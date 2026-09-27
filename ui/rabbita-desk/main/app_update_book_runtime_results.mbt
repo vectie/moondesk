@@ -8,7 +8,7 @@ fn update_book_runtime_results(
     LoadedBookBaseTypes(Ok(book_base_types)) =>
       (@rabbita.none, { ..model, book_base_types, })
     LoadedBookBaseTypes(Err(error)) =>
-      (@rabbita.none, { ..model, book_pattern_status: error })
+      (@rabbita.none, { ..model, book_pattern_status: error, })
     LoadedBookPatterns(Ok(book_patterns)) => {
       let with_patterns = { ..model, book_patterns, }
       let pattern_id = if pattern_matches_base_type(
@@ -26,19 +26,19 @@ fn update_book_runtime_results(
       (@rabbita.none, apply_selected_book_pattern(with_patterns, pattern_id))
     }
     LoadedBookPatterns(Err(error)) =>
-      (@rabbita.none, { ..model, book_pattern_status: error })
+      (@rabbita.none, { ..model, book_pattern_status: error, })
     CreatedBookFromPattern(Ok(result)) =>
       update_created_book_from_pattern(dispatch, model, result)
     CreatedBookFromPattern(Err(error)) =>
-      (@rabbita.none, { ..model, book_pattern_status: error })
+      (@rabbita.none, { ..model, book_pattern_status: error, })
     ExportedAppToolPortable(Ok(result)) =>
       update_exported_app_tool_portable(dispatch, model, result)
     ExportedAppToolPortable(Err(error)) =>
-      (@rabbita.none, { ..model, book_pattern_status: error })
+      (@rabbita.none, { ..model, book_pattern_status: error, })
     ExportedAllAppToolPortable(Ok(result)) =>
       update_exported_all_app_tool_portable(dispatch, model, result)
     ExportedAllAppToolPortable(Err(error)) =>
-      (@rabbita.none, { ..model, book_pattern_status: error })
+      (@rabbita.none, { ..model, book_pattern_status: error, })
     _ => (@rabbita.none, model)
   }
 }

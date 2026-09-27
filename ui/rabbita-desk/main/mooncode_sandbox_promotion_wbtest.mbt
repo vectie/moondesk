@@ -129,7 +129,7 @@ test "sandbox review selection is receipt-bound and only promotes chosen files" 
     selected.mooncode_sandbox_selected_paths,
   ).unwrap()
   assert_eq(request.items, [
-    { source_relative: "src/main.mbt", destination_relative: "src/main.mbt" },
+    { source_relative: "src/main.mbt", destination_relative: "src/main.mbt", },
   ])
   let (_, replaced) = update_mooncode_session_actions(
     code_mode_test_dispatch,

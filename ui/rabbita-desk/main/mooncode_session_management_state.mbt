@@ -42,7 +42,7 @@ fn mooncode_cancel_delete_session(
       },
     )
   } else {
-    (@rabbita.none, { ..model, mooncode_session_delete_id: "" })
+    (@rabbita.none, { ..model, mooncode_session_delete_id: "", })
   }
 }
 
@@ -68,7 +68,7 @@ fn mooncode_save_session_rename(
   if title == "" {
     return (
       @rabbita.none,
-      { ..model, mooncode_session_management_status: "Enter a session title" },
+      { ..model, mooncode_session_management_status: "Enter a session title", },
     )
   }
   if title.length() > 160 {
@@ -82,7 +82,7 @@ fn mooncode_save_session_rename(
   }
   (
     manage_mooncode_session_cmd(dispatch, session_id, Rename(title)),
-    { ..model, mooncode_session_management_status: "Renaming session" },
+    { ..model, mooncode_session_management_status: "Renaming session", },
   )
 }
 
@@ -203,7 +203,7 @@ fn mooncode_session_management_result(
 ) -> (@rabbita.Cmd, Model) {
   match result {
     Err(error) =>
-      (@rabbita.none, { ..model, mooncode_session_management_status: error })
+      (@rabbita.none, { ..model, mooncode_session_management_status: error, })
     Ok((action, session_id_value, title, _archived, _deleted)) => {
       let session_id = session_id_value.to_string()
       let current = mooncode_session_for_management(model, session_id)

@@ -21,7 +21,7 @@ fn preview_tabs(model : Model) -> Array[PreviewTab] {
   match first_run_report_path(model) {
     Some(path) =>
       if path != primary_path && path != "book/site/generated/index.html" {
-        tabs.push({ title: "Latest result", path, renderer: ArtifactSummary })
+        tabs.push({ title: "Latest result", path, renderer: ArtifactSummary, })
       }
     None => ()
   }

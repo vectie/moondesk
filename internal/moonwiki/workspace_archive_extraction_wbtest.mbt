@@ -26,7 +26,7 @@ async test "stored MoonBook ZIP stages payload as data without executing it" {
         ("wiki/index.md", archive_test_bytes("# Stored Book\n")),
         ("payload.py", archive_test_bytes(payload)),
       ],
-      opts={ ..@zip_types.ZipOptions::default(), level: 0 },
+      opts={ ..@zip_types.ZipOptions::default(), level: 0, },
     )
     let archive_path = @pathx.join(root, "book.zip")
     let extract_root = @pathx.join(root, "extract")
@@ -74,7 +74,7 @@ async test "stored ZIP symlink metadata is rejected before staging" {
   @moonlib/fsx.with_temporary_directory("moondesk-symlink-archive-", root => {
     let archive = @moonzip.zip_sync(
       [("link", archive_test_bytes("../outside"))],
-      opts={ ..@zip_types.ZipOptions::default(), level: 0 },
+      opts={ ..@zip_types.ZipOptions::default(), level: 0, },
       entry_opts=[
         Some({
           ..@zip_types.ZipEntryOptions::default(),

@@ -887,7 +887,7 @@ async fn moonclaw_daemon_status_with_platform(
   let installation_evidence = moonclaw_installation_evidence_from_values(
     managed_install,
     service_configured,
-    @fsx.exists(info_path),
+    false,
     repair_available~,
   )
   let configuration_evidence = moonclaw_configuration_evidence_from_descriptor(
@@ -966,6 +966,18 @@ async fn moonclaw_daemon_status_with_platform(
   let reachable = moonclaw_existing_daemon_reachable(
     alive, port, port_reachable, existing_allowed,
   )
+  // A daemon-info file survives a crash. It proves installation only while
+  // its process and bound control endpoint are actually reachable.
+  let verified_installation_evidence = moonclaw_installation_evidence_from_values(
+    managed_install,
+    service_configured,
+    reachable,
+    repair_available~,
+  )
+  let verified_configuration_evidence = moonclaw_configuration_evidence_from_descriptor(
+    json_bool(verified_installation_evidence, "installed", default=false),
+    descriptor,
+  )
   let managed_running = reachable &&
     managed_install &&
     running_version.has_prefix(installed_version)
@@ -1029,8 +1041,8 @@ async fn moonclaw_daemon_status_with_platform(
       "managed_running": managed_running,
       "repair_available": repair_available,
       "platform_evidence": moonclaw_platform_support_json(platform_support),
-      "installation_evidence": installation_evidence,
-      "configuration_evidence": configuration_evidence,
+      "installation_evidence": verified_installation_evidence,
+      "configuration_evidence": verified_configuration_evidence,
       "model_readiness": model_readiness,
       "auth_readiness": auth_readiness,
       "installed_version": installed_version,
@@ -1066,7 +1078,7 @@ async fn moonclaw_daemon_status_with_platform(
     } else if service_configured {
       "restart_moonclaw"
     } else {
-      "configure_moonclaw_service"
+      "install_moonclaw"
     },
   )
 }

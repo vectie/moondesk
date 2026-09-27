@@ -36,7 +36,7 @@ test "moongate client reads suite status from workspace moonsuite state" {
 
 ///|
 test "moongate client builds openclaw route url" {
-  let client = { base_url: "http://127.0.0.1:18081" }
+  let client = { base_url: "http://127.0.0.1:18081", }
   assert_eq(
     client.route_openclaw_chat_url(),
     "http://127.0.0.1:18081/openclaw/v1/chat/completions",

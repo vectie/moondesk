@@ -36,9 +36,9 @@ fn default_serve_options() -> ServeOptions {
 ///|
 fn default_workspace_root() -> String {
   default_workspace_root_from_environment(
-    @sys.get_env_var("MOONDESK_WORKSPACE_ROOT").unwrap_or(""),
-    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
-    @sys.get_env_var("HOME").unwrap_or(""),
+    @env.get_env_var("MOONDESK_WORKSPACE_ROOT").unwrap_or(""),
+    @env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    @env.get_env_var("HOME").unwrap_or(""),
   )
 }
 
@@ -95,21 +95,21 @@ fn parse_serve_args(args : Array[String]) -> ServeOptions? {
     match args[index] {
       "--root" =>
         if index + 1 < args.length() {
-          options = { ..options, workspace_root: args[index + 1] }
+          options = { ..options, workspace_root: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--ui" =>
         if index + 1 < args.length() {
-          options = { ..options, ui_dir: args[index + 1] }
+          options = { ..options, ui_dir: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--host" =>
         if index + 1 < args.length() {
-          options = { ..options, host: args[index + 1] }
+          options = { ..options, host: args[index + 1], }
           index += 2
         } else {
           return None
@@ -125,16 +125,16 @@ fn parse_serve_args(args : Array[String]) -> ServeOptions? {
           return None
         }
       "--open" => {
-        options = { ..options, open_browser: true }
+        options = { ..options, open_browser: true, }
         index += 1
       }
       "--no-open" => {
-        options = { ..options, open_browser: false }
+        options = { ..options, open_browser: false, }
         index += 1
       }
       value =>
         if !seen_root && !value.has_prefix("-") {
-          options = { ..options, workspace_root: value }
+          options = { ..options, workspace_root: value, }
           seen_root = true
           index += 1
         } else {
@@ -158,28 +158,28 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
     match args[index] {
       "--root" =>
         if index + 1 < args.length() {
-          options = { ..options, workspace_root: args[index + 1] }
+          options = { ..options, workspace_root: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--ui" =>
         if index + 1 < args.length() {
-          options = { ..options, ui_dir: args[index + 1] }
+          options = { ..options, ui_dir: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--out" =>
         if index + 1 < args.length() {
-          options = { ..options, out_dir: args[index + 1] }
+          options = { ..options, out_dir: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--host" =>
         if index + 1 < args.length() {
-          options = { ..options, host: args[index + 1] }
+          options = { ..options, host: args[index + 1], }
           index += 2
         } else {
           return None
@@ -196,43 +196,43 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
         }
       "--sign-identity" =>
         if index + 1 < args.length() {
-          options = { ..options, sign_identity: args[index + 1] }
+          options = { ..options, sign_identity: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--version" =>
         if index + 1 < args.length() {
-          options = { ..options, version: args[index + 1] }
+          options = { ..options, version: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--channel" =>
         if index + 1 < args.length() {
-          options = { ..options, channel: args[index + 1] }
+          options = { ..options, channel: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--lepusa" =>
         if index + 1 < args.length() {
-          options = { ..options, lepusa_root: args[index + 1] }
+          options = { ..options, lepusa_root: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--skip-sign" => {
-        options = { ..options, skip_sign: true }
+        options = { ..options, skip_sign: true, }
         index += 1
       }
       "--no-archive" => {
-        options = { ..options, archive: false }
+        options = { ..options, archive: false, }
         index += 1
       }
       value =>
         if !seen_root && !value.has_prefix("-") {
-          options = { ..options, workspace_root: value }
+          options = { ..options, workspace_root: value, }
           seen_root = true
           index += 1
         } else {

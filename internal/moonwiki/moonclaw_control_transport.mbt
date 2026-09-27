@@ -58,6 +58,7 @@ fn moonclaw_control_response_text(
   data : &@io.Data,
   config : SourceSemanticsSandboxClientConfig,
   operation : String,
+  max_chars? : Int = MoonClawControlResponseChars,
 ) -> Result[String, String] {
   guard response.headers.get("x-moonclaw-instance-id") ==
     Some(config.instance_id) else {
@@ -71,13 +72,49 @@ fn moonclaw_control_response_text(
   let text = data.text() catch {
     _ => return Err("MoonClaw \{operation} returned an unreadable response")
   }
-  guard text.length() <= MoonClawControlResponseChars else {
+  guard text.length() <= max_chars else {
     return Err("MoonClaw \{operation} exceeded the response limit")
   }
   guard !text.contains(config.auth_token) else {
     return Err("MoonClaw \{operation} returned an invalid control response")
   }
   Ok(text)
+}
+
+///|
+async fn moonclaw_get_media_with_control_config(
+  daemon : Json,
+  path : String,
+  config : SourceSemanticsSandboxClientConfig,
+) -> Result[Json, String] {
+  let port = json_int(daemon, "port", default=0)
+  guard port > 0 &&
+    path.has_prefix("/v1/code/sessions/") &&
+    path.contains("/media/") else {
+    return Err("MoonClaw media endpoint is not available")
+  }
+  let (response, data) = @http.get(
+    "http://127.0.0.1:\{port}\{path}",
+    headers=moonclaw_control_headers(config),
+  ) catch {
+    _ => return Err("MoonClaw media GET failed")
+  }
+  let body = match
+    moonclaw_control_response_text(
+      response,
+      data,
+      config,
+      "media GET",
+      max_chars=11 * 1024 * 1024 + 1024,
+    ) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok(
+    @json.parse(body) catch {
+      _ => return Err("MoonClaw media returned invalid JSON")
+    },
+  )
 }
 
 ///|

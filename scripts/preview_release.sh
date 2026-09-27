@@ -9,19 +9,22 @@ VERSION=
 NOTES=
 OUTPUT=
 WORKSPACE=
+LEPUSA_ROOT=
 TEMP_WORKSPACE=
 TEMP_UI=
+TEMP_MOON_WORK=
 
 usage() {
   printf '%s\n' \
     "Usage: $0 --version VERSION --notes FILE --out FRESH_DIR [--workspace DIR]" \
+    "          [--lepusa LOCAL_CHECKOUT]" \
     "          [--credentialed]" >&2
 }
 
 CREDENTIALED=false
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --version|--notes|--out|--workspace)
+    --version|--notes|--out|--workspace|--lepusa)
       [ "$#" -ge 2 ] || {
         usage
         exit 64
@@ -34,6 +37,7 @@ while [ "$#" -gt 0 ]; do
         --notes) NOTES=$value ;;
         --out) OUTPUT=$value ;;
         --workspace) WORKSPACE=$value ;;
+        --lepusa) LEPUSA_ROOT=$value ;;
       esac
       ;;
     --credentialed)
@@ -53,8 +57,8 @@ done
 }
 
 printf '%s\n' "$VERSION" |
-  grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$' || {
-    printf 'preview release: invalid version: %s\n' "$VERSION" >&2
+  grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+-preview\.[0-9]+$' || {
+    printf 'preview release: invalid preview version: %s\n' "$VERSION" >&2
     exit 65
   }
 
@@ -95,8 +99,25 @@ cleanup() {
   if [ -n "$TEMP_UI" ] && [ -d "$TEMP_UI" ]; then
     rm -rf -- "$TEMP_UI"
   fi
+  if [ -n "$TEMP_MOON_WORK" ]; then
+    rm -f -- "$TEMP_MOON_WORK"
+  fi
 }
 trap cleanup EXIT HUP INT TERM
+
+if [ -n "$LEPUSA_ROOT" ]; then
+  [ -f "$LEPUSA_ROOT/moon.mod" ] || {
+    printf 'preview release: Lepusa checkout is missing moon.mod: %s\n' "$LEPUSA_ROOT" >&2
+    exit 66
+  }
+  LEPUSA_ROOT=$(CDPATH= cd -- "$LEPUSA_ROOT" && pwd)
+  [ ! -e "$REPO_ROOT/moon.work" ] || {
+    printf '%s\n' 'preview release: --lepusa requires no existing moon.work' >&2
+    exit 66
+  }
+  TEMP_MOON_WORK="$REPO_ROOT/moon.work"
+  (cd "$REPO_ROOT" && moon work init . "$LEPUSA_ROOT")
+fi
 
 if [ -z "$WORKSPACE" ]; then
   TEMP_WORKSPACE=$(mktemp -d "${TMPDIR:?set TMPDIR beneath repository _build or .moonagent}/moondesk-preview-workspace.XXXXXX")
@@ -122,6 +143,10 @@ set -- \
   --channel preview
 
 set -- "$@" --skip-sign --no-dmg
+
+if [ -n "$LEPUSA_ROOT" ]; then
+  set -- "$@" --lepusa "$LEPUSA_ROOT"
+fi
 
 (
   cd "$REPO_ROOT"

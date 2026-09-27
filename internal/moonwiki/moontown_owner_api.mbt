@@ -76,9 +76,23 @@ async fn moontown_owner_post_json(
   path : String,
   body : Json,
 ) -> Result[Json, String] {
+  match moontown_owner_post_json_with_status(workspace_root, path, body) {
+    Ok(payload) => Ok(payload)
+    Err((_, message)) => Err(message)
+  }
+}
+
+///|
+/// Preserve a trusted owner's validation status for callers that present a
+/// user-editable form. Transport and contract failures remain service errors.
+async fn moontown_owner_post_json_with_status(
+  workspace_root : String,
+  path : String,
+  body : Json,
+) -> Result[Json, (Int, String)] {
   let service_url = match verified_moontown_owner_service_url(workspace_root) {
     Ok(value) => value
-    Err(error) => return Err(error)
+    Err(error) => return Err((503, error))
   }
   // MoonTown's owner boundary rejects chunked or unbounded writes. Encode the
   // exact payload once so the trusted bridge can declare and send one bounded
@@ -92,15 +106,21 @@ async fn moontown_owner_post_json(
     "Accept": "application/json",
     "Content-Length": encoded.length().to_string(),
   }) catch {
-    error => return Err("MoonTown is unavailable at \{path}: \{error}")
+    error => return Err((503, "MoonTown is unavailable at \{path}: \{error}"))
   }
   let data = client.read_all()
   let text = data.text() catch { _ => "" }
   if response.code < 200 || response.code > 299 {
-    return Err("MoonTown returned \{response.code} for \{path}: \{text}")
+    let error_payload = @json.parse(text) catch { _ => Json::object({}) }
+    let detail = json_string(
+      error_payload,
+      "error",
+      default="MoonTown rejected the request",
+    )
+    return Err((response.code, detail))
   }
   let payload = @json.parse(text) catch {
-    _ => return Err("MoonTown returned invalid JSON for \{path}")
+    _ => return Err((503, "MoonTown returned invalid JSON for \{path}"))
   }
   Ok(payload)
 }

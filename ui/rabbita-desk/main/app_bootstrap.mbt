@@ -27,7 +27,7 @@ fn bootstrap_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
     bootstrap_fetch_cmd(dispatch),
     install_import_capture_cmd(),
     schedule_import_drop_poll(dispatch),
-    install_desk_location_enter_cmd(),
+    install_desk_location_enter_cmd(dispatch),
     install_mooncode_enter_send_cmd(),
     install_browser_preview_observer_cmd(),
   ])

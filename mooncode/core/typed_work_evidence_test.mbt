@@ -154,6 +154,7 @@ test "typed evidence canonical kind precedence and fallback matrix" {
       },
     },
     typed_matrix_step("unknown", "tool"),
+    typed_matrix_step("unknown", "skill"),
     typed_matrix_step("unknown", "future"),
   ]
   guard @core.decode_mooncode_conversation(typed_evidence_matrix_fixture(steps))
@@ -164,6 +165,7 @@ test "typed evidence canonical kind precedence and fallback matrix" {
     "package_manifest", "package_manifest", "review_accept", "review_reject", "package_built",
     "package_built", "package_verified", "package_verified", "assistant_summary",
     "assistant_summary", "test", "edit", "test", "artifact", "approval", "tool",
+    "skill",
   ])
 }
 

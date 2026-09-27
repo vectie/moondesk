@@ -1,9 +1,9 @@
 ///|
 fn moonclaw_runtime_root() -> String {
   moonclaw_runtime_root_from_environment(
-    @sys.get_env_var("MOONDESK_RUNTIME_ROOT").unwrap_or(""),
-    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
-    @sys.get_env_var("HOME").unwrap_or(""),
+    @env.get_env_var("MOONDESK_RUNTIME_ROOT").unwrap_or(""),
+    @env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    @env.get_env_var("HOME").unwrap_or(""),
   )
 }
 
@@ -69,10 +69,10 @@ fn moonclaw_platform_support_json(evidence : MoonClawPlatformSupport) -> Json {
 /// Host probing is a fixed, reviewed capability. No command, executable, or
 /// argument vector crosses this package boundary.
 async fn moonclaw_install_platform() -> (String, String) {
-  let forced_platform = @sys.get_env_var("MOONCLAW_INSTALL_PLATFORM").unwrap_or(
+  let forced_platform = @env.get_env_var("MOONCLAW_INSTALL_PLATFORM").unwrap_or(
     "",
   )
-  let forced_architecture = @sys.get_env_var("MOONCLAW_INSTALL_ARCHITECTURE").unwrap_or(
+  let forced_architecture = @env.get_env_var("MOONCLAW_INSTALL_ARCHITECTURE").unwrap_or(
     "",
   )
   if forced_platform != "" && forced_architecture != "" {

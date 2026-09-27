@@ -5,11 +5,11 @@ fn update_inbox_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    SetInboxTitle(title) => (@rabbita.none, { ..model, inbox_title: title })
+    SetInboxTitle(title) => (@rabbita.none, { ..model, inbox_title: title, })
     SetInboxContent(content) =>
       (
         @rabbita.none,
-        { ..model, inbox_content: content, inbox_status: "draft" },
+        { ..model, inbox_content: content, inbox_status: "draft", },
       )
     SetImportUrl(url) =>
       (
@@ -21,7 +21,7 @@ fn update_inbox_actions(
             request_material_status: "material draft",
           }
         } else {
-          { ..model, import_url: url, inbox_status: "import draft" }
+          { ..model, import_url: url, inbox_status: "import draft", }
         },
       )
     SetImportNote(note) =>
@@ -34,7 +34,7 @@ fn update_inbox_actions(
             request_material_status: "material draft",
           }
         } else {
-          { ..model, import_note: note, inbox_status: "import draft" }
+          { ..model, import_note: note, inbox_status: "import draft", }
         },
       )
     ImportUrlToInbox =>
@@ -42,27 +42,27 @@ fn update_inbox_actions(
         if task_material_capture_active(model) {
           (
             @rabbita.none,
-            { ..model, request_material_status: "enter a link to add" },
+            { ..model, request_material_status: "enter a link to add", },
           )
         } else {
-          (@rabbita.none, { ..model, inbox_status: "enter a URL to import" })
+          (@rabbita.none, { ..model, inbox_status: "enter a URL to import", })
         }
       } else if model.selected_workspace_id == "" {
         if task_material_capture_active(model) {
           (
             @rabbita.none,
-            { ..model, request_material_status: "select a book first" },
+            { ..model, request_material_status: "select a book first", },
           )
         } else {
-          (@rabbita.none, { ..model, inbox_status: "select a book first" })
+          (@rabbita.none, { ..model, inbox_status: "select a book first", })
         }
       } else {
         (
           import_url_cmd(dispatch, model),
           if task_material_capture_active(model) {
-            { ..model, request_material_status: "adding link" }
+            { ..model, request_material_status: "adding link", }
           } else {
-            { ..model, inbox_status: "importing URL" }
+            { ..model, inbox_status: "importing URL", }
           },
         )
       }
@@ -71,10 +71,10 @@ fn update_inbox_actions(
         if task_material_capture_active(model) {
           (
             @rabbita.none,
-            { ..model, request_material_status: "select a book first" },
+            { ..model, request_material_status: "select a book first", },
           )
         } else {
-          (@rabbita.none, { ..model, inbox_status: "select a book first" })
+          (@rabbita.none, { ..model, inbox_status: "select a book first", })
         }
       } else {
         let target = if task_material_capture_active(model) {
@@ -115,7 +115,7 @@ fn update_inbox_actions(
       let content = trimmed_or(model.inbox_content, "Empty operator note.")
       (
         save_inbox_cmd(dispatch, model, title, content),
-        { ..model, inbox_status: "saving inbox note" },
+        { ..model, inbox_status: "saving inbox note", },
       )
     }
     StageSelectedLink => stage_selected_link_action(dispatch, model)
@@ -169,10 +169,10 @@ fn stage_selected_link_action(
   (
     save_inbox_cmd(
       dispatch,
-      { ..model, editing_inbox_path: "" },
+      { ..model, editing_inbox_path: "", },
       title,
       content,
     ),
-    { ..model, inbox_status: "copying selection to inbox" },
+    { ..model, inbox_status: "copying selection to inbox", },
   )
 }

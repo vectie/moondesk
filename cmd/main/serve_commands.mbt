@@ -13,7 +13,7 @@ async fn run_serve(args : Array[String]) -> Unit {
 ///|
 async fn run_desktop(args : Array[String]) -> Unit {
   let options = match parse_serve_args(args) {
-    Some(options) => { ..options, open_browser: true }
+    Some(options) => { ..options, open_browser: true, }
     None => {
       print_usage()
       return
@@ -111,7 +111,7 @@ async fn resolve_user_workspace_root_resolution(
     workspace_root,
     repo_root,
     default_workspace_root(),
-    @sys.get_env_var("HOME").unwrap_or(""),
+    @env.get_env_var("HOME").unwrap_or(""),
   )
 }
 
@@ -127,9 +127,9 @@ async fn resolve_user_workspace_root_with_default(
     let workspace_root = source_checkout_fallback_workspace_root(
       fallback_root, repo_root, home_root,
     )
-    return { requested_root, workspace_root, redirected: true }
+    return { requested_root, workspace_root, redirected: true, }
   }
-  { requested_root, workspace_root: requested_root, redirected: false }
+  { requested_root, workspace_root: requested_root, redirected: false, }
 }
 
 ///|

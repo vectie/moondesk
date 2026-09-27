@@ -21,7 +21,7 @@ priv struct MoonEditDocument {
 
 ///|
 fn moonedit_hex(bytes : FixedArray[Byte]) -> String {
-  let out = StringBuilder::new(size_hint=bytes.length() * 2)
+  let out = StringBuilder(size_hint=bytes.length() * 2)
   for byte in bytes {
     out.write_string(byte.to_hex())
   }
@@ -65,7 +65,7 @@ fn moonedit_decode_document(
   }
   match moonedit_validate_text_controls(text) {
     Err(error) => Err(error)
-    Ok(_) => Ok({ text, byte_size, revision: moonedit_revision(bytes) })
+    Ok(_) => Ok({ text, byte_size, revision: moonedit_revision(bytes), })
   }
 }
 
@@ -81,6 +81,6 @@ fn moonedit_validate_document_for_save(
   }
   match moonedit_validate_text_controls(text) {
     Err(error) => Err(error)
-    Ok(_) => Ok({ text, byte_size, revision: moonedit_revision(bytes) })
+    Ok(_) => Ok({ text, byte_size, revision: moonedit_revision(bytes), })
   }
 }

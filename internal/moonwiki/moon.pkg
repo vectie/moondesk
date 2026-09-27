@@ -3,8 +3,10 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/http",
   "moonbitlang/async/io",
+  "moonbitlang/async/process",
   "moonbitlang/async/socket",
   "moonbitlang/core/env",
+  "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/json",
@@ -12,7 +14,6 @@ import {
   "moonbitlang/core/ref",
   "moonbitlang/core/string",
   "ivgtr/moonzip",
-  "moonbitlang/x/sys",
   "moonbitlang/x/fs" @nativefs,
   "moonbitlang/x/time",
   "moonbitlang/x/crypto",
@@ -34,12 +35,7 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
-} for "test"
-
-import {
   "ivgtr/moonzip/types" @zip_types,
-  "moonbitlang/async/process",
 } for "wbtest"
 
 supported_targets = "native"
@@ -53,6 +49,10 @@ options(
     "api_review_preferences_router.mbt": [ "native" ],
     "api_town_router.mbt": [ "native" ],
     "api_workspace_router.mbt": [ "native" ],
+    "git_repository_projection.mbt": [ "native" ],
+    "git_review_journal.mbt": [ "native" ],
+    "git_github_projection.mbt": [ "native" ],
+    "git_repository_projection_wbtest.mbt": [ "native" ],
     "agent_preference_handlers.mbt": [ "native" ],
     "agent_preference_handlers_wbtest.mbt": [ "native" ],
     "agent_library.mbt": [ "native" ],

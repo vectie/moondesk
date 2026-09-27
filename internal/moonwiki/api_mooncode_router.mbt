@@ -26,6 +26,19 @@ async fn route_mooncode_api(
       }
       true
     }
+    ["api", "mooncode", "skills", workspace_id] => {
+      let endpoint = @mooncode.desktop_skills_endpoint()
+      if mooncode_route_accepts_read(endpoint, method_) {
+        handle_mooncode_skills(workspace_root, workspace_id, method_, conn)
+      } else {
+        send_mooncode_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "mooncode", "schedules"] => {
+      handle_mooncode_schedules(workspace_root, body, method_, conn)
+      true
+    }
     ["api", "mooncode", "sessions"] => {
       let endpoint = @mooncode.desktop_sessions_endpoint()
       if mooncode_route_accepts_read(endpoint, method_) {
@@ -45,6 +58,34 @@ async fn route_mooncode_api(
         )
       } else {
         send_mooncode_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "mooncode", "sessions", session_id, "media", command_id, index] => {
+      if method_ is Get || method_ is Head {
+        handle_mooncode_session_media(
+          workspace_root, session_id, command_id, index, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
+    ["api", "mooncode", "sessions", session_id, "jobs"] => {
+      if method_ is Get || method_ is Head {
+        handle_mooncode_session_jobs(workspace_root, session_id, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
+    ["api", "mooncode", "sessions", session_id, "export"] => {
+      if method_ is Get || method_ is Head {
+        handle_mooncode_session_export(
+          workspace_root, session_id, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
       }
       true
     }

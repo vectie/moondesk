@@ -41,7 +41,7 @@ fn work_agenda_item(
   current_tick : Int,
 ) -> WorkAgendaItem {
   let state = work_agenda_state(goal, current_tick)
-  { goal, state, relative_label: work_agenda_relative_label(state) }
+  { goal, state, relative_label: work_agenda_relative_label(state), }
 }
 
 ///|

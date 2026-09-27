@@ -55,6 +55,52 @@ fn source_semantics_diagnostics(
 }
 
 ///|
+async fn source_semantics_ide_locations(
+  output : String,
+  workspace_root : String,
+) -> Array[Json] {
+  let parsed = @json.parse(output) catch { _ => return [] }
+  guard parsed is Array(items) else { return [] }
+  let locations : Array[Json] = []
+  for item in items {
+    if locations.length() >= 100 {
+      break
+    }
+    let path = json_string(item, "path", default="")
+    let relative = match path.strip_prefix(workspace_root + "/") {
+      Some(value) => value.to_owned()
+      None => continue
+    }
+    guard clean_relative_path(relative) is Some(clean_path) &&
+      clean_path == relative else {
+      continue
+    }
+    let confined = @fsx.resolve_confined_existing(workspace_root, clean_path) catch {
+      _ => None
+    }
+    guard confined is Some(_) else { continue }
+    let range = json_string(item, "range", default="")
+    let start = range.split("-").to_array()[0].split(":").to_array()
+    if start.length() < 2 {
+      continue
+    }
+    let line = @string.parse_int(start[0].to_owned()) catch { _ => continue }
+    let column = @string.parse_int(start[1].to_owned()) catch { _ => continue }
+    if line <= 0 || column <= 0 {
+      continue
+    }
+    locations.push({
+      "path": clean_path,
+      "line": line,
+      "column": column,
+      "range": range,
+      "is_test": json_bool(item, "is_test", default=false),
+    })
+  }
+  locations
+}
+
+///|
 async fn source_semantics_module_root(
   workspace_root : String,
   absolute_path : String,
@@ -148,7 +194,7 @@ fn source_semantics_sandbox_request(
     }
     _ => return Err("Unsupported source semantic action")
   }
-  Ok({ workspace_root, module_root, module_path, action: sandbox_action })
+  Ok({ workspace_root, module_root, module_path, action: sandbox_action, })
 }
 
 ///|
@@ -166,15 +212,25 @@ async fn execute_source_semantics_sandbox(
         Ok(result) => Ok(result)
         Err(Unavailable | InvalidReceipt | Truncated) => Err(SandboxUnavailable)
       }
-    Definition(symbol~, line~, column~) | References(symbol~, line~, column~) => {
-      ignore(symbol)
-      ignore(line)
-      ignore(column)
-    }
+    Definition(symbol~, line~, column~) | References(symbol~, line~, column~) =>
+      return match
+        source_semantics_sandbox_ide(
+          request.workspace_root,
+          request.module_root,
+          request.module_path,
+          if request.action is Definition(_) {
+            "definition"
+          } else {
+            "references"
+          },
+          symbol,
+          line,
+          column,
+        ) {
+        Ok(result) => Ok(result)
+        Err(Unavailable | InvalidReceipt | Truncated) => Err(SandboxUnavailable)
+      }
   }
-  // Semantic navigation remains closed until it receives its own typed,
-  // receipt-bound capability. It must never fall back to a host process.
-  Err(SandboxUnavailable)
 }
 
 ///|
@@ -214,6 +270,7 @@ fn source_semantics_ide_args(
     line.max(1).to_string() +
     ":" +
     column.max(1).to_string(),
+    "--json",
   ])
 }
 
@@ -274,11 +331,27 @@ async fn source_semantics_result(
     Ok(request) => request
     Err(problem) => return Err(InvalidRequest(problem))
   }
-  ignore(module_prefix)
-  ignore(clean_path)
   match execute_source_semantics_sandbox(request) {
     Ok(result) => {
-      guard request.action is Diagnostics else { return Ok(result) }
+      if request.action is Definition(_) || request.action is References(_) {
+        let exit_code = json_int(result, "exit_code", default=-1)
+        let output = json_string(result, "output", default="")
+        return Ok({
+          "ok": exit_code == 0,
+          "action": action,
+          "path": clean_path,
+          "module_prefix": module_prefix,
+          "locations": Json::array(
+            source_semantics_ide_locations(output, canonical_workspace_root),
+          ),
+          "output": if exit_code == 0 {
+            ""
+          } else {
+            source_semantics_normalize_output(output, canonical_workspace_root)
+          },
+          "execution_sandbox": "moonfort",
+        })
+      }
       let output = json_string(result, "output", default="")
       let exit_code = json_int(result, "exit_code", default=-1)
       let diagnostics = source_semantics_diagnostics(

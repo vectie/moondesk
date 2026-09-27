@@ -174,7 +174,7 @@ test "Flow restores persisted node geometry without resetting the viewport" {
   let restored = flow_canvas_apply_composition_positions(canvas, {
     selected_item_ids: [],
     items: [],
-    node_positions: Some([{ work_item_id: "research", x: 512.5, y: 224.25 }]),
+    node_positions: Some([{ work_item_id: "research", x: 512.5, y: 224.25, }]),
     catalog_id: None,
     catalog_status: None,
     evaluated_at: None,

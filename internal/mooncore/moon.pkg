@@ -4,7 +4,3 @@ import {
   "moonbitlang/core/string",
   "vectie/moondesk/core" @desk,
 }
-
-import {
-  "moonbitlang/core/test",
-} for "test"

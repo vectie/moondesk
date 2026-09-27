@@ -22,14 +22,14 @@ pub fn workspace_from_root(
 ///|
 pub fn canonical_sections() -> Array[MoonBookSection] {
   [
-    { label: "Wiki", path: "wiki", layer: Wiki, writable: false },
-    { label: "Raw Evidence", path: "raw", layer: RawEvidence, writable: false },
-    { label: "Inbox", path: "inbox", layer: Inbox, writable: true },
-    { label: "Skills", path: "skills", layer: Skill, writable: false },
-    { label: "Schemas", path: "schemas", layer: Schema, writable: false },
-    { label: "Tools", path: "tools", layer: Tool, writable: false },
-    { label: "Apps", path: "apps", layer: App, writable: false },
-    { label: "App", path: "app", layer: App, writable: false },
+    { label: "Wiki", path: "wiki", layer: Wiki, writable: false, },
+    { label: "Raw Evidence", path: "raw", layer: RawEvidence, writable: false, },
+    { label: "Inbox", path: "inbox", layer: Inbox, writable: true, },
+    { label: "Skills", path: "skills", layer: Skill, writable: false, },
+    { label: "Schemas", path: "schemas", layer: Schema, writable: false, },
+    { label: "Tools", path: "tools", layer: Tool, writable: false, },
+    { label: "Apps", path: "apps", layer: App, writable: false, },
+    { label: "App", path: "app", layer: App, writable: false, },
     {
       label: "Generated Site",
       path: "book/site/generated",
@@ -48,14 +48,14 @@ pub fn canonical_sections() -> Array[MoonBookSection] {
       layer: PortableAppTool,
       writable: false,
     },
-    { label: "Reviews", path: "reviews", layer: Review, writable: false },
+    { label: "Reviews", path: "reviews", layer: Review, writable: false, },
     {
       label: "Review Queue",
       path: "wiki/reviews",
       layer: Review,
       writable: false,
     },
-    { label: "Journal", path: "wiki/history", layer: History, writable: false },
+    { label: "Journal", path: "wiki/history", layer: History, writable: false, },
     {
       label: "MoonClaw Runs",
       path: @moondesk_core.moonsuite_product_display_artifact(

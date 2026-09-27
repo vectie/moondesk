@@ -4,6 +4,21 @@ fn moondesk_access_env(name : String) -> String {
 }
 
 ///|
+/// A per-user MoonDesk is reachable only through its authenticated Kubernetes
+/// gateway and exact internal Service host. Public shared desktops continue
+/// to require PlatformOperator login.
+fn moondesk_trusted_workspace_gateway(
+  allowed_hosts : String,
+  flag : String,
+) -> Bool {
+  flag == "true" &&
+  allowed_hosts.has_prefix("webide-") &&
+  allowed_hosts.has_suffix(".svc.cluster.local:8188") &&
+  !allowed_hosts.contains(",") &&
+  moondesk_valid_authority(allowed_hosts)
+}
+
+///|
 fn moondesk_valid_authority(value : String) -> Bool {
   !value.is_empty() &&
   value
@@ -61,7 +76,10 @@ fn moondesk_active_operator(value : Json) -> Bool {
 }
 
 ///|
-fn moondesk_identity_authority_matches(endpoint : String, host : String) -> Bool {
+fn moondesk_identity_authority_matches(
+  endpoint : String,
+  host : String,
+) -> Bool {
   moondesk_valid_authority(host) &&
   (endpoint == "http://" + host || endpoint == "https://" + host)
 }
@@ -200,6 +218,12 @@ async fn moondesk_public_access_gate(
   body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Bool {
+  if moondesk_trusted_workspace_gateway(
+      moondesk_access_env("MOONDESK_ALLOWED_HOSTS"),
+      moondesk_access_env("MOONDESK_TRUSTED_WORKSPACE_GATEWAY"),
+    ) {
+    return false
+  }
   // Public mode covers ALL requests, including spoofed loopback Host values.
   if moondesk_access_env("MOONDESK_ALLOWED_HOSTS").is_empty() {
     return false

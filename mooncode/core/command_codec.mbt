@@ -33,6 +33,7 @@ pub(all) struct MoonCodeCommand {
   client_turn_id : String
   context_path : String
   message : String
+  content_parts : Array[MoonCodeContentPart]
   model : String
   web_search : Bool
   planner_max_steps : Int?
@@ -172,6 +173,13 @@ fn command_codec_invalid_combination(command : MoonCodeCommand) -> String? {
   let has_tool_call = command.tool_call_id != ""
   if command.client_turn_id == "" {
     Some("client_turn_id is required")
+  } else if mooncode_command_content_parts_valid(
+      command.content_parts,
+      command.kind,
+      command.message,
+    )
+    is Err(error) {
+    Some(error)
   } else if command_codec_requires_target(command.kind) && !has_target {
     Some("target_command_id is required for this command")
   } else if !command_codec_requires_target(command.kind) && has_target {
@@ -195,6 +203,13 @@ pub fn decode_mooncode_command(
   guard payload is Object(fields) else {
     return Err("MoonCode command must be a JSON object")
   }
+  // Alternate media shapes have no native replay contract. Reject them
+  // instead of silently falling back to the plain-text message.
+  for key in ["content", "images", "attachments"] {
+    if fields.get(key) is Some(_) {
+      return Err("MoonCode media input is not available for this runtime")
+    }
+  }
   let action = match fields.get("action") {
     Some(String(value)) => value
     _ => return Err("action must be a string")
@@ -202,6 +217,10 @@ pub fn decode_mooncode_command(
   let kind = match mooncode_command_kind(action) {
     Some(value) => value
     None => return Err("unsupported MoonCode command action: \{action}")
+  }
+  let content_parts = match mooncode_command_decode_content_parts(fields) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
   let planner_max_steps = match command_codec_planner_max_steps(fields) {
     Ok(value) => value
@@ -236,6 +255,7 @@ pub fn decode_mooncode_command(
     client_turn_id: strings[0],
     context_path: strings[1],
     message: strings[2],
+    content_parts,
     model: strings[3],
     web_search,
     planner_max_steps,
@@ -279,6 +299,11 @@ pub fn encode_mooncode_command(
     Some(error) => Err(error)
     None => {
       let fields = command_codec_submission_fields(command)
+      if !command.content_parts.is_empty() {
+        fields["content_parts"] = Json::array(
+          command.content_parts.map(mooncode_content_part_json),
+        )
+      }
       match command.planner_max_steps {
         Some(value) if value > 0 =>
           fields["planner_max_steps"] = value.to_json()

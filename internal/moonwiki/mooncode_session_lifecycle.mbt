@@ -64,7 +64,13 @@ fn mooncode_session_lifecycle_route_failure(
 ) -> MoonCodeLifecycleRouteFailure {
   match code {
     404 =>
-      { code, title: "Not Found", failure: NotFound, stop_reason: None, detail }
+      {
+        code,
+        title: "Not Found",
+        failure: NotFound,
+        stop_reason: None,
+        detail,
+      }
     409 =>
       {
         code,
@@ -179,11 +185,24 @@ async fn handle_mooncode_session_lifecycle(
   let endpoint = @mooncode.moonclaw_native_session_lifecycle_endpoint(
     session_id,
   )
+  let book_root = match
+    moonclaw_runtime_session_book_root(
+      workspace_root,
+      session_id,
+      archived=action is Restore,
+    ) {
+    Ok(value) => value
+    Err(error) => {
+      let (code, reason) = mooncode_session_scope_error_status(error)
+      send_api_error(conn, method_, code, reason, error)
+      return
+    }
+  }
   match
     moonclaw_post_json(
       daemon,
       endpoint,
-      mooncode_session_lifecycle_native_body(action, workspace_root),
+      mooncode_session_lifecycle_native_body(action, book_root),
     ) {
     Ok(result) =>
       match mooncode_session_lifecycle_result(result, session_id) {

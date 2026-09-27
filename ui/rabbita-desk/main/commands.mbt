@@ -405,8 +405,8 @@ extern "js" fn send_browser_notification(title : String, body : String) =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_install_desk_location_enter() =
-  #| () => {
+extern "js" fn browser_install_desk_location_enter(on_code_images : () -> Unit) =
+  #| (on_code_images) => {
   #|   if (window.__moondeskDeskLocationEnterInstalled) return;
   #|   window.__moondeskDeskLocationEnterInstalled = true;
   #|   document.addEventListener("keydown", (event) => {
@@ -419,11 +419,57 @@ extern "js" fn browser_install_desk_location_enter() =
   #|     event.stopPropagation();
   #|     document.querySelector('[data-testid="desk-location-go"]')?.click();
   #|   }, true);
+  #|   const capture = (files, source) => {
+  #|     if (!files.length) return;
+  #|     window.__moondeskPendingCodeImages = { files, source };
+  #|     // Dispatch after the DOM event to avoid re-entering an active render.
+  #|     queueMicrotask(() => on_code_images());
+  #|   };
+  #|   document.addEventListener("click", (event) => {
+  #|     const input = event.target;
+  #|     if (!(input instanceof HTMLInputElement) || input.dataset.testid !== 'mooncode-image-file-input') return;
+  #|     if (input.dataset.mooncodeImageChangeReady === 'true') return;
+  #|     input.dataset.mooncodeImageChangeReady = 'true';
+  #|     // Keep the listener on this element. Rabbita can replace it while a
+  #|     // picker is open, before the selected file fires its change event.
+  #|     input.addEventListener('change', () => {
+  #|       capture(Array.from(input.files || []), 'picker');
+  #|       // Selecting the same file again must still fire a change event.
+  #|       input.value = '';
+  #|     });
+  #|   }, true);
+  #|   document.addEventListener("paste", (event) => {
+  #|     if (event.target?.dataset?.testid !== "mooncode-input") return;
+  #|     const files = Array.from(event.clipboardData?.files || []).filter(file => file.type.startsWith("image/"));
+  #|     if (!files.length) return;
+  #|     event.stopPropagation();
+  #|     // Keep native text insertion when a clipboard carries both text and an image.
+  #|     if (!event.clipboardData?.getData('text/plain')) event.preventDefault();
+  #|     capture(files, "paste");
+  #|   }, true);
+  #|   document.addEventListener("dragover", (event) => {
+  #|     if (event.target instanceof Element && event.target.closest('.mooncode-composer') && event.dataTransfer?.types?.includes('Files')) event.preventDefault();
+  #|   }, true);
+  #|   document.addEventListener("drop", (event) => {
+  #|     if (!(event.target instanceof Element) || !event.target.closest('.mooncode-composer')) return;
+  #|     const files = Array.from(event.dataTransfer?.files || []);
+  #|     if (!files.length) return;
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     capture(files, "drop");
+  #|   }, true);
   #| }
 
 ///|
-fn install_desk_location_enter_cmd() -> @rabbita.Cmd {
-  @cmd.custom_cmd(_ => browser_install_desk_location_enter(), kind=AfterRender)
+fn install_desk_location_enter_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @cmd.custom_cmd(
+    scheduler => {
+      browser_install_desk_location_enter(() => {
+        scheduler.add(dispatch(PickMoonCodeImages("pending")))
+      })
+    },
+    kind=AfterRender,
+  )
 }
 
 ///|
@@ -447,6 +493,74 @@ extern "js" fn browser_install_mooncode_enter_send() =
 ///|
 extern "js" fn browser_mooncode_prompt_value() -> String =
   #| () => document.querySelector('[data-testid="mooncode-input"]')?.value ?? ""
+
+///|
+#cfg(target="js")
+extern "js" fn browser_read_mooncode_images(source : String) -> @js.Promise =
+  #| async (source) => {
+  #|   try {
+  #|     let files = [];
+  #|     if (source === 'pending') {
+  #|       const pending = window.__moondeskPendingCodeImages;
+  #|       if (pending) files = pending.files;
+  #|       window.__moondeskPendingCodeImages = null;
+  #|     }
+  #|     if (files.length > 4) throw new Error('Choose at most four images per turn.');
+  #|     let total = 0;
+  #|     const images = [];
+  #|     for (const file of files) {
+  #|       const mediaType = file.type || ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' })[file.name.split('.').pop()?.toLowerCase()];
+  #|       if (!['image/png', 'image/jpeg', 'image/webp'].includes(mediaType)) throw new Error('Use PNG, JPEG, or WebP images.');
+  #|       if (!file.size || file.size > 8 * 1024 * 1024) throw new Error('Each image must be 8 MB or smaller.');
+  #|       total += file.size;
+  #|       if (total > 16 * 1024 * 1024) throw new Error('Images must total 16 MB or less.');
+  #|       const url = await new Promise((resolve, reject) => {
+  #|         const reader = new FileReader();
+  #|         reader.onerror = () => reject(reader.error ?? new Error('Could not read image'));
+  #|         reader.onload = () => resolve(String(reader.result ?? ''));
+  #|         reader.readAsDataURL(file);
+  #|       });
+  #|       const base64 = url.split(',')[1] || '';
+  #|       images.push({ type: 'image', media_type: mediaType, data_base64: base64, name: file.name.slice(0, 120) });
+  #|     }
+  #|     return JSON.stringify({ ok: true, images });
+  #|   } catch (error) {
+  #|     return JSON.stringify({ ok: false, images: [], error: String(error?.message || error) });
+  #|   }
+  #| }
+
+///|
+fn parse_browser_mooncode_images(text : String) -> Result[Array[Json], String] {
+  let payload = @json.parse(text) catch {
+    _ => return Err("Could not read selected images")
+  }
+  guard payload is Object(fields) else { return Err("Invalid image selection") }
+  match fields.get("ok") {
+    Some(True) =>
+      match fields.get("images") {
+        Some(Array(images)) => Ok(images)
+        _ => Err("Invalid image selection")
+      }
+    _ =>
+      match fields.get("error") {
+        Some(String(error)) => Err(error)
+        _ => Err("Could not read selected images")
+      }
+  }
+}
+
+///|
+fn pick_mooncode_images_cmd(
+  dispatch : Dispatch[Msg],
+  source : String,
+) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(MoonCodeImagesPicked(result)) }, async fn() noraise {
+    let text : String = browser_read_mooncode_images(source).wait().cast() catch {
+        error => return Err("Could not read image: \{error}")
+      }
+    parse_browser_mooncode_images(text)
+  })
+}
 
 ///|
 extern "js" fn browser_source_path_value() -> String =

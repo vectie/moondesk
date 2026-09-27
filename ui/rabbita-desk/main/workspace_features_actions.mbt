@@ -11,12 +11,12 @@ fn update_workspace_features(
     "open-search" | "open-synthesis" =>
       (
         workspace_feature_signal_cmd(action, first),
-        { ..model, command_open: false },
+        { ..model, command_open: false, },
       )
     "open-toolbox" =>
       (
         workspace_feature_signal_cmd("open-toolbox", first),
-        { ..model, command_open: false },
+        { ..model, command_open: false, },
       )
     "open-recipe" => {
       let (select_cmd, selected) = select_workspace_action(
@@ -27,7 +27,7 @@ fn update_workspace_features(
           select_cmd,
           workspace_feature_signal_cmd("open-recipe", ""),
         ]),
-        { ..selected, command_open: false },
+        { ..selected, command_open: false, },
       )
     }
     "query" =>
@@ -73,12 +73,12 @@ fn update_workspace_features(
     "export" =>
       (
         workspace_feature_signal_cmd("export", ""),
-        { ..model, command_open: false },
+        { ..model, command_open: false, },
       )
     "start-synthesis" =>
       start_synthesis_action(dispatch, model, first, second, third)
     "ask-selection" => {
-      let staged = { ..model, request_prompt: first, request_status: "draft" }
+      let staged = { ..model, request_prompt: first, request_status: "draft", }
       if second == "send" {
         update_wiki_chat(dispatch, SubmitWikiChat, staged)
       } else {
@@ -88,14 +88,14 @@ fn update_workspace_features(
     "set-chat-prompt" =>
       (
         @rabbita.none,
-        { ..model, request_prompt: first, request_status: "draft" },
+        { ..model, request_prompt: first, request_status: "draft", },
       )
     "submit-chat-prompt" => {
-      let staged = { ..model, request_prompt: first, request_status: "draft" }
+      let staged = { ..model, request_prompt: first, request_status: "draft", }
       update_wiki_chat(dispatch, SubmitWikiChat, staged)
     }
     "start-recipe" => {
-      let staged = { ..model, request_prompt: first, request_status: "draft" }
+      let staged = { ..model, request_prompt: first, request_status: "draft", }
       let (mode_cmd, in_wiki) = select_workspace_mode_action(
         dispatch,
         MoonWiki,
@@ -153,8 +153,8 @@ fn update_workspace_features(
       )
     "reveal-inbox" =>
       (
-        reveal_selection_cmd(dispatch, { ..model, selected_path: "inbox" }),
-        { ..model, dispatch_status: "opening MoonDesk Inbox" },
+        reveal_selection_cmd(dispatch, { ..model, selected_path: "inbox", }),
+        { ..model, dispatch_status: "opening MoonDesk Inbox", },
       )
     "run-goal" => run_standing_goal_now(dispatch, model, first)
     _ => (@rabbita.none, model)
@@ -196,10 +196,10 @@ fn append_wiki_chat_background_results(
     if !entries.any(entry => {
         entry.role == "background_result" && entry.content == content
       }) {
-      entries.push({ role: "background_result", content })
+      entries.push({ role: "background_result", content, })
     }
   }
-  (@rabbita.none, { ..model, wiki_chat_entries: entries })
+  (@rabbita.none, { ..model, wiki_chat_entries: entries, })
 }
 
 ///|
@@ -257,7 +257,7 @@ fn add_wiki_chat_context(
     _ =>
       return (
         @rabbita.none,
-        { ..model, request_status: "That context item is invalid" },
+        { ..model, request_status: "That context item is invalid", },
       )
   }
   if item.id.trim() == "" ||
@@ -271,7 +271,7 @@ fn add_wiki_chat_context(
     ) {
     return (
       @rabbita.none,
-      { ..model, request_status: "That context item is invalid" },
+      { ..model, request_status: "That context item is invalid", },
     )
   }
   let items = model.wiki_chat_context_items.filter(existing => {
@@ -280,7 +280,10 @@ fn add_wiki_chat_context(
   if items.length() >= 12 {
     return (
       @rabbita.none,
-      { ..model, request_status: "Remove a context item before adding another" },
+      {
+        ..model,
+        request_status: "Remove a context item before adding another",
+      },
     )
   }
   items.push(item)
@@ -433,7 +436,7 @@ fn run_standing_goal_now(
   if prompt == "" {
     return (
       @rabbita.none,
-      { ..model, dispatch_status: "Automation is no longer available" },
+      { ..model, dispatch_status: "Automation is no longer available", },
     )
   }
   update_town_actions(dispatch, SubmitRequest, {

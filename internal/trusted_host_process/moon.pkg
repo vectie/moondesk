@@ -3,7 +3,8 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/process",
   "moonbitlang/async/stdio",
-  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
+  "moonbitlang/core/debug",
 }
 
 supported_targets = "native"

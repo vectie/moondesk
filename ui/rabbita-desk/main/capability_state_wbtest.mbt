@@ -147,13 +147,26 @@ test "every capability primary action and label is exact" {
 test "Linux external running capability uses readiness without enabling installer" {
   let daemon = {
     ..capability_test_daemon(true, true, Some(true), platform_supported=false),
-    platform_evidence: Some({supported: false, platform: "linux", architecture: "x86_64"}),
+    platform_evidence: Some({
+      supported: false,
+      platform: "linux",
+      architecture: "x86_64",
+    }),
     model_ready: Some(true),
   }
   assert_true(moonclaw_capability_state(Some(daemon)) is DetectedRunning)
-  assert_true(moonclaw_capability_state(Some({..daemon, model_ready: Some(false)})) is InstalledNeedsConfiguration)
-  assert_true(moonclaw_capability_state(Some({..daemon, model_ready: None})) is TemporarilyUnavailable)
-  assert_true(moonclaw_capability_state(Some({..daemon, running: false})) is UnsupportedPlatform)
+  assert_true(
+    moonclaw_capability_state(Some({ ..daemon, model_ready: Some(false), }))
+    is InstalledNeedsConfiguration,
+  )
+  assert_true(
+    moonclaw_capability_state(Some({ ..daemon, model_ready: None, }))
+    is TemporarilyUnavailable,
+  )
+  assert_true(
+    moonclaw_capability_state(Some({ ..daemon, running: false, }))
+    is UnsupportedPlatform,
+  )
 }
 
 ///|
@@ -355,7 +368,7 @@ test "fresh and copied clean-Mac evidence remains installable or repairable" {
 test "model readiness distinguishes running setup from ready and stopped" {
   let running = capability_test_daemon(true, true, Some(true))
   assert_true(
-    moonclaw_capability_state(Some({ ..running, model_ready: Some(false) }))
+    moonclaw_capability_state(Some({ ..running, model_ready: Some(false), }))
     is InstalledNeedsConfiguration,
   )
   assert_true(
@@ -374,7 +387,7 @@ test "model readiness distinguishes running setup from ready and stopped" {
     is InstalledNeedsConfiguration,
   )
   assert_true(
-    moonclaw_capability_state(Some({ ..running, model_ready: Some(true) }))
+    moonclaw_capability_state(Some({ ..running, model_ready: Some(true), }))
     is DetectedRunning,
   )
   assert_true(

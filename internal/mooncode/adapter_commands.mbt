@@ -25,7 +25,7 @@ pub fn command_action(command : @mooncode_core.MoonCodeCommand) -> String {
 ///|
 pub fn command_message(command : @mooncode_core.MoonCodeCommand) -> String {
   let explicit = command.message
-  if explicit != "" {
+  if explicit != "" || !command.content_parts.is_empty() {
     return explicit
   }
   let context_path = command_context_path(command)
@@ -174,6 +174,9 @@ fn native_payload(
     Object(values) => values.copy()
     _ => Map([])
   }
+  // The typed command owns validated media. Keep the bytes only in the
+  // native top-level content_parts field, not in the generic payload copy.
+  fields.remove("content_parts")
   fields["planner_guidance"] = planner_guidance()
   match command.planner_max_steps {
     Some(steps) => fields["planner_max_steps"] = steps.to_json()
@@ -194,6 +197,21 @@ pub fn native_command_body(
   let packet = accepted_command_packet_json(
     accepted, session, runtime_passthrough,
   )
+  let content_parts = json_array_items(packet, "content_parts")
+  let packet = if content_parts.is_empty() {
+    packet
+  } else {
+    // The command ID already fingerprints the complete typed submission.
+    // Carry bounded media bytes once in the native body and journal.
+    match packet {
+      Object(packet_fields) => {
+        let compact = packet_fields.copy()
+        compact.remove("content_parts")
+        Json::object(compact)
+      }
+      _ => packet
+    }
+  }
   let payload = native_payload(command, runtime_passthrough)
   let calls = json_array_items(payload, "runtime_tool_calls")
   let fields : Map[String, Json] = {
@@ -212,6 +230,9 @@ pub fn native_command_body(
     "packet": packet,
     "web_search": json_bool(packet, "web_search", default=false).to_json(),
     "runtime_tool_calls": Json::array(calls),
+  }
+  if !content_parts.is_empty() {
+    fields["content_parts"] = Json::array(content_parts)
   }
   Json::object(fields)
 }

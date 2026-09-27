@@ -23,11 +23,13 @@ test "source semantics keeps compiler diagnostics structured and confined" {
 test "source semantics builds compiler IDE commands from server paths" {
   assert_eq(
     source_semantics_ide_args("definition", "Widget", "src/main.mbt", 8, 13),
-    Ok(["ide", "peek-def", "Widget", "--loc", "src/main.mbt:8:13"]),
+    Ok(["ide", "peek-def", "Widget", "--loc", "src/main.mbt:8:13", "--json"]),
   )
   assert_eq(
     source_semantics_ide_args("references", "Widget", "src/main.mbt", 8, 13),
-    Ok(["ide", "find-references", "Widget", "--loc", "src/main.mbt:8:13"]),
+    Ok([
+      "ide", "find-references", "Widget", "--loc", "src/main.mbt:8:13", "--json",
+    ]),
   )
   assert_true(
     source_semantics_ide_args("definition", " ", "src/main.mbt", 1, 1) is Err(_),

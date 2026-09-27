@@ -21,7 +21,7 @@ test "MoonCode list selection enters loading only with running evidence" {
   let (_, unavailable) = update_navigation_actions(
     dispatch,
     SelectWorkspaceMode(MoonCode),
-    { ..first_use, mooncode_sessions_error: "earlier failure" },
+    { ..first_use, mooncode_sessions_error: "earlier failure", },
   )
   assert_true(unavailable.mooncode_sessions_state is Some(FirstUseEmpty))
   assert_eq(unavailable.mooncode_sessions_error, "earlier failure")
@@ -73,7 +73,7 @@ test "MoonCode list results distinguish zero ready stale and failure" {
   let (_, ready) = update_mooncode_session_results(
     dispatch,
     LoadedMoonCodeSessions(Ok([session])),
-    { ..base, mooncode_sessions_error: "earlier failure" },
+    { ..base, mooncode_sessions_error: "earlier failure", },
   )
   assert_true(ready.mooncode_sessions_state is None)
   assert_eq(ready.mooncode_sessions.length(), 1)
@@ -81,7 +81,7 @@ test "MoonCode list results distinguish zero ready stale and failure" {
   let (_, stale) = update_mooncode_session_results(
     dispatch,
     LoadedMoonCodeSessions(Err("listing refresh failed")),
-    { ..ready, mooncode_sessions_state: Some(Loading) },
+    { ..ready, mooncode_sessions_state: Some(Loading), },
   )
   assert_true(stale.mooncode_sessions_state is Some(Stale))
   assert_eq(stale.mooncode_sessions.length(), 1)

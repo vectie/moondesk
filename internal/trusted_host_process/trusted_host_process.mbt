@@ -6,6 +6,12 @@ pub(all) enum ManagedLaunchAgent {
 } derive(Debug, Eq)
 
 ///|
+pub extend ManagedLaunchAgent with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend ManagedLaunchAgent with Eq::{not_equal, equal}
+
+///|
 fn safe_absolute_path(path : String) -> Bool {
   path.length() > 1 &&
   path.length() <= 4096 &&
@@ -58,7 +64,7 @@ fn launch_agent_label(service : ManagedLaunchAgent) -> String {
 
 ///|
 fn launch_agent_plist_path(service : ManagedLaunchAgent) -> String {
-  let home = @sys.get_env_var("HOME").unwrap_or("")
+  let home = @env.get_env_var("HOME").unwrap_or("")
   if !safe_absolute_path(home) {
     ""
   } else {

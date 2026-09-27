@@ -88,14 +88,14 @@ test "runs starts first-use and enters loading only with a book" {
 ///|
 test "runs result evidence selects zero ready stale and recoverable states" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_workspace_id: "book-demo" }
+  let base = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, zero) = update_workspace_results(dispatch, LoadedRuns(Ok([])), base)
   assert_true(zero.runs_state is Some(LegitimateZero))
   assert_eq(zero.runs_error, "")
   let (_, ready) = update_workspace_results(
     dispatch,
     LoadedRuns(Ok([test_run()])),
-    { ..base, runs_error: "old" },
+    { ..base, runs_error: "old", },
   )
   assert_true(ready.runs_state is None)
   assert_eq(ready.runs_error, "")

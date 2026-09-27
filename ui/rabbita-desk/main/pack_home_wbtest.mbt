@@ -88,7 +88,7 @@ fn pack_home_test_template(blocked : Bool) -> PackTemplateRecord {
         classes: ["local"],
         note: "Local inputs only",
       },
-      review: { required: true, authority: "owner", gates: ["acceptance"] },
+      review: { required: true, authority: "owner", gates: ["acceptance"], },
     },
     recovery: {
       blocked,
@@ -182,7 +182,7 @@ test "Pack Home catalog result becomes the visible product list" {
     template_count: None,
     apps: [
       pack_home_test_record("configured"),
-      { ..pack_home_test_record("workflow_only"), pack_id: "workflow" },
+      { ..pack_home_test_record("workflow_only"), pack_id: "workflow", },
     ],
   }
   let (_, model) = update_workspace_results(
@@ -236,7 +236,7 @@ test "agent catalog result becomes a typed immutable model transition" {
 #warnings("-alert_unstable")
 test "Agent Library presents readable passports without developer controls" {
   let agent = agent_passport_test_record()
-  let model = { ..init_model(), agent_passports: [agent] }
+  let model = { ..init_model(), agent_passports: [agent], }
   let markup = @rabbita.render_to_string(
     @rabbita.static_cell(render_agent_library(code_mode_test_dispatch, model)),
   )

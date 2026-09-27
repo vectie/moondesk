@@ -21,10 +21,20 @@ pub struct DeskRoot {
   label : String
   path : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskRoot::equal(Self, Self) -> Bool
+pub fn DeskRoot::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskRoot::not_equal(Self, Self) -> Bool
+pub fn DeskRoot::to_json(Self) -> Json
+pub fn DeskRoot::to_repr(Self) -> @debug.Repr
 
 pub struct HostConfig {
   roots : Array[DeskRoot]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn HostConfig::equal(Self, Self) -> Bool
+pub fn HostConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn HostConfig::not_equal(Self, Self) -> Bool
+pub fn HostConfig::to_json(Self) -> Json
+pub fn HostConfig::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

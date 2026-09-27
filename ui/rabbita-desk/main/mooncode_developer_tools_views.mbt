@@ -356,9 +356,15 @@ fn render_mooncode_developer_tools(model : Model) -> @rabbita.Html {
       .open(initial_url != "about:blank"),
     [
       summary(class="mooncode-developer-tools-summary", [
-        span("Developer tools"),
+        span(
+          attrs=@html.Attrs::build().data_set("i18n", "code.developer_tools"),
+          "Developer tools",
+        ),
         span(
           class="mooncode-developer-tools-summary-note",
+          attrs=@html.Attrs::build().data_set(
+            "i18n", "code.developer_tools_note",
+          ),
           "Terminal · Browser · Compare",
         ),
       ]),

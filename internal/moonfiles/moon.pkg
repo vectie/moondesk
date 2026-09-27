@@ -6,10 +6,6 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
-} for "test"
-
-import {
   "moonbitlang/async",
 } for "wbtest"
 

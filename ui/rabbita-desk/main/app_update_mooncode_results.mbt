@@ -20,6 +20,7 @@ fn update_mooncode_results(
       update_mooncode_session_results(dispatch, msg, model)
     CreatedMoonCodeSession(_)
     | CompletedMoonCodeCommand(_)
+    | CompletedMoonCodeGuidance(_, _, _, _)
     | ManagedMoonCodeSession(_) =>
       update_mooncode_session_results(dispatch, msg, model)
     _ => (@rabbita.none, model)

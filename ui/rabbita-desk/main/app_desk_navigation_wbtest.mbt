@@ -58,7 +58,7 @@ test "desk quick path opens containing directory and preserves scoped selection"
 ///|
 test "desk favorite action and labels toggle selected paths" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_path: "wiki/index.md" }
+  let base = { ..init_model(), selected_path: "wiki/index.md", }
   assert_eq(desk_favorite_button_label(base, "wiki/index.md"), "Add Favorite")
   let (_, favorited) = update_workspace_surface_actions(
     dispatch,
@@ -167,7 +167,7 @@ test "desk multi selection details summarize counts and known size" {
     desk_selected_paths: ["wiki/index.md", "raw/evidence.txt"],
   }
   assert_eq(desk_multi_selection_size_label(files_only), "4 KB")
-  let missing = { ..init_model(), desk_selected_paths: ["wiki/missing.md"] }
+  let missing = { ..init_model(), desk_selected_paths: ["wiki/missing.md"], }
   assert_eq(desk_multi_selection_count_label(missing), "1 selected")
   assert_eq(desk_multi_selection_size_label(missing), "-")
 }
@@ -175,7 +175,7 @@ test "desk multi selection details summarize counts and known size" {
 ///|
 test "desk selection label uses virtual root for empty path" {
   assert_eq(desk_selection_label(init_model()), "No selection")
-  let model = { ..init_model(), selected_path: "wiki/index.md" }
+  let model = { ..init_model(), selected_path: "wiki/index.md", }
   assert_eq(desk_selection_label(model), "Selected wiki/index.md")
 }
 
@@ -215,7 +215,7 @@ test "desk sort headers show active direction" {
   let model = init_model()
   assert_eq(desk_sort_header_label(model, SortByName, "Name"), "Name ^")
   assert_eq(desk_sort_header_label(model, SortBySize, "Size"), "Size")
-  let desc = { ..model, desk_sort_desc: true }
+  let desc = { ..model, desk_sort_desc: true, }
   assert_eq(desk_sort_header_label(desc, SortByName, "Name"), "Name v")
 }
 
@@ -295,7 +295,7 @@ test "desk reveal target uses selection or current directory" {
     "wiki/index.md",
   )
   assert_eq(
-    reveal_target_path({ ..init_model(), current_directory: "wiki/notes" }),
+    reveal_target_path({ ..init_model(), current_directory: "wiki/notes", }),
     "wiki/notes",
   )
   assert_eq(reveal_target_path(init_model()), "")
@@ -309,7 +309,7 @@ test "desk empty folder state uses file-manager language" {
     desk_empty_folder_message(no_workspace),
     "Select or create a MoonBook to browse its files.",
   )
-  let root = { ..init_model(), selected_workspace_id: "book-demo" }
+  let root = { ..init_model(), selected_workspace_id: "book-demo", }
   assert_eq(desk_empty_folder_title(root), "This MoonBook root is empty")
   assert_eq(
     desk_empty_folder_message(root),
@@ -337,7 +337,7 @@ test "desk create moonbook action tracks draft and opens created book" {
       selected_workspace_id: "book-demo",
     }),
   )
-  let empty_draft = { ..init_model(), new_book_name: "", new_book_id: "" }
+  let empty_draft = { ..init_model(), new_book_name: "", new_book_id: "", }
   assert_true(desk_create_book_disabled(empty_draft))
   assert_false(desk_create_book_disabled(init_model()))
   let (_, named) = update_workspace_surface_actions(
@@ -397,7 +397,7 @@ test "desk import moonbook action opens imported book in library" {
   let (_, blocked) = update_workspace_surface_actions(
     dispatch,
     ImportMoonBook,
-    { ..draft, import_book_path: "" },
+    { ..draft, import_book_path: "", },
   )
   assert_eq(blocked.import_book_status, "enter a MoonBook folder path")
   let (_, importing) = update_workspace_surface_actions(
@@ -539,7 +539,7 @@ test "desk create item actions validate name and open created entry" {
   let (_, opened) = update_workspace_results(
     dispatch,
     CreatedDeskEntry(
-      Ok({ workspace_id: "book-demo", path: "wiki/Notes", directory: "wiki" }),
+      Ok({ workspace_id: "book-demo", path: "wiki/Notes", directory: "wiki", }),
     ),
     creating,
   )
@@ -809,7 +809,7 @@ test "desk duplicate action accepts single and multi selection" {
   let (_, batch_copying) = update_workspace_surface_actions(
     dispatch,
     DuplicateDeskSelection,
-    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"] },
+    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"], },
   )
   assert_eq(batch_copying.desk_copy_status, "duplicating 2 items")
   let (_, batch_copied) = update_workspace_results(
@@ -840,7 +840,7 @@ test "desk duplicate action blocks missing workspace and selection" {
   let (_, missing_selection) = update_workspace_surface_actions(
     dispatch,
     DuplicateDeskSelection,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(missing_selection.desk_copy_status, "select an item to duplicate")
 }
@@ -889,7 +889,7 @@ test "desk clipboard copy and paste track current directory" {
   let (_, batch_clipboard) = update_workspace_surface_actions(
     dispatch,
     CopyDeskSelection,
-    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"] },
+    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"], },
   )
   assert_true(
     batch_clipboard.desk_clipboard_paths == ["wiki/alpha.md", "wiki/beta.md"],
@@ -970,7 +970,7 @@ test "desk clipboard cut and paste moves then clears clipboard" {
   let (_, batch_cut) = update_workspace_surface_actions(
     dispatch,
     CutDeskSelection,
-    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"] },
+    { ..base, desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"], },
   )
   assert_eq(batch_cut.desk_clipboard_status, "cut 2 items")
   let (_, batch_moving) = update_workspace_surface_actions(
@@ -1010,7 +1010,7 @@ test "desk clipboard copy and paste block invalid state" {
   let (_, copy_missing_selection) = update_workspace_surface_actions(
     dispatch,
     CopyDeskSelection,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(
     copy_missing_selection.desk_clipboard_status,
@@ -1019,13 +1019,13 @@ test "desk clipboard copy and paste block invalid state" {
   let (_, cut_missing_selection) = update_workspace_surface_actions(
     dispatch,
     CutDeskSelection,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(cut_missing_selection.desk_clipboard_status, "select items to cut")
   let (_, paste_missing_workspace) = update_workspace_surface_actions(
     dispatch,
     PasteDeskClipboard,
-    { ..init_model(), desk_clipboard_paths: ["wiki/alpha.md"] },
+    { ..init_model(), desk_clipboard_paths: ["wiki/alpha.md"], },
   )
   assert_eq(
     paste_missing_workspace.desk_clipboard_status,
@@ -1034,7 +1034,7 @@ test "desk clipboard copy and paste block invalid state" {
   let (_, paste_empty_clipboard) = update_workspace_surface_actions(
     dispatch,
     PasteDeskClipboard,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(paste_empty_clipboard.desk_clipboard_status, "clipboard empty")
   let (_, paste_other_workspace) = update_workspace_surface_actions(
@@ -1069,7 +1069,7 @@ test "desk copy path action copies scoped virtual paths" {
   }
   assert_eq(desk_path_clipboard_text(multi), "wiki/index.md\nraw/evidence.txt")
   assert_eq(desk_path_copied_status(multi), "copied 2 paths")
-  let current_folder = { ..model, selected_path: "", desk_selected_paths: [] }
+  let current_folder = { ..model, selected_path: "", desk_selected_paths: [], }
   assert_eq(desk_path_clipboard_text(current_folder), "wiki")
   let root = {
     ..init_model(),
@@ -1115,7 +1115,7 @@ test "app update routes desk duplicate result to workspace results" {
         copied_count: 1,
       }),
     ),
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(copied.selected_path, "wiki/alpha copy.md")
   assert_eq(copied.desk_copy_status, "duplicated wiki/alpha copy.md")
@@ -1166,7 +1166,7 @@ test "desk trash action clears selection and restore opens item" {
   let (_, restored) = update_workspace_results(
     dispatch,
     RestoredDeskEntry(
-      Ok({ workspace_id: "book-demo", path: "wiki/old.md", directory: "wiki" }),
+      Ok({ workspace_id: "book-demo", path: "wiki/old.md", directory: "wiki", }),
     ),
     restoring,
   )
@@ -1192,7 +1192,7 @@ test "desk trash listing loads entries and restores selected trash item" {
         },
       ]),
     ),
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(loaded.desk_trash_entries.length(), 1)
   assert_eq(loaded.desk_trash_entries[0].original_path, "wiki/old.md")
@@ -1265,7 +1265,7 @@ test "desk local file import stays in current directory" {
         },
       ]),
     ),
-    { ..model, activity: Inbox },
+    { ..model, activity: Inbox, },
   )
   assert_true(stale_activity_importing.workspace_mode is Desk)
   assert_true(stale_activity_importing.activity is Inbox)
@@ -1327,7 +1327,7 @@ test "desk trash action accepts multi selection and blocks empty restore" {
   let (_, restore_blocked) = update_workspace_surface_actions(
     dispatch,
     RestoreLastTrashedDeskEntry,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_eq(restore_blocked.desk_trash_status, "nothing to restore")
 }
@@ -1442,9 +1442,9 @@ test "workspace metadata result records empty library location" {
         library_path: "/Users/example/moonsuite/books",
         books_root: "/Users/example/moonsuite/books",
         products: [
-          { name: "MoonDesk", status: "installed" },
-          { name: "MoonClaw", status: "installed" },
-          { name: "MoonRobo", status: "installed" },
+          { name: "MoonDesk", status: "installed", },
+          { name: "MoonClaw", status: "installed", },
+          { name: "MoonRobo", status: "installed", },
         ],
       }),
     ),
@@ -2049,7 +2049,7 @@ test "desk workspace routes encode query and path segments" {
     workspace_preview_url("book-demo", "raw/data?set%.json"),
     "/api/workspaces/book-demo/preview?path=raw%2Fdata%3Fset%25.json",
   )
-  let model = { ..init_model(), selected_workspace_id: "book-demo" }
+  let model = { ..init_model(), selected_workspace_id: "book-demo", }
   assert_eq(
     raw_url(model, "images/logo #1.png"),
     "/api/workspaces/book-demo/raw?path=images%2Flogo%20%231.png",

@@ -67,6 +67,7 @@ test "MoonCode planning commands require a MoonGate route" {
     client_turn_id: "turn-1",
     context_path: "",
     message: "Help",
+    content_parts: [],
     model: "moongate/kimi-k3",
     web_search: false,
     planner_max_steps: None,
@@ -85,7 +86,7 @@ test "MoonCode planning commands require a MoonGate route" {
     is Err(_),
   )
   assert_true(
-    validate_mooncode_command_model_route({ ..routed, model: "" }) is Err(_),
+    validate_mooncode_command_model_route({ ..routed, model: "", }) is Err(_),
   )
   let deterministic = @mooncode_core.MoonCodeCommand::{
     ..routed,

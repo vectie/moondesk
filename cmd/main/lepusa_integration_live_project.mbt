@@ -12,7 +12,7 @@ async fn lepusa_integration_resolve_live_paths(
   } else {
     absolute_path(options.ui_dir, repo_root)
   }
-  { ..options, workspace_root, ui_dir }
+  { ..options, workspace_root, ui_dir, }
 }
 
 ///|
@@ -31,9 +31,14 @@ async fn write_lepusa_integration_live_project(
       return false
     }
   }
+  let workspace_build = @fsx.exists(@pathx.join(repo_root, "moon.work")) catch {
+    _ => false
+  }
   @fsx.write_to_file(
     path,
-    lepusa_integration_live_project_json(options, repo_root).stringify(indent=2) +
+    lepusa_integration_live_project_json(options, repo_root, workspace_build~).stringify(
+      indent=2,
+    ) +
     "\n",
     create=0o644,
   ) catch {
@@ -49,9 +54,10 @@ async fn write_lepusa_integration_live_project(
 fn lepusa_integration_live_project_json(
   options : LepusaIntegrationOptions,
   repo_root : String,
+  workspace_build? : Bool = false,
 ) -> Json {
   let host = "127.0.0.1"
-  let sidecar = moondesk_sidecar_build_output(repo_root)
+  let sidecar = moondesk_sidecar_build_output(repo_root, workspace_build~)
   let icon = @pathx.join(repo_root, "assets/moondesk.icns")
   {
     "identifier": "app.vectie.moondesk.lepusa.live",

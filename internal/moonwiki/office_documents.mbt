@@ -301,7 +301,7 @@ fn office_replace_ranges(
   ranges : Array[(Int, Int, String, String)],
   replacements : Array[String],
 ) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut offset = 0
   for index, range in ranges {
     builder.write_string(xml[offset:range.0].to_owned())
@@ -340,7 +340,7 @@ fn parse_xlsx_sheet(part : String, xml : String) -> XlsxSheet {
       formula: office_first_tag_text(cell, "f"),
     }
   })
-  { part, name: part, cells }
+  { part, name: part, cells, }
 }
 
 ///|
@@ -425,7 +425,7 @@ fn parse_pptx_slide(part : String, xml : String) -> PptxSlide {
       },
     }
   })
-  { part, objects }
+  { part, objects, }
 }
 
 ///|
@@ -706,7 +706,7 @@ fn office_document_open_bytes(
       warnings.push(diagnostic)
     }
   }
-  Ok({ kind, entries, editable_parts, supported, warnings })
+  Ok({ kind, entries, editable_parts, supported, warnings, })
 }
 
 ///|
@@ -735,7 +735,7 @@ fn office_document_replace_part(
     }
   })
   if found {
-    Ok({ ..document, entries, supported })
+    Ok({ ..document, entries, supported, })
   } else {
     Err("Office package part not found")
   }
@@ -876,7 +876,7 @@ fn office_document_set_xlsx_cell(
       let cells = sheet.cells.map(cell => {
         if cell.reference == reference {
           found_cell = true
-          { reference, value, formula }
+          { reference, value, formula, }
         } else {
           cell
         }

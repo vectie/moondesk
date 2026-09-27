@@ -98,6 +98,11 @@ fn desktop_api_route_authority_scope(
     p if p == workspace_action_route("import") => "import-staging"
     p if p == workspace_action_route("reveal") => "selected-book"
     p if p == workspace_action_route("review-diff") => "selected-book"
+    p if p == workspace_action_route("git/github/comment") => "github-pr"
+    p if p == workspace_action_route("git/github/inline") => "github-pr"
+    p if p == workspace_action_route("git/github/inline/draft") =>
+      "selected-book"
+    p if p == workspace_action_route("git/github/draft") => "selected-book"
     _ => "suite-product-home"
   }
 }
@@ -536,6 +541,32 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(workspace_action_route("preview"), [
       "GET", "HEAD",
     ]),
+    desktop_api_route_contract(workspace_action_route("git"), ["GET", "HEAD"]),
+    desktop_api_route_contract(workspace_action_route("git/diff"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/review"), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/review/progress"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/github"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/github/comment"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/github/draft"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(workspace_action_route("git/github/inline"), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(
+      workspace_action_route("git/github/inline/draft"),
+      ["POST"],
+    ),
     desktop_api_route_contract(workspace_action_route("document"), [
       "GET", "HEAD",
     ]),

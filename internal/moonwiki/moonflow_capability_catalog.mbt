@@ -69,7 +69,7 @@ async fn moonflow_resolve_capability_catalog(
   book_root : String,
   evaluated_at : String,
 ) -> MoonFlowCapabilityCatalogResolution {
-  let override_path = @sys.get_env_var("MOONFLOW_CAPABILITY_CATALOG").unwrap_or(
+  let override_path = @env.get_env_var("MOONFLOW_CAPABILITY_CATALOG").unwrap_or(
     "",
   )
   let (path, source) = moonflow_capability_catalog_candidate(

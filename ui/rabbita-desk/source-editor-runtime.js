@@ -33,9 +33,11 @@ const DEFINITION_WORDS = new Set([
   'class', 'const', 'def', 'enum', 'fn', 'function', 'interface', 'let', 'struct',
   'suberror', 'trait', 'type', 'var',
 ])
+const MAX_HIGHLIGHT_CHARACTERS = 120_000
 
 let installed = false
 let completionState = null
+let completionListSequence = 0
 let pendingReveal = null
 const renderedHighlights = new WeakMap()
 
@@ -144,19 +146,27 @@ function structuralDiagnostic(value, language) {
 function syncEditor(element) {
   const parts = editorParts(element)
   if (!parts) return
-  const signature = `${parts.language}\u0000${parts.editor.value}`
-  if (renderedHighlights.get(parts.highlight) !== signature) {
-    parts.highlight.innerHTML = highlightedHtml(parts.editor.value, parts.language)
+  const large = parts.editor.value.length > MAX_HIGHLIGHT_CHARACTERS
+  const signature = large
+    ? `${parts.language}\u0000large`
+    : `${parts.language}\u0000${parts.editor.value}`
+  const changed = renderedHighlights.get(parts.highlight) !== signature
+  if (changed) {
+    if (large) parts.highlight.replaceChildren()
+    else parts.highlight.innerHTML = highlightedHtml(parts.editor.value, parts.language)
     renderedHighlights.set(parts.highlight, signature)
   }
   parts.highlight.parentElement.scrollTop = parts.editor.scrollTop
   parts.highlight.parentElement.scrollLeft = parts.editor.scrollLeft
-  parts.surface.classList.add('is-highlight-ready')
-  const problem = structuralDiagnostic(parts.editor.value, parts.language)
-  if (parts.diagnostics instanceof HTMLElement) {
-    parts.diagnostics.textContent = problem
+  parts.surface.classList.toggle('is-highlight-ready', !large)
+  if (changed && parts.diagnostics instanceof HTMLElement) {
+    const problem = large ? '' : structuralDiagnostic(parts.editor.value, parts.language)
+    const message = large
+      ? 'Local highlighting and diagnostics paused for this large file'
+      : problem
       ? `Local diagnostics: ${problem}`
       : 'Local diagnostics: no structural issues'
+    if (parts.diagnostics.textContent !== message) parts.diagnostics.textContent = message
     parts.diagnostics.classList.toggle('has-problem', Boolean(problem))
   }
   applyPendingReveal(parts)
@@ -181,6 +191,12 @@ function completionCandidates(parts) {
 }
 
 function closeCompletions() {
+  if (completionState?.parts.editor instanceof HTMLTextAreaElement) {
+    const editor = completionState.parts.editor
+    editor.removeAttribute('aria-controls')
+    editor.removeAttribute('aria-activedescendant')
+    editor.setAttribute('aria-expanded', 'false')
+  }
   if (completionState?.parts.completions instanceof HTMLElement) {
     completionState.parts.completions.replaceChildren()
     completionState.parts.completions.classList.remove('is-open')
@@ -208,16 +224,24 @@ function showCompletions(element) {
     return
   }
   completionState = { parts, range, words, selected: 0 }
+  if (!parts.completions.id) parts.completions.id = `source-completions-${++completionListSequence}`
   parts.completions.replaceChildren(...words.map((word, index) => {
     const button = document.createElement('button')
     button.type = 'button'
     button.role = 'option'
     button.textContent = word
     button.dataset.completionIndex = String(index)
+    button.id = `${parts.completions.id}-option-${index}`
+    button.tabIndex = -1
+    button.setAttribute('aria-selected', index === 0 ? 'true' : 'false')
     button.className = index === 0 ? 'is-selected' : ''
     return button
   }))
   parts.completions.classList.add('is-open')
+  parts.editor.setAttribute('aria-autocomplete', 'list')
+  parts.editor.setAttribute('aria-controls', parts.completions.id)
+  parts.editor.setAttribute('aria-expanded', 'true')
+  parts.editor.setAttribute('aria-activedescendant', `${parts.completions.id}-option-0`)
 }
 
 function moveCompletion(direction) {
@@ -225,7 +249,12 @@ function moveCompletion(direction) {
   completionState.selected = (completionState.selected + direction + completionState.words.length) % completionState.words.length
   for (const [index, button] of [...completionState.parts.completions.children].entries()) {
     button.classList.toggle('is-selected', index === completionState.selected)
+    button.setAttribute('aria-selected', index === completionState.selected ? 'true' : 'false')
   }
+  completionState.parts.editor.setAttribute(
+    'aria-activedescendant',
+    `${completionState.parts.completions.id}-option-${completionState.selected}`,
+  )
   return true
 }
 
@@ -324,10 +353,20 @@ async function semanticRequest(parts, action) {
       body: JSON.stringify(body),
     })
     const payload = await response.json().catch(() => ({}))
-    if (!response.ok) throw new Error(payload.error || payload.message || `Compiler request failed (${response.status})`)
+    if (!parts.surface.isConnected || !semanticContext(parts).available ||
+      semanticContext(parts).workspaceId !== context.workspaceId ||
+      semanticContext(parts).path !== context.path) return null
+    if (!payload || typeof payload !== 'object') throw new Error('Compiler response is unreadable')
+    if (!response.ok) throw new Error(payload.error?.message || payload.error || payload.message || `Compiler request failed (${response.status})`)
+    if (payload.ok === false && action !== 'diagnostics') {
+      throw new Error(String(payload.output || 'MoonBit navigation could not resolve this symbol').slice(0, 1000))
+    }
     return payload
   } catch (error) {
-    setSemanticMessage(parts, String(error.message || error), true)
+    if (parts.surface.isConnected && semanticContext(parts).workspaceId === context.workspaceId &&
+      semanticContext(parts).path === context.path) {
+      setSemanticMessage(parts, String(error.message || error), true)
+    }
     return null
   } finally {
     setSemanticBusy(parts, false)
@@ -376,38 +415,30 @@ function renderCompilerDiagnostics(parts, payload) {
   }
 }
 
-function workspaceSemanticPath(path, modulePrefix) {
-  const value = String(path || '').replace(/^\.\//, '')
-  const prefix = String(modulePrefix || '')
-  return prefix && !value.startsWith(prefix) ? prefix + value : value
-}
-
-function definitionLocation(output, modulePrefix = '') {
-  const path = output.match(/^Definition found at file (.+)$/m)?.[1]?.trim()
-  const line = Number(output.match(/^\s*(\d+) \|/m)?.[1] || 1)
-  if (!path) return null
-  return { path: workspaceSemanticPath(path, modulePrefix), line, column: 1 }
-}
-
-function referenceLocations(output, modulePrefix = '') {
-  const locations = []
+export function semanticLocations(payload) {
+  if (!Array.isArray(payload?.locations)) return []
   const seen = new Set()
-  const pattern = /^(.+?):(\d+):(\d+)-\d+:\d+:$/gm
-  for (const match of output.matchAll(pattern)) {
-    const path = workspaceSemanticPath(match[1], modulePrefix)
-    const key = `${path}:${match[2]}:${match[3]}`
-    if (seen.has(key)) continue
+  return payload.locations.filter(location => {
+    if (!location || typeof location !== 'object') return false
+    const path = String(location.path || '')
+    const line = Number(location.line)
+    const column = Number(location.column)
+    if (!path || path.startsWith('/') || path.includes('\0') ||
+      path.split('/').includes('..') ||
+      !Number.isSafeInteger(line) || line < 1 ||
+      !Number.isSafeInteger(column) || column < 1) return false
+    const key = `${path}:${line}:${column}`
+    if (seen.has(key)) return false
     seen.add(key)
-    locations.push({ path, line: Number(match[2]), column: Number(match[3]) })
-  }
-  return locations
+    return true
+  })
 }
 
 function revealSourceLocation(parts, location) {
   if (!location?.path) return
   const context = semanticContext(parts)
   if (context.path !== location.path) {
-    pendingReveal = location
+    pendingReveal = { ...location, workspaceId: context.workspaceId, originPath: context.path }
     const pathInput = parts.surface.querySelector('[data-testid="source-path"]')
     const open = parts.surface.querySelector('[data-testid="source-open"]')
     if (pathInput instanceof HTMLInputElement && open instanceof HTMLButtonElement) {
@@ -433,7 +464,13 @@ function revealSourceLocation(parts, location) {
 
 function applyPendingReveal(parts) {
   if (!pendingReveal) return
-  if (semanticContext(parts).path === pendingReveal.path) revealSourceLocation(parts, pendingReveal)
+  const context = semanticContext(parts)
+  if (context.workspaceId !== pendingReveal.workspaceId ||
+    (context.path !== pendingReveal.path && context.path !== pendingReveal.originPath)) {
+    pendingReveal = null
+    return
+  }
+  if (context.path === pendingReveal.path) revealSourceLocation(parts, pendingReveal)
 }
 
 async function runCompilerDiagnostics(element) {
@@ -448,9 +485,9 @@ async function runDefinitionLookup(element) {
   if (!parts) return
   const payload = await semanticRequest(parts, 'definition')
   if (!payload) return
-  const location = definitionLocation(String(payload.output || ''), payload.module_prefix)
+  const location = semanticLocations(payload)[0]
   if (!location) {
-    setSemanticMessage(parts, `MoonBit definition not found for ${payload.symbol || 'selection'}`, true)
+    setSemanticMessage(parts, 'MoonBit definition is unavailable inside this MoonBook.', true)
     return
   }
   setSemanticMessage(parts, `MoonBit definition: ${location.path}:${location.line}`)
@@ -464,7 +501,7 @@ async function runReferencesLookup(element) {
   if (!payload) return
   const results = semanticResults(parts)
   if (!(results instanceof HTMLElement)) return
-  const locations = referenceLocations(String(payload.output || ''), payload.module_prefix)
+  const locations = semanticLocations(payload)
   results.replaceChildren()
   const summary = document.createElement('p')
   summary.className = 'source-semantic-message'
@@ -495,6 +532,7 @@ export function installSourceEditorRuntime() {
       acceptCompletion(Number(completion.dataset.completionIndex))
       return
     }
+    if (completionState && event.target !== completionState.parts.editor) closeCompletions()
     const location = event.target instanceof Element ? event.target.closest('[data-semantic-path]') : null
     if (location instanceof HTMLElement) {
       const parts = editorParts(location)
@@ -536,16 +574,33 @@ export function installSourceEditorRuntime() {
     } else if (completionState && event.key === 'Escape') {
       event.preventDefault()
       closeCompletions()
+    } else if (completionState && event.key === 'Tab') {
+      closeCompletions()
     }
   }, true)
+  let editorSyncPending = false
+  const scheduleEditorSync = () => {
+    if (editorSyncPending) return
+    editorSyncPending = true
+    requestAnimationFrame(() => {
+      editorSyncPending = false
+      for (const editor of document.querySelectorAll('[data-testid="source-editor-input"]')) syncEditor(editor)
+    })
+  }
   new MutationObserver(records => {
     for (const record of records) {
-      for (const node of record.addedNodes) {
-        if (!(node instanceof Element)) continue
-        if (node.matches('[data-testid="source-editor-input"]')) syncEditor(node)
-        for (const editor of node.querySelectorAll('[data-testid="source-editor-input"]')) syncEditor(editor)
+      if (record.type === 'attributes' && record.target instanceof HTMLElement &&
+        record.target.matches('[data-testid="source-editor"]') &&
+        record.target.dataset.sourceDirty === 'false') {
+        record.target.dataset.sourceRuntimeDirty = 'false'
       }
     }
-  }).observe(document.getElementById('app') || document.body, { childList: true, subtree: true })
-  for (const editor of document.querySelectorAll('[data-testid="source-editor-input"]')) syncEditor(editor)
+    scheduleEditorSync()
+  }).observe(document.getElementById('app') || document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-source-dirty'],
+  })
+  scheduleEditorSync()
 }

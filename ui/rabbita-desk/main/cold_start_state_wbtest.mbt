@@ -219,7 +219,7 @@ test "workspace catalog success failure and refresh own honest state" {
   let (_, failed) = update_workspace_results(
     dispatch,
     LoadedWorkspaces(Err("private catalog failure")),
-    { ..configured, workspace_catalog_state: Some(Loading) },
+    { ..configured, workspace_catalog_state: Some(Loading), },
   )
   assert_true(failed.workspace_catalog_state is Some(RecoverableError))
   assert_eq(failed.workspace_catalog_error, "private catalog failure")

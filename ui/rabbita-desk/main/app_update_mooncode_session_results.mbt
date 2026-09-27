@@ -18,7 +18,7 @@ fn update_mooncode_session_results(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     LoadedMoonCodeCapability(capability) =>
-      (@rabbita.none, { ..model, mooncode_capability: capability })
+      (@rabbita.none, { ..model, mooncode_capability: capability, })
     ManagedMoonClaw(Ok(status)) => {
       let failed = status.ok is Some(false) ||
         (
@@ -108,7 +108,7 @@ fn update_mooncode_session_results(
     LoadedMoonClawModels(Ok(result)) => {
       let ready = moonclaw_models_result_allows_sessions(result)
       let daemon = if ready {
-        { ..result.daemon, model_ready: Some(true) }
+        { ..result.daemon, model_ready: Some(true), }
       } else {
         result.daemon
       }
@@ -126,6 +126,7 @@ fn update_mooncode_session_results(
             result,
           ),
           mooncode_models: mooncode_available_model_names(result),
+          mooncode_image_models: mooncode_available_image_model_names(result),
           mooncode_composer_status: if mooncode_new_session_draft_active(model) {
             model.mooncode_composer_status
           } else if result.ok {
@@ -471,11 +472,11 @@ fn update_mooncode_session_results(
         )
       }
     LoadedMoonCodeArchivedSessions(Ok(sessions)) =>
-      (@rabbita.none, { ..model, mooncode_archived_sessions: sessions })
+      (@rabbita.none, { ..model, mooncode_archived_sessions: sessions, })
     LoadedMoonCodeArchivedSessions(Err(_)) =>
       // Archived history is optional; never surface its listing failure as
       // a blocking error in the session pane.
-      (@rabbita.none, { ..model, mooncode_archived_sessions: [] })
+      (@rabbita.none, { ..model, mooncode_archived_sessions: [], })
     LoadedMoonCodeWatch(generation, session_id, result) =>
       if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
@@ -489,6 +490,15 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
+          mooncode_image_submit_pending: false,
+          mooncode_prompt: if model.mooncode_image_submit_pending &&
+            model.mooncode_image_submit_revision ==
+            model.mooncode_draft_revision &&
+            model.mooncode_prompt == "" {
+            model.mooncode_image_submit_prompt
+          } else {
+            model.mooncode_prompt
+          },
           mooncode_optimistic_rows: mooncode_fail_pending_optimistic_rows_for_session(
             model.mooncode_optimistic_rows,
             mooncode_draft_session_id(model),
@@ -506,6 +516,15 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
+          mooncode_image_submit_pending: false,
+          mooncode_prompt: if model.mooncode_image_submit_pending &&
+            model.mooncode_image_submit_revision ==
+            model.mooncode_draft_revision &&
+            model.mooncode_prompt == "" {
+            model.mooncode_image_submit_prompt
+          } else {
+            model.mooncode_prompt
+          },
           mooncode_optimistic_rows: mooncode_fail_pending_optimistic_rows_for_session(
             model.mooncode_optimistic_rows,
             mooncode_current_composer_session_id(model),
@@ -514,6 +533,56 @@ fn update_mooncode_session_results(
           mooncode_composer_status: error,
         },
       )
+    CompletedMoonCodeGuidance(session_id, message, draft_revision, Ok(session)) => {
+      guard model.mooncode_guidance_pending_session_id == session_id else {
+        return (@rabbita.none, model)
+      }
+      let selected = model.selected_mooncode_session_id == session_id
+      let clear_draft = selected &&
+        model.mooncode_draft_revision == draft_revision &&
+        model.mooncode_prompt.trim().to_owned() == message
+      (
+        @rabbita.batch([
+          fetch_mooncode_sessions_cmd(dispatch, ""),
+          if clear_draft {
+            clear_mooncode_composer_cmd()
+          } else {
+            @rabbita.none
+          },
+        ]),
+        {
+          ..model,
+          mooncode_sessions: mooncode_upsert_session_if_revision_changed(
+            model.mooncode_sessions,
+            session,
+          ),
+          mooncode_guidance_pending_session_id: "",
+          mooncode_guidance_feedback_session_id: session_id,
+          mooncode_guidance_feedback: "Guidance accepted. MoonClaw will apply it to the current or next turn.",
+          mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
+          1,
+          mooncode_prompt: if clear_draft {
+            ""
+          } else {
+            model.mooncode_prompt
+          },
+        },
+      )
+    }
+    CompletedMoonCodeGuidance(session_id, _, _, Err(error)) => {
+      guard model.mooncode_guidance_pending_session_id == session_id else {
+        return (@rabbita.none, model)
+      }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_guidance_pending_session_id: "",
+          mooncode_guidance_feedback_session_id: session_id,
+          mooncode_guidance_feedback: "Guidance was not sent. Your draft is still here. \{error}",
+        },
+      )
+    }
     ManagedMoonCodeSession(result) =>
       mooncode_session_management_result(dispatch, model, result)
     _ => (@rabbita.none, model)
@@ -532,7 +601,7 @@ fn mooncode_after_session_listing_result(
       cmd,
       schedule_mooncode_metadata_refresh(dispatch, generation),
     ]),
-    { ..model, mooncode_metadata_generation: generation },
+    { ..model, mooncode_metadata_generation: generation, },
   )
 }
 
@@ -570,6 +639,21 @@ fn mooncode_session_from_watch_snapshot(
 }
 
 ///|
+fn mooncode_edit_evidence_count(
+  conversation : @mooncode_core.MoonCodeConversation,
+) -> Int {
+  let mut count = 0
+  for turn in conversation.turns {
+    for item in turn.work.evidence {
+      if item.kind == "edit" {
+        count += 1
+      }
+    }
+  }
+  count
+}
+
+///|
 fn mooncode_watch_succeeded(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -579,8 +663,29 @@ fn mooncode_watch_succeeded(
   let mut optimistic_rows = model.mooncode_optimistic_rows
   let mut status = "watching"
   let mut retry_after_ms = 0
+  let mut refresh_changes = false
   match result {
     Snapshot(cursor~, session=summary, conversation~, terminal~) => {
+      let terminal_transition = terminal &&
+        model.mooncode_watch_status != "watching-terminal"
+      let mut new_edit_evidence = false
+      match
+        mooncode_find_session(model.mooncode_sessions, summary.id.to_string()) {
+        Some(existing) =>
+          match existing.mooncode_conversation {
+            Some(previous) =>
+              new_edit_evidence = mooncode_edit_evidence_count(conversation) >
+                mooncode_edit_evidence_count(previous)
+            None => ()
+          }
+        None => ()
+      }
+      refresh_changes = (terminal_transition || new_edit_evidence) &&
+        model.git_diff_path == "" &&
+        model.git_review_note.trim() == "" &&
+        !model.git_projection_loading &&
+        mooncode_git_workspace_id(model) != "" &&
+        model.git_projection_workspace_id == mooncode_git_workspace_id(model)
       match
         mooncode_find_session(model.mooncode_sessions, summary.id.to_string()) {
         Some(existing) => {
@@ -633,7 +738,22 @@ fn mooncode_watch_succeeded(
   } else {
     mooncode_watch_cmd(dispatch, next)
   }
-  (cmd, next)
+  (
+    if refresh_changes {
+      @rabbita.batch([
+        cmd,
+        @rabbita.delay(
+          dispatch(
+            RefreshGitRepositoryProjection(mooncode_git_workspace_id(next)),
+          ),
+          0,
+        ),
+      ])
+    } else {
+      cmd
+    },
+    next,
+  )
 }
 
 ///|
@@ -749,6 +869,14 @@ fn mooncode_session_mutation_succeeded(
     model.mooncode_watch_status == "idle"
   let next = {
     ..model,
+    mooncode_images: if model.mooncode_image_submit_pending &&
+      model.mooncode_image_submit_revision == model.mooncode_draft_revision {
+      []
+    } else {
+      model.mooncode_images
+    },
+    mooncode_image_submit_pending: false,
+    mooncode_image_submit_prompt: "",
     workspace_mode: MoonCode,
     mooncode_sessions: mooncode_upsert_session_at_top(
       model.mooncode_sessions,

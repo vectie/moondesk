@@ -172,6 +172,33 @@ test "MoonClaw capability evidence separates ownership and installation" {
 }
 
 ///|
+async test "stale daemon info does not pose as an installed Code runtime" {
+  @moonlib/fsx.with_temporary_directory("moondesk-stale-moonclaw-", root => {
+    @fsx.make_directory(
+      moonsuite_product_dir(root, "moonclaw"),
+      recursive=true,
+      exists_ok=true,
+    )
+    @fsx.write_to_file(
+      moonclaw_daemon_info_path(root),
+      ({ "pid": 2147483647, "port": 1, "version": "old" } : Json).stringify(),
+      create=0o600,
+    )
+    let status = moonclaw_daemon_status_with_platform(
+      root,
+      moonclaw_platform_support_from_values("macos", "arm64"),
+    )
+    assert_false(json_bool(status, "running", default=true))
+    let installation = json_object_field(status, "installation_evidence").unwrap()
+    assert_false(json_bool(installation, "installed", default=true))
+    assert_eq(
+      json_string(status, "next_action", default=""),
+      "install_moonclaw",
+    )
+  })
+}
+
+///|
 async test "moonclaw service descriptor ignores implicit checkout fallback" {
   let parent = "/tmp/moondesk-moonclaw-service-missing-wbtest-" +
     @desk.stable_id("moonclaw-service-missing", @async.now().to_string())

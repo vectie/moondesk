@@ -33,6 +33,29 @@ struct MoonCodeActivityRow {
 }
 
 ///|
+fn mooncode_work_status_i18n_key(status : String) -> String {
+  match status {
+    "queued" => "code.work_status_queued"
+    "running" => "code.work_status_running"
+    "done" => "code.work_status_done"
+    "failed" => "code.work_status_failed"
+    "cancelled" => "code.work_status_cancelled"
+    _ => ""
+  }
+}
+
+///|
+fn mooncode_work_summary_i18n_key(title : String) -> String {
+  match title {
+    "Request queued" => "code.work_summary_queued"
+    "Work interrupted" => "code.work_summary_interrupted"
+    "Completed work" => "code.work_summary_completed"
+    "Working on request" => "code.work_summary_working"
+    _ => ""
+  }
+}
+
+///|
 fn render_mooncode_activity_row(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -58,14 +81,29 @@ fn render_mooncode_activity_row(
       div(class="mooncode-activity-dot", ""),
       div(class="mooncode-activity-copy", [
         div(class="mooncode-activity-line", [
-          strong(row.label),
+          strong(
+            attrs=@html.Attrs::build().data_set("i18n", "code.work_label"),
+            row.label,
+          ),
           div(class="mooncode-activity-controls", [
-            span(row.status),
+            span(
+              attrs=if mooncode_work_status_i18n_key(row.status) == "" {
+                @html.Attrs::build()
+              } else {
+                @html.Attrs::build().data_set(
+                  "i18n",
+                  mooncode_work_status_i18n_key(row.status),
+                )
+              },
+              row.status,
+            ),
             if row.status == "running" {
               button(
                 class="mooncode-inline-action stop",
                 attrs=@html.Attrs::build()
                   .aria_label("Stop this MoonCode request")
+                  .data_set("i18n-aria-label", "code.stop_request")
+                  .data_set("i18n", "common.stop")
                   .data_set("testid", "mooncode-stop"),
                 on_click=dispatch(
                   CancelMoonCodeWork(row.session_id, row.command_id),
@@ -78,6 +116,8 @@ fn render_mooncode_activity_row(
                 class="mooncode-inline-action retry",
                 attrs=@html.Attrs::build()
                   .aria_label("Retry this MoonCode request")
+                  .data_set("i18n-aria-label", "code.retry_request")
+                  .data_set("i18n", "code.retry")
                   .data_set("testid", "mooncode-retry"),
                 on_click=dispatch(
                   RetryMoonCodeTurn(row.session_id, row.retry_prompt),
@@ -105,7 +145,18 @@ fn render_mooncode_activity_body(
     render_mooncode_activity_disclosure(dispatch, model, row)
   } else {
     div(class="mooncode-activity-body", [
-      p(class="mooncode-activity-title", row.title),
+      p(
+        class="mooncode-activity-title",
+        attrs=if mooncode_work_summary_i18n_key(row.title) == "" {
+          @html.Attrs::build()
+        } else {
+          @html.Attrs::build().data_set(
+            "i18n",
+            mooncode_work_summary_i18n_key(row.title),
+          )
+        },
+        row.title,
+      ),
       if row.detail == "" {
         span(class="mooncode-activity-detail empty", "")
       } else {
@@ -138,12 +189,28 @@ fn render_mooncode_activity_disclosure(
       "summary",
       @html.Attrs::build().class("mooncode-activity-summary"),
       [
-        span(class="mooncode-activity-summary-text", row.title),
+        span(
+          class="mooncode-activity-summary-text",
+          attrs=if mooncode_work_summary_i18n_key(row.title) == "" {
+            @html.Attrs::build()
+          } else {
+            @html.Attrs::build().data_set(
+              "i18n",
+              mooncode_work_summary_i18n_key(row.title),
+            )
+          },
+          row.title,
+        ),
         span(
           class="mooncode-activity-summary-action when-closed",
+          attrs=@html.Attrs::build().data_set("i18n", "code.show_details"),
           "Show details",
         ),
-        span(class="mooncode-activity-summary-action when-open", "Hide details"),
+        span(
+          class="mooncode-activity-summary-action when-open",
+          attrs=@html.Attrs::build().data_set("i18n", "code.hide_details"),
+          "Hide details",
+        ),
       ],
     ),
     if row.detail == "" {
@@ -192,6 +259,10 @@ fn render_mooncode_evidence(
     [
       span(
         class="mooncode-evidence-kind " + row.kind,
+        attrs=@html.Attrs::build().data_set(
+          "i18n",
+          mooncode_evidence_label_key(row),
+        ),
         mooncode_evidence_label(row),
       ),
       span(
@@ -284,7 +355,22 @@ fn mooncode_evidence_label(row : MoonCodeEvidenceRow) -> String {
     "test" => "Test"
     "artifact" => "Output"
     "approval" => "Approval"
+    "usage" => "Usage"
+    "skill" => "Skill"
     _ => "Tool"
+  }
+}
+
+///|
+fn mooncode_evidence_label_key(row : MoonCodeEvidenceRow) -> String {
+  match row.kind {
+    "edit" => "code.evidence_edit"
+    "test" => "code.evidence_test"
+    "artifact" => "code.evidence_output"
+    "approval" => "code.evidence_approval"
+    "usage" => "code.evidence_usage"
+    "skill" => "code.evidence_skill"
+    _ => "code.evidence_tool"
   }
 }
 
@@ -313,6 +399,16 @@ fn render_mooncode_approval(
     [
       div(class="mooncode-approval-copy", [
         strong(
+          attrs=@html.Attrs::build().data_set(
+            "i18n",
+            if pending {
+              "code.approval_needed"
+            } else if state_name == "approved" {
+              "code.approval_recorded"
+            } else {
+              "code.denial_recorded"
+            },
+          ),
           if pending {
             "Approval needed before this operation can run"
           } else if state_name == "approved" {
@@ -330,7 +426,12 @@ fn render_mooncode_approval(
             @html.Attrs::build().class("mooncode-approval-detail"),
             [
               @html.node("summary", @html.Attrs::build(), [
-                span("Technical details"),
+                span(
+                  attrs=@html.Attrs::build().data_set(
+                    "i18n", "common.technical_details",
+                  ),
+                  "Technical details",
+                ),
               ]),
               p("Command \{command_id}"),
               p("Tool call \{tool_call_id}"),
@@ -350,6 +451,8 @@ fn render_mooncode_approval(
             class="mooncode-inline-action reject",
             attrs=@html.Attrs::build()
               .aria_label("Reject this MoonCode tool call")
+              .data_set("i18n-aria-label", "code.reject_tool_aria")
+              .data_set("i18n", "code.reject_tool")
               .data_set("testid", "mooncode-reject-tool"),
             on_click=dispatch(DecideMoonCodeTool(approval, RejectMoonCodeTool)),
             "Reject",
@@ -358,6 +461,8 @@ fn render_mooncode_approval(
             class="mooncode-inline-action approve",
             attrs=@html.Attrs::build()
               .aria_label("Approve this MoonCode tool call")
+              .data_set("i18n-aria-label", "code.approve_tool_aria")
+              .data_set("i18n", "code.approve_tool")
               .data_set("testid", "mooncode-approve-tool"),
             on_click=dispatch(DecideMoonCodeTool(approval, ApproveMoonCodeTool)),
             "Approve",

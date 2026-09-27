@@ -151,11 +151,97 @@ struct Model {
   mooncode_session_management_status : String
   mooncode_new_chat_active : Bool
   mooncode_prompt : String
+  mooncode_images : Array[Json]
+  mooncode_image_submit_pending : Bool
+  mooncode_image_submit_revision : Int
+  mooncode_image_submit_prompt : String
+  mooncode_draft_revision : Int
   mooncode_model : String
   mooncode_models : Array[String]
+  mooncode_image_models : Array[String]
   mooncode_reasoning_effort : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
+  mooncode_guidance_pending_session_id : String
+  mooncode_guidance_feedback_session_id : String
+  mooncode_guidance_feedback : String
+  mooncode_skills_workspace_id : String
+  mooncode_skills_visible : Bool
+  mooncode_skills_loading : Bool
+  mooncode_skills_error : String
+  mooncode_skill_catalog : MoonCodeSkillCatalogProjection?
+  mooncode_jobs_session_id : String
+  mooncode_jobs_visible : Bool
+  mooncode_jobs_loading : Bool
+  mooncode_jobs_error : String
+  mooncode_job_history : MoonCodeJobHistory?
+  mooncode_schedules_visible : Bool
+  mooncode_schedules_loading : Bool
+  mooncode_schedules_saving : Bool
+  mooncode_schedules_error : String
+  mooncode_schedules_status : String
+  mooncode_schedules_workspace_id : String
+  mooncode_schedules_generation : Int
+  mooncode_schedule_state : MoonCodeScheduleState?
+  mooncode_schedule_id_draft : String
+  mooncode_schedule_prompt_draft : String
+  mooncode_schedule_interval_draft : String
+  git_projection_workspace_id : String
+  git_projection_generation : Int
+  git_projection : GitRepositoryProjection?
+  git_projection_loading : Bool
+  git_projection_error : String
+  git_change_query : String
+  git_change_filter : String
+  git_diff_path : String
+  git_diff_workspace_id : String
+  git_diff : GitDiffProjection?
+  git_diff_loading : Bool
+  git_diff_error : String
+  git_diff_hunk_index : Int
+  git_diff_selected_side : String
+  git_diff_selected_line : Int
+  git_review : GitReviewProjection?
+  git_review_progress : GitReviewProgress?
+  git_review_note : String
+  git_review_loading : Bool
+  git_review_saving : Bool
+  git_review_error : String
+  github_context : GitHubContextProjection?
+  github_context_loading : Bool
+  github_context_error : String
+  github_checkout_workspace_id : String
+  github_checkout_repository : String
+  github_checkout_number : Int
+  github_checkout_head_oid : String
+  github_checkout_pending : Bool
+  github_checkout_status : String
+  github_checkout_target_workspace_id : String
+  github_comment_workspace_id : String
+  github_comment_number : Int
+  github_comment_head : String
+  github_comment_draft : String
+  github_comment_saved : Bool
+  github_comment_saving_draft : Bool
+  github_comment_saving : Bool
+  github_comment_error : String
+  github_comment_published_url : String
+  github_inline_workspace_id : String
+  github_inline_number : Int
+  github_inline_review : GitHubInlineReviewProjection?
+  github_inline_loading : Bool
+  github_inline_error : String
+  github_inline_path : String
+  github_inline_hunk_index : Int
+  github_inline_hunk : String
+  github_inline_side : String
+  github_inline_line : Int
+  github_inline_draft : String
+  github_inline_record : GitHubInlineDraftProjection?
+  github_inline_saved : Bool
+  github_inline_saving_draft : Bool
+  github_inline_saving : Bool
+  github_inline_published_url : String
   mooncode_copied_item_id : String
   mooncode_next_client_turn_index : Int
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
@@ -328,6 +414,12 @@ enum Msg {
   LoadedMoonCodeWatch(Int, String, @mooncode_core.MoonCodeWatchResult)
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
+  CompletedMoonCodeGuidance(
+    String,
+    String,
+    Int,
+    Result[MoonCodeSession, String]
+  )
   ManagedMoonCodeSession(
     Result[
       (
@@ -370,9 +462,100 @@ enum Msg {
   CancelDeleteMoonCodeSession
   ConfirmDeleteMoonCodeSession(String)
   SetMoonCodePrompt(String)
+  PickMoonCodeImages(String)
+  MoonCodeImagesPicked(Result[Array[Json], String])
+  RemoveMoonCodeImage(Int)
   SetMoonCodeModel(String)
   SetMoonCodeReasoningEffort(String)
   SendMoonCodeMessage(String)
+  SendMoonCodeGuidance(String)
+  RefreshGitRepositoryProjection(String)
+  SetGitChangeQuery(String)
+  SetGitChangeFilter(String)
+  LoadedGitRepositoryProjection(
+    String,
+    Int,
+    Result[GitRepositoryProjection, String]
+  )
+  OpenGitChange(String)
+  OpenGitDiff(String)
+  RefreshGitDiff
+  LoadedGitDiff(String, String, String, Result[GitDiffProjection, String])
+  CloseGitDiff
+  SelectGitDiffHunk(Int)
+  SelectGitDiffLine(String, Int)
+  LoadedGitReview(String, String, String, Result[GitReviewProjection, String])
+  LoadedGitReviewProgress(
+    String,
+    Int,
+    String,
+    Result[GitReviewProgress, String]
+  )
+  SetGitReviewNote(String)
+  SaveGitReview(String)
+  SavedGitReview(String, String, String, Result[Unit, String])
+  LoadedGitHubContext(
+    String,
+    String,
+    String,
+    Result[GitHubContextProjection, String]
+  )
+  BeginGitHubComment(Int)
+  OpenGitHubSavedDraft(Int)
+  SetGitHubCommentDraft(String)
+  DiscardGitHubComment
+  SaveGitHubCommentDraft
+  SavedGitHubCommentDraft(String, Int, String, Bool, Result[Unit, String])
+  PublishGitHubComment
+  PublishedGitHubComment(String, Int, String, Result[String, String])
+  ToggleMoonCodeSkills
+  RefreshMoonCodeSkills
+  LoadedMoonCodeSkills(String, Result[MoonCodeSkillCatalogProjection, String])
+  ToggleMoonCodeJobs
+  RefreshMoonCodeJobs
+  LoadedMoonCodeJobs(String, Result[MoonCodeJobHistory, String])
+  ToggleMoonCodeSchedules
+  RefreshMoonCodeSchedules
+  LoadedMoonCodeSchedules(String, Int, Result[MoonCodeScheduleState, String])
+  MoonCodeSchedulesTimedOut(String, Int)
+  SetMoonCodeScheduleId(String)
+  SetMoonCodeSchedulePrompt(String)
+  SetMoonCodeScheduleInterval(String)
+  CreateMoonCodeSchedule
+  SetMoonCodeScheduleEnabled(String, Bool)
+  SavedMoonCodeSchedule(String, Bool, Result[MoonCodeScheduleState, String])
+  OpenGitHubInlineReview(Int)
+  CheckoutGitHubPull(Int)
+  CheckedOutGitHubPull(
+    String,
+    Int,
+    String,
+    Result[GitHubCheckoutProjection, String]
+  )
+  OpenCheckedOutGitHubPull
+  OpenGitHubSavedInlineDraft(GitHubInlineDraftProjection)
+  LoadedGitHubInlineReview(
+    String,
+    Int,
+    String,
+    Result[GitHubInlineReviewProjection, String]
+  )
+  CloseGitHubInlineReview
+  SelectGitHubInlineFile(String)
+  SelectGitHubInlineHunk(Int)
+  SelectGitHubInlineLine(String, String, Int)
+  SetGitHubInlineDraft(String)
+  DiscardGitHubInlineDraft
+  SaveGitHubInlineDraft
+  SavedGitHubInlineDraft(String, Int, String, Bool, Result[Unit, String])
+  PublishGitHubInlineComment
+  PublishedGitHubInlineComment(
+    String,
+    Int,
+    String,
+    String,
+    Result[String, String]
+  )
   CopyMoonCodeText(String, String)
   ClearMoonCodeCopy(String)
   RetryMoonCodeTurn(String, String)

@@ -155,7 +155,7 @@ test "Flow run listing transitions through loading zero ready stale and failure"
   let (_, failed) = update_workspace_results(
     dispatch,
     LoadedMoonFlowRuns(Err("private initial failure")),
-    { ..loading, moonflow_runs: [] },
+    { ..loading, moonflow_runs: [], },
   )
   assert_true(failed.moonflow_runs_state is Some(RecoverableError))
   assert_eq(failed.moonflow_runs.length(), 0)

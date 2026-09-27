@@ -55,7 +55,7 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
   )
   let failed = base.map(item => {
     if item.kind == Test.canonical() {
-      { ..item, state: "failed", exit_code: 1 }
+      { ..item, state: "failed", exit_code: 1, }
     } else {
       item
     }
@@ -65,7 +65,7 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
   )
   let rejected = base.map(item => {
     if item.kind == ReviewAccept.canonical() {
-      { ..item, kind: ReviewReject.canonical(), state: "rejected" }
+      { ..item, kind: ReviewReject.canonical(), state: "rejected", }
     } else {
       item
     }

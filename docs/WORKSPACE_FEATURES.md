@@ -2,7 +2,7 @@
 
 Status: implemented locally
 
-Last verified: 2026-09-04
+Last verified: 2026-09-26
 
 ## User experience
 
@@ -66,6 +66,29 @@ Only actionable warnings should interrupt normal work.
 visible conversation, selected document, completed work, artifacts, review
 decisions, pinned sources and warnings. Hidden reasoning is excluded.
 
+## Coding workflow
+
+MoonCode keeps the canonical MoonClaw conversation central. Running work has
+separate **Guide current** and **Queue next turn** actions. For Git MoonBooks,
+Code shows the current branch and changed files, opens the existing source
+editor, and provides per-file and per-hunk diff navigation. Untracked text
+has a reviewable new-file diff; binary changes support a file-level decision.
+Untracked MoonBit build output stays out of the review queue while tracked
+files in those directories remain visible. Local review decisions and hunk
+notes are saved under MoonDesk product state against the
+exact patch digest; an edited patch makes earlier records stale and returns the
+file to pending in review progress. Unsent notes remain in the review pane and
+block ordinary file, session, and MoonBook switches until saved or discarded.
+When all current Git changes have local review decisions, Code offers a link to
+the separate MoonBook outcome review.
+Changed-file context refreshes after new Code edit evidence or turn completion
+when no review is open. A GitHub remote adds read-only PR, check, and linked
+issue context with a visible local
+HEAD match. Saved MoonBit files can request compiler diagnostics and typed
+definition/reference locations through the MoonFort-bound Moon IDE route.
+GitHub comment publication and multimodal Code turns are still under
+implementation.
+
 ## Implementation boundary
 
 - Durable workspace truth, search results, tasks, reviews and artifacts remain
@@ -83,9 +106,9 @@ decisions, pinned sources and warnings. Hidden reasoning is excluded.
 - Office apply/reject delegates to the established Office editor messages; the
   lazy controller does not write documents directly.
 - Automation execution delegates to the existing request submission path.
-- Production builds use Terser and retain explicit 3 MiB raw entry and 300 KiB
-  compressed entry budgets, with workspace features and MoonCode developer
-  tools split into independently measured lazy chunks.
+- Production builds use Terser and keep workspace features and MoonCode
+  developer tools in separate lazy chunks. Bundle sizes are reported by the
+  build test without enforcing temporary size limits.
 
 ## Verification
 

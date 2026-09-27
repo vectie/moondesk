@@ -102,13 +102,89 @@ async fn moonclaw_runtime_session_by_id(
   workspace_root : String,
   session_id : String,
 ) -> Json {
+  let book_root = match
+    moonclaw_runtime_session_book_root(workspace_root, session_id) {
+    Ok(value) => value
+    Err(_) => return Json::object({})
+  }
   let record = moonclaw_runtime_session_record(
-    workspace_root, session_id, workspace_root,
+    workspace_root, session_id, book_root,
   )
   if json_string(record, "session_id", default="") != session_id {
     return Json::object({})
   }
   moonclaw_runtime_full_session_from_record(workspace_root, record)
+}
+
+///|
+async fn moonclaw_runtime_session_book_root(
+  workspace_root : String,
+  session_id : String,
+  archived? : Bool = false,
+) -> Result[String, String] {
+  let rows = match
+    moonclaw_runtime_session_listing_result(workspace_root, archived~) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  moonclaw_runtime_session_book_root_from_rows(
+    workspace_root,
+    session_id,
+    rows,
+    discover_workspaces(workspace_root),
+  )
+}
+
+///|
+fn moonclaw_runtime_session_book_root_from_rows(
+  workspace_root : String,
+  session_id : String,
+  rows : Array[Json],
+  workspaces : Array[@desk.DeskWorkspace],
+) -> Result[String, String] {
+  let mut selected = ""
+  for row in rows {
+    if json_string(row, "id", default="") == session_id {
+      let root = json_string(row, "book_root", default="")
+      let mut resolved = if root == workspace_root {
+        workspace_root
+      } else {
+        ""
+      }
+      if resolved == "" {
+        for workspace in workspaces {
+          if @pathx.normalize(root) == @pathx.normalize(workspace.root_path) {
+            resolved = workspace.root_path
+            break
+          }
+        }
+      }
+      if resolved == "" {
+        return Err("MoonCode session belongs to an unknown MoonBook")
+      }
+      if selected != "" && selected != resolved {
+        return Err("MoonCode session identifier is ambiguous across MoonBooks")
+      }
+      selected = resolved
+    }
+  }
+  if selected == "" {
+    Err("Unknown MoonCode session")
+  } else {
+    Ok(selected)
+  }
+}
+
+///|
+fn mooncode_session_scope_error_status(error : String) -> (Int, String) {
+  if error == "Unknown MoonCode session" {
+    (404, "Not Found")
+  } else if error == "MoonCode session identifier is ambiguous across MoonBooks" ||
+    error == "MoonCode session belongs to an unknown MoonBook" {
+    (409, "Conflict")
+  } else {
+    (503, "Service Unavailable")
+  }
 }
 
 ///|
@@ -339,9 +415,15 @@ async fn moonclaw_runtime_session_listing_result(
     )
   }
   let endpoint = if archived {
-    @mooncode.moonclaw_native_archived_session_listing_endpoint(workspace_root)
+    @mooncode.moonclaw_native_archived_session_listing_endpoint(
+      workspace_root,
+      include_books=true,
+    )
   } else {
-    @mooncode.moonclaw_native_session_listing_endpoint(workspace_root)
+    @mooncode.moonclaw_native_session_listing_endpoint(
+      workspace_root,
+      include_books=true,
+    )
   }
   let native_rows = match moonclaw_get_json(daemon, endpoint) {
     Ok(payload) =>

@@ -3,7 +3,11 @@ fn create_mooncode_session_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
-  let prompt = trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model))
+  let prompt = if model.mooncode_images.is_empty() {
+    trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model))
+  } else {
+    model.mooncode_prompt.trim().to_owned()
+  }
   let client_turn_id = mooncode_client_turn_id(
     model,
     mooncode_draft_session_id(model),
@@ -20,6 +24,11 @@ fn create_mooncode_session_cmd(
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
+  let submission = mooncode_prompt_with_images(
+    submission,
+    prompt,
+    model.mooncode_images,
+  )
   let encoded = match typed_mooncode_command_body(submission) {
     Ok(value) => value
     Err(error) => return dispatch(CreatedMoonCodeSession(Err(error)))
@@ -48,6 +57,7 @@ fn send_mooncode_composer_cmd(
     session,
     "prompt",
     message=model.mooncode_prompt.trim().to_owned(),
+    images=model.mooncode_images,
   )
 }
 
@@ -81,6 +91,7 @@ fn mooncode_session_command_cmd(
   target_command_id? : String = "",
   tool_call_id? : String = "",
   guidance? : Bool = false,
+  images? : Array[Json] = [],
 ) -> @rabbita.Cmd {
   let target_path = if context_path == "" {
     mooncode_context_path(model)
@@ -101,6 +112,11 @@ fn mooncode_session_command_cmd(
     "approval_id": approval_id,
     "target_command_id": target_command_id,
     "tool_call_id": tool_call_id,
+  }
+  let submission = if action == "prompt" {
+    mooncode_prompt_with_images(submission, message, images)
+  } else {
+    submission
   }
   let body = match typed_mooncode_command_body(submission) {
     Ok(value) => value
@@ -138,6 +154,28 @@ fn mooncode_session_command_cmd(
       },
     )
   })
+}
+
+///|
+fn mooncode_prompt_with_images(
+  submission : Json,
+  message : String,
+  images : Array[Json],
+) -> Json {
+  if images.is_empty() {
+    return submission
+  }
+  let parts : Array[Json] = []
+  if message != "" {
+    parts.push({ "type": "text", "text": message })
+  }
+  for image in images {
+    parts.push(image)
+  }
+  guard submission is Object(fields) else { return submission }
+  let next = fields.copy()
+  next["content_parts"] = Json::array(parts)
+  Json::object(next)
 }
 
 ///|

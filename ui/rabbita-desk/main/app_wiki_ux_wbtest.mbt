@@ -68,7 +68,7 @@ test "wiki empty-book detection uses successful typed listing evidence" {
   }
   assert_true(wiki_book_is_empty(empty_book))
   assert_false(
-    wiki_book_is_empty({ ..empty_book, desk_entries_state: Some(Loading) }),
+    wiki_book_is_empty({ ..empty_book, desk_entries_state: Some(Loading), }),
   )
   assert_false(
     wiki_book_is_empty({
@@ -216,7 +216,7 @@ test "Wiki chat submits document context to the general agent endpoint" {
     "documents/forecast.xlsx",
   ])
   assert_false(body.stringify().contains("/v1/code"))
-  assert_true(wiki_task_start_disabled({ ..model, request_status: "sending" }))
+  assert_true(wiki_task_start_disabled({ ..model, request_status: "sending", }))
 }
 
 ///|
@@ -240,7 +240,7 @@ test "Wiki chat attaches existing files and projects MoonClaw deltas" {
   let (after_delta, done) = wiki_chat_apply_stream_event(attached, delta)
   assert_false(done)
   assert_eq(after_delta.wiki_chat_entries, [
-    { role: "assistant-stream", content: "Checking" },
+    { role: "assistant-stream", content: "Checking", },
   ])
   let final_response : Json = {
     "contract": "moonclaw-task-stream.v2",
@@ -252,7 +252,7 @@ test "Wiki chat attaches existing files and projects MoonClaw deltas" {
   )
   assert_true(!done)
   assert_eq(after_final.wiki_chat_entries, [
-    { role: "assistant", content: "Checked." },
+    { role: "assistant", content: "Checked.", },
   ])
   let (after_terminal, done) = wiki_chat_apply_stream_event(after_final, {
     "contract": "moonclaw-task-stream.v2",
@@ -343,7 +343,7 @@ test "Wiki chat file search rejects stale replies and scopes results to the book
   ])
   let (_, stale) = update_wiki_chat(
     dispatch,
-    LoadedWikiChatFileSearch(3, Ok({ ..response, hits: [other] })),
+    LoadedWikiChatFileSearch(3, Ok({ ..response, hits: [other], })),
     loaded,
   )
   assert_eq(stale.wiki_chat_file_results.map(hit => hit.path), [
@@ -412,7 +412,7 @@ test "Wiki chat keeps a general task conversation without exposing its id" {
   assert_eq(next.request_prompt, "")
   assert_true(
     next.wiki_chat_entries ==
-    [{ role: "user", content: "Validate this presentation." }],
+    [{ role: "user", content: "Validate this presentation.", }],
   )
   let markup = @rabbita.render_to_string(
     @rabbita.static_cell(render_wiki_focus_workspace(dispatch, next)),
@@ -442,7 +442,7 @@ test "Wiki chat keeps removable typed context visible beside the composer" {
       "draft",
       "",
     ),
-    { ..model, selected_path: "documents/sample.docx" },
+    { ..model, selected_path: "documents/sample.docx", },
   )
   assert_eq(with_context.wiki_chat_context_items.length(), 1)
   assert_eq(
@@ -471,7 +471,10 @@ test "Wiki chat keeps removable typed context visible beside the composer" {
 #warnings("-alert_unstable")
 test "Wiki chat reports approved preferences used without exposing prompt internals" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let model = { ..wiki_focus_test_model([]), request_prompt: "Summarize this." }
+  let model = {
+    ..wiki_focus_test_model([]),
+    request_prompt: "Summarize this.",
+  }
   let (_, next) = update_wiki_chat(
     dispatch,
     SubmittedWikiChat(
@@ -863,7 +866,10 @@ test "wiki editor feedback reports user save state" {
 
 ///|
 test "wiki unsaved navigation names the edited page" {
-  let model = { ..init_model(), markdown_editor_path: "wiki/notes/decision.md" }
+  let model = {
+    ..init_model(),
+    markdown_editor_path: "wiki/notes/decision.md",
+  }
   assert_eq(
     wiki_unsaved_navigation_message(model),
     "Your changes to decision.md have not been saved.",

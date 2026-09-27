@@ -1,6 +1,5 @@
 import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
-  "moonbitlang/core/string",
   "moonbitlang/x/crypto",
   "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/mooncode/core" @mooncode_core,

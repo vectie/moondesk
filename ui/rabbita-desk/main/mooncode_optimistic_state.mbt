@@ -120,7 +120,7 @@ fn mooncode_push_optimistic_row(
       return
     }
   }
-  rows.push({ session_id, role, content: normalized, status, key })
+  rows.push({ session_id, role, content: normalized, status, key, })
 }
 
 ///|
@@ -135,7 +135,7 @@ fn mooncode_fail_pending_optimistic_rows_for_session(
     if row.session_id == session_id &&
       row.role == "user" &&
       (row.status == "queued" || row.status == "running") {
-      next.push({ ..row, status: "failed" })
+      next.push({ ..row, status: "failed", })
       if row.key != "" {
         failed_keys.push(row.key)
       }

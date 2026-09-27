@@ -11,49 +11,49 @@ fn parse_lepusa_integration_args(
     match args[index] {
       "--lepusa" =>
         if index + 1 < args.length() {
-          options = { ..options, lepusa_root: args[index + 1] }
+          options = { ..options, lepusa_root: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--project" =>
         if index + 1 < args.length() {
-          options = { ..options, project: args[index + 1] }
+          options = { ..options, project: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--out" =>
         if index + 1 < args.length() {
-          options = { ..options, out_dir: args[index + 1] }
+          options = { ..options, out_dir: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--manifest" =>
         if index + 1 < args.length() {
-          options = { ..options, manifest_path: args[index + 1] }
+          options = { ..options, manifest_path: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--asset" =>
         if index + 1 < args.length() {
-          options = { ..options, asset_url: args[index + 1] }
+          options = { ..options, asset_url: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--workspace-root" =>
         if index + 1 < args.length() {
-          options = { ..options, workspace_root: args[index + 1] }
+          options = { ..options, workspace_root: args[index + 1], }
           index += 2
         } else {
           return None
         }
       "--ui" =>
         if index + 1 < args.length() {
-          options = { ..options, ui_dir: args[index + 1] }
+          options = { ..options, ui_dir: args[index + 1], }
           index += 2
         } else {
           return None
@@ -69,7 +69,7 @@ fn parse_lepusa_integration_args(
           return None
         }
       "--strict" => {
-        options = { ..options, strict: true }
+        options = { ..options, strict: true, }
         index += 1
       }
       value =>
@@ -77,20 +77,20 @@ fn parse_lepusa_integration_args(
           if !lepusa_integration_command_supported(value) {
             return None
           }
-          options = { ..options, command: value }
+          options = { ..options, command: value, }
           seen_command = true
           index += 1
         } else if lepusa_integration_command_uses_asset(options.command) &&
           !value.has_prefix("-") &&
           !seen_asset {
-          options = { ..options, asset_url: value }
+          options = { ..options, asset_url: value, }
           seen_asset = true
           index += 1
         } else if !value.has_prefix("-") && !seen_target {
           if !lepusa_integration_target_supported(value) {
             return None
           }
-          options = { ..options, target: value }
+          options = { ..options, target: value, }
           seen_target = true
           index += 1
         } else {

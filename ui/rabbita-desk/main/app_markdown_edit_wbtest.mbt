@@ -54,7 +54,7 @@ test "saved markdown edit refreshes preview and exits editor" {
   }
   let (_, next) = update_workspace_results(
     dispatch,
-    SavedMarkdownEdit(Ok({ workspace_id: "book-demo", path: "wiki/index.md" })),
+    SavedMarkdownEdit(Ok({ workspace_id: "book-demo", path: "wiki/index.md", })),
     model,
   )
   assert_eq(next.selected_workspace_id, "book-demo")
@@ -275,7 +275,7 @@ test "review decision note edits settings state" {
 ///|
 test "review decision result clears note and reports accepted path" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let model = { ..init_model(), review_decision_note: "Looks sourced." }
+  let model = { ..init_model(), review_decision_note: "Looks sourced.", }
   let (_, next) = update_town_results(
     dispatch,
     DecidedReviewItem(
@@ -345,7 +345,7 @@ test "inbox save result selects saved note for wiki forward run" {
   let (_, next) = update_inbox_results(
     dispatch,
     SavedInbox(
-      Ok({ ok: true, workspace_id: "book-demo", path: "inbox/forward-seed.md" }),
+      Ok({ ok: true, workspace_id: "book-demo", path: "inbox/forward-seed.md", }),
     ),
     init_model(),
   )

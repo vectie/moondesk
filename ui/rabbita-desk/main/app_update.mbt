@@ -124,6 +124,8 @@ fn update(
       update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
+    CompletedMoonCodeGuidance(_, _, _, _) =>
+      update_mooncode_results(dispatch, msg, model)
     ManagedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     ControlMoonFlow(_, _, _) =>
@@ -196,10 +198,73 @@ fn update(
     ConfirmDeleteMoonCodeSession(_) =>
       update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
+    PickMoonCodeImages(_) => update_mooncode_actions(dispatch, msg, model)
+    MoonCodeImagesPicked(_) => update_mooncode_actions(dispatch, msg, model)
+    RemoveMoonCodeImage(_) => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodeModel(_) => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodeReasoningEffort(_) =>
       update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage(_) => update_mooncode_actions(dispatch, msg, model)
+    SendMoonCodeGuidance(_) => update_mooncode_actions(dispatch, msg, model)
+    RefreshGitRepositoryProjection(_)
+    | SetGitChangeQuery(_)
+    | SetGitChangeFilter(_)
+    | LoadedGitRepositoryProjection(_, _, _)
+    | OpenGitChange(_)
+    | OpenGitDiff(_)
+    | RefreshGitDiff
+    | LoadedGitDiff(_, _, _, _)
+    | CloseGitDiff => update_mooncode_actions(dispatch, msg, model)
+    SelectGitDiffHunk(_)
+    | SelectGitDiffLine(_, _)
+    | LoadedGitReview(_, _, _, _)
+    | LoadedGitReviewProgress(_, _, _, _)
+    | SetGitReviewNote(_)
+    | SaveGitReview(_)
+    | SavedGitReview(_, _, _, _) =>
+      update_mooncode_actions(dispatch, msg, model)
+    LoadedGitHubContext(_, _, _, _)
+    | BeginGitHubComment(_)
+    | OpenGitHubSavedDraft(_)
+    | SetGitHubCommentDraft(_)
+    | DiscardGitHubComment
+    | SaveGitHubCommentDraft
+    | SavedGitHubCommentDraft(_, _, _, _, _)
+    | PublishGitHubComment
+    | PublishedGitHubComment(_, _, _, _) =>
+      update_mooncode_actions(dispatch, msg, model)
+    ToggleMoonCodeSkills | RefreshMoonCodeSkills | LoadedMoonCodeSkills(_, _) =>
+      update_mooncode_actions(dispatch, msg, model)
+    ToggleMoonCodeJobs | RefreshMoonCodeJobs | LoadedMoonCodeJobs(_, _) =>
+      update_mooncode_actions(dispatch, msg, model)
+    ToggleMoonCodeSchedules
+    | RefreshMoonCodeSchedules
+    | LoadedMoonCodeSchedules(_, _, _)
+    | MoonCodeSchedulesTimedOut(_, _)
+    | SetMoonCodeScheduleId(_)
+    | SetMoonCodeSchedulePrompt(_)
+    | SetMoonCodeScheduleInterval(_)
+    | CreateMoonCodeSchedule
+    | SetMoonCodeScheduleEnabled(_, _)
+    | SavedMoonCodeSchedule(_, _, _) =>
+      update_mooncode_actions(dispatch, msg, model)
+    CheckoutGitHubPull(_)
+    | CheckedOutGitHubPull(_, _, _, _)
+    | OpenCheckedOutGitHubPull
+    | OpenGitHubInlineReview(_)
+    | OpenGitHubSavedInlineDraft(_)
+    | LoadedGitHubInlineReview(_, _, _, _)
+    | CloseGitHubInlineReview
+    | SelectGitHubInlineFile(_)
+    | SelectGitHubInlineHunk(_)
+    | SelectGitHubInlineLine(_, _, _)
+    | SetGitHubInlineDraft(_)
+    | DiscardGitHubInlineDraft
+    | SaveGitHubInlineDraft
+    | SavedGitHubInlineDraft(_, _, _, _, _)
+    | PublishGitHubInlineComment
+    | PublishedGitHubInlineComment(_, _, _, _, _) =>
+      update_mooncode_actions(dispatch, msg, model)
     CopyMoonCodeText(_, _) => update_mooncode_actions(dispatch, msg, model)
     ClearMoonCodeCopy(_) => update_mooncode_actions(dispatch, msg, model)
     RetryMoonCodeTurn(_, _) => update_mooncode_actions(dispatch, msg, model)

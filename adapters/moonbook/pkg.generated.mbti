@@ -25,6 +25,11 @@ pub struct MoonBookSection {
   layer : @core.SourceLayer
   writable : Bool
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoonBookSection::equal(Self, Self) -> Bool
+pub fn MoonBookSection::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoonBookSection::not_equal(Self, Self) -> Bool
+pub fn MoonBookSection::to_json(Self) -> Json
+pub fn MoonBookSection::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

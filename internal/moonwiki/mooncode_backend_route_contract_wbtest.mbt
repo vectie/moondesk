@@ -9,6 +9,11 @@ test "mooncode backend method checks match the canonical route surface" {
   assert_true(mooncode_route_accepts_read(sessions, Get))
   assert_true(mooncode_route_accepts_post(sessions, Post))
 
+  let skills = @mooncode.desktop_skills_endpoint()
+  assert_true(mooncode_route_accepts_read(skills, Get))
+  assert_true(mooncode_route_accepts_read(skills, Head))
+  assert_false(mooncode_route_accepts_post(skills, Post))
+
   let commands = @mooncode.desktop_session_commands_endpoint()
   assert_false(mooncode_route_accepts_read(commands, Get))
   assert_true(mooncode_route_accepts_post(commands, Post))

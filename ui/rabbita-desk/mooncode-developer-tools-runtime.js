@@ -1,12 +1,12 @@
 const HTTP_PROTOCOLS = new Set(['http:', 'https:'])
 const OPEN_TOOL_STATES = new Set(['running', 'queued', 'pending', 'failed', 'cancelled', 'rejected', 'reverted', 'stale'])
 const REASONING_OPTIONS = [
-  ['none', 'Auto'],
-  ['minimal', 'Minimal'],
-  ['low', 'Low'],
-  ['medium', 'Medium'],
-  ['high', 'High'],
-  ['xhigh', 'Extra high'],
+  ['none', 'Auto', 'code.reasoning_auto'],
+  ['minimal', 'Minimal', 'code.reasoning_minimal'],
+  ['low', 'Low', 'code.reasoning_low'],
+  ['medium', 'Medium', 'code.reasoning_medium'],
+  ['high', 'High', 'code.reasoning_high'],
+  ['xhigh', 'Extra high', 'code.reasoning_xhigh'],
 ]
 let developerToolsOpen = false
 let selectedDeveloperTool = 'terminal'
@@ -145,15 +145,18 @@ function composerControl(title, kind, options, selected, disabled = false) {
   const caption = document.createElement('span')
   caption.className = 'mooncode-composer-control-label'
   caption.textContent = title
+  caption.dataset.i18n = kind === 'model' ? 'code.model' : 'code.reasoning'
   const select = document.createElement('select')
   select.className = 'mooncode-composer-select'
   select.dataset.testid = `mooncode-${kind}-select`
   select.setAttribute('aria-label', `MoonCode ${kind === 'model' ? 'model' : 'reasoning effort'}`)
+  select.dataset.i18nAriaLabel = kind === 'model' ? 'code.model_aria' : 'code.reasoning_aria'
   select.disabled = disabled
-  for (const [value, text] of options) {
+  for (const [value, text, key] of options) {
     const option = document.createElement('option')
     option.value = value
     option.textContent = text
+    if (key) option.dataset.i18n = key
     option.selected = value === selected
     select.append(option)
   }
@@ -165,16 +168,19 @@ function composerControl(title, kind, options, selected, disabled = false) {
 function installComposerControls(root) {
   if (!(root instanceof HTMLElement)) return
   const models = String(root.dataset.models || '').split('\n').filter(Boolean)
-  const modelOptions = models.length ? models.map(value => [value, value]) : [['', 'No models available']]
+  const modelOptions = models.length
+    ? models.map(value => [value, value, ''])
+    : [['', 'No models available', 'code.no_models']]
   if (root.dataset.controlsInstalled === 'true') {
     const modelSelect = root.querySelector('[data-testid="mooncode-model-select"]')
     if (modelSelect instanceof HTMLSelectElement) {
       const optionValues = Array.from(modelSelect.options, option => option.value)
       if (optionValues.join('\n') !== modelOptions.map(([value]) => value).join('\n')) {
-        modelSelect.replaceChildren(...modelOptions.map(([value, text]) => {
+        modelSelect.replaceChildren(...modelOptions.map(([value, text, key]) => {
           const option = document.createElement('option')
           option.value = value
           option.textContent = text
+          if (key) option.dataset.i18n = key
           return option
         }))
       }

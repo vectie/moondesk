@@ -65,7 +65,7 @@ test "Publish selection and book changes own loading and clear cross-book eviden
 ///|
 test "Publish readiness evidence distinguishes zero ready stale and failure" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_workspace_id: "book-demo" }
+  let base = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, zero) = update_town_results(dispatch, LoadedReviewItems(Ok([])), base)
   assert_true(zero.publish_state is Some(LegitimateZero))
   assert_eq(zero.publish_error, "")
@@ -73,12 +73,12 @@ test "Publish readiness evidence distinguishes zero ready stale and failure" {
   let (_, ready) = update_town_results(
     dispatch,
     LoadedReviewItems(Ok([pending_item])),
-    { ..base, publish_error: "old failure" },
+    { ..base, publish_error: "old failure", },
   )
   assert_true(ready.publish_state is None)
   assert_eq(ready.review_items.length(), 1)
   assert_eq(ready.publish_error, "")
-  let refreshing = { ..ready, publish_state: Some(Loading) }
+  let refreshing = { ..ready, publish_state: Some(Loading), }
   assert_true(publish_state_keeps_evidence(refreshing.publish_state))
   let (_, stale) = update_town_results(
     dispatch,
@@ -108,7 +108,7 @@ test "Publish readiness evidence distinguishes zero ready stale and failure" {
   let (_, invalidated) = update_town_results(
     dispatch,
     DecidedReviewItem(Ok(decision)),
-    { ..stale, publish_error: "old failure" },
+    { ..stale, publish_error: "old failure", },
   )
   assert_true(invalidated.publish_state is Some(Loading))
   assert_eq(invalidated.publish_error, "")

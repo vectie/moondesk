@@ -16,7 +16,7 @@ pub(all) struct AppRegistry {
 
 ///|
 pub fn empty_registry() -> AppRegistry {
-  { entrypoints: [] }
+  { entrypoints: [], }
 }
 
 ///|
@@ -62,7 +62,7 @@ pub fn reconcile(
     binding.pack_id != projection.pack_id ||
     !ids.contains(binding.entrypoint_id)
   })
-  { entrypoints: retained + incoming }
+  { entrypoints: retained + incoming, }
 }
 
 ///|

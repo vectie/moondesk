@@ -1,6 +1,6 @@
 ///|
 test "MoonClaw setup action stays visible as a user operation" {
-  let model = { ..init_model(), mooncode_composer_status: "idle" }
+  let model = { ..init_model(), mooncode_composer_status: "idle", }
   let (_, next) = update_mooncode_actions(
     code_mode_test_dispatch,
     ManageMoonClaw("start"),
@@ -11,7 +11,7 @@ test "MoonClaw setup action stays visible as a user operation" {
 
 ///|
 test "MoonClaw install action exposes progress until lifecycle result" {
-  let model = { ..init_model(), mooncode_composer_status: "idle" }
+  let model = { ..init_model(), mooncode_composer_status: "idle", }
   let (_, installing) = update_mooncode_actions(
     code_mode_test_dispatch,
     ManageMoonClaw("install"),
@@ -100,7 +100,7 @@ test "MoonClaw failed start keeps the installed state and exact failure" {
 
 ///|
 test "MoonClaw auth status treats fresh setup as guidance, not failure" {
-  let model = { ..init_model(), moonclaw_auth_pending: "check" }
+  let model = { ..init_model(), moonclaw_auth_pending: "check", }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
     LoadedMoonClawAuth(
@@ -110,8 +110,8 @@ test "MoonClaw auth status treats fresh setup as guidance, not failure" {
         message: Some("Connect a model provider"),
         next_action: Some("configure_model"),
         model_ready: Some(false),
-        codex: Some({ authenticated: Some(false), email: None, plan: None }),
-        copilot: Some({ authenticated: Some(false), email: None, plan: None }),
+        codex: Some({ authenticated: Some(false), email: None, plan: None, }),
+        copilot: Some({ authenticated: Some(false), email: None, plan: None, }),
       }),
     ),
     model,

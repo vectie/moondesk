@@ -10,18 +10,21 @@ test "projection binds app entrypoints without domain imports" {
     tools: [],
     schedules: [],
     app_entrypoints: [
-      { id: "fixture.console", path: "apps/console", audience: "operator" },
+      { id: "fixture.console", path: "apps/console", audience: "operator", },
     ],
     provider_ports: [],
     policies: [],
   }
-  let projected = bindings(projection)
-  guard resolve(projected, "fixture.console") is Some(binding) else {
+  let projected = @packapp.bindings(projection)
+  guard @packapp.resolve(projected, "fixture.console") is Some(binding) else {
     fail("entrypoint should resolve")
   }
   assert_eq(binding.path, "apps/console")
   assert_eq(binding.audience, "operator")
-  let twice = reconcile(reconcile(empty_registry(), projection), projection)
+  let twice = @packapp.reconcile(
+    @packapp.reconcile(@packapp.empty_registry(), projection),
+    projection,
+  )
   assert_eq(twice.entrypoints.length(), 1)
-  assert_eq(remove_pack(twice, "fixture").entrypoints.length(), 0)
+  assert_eq(@packapp.remove_pack(twice, "fixture").entrypoints.length(), 0)
 }

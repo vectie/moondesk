@@ -8,19 +8,22 @@ fn update_library_selection(
     PickLibraryFolder =>
       (
         pick_library_folder_cmd(dispatch),
-        { ..model, host_status: "Choose a MoonBook library folder" },
+        { ..model, host_status: "Choose a MoonBook library folder", },
       )
     LibraryFolderPicked(Ok(path)) =>
       if path == "" {
-        (@rabbita.none, { ..model, host_status: "Library selection cancelled" })
+        (
+          @rabbita.none,
+          { ..model, host_status: "Library selection cancelled", },
+        )
       } else {
         (
           select_library_cmd(dispatch, path),
-          { ..model, host_status: "Checking selected library" },
+          { ..model, host_status: "Checking selected library", },
         )
       }
     LibraryFolderPicked(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (@rabbita.none, { ..model, host_status: error, })
     SelectedLibrary(Ok(metadata)) => {
       let (_, with_metadata) = update_workspace_results(
         dispatch,
@@ -80,7 +83,7 @@ fn update_library_selection(
       )
     }
     SelectedLibrary(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (@rabbita.none, { ..model, host_status: error, })
     _ => (@rabbita.none, model)
   }
 }

@@ -15,7 +15,7 @@ test "cold-start metadata failure preserves one-time bootstrap state" {
   let (_, next) = update_workspace_results(
     dispatch,
     LoadedWorkspaceMetadata(Err("Invalid workspace metadata")),
-    { ..init_model(), bootstrapped: true },
+    { ..init_model(), bootstrapped: true, },
   )
   assert_true(next.bootstrapped)
   assert_eq(next.host_status, "Invalid workspace metadata")
@@ -40,7 +40,7 @@ test "metadata refresh failure does not restart an established bootstrap" {
   let (_, next) = update_workspace_results(
     dispatch,
     LoadedWorkspaceMetadata(Err("Invalid workspace metadata")),
-    { ..init_model(), bootstrapped: true, workspace_root_path: "/tmp/library" },
+    { ..init_model(), bootstrapped: true, workspace_root_path: "/tmp/library", },
   )
   assert_true(next.bootstrapped)
   assert_eq(next.workspace_root_path, "/tmp/library")

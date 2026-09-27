@@ -17,13 +17,17 @@ async test "confined Office open save conflict and independent reopen" {
   )
   let path = @pathx.join(root, "sample.docx")
   let initial = valid_docx_bytes()
-  let initial_bytes = Bytes::from_array(initial.view())
+  let initial_bytes = Bytes::from_array(initial.exact_view())
   @fs.write_file(path, initial_bytes, create_mode=CreateOrTruncate)
   let (clean, opened) = open_workspace_office(workspace, "sample.docx").unwrap()
   assert_eq(clean, "sample.docx")
   guard opened.supported is Word([paragraph, ..]) else { fail("expected DOCX") }
   assert_eq(paragraph.runs[0].text, "MoonDesk DOCX")
-  let opened_json = office_document_json(clean, opened, initial_bytes.view())
+  let opened_json = office_document_json(
+    clean,
+    opened,
+    initial_bytes.exact_view(),
+  )
   let baseline = json_string(opened_json, "baseline", default="")
   assert_eq(@base64.decode(baseline), initial_bytes)
   let payload : Json = {

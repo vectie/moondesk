@@ -53,7 +53,7 @@ fn update_daemon_results(
         },
       )
     DispatchedDaemon(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     ManagedDaemon(Ok(result)) =>
       (
         sync_activity_batch(
@@ -96,7 +96,7 @@ fn update_daemon_results(
         },
       )
     LoadedLaunchAgent(Err(error)) =>
-      (@rabbita.none, { ..model, daemon_status: error })
+      (@rabbita.none, { ..model, daemon_status: error, })
     ManagedLaunchAgent(Ok(result)) =>
       (
         fetch_launch_agent_cmd(dispatch),
@@ -108,7 +108,7 @@ fn update_daemon_results(
         },
       )
     ManagedLaunchAgent(Err(error)) =>
-      (@rabbita.none, { ..model, daemon_status: error })
+      (@rabbita.none, { ..model, daemon_status: error, })
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -122,7 +122,7 @@ fn update_daemon_results(
         },
       )
     RevealedSelection(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (@rabbita.none, { ..model, host_status: error, })
     _ => (@rabbita.none, model)
   }
 }

@@ -2,10 +2,10 @@
 test "MoonCode model choices are normalized and selected explicitly" {
   assert_eq(
     mooncode_normalize_model_names([
-      { name: " codex/gpt-5.6-sol " },
-      { name: "" },
-      { name: "codex/gpt-5.6-sol" },
-      { name: "moongate/kimi-k3" },
+      { name: " codex/gpt-5.6-sol ", input_modalities: None, },
+      { name: "", input_modalities: None, },
+      { name: "codex/gpt-5.6-sol", input_modalities: None, },
+      { name: "moongate/kimi-k3", input_modalities: None, },
     ]),
     ["moongate/kimi-k3"],
   )

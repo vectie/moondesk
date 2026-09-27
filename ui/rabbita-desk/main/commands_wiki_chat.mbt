@@ -14,7 +14,7 @@ fn wiki_chat_submission_body(model : Model) -> Json {
     },
     "file_paths": Json::array(paths.map(path => Json::string(path))),
     "context_items": Json::array(
-      model.wiki_chat_context_items.map(item => item.to_json()),
+      model.wiki_chat_context_items.map(item => ToJson::to_json(item)),
     ),
     "message": model.request_prompt.trim().to_owned(),
   }

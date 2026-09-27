@@ -272,7 +272,7 @@ fn parse_office_editor_http(
       }
     }
   }
-  Ok({ path, kind, items, warnings, baseline })
+  Ok({ path, kind, items, warnings, baseline, })
 }
 
 ///|

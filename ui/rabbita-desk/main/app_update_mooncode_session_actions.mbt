@@ -6,41 +6,116 @@ fn update_mooncode_session_actions(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     SelectMoonCodeSession(session_id) => {
+      if model.git_review_saving {
+        return (@rabbita.none, model)
+      }
+      if model.git_review_note.trim() != "" &&
+        session_id != model.selected_mooncode_session_id {
+        return (
+          @rabbita.none,
+          {
+            ..model,
+            git_review_error: "Save or discard the current review note before changing Code sessions.",
+          },
+        )
+      }
       let next = mooncode_select_session_model(model, session_id)
+      let workspace_id = mooncode_workspace_id_for_selected_session(
+        model, session_id,
+      )
       (
         @rabbita.batch([
           fetch_mooncode_selected_session_cmd(dispatch, session_id),
-          mooncode_selected_session_cmd(dispatch, next),
-          sync_mooncode_context_cmd(
-            mooncode_workspace_id_for_selected_session(model, session_id),
-            session_id,
+          fetch_git_repository_projection_cmd(
+            dispatch,
+            workspace_id,
+            model.git_projection_generation + 1,
           ),
+          mooncode_selected_session_cmd(dispatch, next),
+          sync_mooncode_context_cmd(workspace_id, session_id),
         ]),
-        next,
+        {
+          ..next,
+          git_projection_workspace_id: workspace_id,
+          git_projection_generation: model.git_projection_generation + 1,
+          git_projection: None,
+          git_review_progress: None,
+          git_projection_loading: workspace_id != "",
+          git_projection_error: "",
+          git_diff_workspace_id: "",
+          git_diff_path: "",
+          git_diff: None,
+          git_diff_loading: false,
+          git_diff_error: "",
+          git_review: None,
+          git_review_note: "",
+          git_review_loading: false,
+          git_review_saving: false,
+          git_review_error: "",
+          github_context: None,
+          github_context_loading: false,
+          github_context_error: "",
+        },
       )
     }
     NewMoonCodeSession =>
-      (
-        @rabbita.batch([
-          sync_shell_cmd(MoonCode, model.activity),
-          sync_mooncode_context_cmd(model.selected_workspace_id, ""),
-          clear_mooncode_composer_cmd(),
-          stop_mooncode_watch_cmd(),
-        ]),
-        {
-          ..model,
-          workspace_mode: MoonCode,
-          command_open: false,
-          selected_mooncode_session_id: "",
-          mooncode_new_chat_active: true,
-          mooncode_prompt: "",
-          mooncode_watch_generation: model.mooncode_watch_generation + 1,
-          mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
-          mooncode_watch_status: "idle",
-          mooncode_watch_failure_count: 0,
-          mooncode_composer_status: "new session draft",
-        },
-      )
+      if model.git_review_saving {
+        (@rabbita.none, model)
+      } else if model.git_review_note.trim() != "" {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            git_review_error: "Save or discard the current review note before starting a new Code session.",
+          },
+        )
+      } else {
+        (
+          @rabbita.batch([
+            sync_shell_cmd(MoonCode, model.activity),
+            sync_mooncode_context_cmd(model.selected_workspace_id, ""),
+            fetch_git_repository_projection_cmd(
+              dispatch,
+              model.selected_workspace_id,
+              model.git_projection_generation + 1,
+            ),
+            clear_mooncode_composer_cmd(),
+            stop_mooncode_watch_cmd(),
+          ]),
+          {
+            ..model,
+            workspace_mode: MoonCode,
+            command_open: false,
+            selected_mooncode_session_id: "",
+            git_projection_workspace_id: model.selected_workspace_id,
+            git_projection_generation: model.git_projection_generation + 1,
+            git_projection: None,
+            git_review_progress: None,
+            git_projection_loading: model.selected_workspace_id != "",
+            git_projection_error: "",
+            git_diff_workspace_id: "",
+            git_diff_path: "",
+            git_diff: None,
+            git_diff_loading: false,
+            git_diff_error: "",
+            git_review: None,
+            git_review_note: "",
+            git_review_loading: false,
+            git_review_saving: false,
+            git_review_error: "",
+            github_context: None,
+            github_context_loading: false,
+            github_context_error: "",
+            mooncode_new_chat_active: true,
+            mooncode_prompt: "",
+            mooncode_watch_generation: model.mooncode_watch_generation + 1,
+            mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
+            mooncode_watch_status: "idle",
+            mooncode_watch_failure_count: 0,
+            mooncode_composer_status: "new session draft",
+          },
+        )
+      }
     SetMoonCodePrompt(prompt) => {
       // Keep the user-facing composers on the same trigger grammar. The
       // MoonCode surface does not currently expose workspace-file chips, but
@@ -52,12 +127,70 @@ fn update_mooncode_session_actions(
         {
           ..model,
           mooncode_prompt: prompt,
+          mooncode_draft_revision: model.mooncode_draft_revision + 1,
           mooncode_new_chat_active: if model.selected_mooncode_session_id == "" {
             true
           } else {
             model.mooncode_new_chat_active
           },
           mooncode_composer_status: "draft",
+        },
+      )
+    }
+    PickMoonCodeImages(source) =>
+      (pick_mooncode_images_cmd(dispatch, source), model)
+    MoonCodeImagesPicked(Ok(images)) => {
+      if model.mooncode_image_submit_pending {
+        return (@rabbita.none, model)
+      }
+      let combined = model.mooncode_images.copy()
+      for image in images {
+        combined.push(image)
+      }
+      let mut encoded_size = 0
+      for image in combined {
+        encoded_size += mooncode_transcript_part_string(image, "data_base64").length()
+      }
+      if combined.length() > 4 || encoded_size > 23 * 1024 * 1024 {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_composer_status: "Attach at most four images totaling 16 MB",
+          },
+        )
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_images: combined,
+            mooncode_draft_revision: model.mooncode_draft_revision + 1,
+            mooncode_composer_status: if images.is_empty() {
+              model.mooncode_composer_status
+            } else {
+              "Image attached to Code draft"
+            },
+          },
+        )
+      }
+    }
+    MoonCodeImagesPicked(Err(error)) =>
+      (@rabbita.none, { ..model, mooncode_composer_status: error, })
+    RemoveMoonCodeImage(index) => {
+      let remaining : Array[Json] = []
+      for i, image in model.mooncode_images {
+        if i != index {
+          remaining.push(image)
+        }
+      }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_images: remaining,
+          mooncode_draft_revision: model.mooncode_draft_revision + 1,
+          mooncode_composer_status: "Image removed from Code draft",
         },
       )
     }
@@ -88,7 +221,9 @@ fn update_mooncode_session_actions(
         (@rabbita.none, model)
       }
     SendMoonCodeMessage(prompt) =>
-      mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
+      mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt, })
+    SendMoonCodeGuidance(message) =>
+      mooncode_send_guidance(dispatch, model, message)
     RetryMoonCodeTurn(session_id, prompt) =>
       mooncode_retry_turn(dispatch, model, session_id, prompt)
     CancelMoonCodeWork(session_id, target_command_id) =>
@@ -212,7 +347,7 @@ fn update_mooncode_session_actions(
         }
       }
     SetMoonCodeSessionQuery(query) =>
-      (@rabbita.none, { ..model, mooncode_session_query: query })
+      (@rabbita.none, { ..model, mooncode_session_query: query, })
     BeginMoonCodeSessionRename(session_id) =>
       match mooncode_session_for_management(model, session_id) {
         Some(session) =>
@@ -229,7 +364,7 @@ fn update_mooncode_session_actions(
         None => (@rabbita.none, model)
       }
     SetMoonCodeSessionTitleDraft(title) =>
-      (@rabbita.none, { ..model, mooncode_session_title_draft: title })
+      (@rabbita.none, { ..model, mooncode_session_title_draft: title, })
     CancelMoonCodeSessionRename =>
       (
         @rabbita.none,
@@ -284,7 +419,7 @@ fn mooncode_retry_turn(
   if prompt == "" {
     return (
       @rabbita.none,
-      { ..model, mooncode_composer_status: "Nothing to retry" },
+      { ..model, mooncode_composer_status: "Nothing to retry", },
     )
   }
   match mooncode_find_session(model.mooncode_sessions, session_id) {
@@ -337,12 +472,12 @@ fn mooncode_cancel_work(
           "cancel",
           target_command_id~,
         ),
-        { ..model, mooncode_composer_status: "Cancellation requested" },
+        { ..model, mooncode_composer_status: "Cancellation requested", },
       )
     Some(_) =>
       (
         @rabbita.none,
-        { ..model, mooncode_composer_status: "MoonCode is not running" },
+        { ..model, mooncode_composer_status: "MoonCode is not running", },
       )
     None =>
       (
@@ -431,8 +566,31 @@ fn mooncode_send_composer(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if model.mooncode_image_submit_pending {
+    return (@rabbita.none, model)
+  }
+  if !model.mooncode_images.is_empty() &&
+    !mooncode_selected_model_accepts_images(model) {
+    return (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_composer_status: "Choose a model that declares image input before sending",
+      },
+    )
+  }
+  if model.mooncode_guidance_pending_session_id != "" {
+    return (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_composer_status: "waiting for guidance acknowledgement",
+      },
+    )
+  }
   match mooncode_capability_submission_blocker(model.mooncode_capability) {
-    Some(problem) if model.mooncode_prompt.trim().to_owned() != "" =>
+    Some(problem) if model.mooncode_prompt.trim().to_owned() != "" ||
+      !model.mooncode_images.is_empty() =>
       return (
         @rabbita.none,
         {
@@ -444,7 +602,8 @@ fn mooncode_send_composer(
       )
     _ => ()
   }
-  if model.mooncode_prompt.trim().to_owned() == "" {
+  if model.mooncode_prompt.trim().to_owned() == "" &&
+    model.mooncode_images.is_empty() {
     (
       sync_shell_cmd(MoonCode, model.activity),
       {
@@ -483,6 +642,11 @@ fn mooncode_send_composer(
           ),
         }
         let prompt = model.mooncode_prompt.trim().to_owned()
+        let visible_prompt = if prompt == "" {
+          "[\{model.mooncode_images.length()} image attachment(s)]"
+        } else {
+          prompt
+        }
         let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
         (
           mooncode_after_user_submit_cmd(
@@ -496,10 +660,13 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: false,
             mooncode_prompt: "",
+            mooncode_image_submit_pending: !model.mooncode_images.is_empty(),
+            mooncode_image_submit_revision: model.mooncode_draft_revision,
+            mooncode_image_submit_prompt: prompt,
             mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
               model.mooncode_optimistic_rows,
               session.id,
-              prompt,
+              visible_prompt,
               client_turn_id~,
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
@@ -510,6 +677,11 @@ fn mooncode_send_composer(
       }
       None => {
         let prompt = model.mooncode_prompt.trim().to_owned()
+        let visible_prompt = if prompt == "" {
+          "[\{model.mooncode_images.length()} image attachment(s)]"
+        } else {
+          prompt
+        }
         let client_turn_id = mooncode_client_turn_id(
           model, draft_session_id, prompt,
         )
@@ -525,10 +697,13 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: true,
             mooncode_prompt: "",
+            mooncode_image_submit_pending: !model.mooncode_images.is_empty(),
+            mooncode_image_submit_revision: model.mooncode_draft_revision,
+            mooncode_image_submit_prompt: prompt,
             mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
               model.mooncode_optimistic_rows,
               draft_session_id,
-              prompt,
+              visible_prompt,
               client_turn_id~,
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
@@ -539,4 +714,44 @@ fn mooncode_send_composer(
       }
     }
   }
+}
+
+///|
+fn mooncode_send_guidance(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  message : String,
+) -> (@rabbita.Cmd, Model) {
+  let message = message.trim().to_owned()
+  if message == "" {
+    return (@rabbita.none, model)
+  }
+  guard selected_mooncode_session(model) is Some(session) &&
+    mooncode_can_guide_running_work(session) else {
+    return (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_guidance_feedback_session_id: model.selected_mooncode_session_id,
+        mooncode_guidance_feedback: "Current work ended. Your draft is still here; queue it as the next turn.",
+      },
+    )
+  }
+  if model.mooncode_guidance_pending_session_id != "" {
+    return (@rabbita.none, model)
+  }
+  match mooncode_capability_submission_blocker(model.mooncode_capability) {
+    Some(problem) =>
+      return (@rabbita.none, { ..model, mooncode_composer_status: problem, })
+    None => ()
+  }
+  (
+    send_mooncode_guidance_cmd(dispatch, model, session, message),
+    {
+      ..model,
+      mooncode_guidance_pending_session_id: session.id,
+      mooncode_guidance_feedback_session_id: session.id,
+      mooncode_guidance_feedback: "Sending guidance to current work…",
+    },
+  )
 }

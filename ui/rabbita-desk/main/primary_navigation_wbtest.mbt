@@ -70,7 +70,7 @@ test "focused Wiki keeps operational sections out of the document workspace" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let markup = @rabbita.render_to_string(
     @rabbita.static_cell(
-      render_title_bar(dispatch, { ..init_model(), workspace_mode: MoonWiki }),
+      render_title_bar(dispatch, { ..init_model(), workspace_mode: MoonWiki, }),
     ),
   )
   assert_false(markup.contains("aria-label=\"Wiki sections\""))
@@ -80,7 +80,7 @@ test "focused Wiki keeps operational sections out of the document workspace" {
 ///|
 test "primary destination selection enters typed loading states" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let selected = { ..init_model(), selected_workspace_id: "book-demo" }
+  let selected = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, requests) = update_navigation_actions(
     dispatch,
     SelectWorkspaceMode(RequestsWorkspace),

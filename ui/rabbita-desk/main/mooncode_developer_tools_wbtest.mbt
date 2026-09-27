@@ -13,6 +13,8 @@ test "MoonCode developer tools remain disclosed and identify honest execution bo
   assert_true(markup.contains("data-workspace-id=\"\""))
   assert_true(markup.contains("Developer tools"))
   assert_true(markup.contains("Terminal · Browser · Compare"))
+  assert_true(markup.contains("data-i18n=\"code.developer_tools\""))
+  assert_true(markup.contains("data-i18n=\"code.developer_tools_note\""))
   assert_true(markup.contains("data-testid=\"mooncode-developer-compare\""))
   assert_true(markup.contains("data-developer-compare-form=\"true\""))
   assert_true(

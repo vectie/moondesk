@@ -44,6 +44,8 @@ fn render_polite_state_announcement(
   test_id : String,
   title : String,
   detail : String,
+  title_i18n_key? : String = "",
+  detail_i18n_key? : String = "",
 ) -> @rabbita.Html {
   div(
     class="surface-state-announcement visually-hidden",
@@ -52,6 +54,9 @@ fn render_polite_state_announcement(
       .role("status")
       .aria_live("polite")
       .aria_atomic("true"),
-    [strong(title), p(detail)],
+    [
+      strong(attrs=@html.Attrs::build().data_set("i18n", title_i18n_key), title),
+      p(attrs=@html.Attrs::build().data_set("i18n", detail_i18n_key), detail),
+    ],
   )
 }

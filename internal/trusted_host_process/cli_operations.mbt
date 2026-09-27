@@ -125,7 +125,7 @@ fn checked_operation(
   if manifest is Some(path) && !safe_canonical_path_shape(path) {
     return Err("Lepusa manifest path is invalid")
   }
-  Ok({ args, needs_project: project, output_directory, manifest })
+  Ok({ args, needs_project: project, output_directory, manifest, })
 }
 
 ///|
@@ -446,7 +446,7 @@ async fn canonical_output_directory(
 
 ///|
 async fn fixed_environment() -> Result[Map[String, String], String] {
-  let home = @sys.get_env_var("HOME").unwrap_or("")
+  let home = @env.get_env_var("HOME").unwrap_or("")
   let home = match canonical_directory("Trusted tool HOME", home) {
     Ok(path) => path
     Err(message) => return Err(message)
@@ -493,7 +493,7 @@ async fn stream_fixed_tool_output(
 
 ///|
 async fn moon_executable() -> Result[String, String] {
-  let home = @sys.get_env_var("HOME").unwrap_or("")
+  let home = @env.get_env_var("HOME").unwrap_or("")
   let candidate = home.trim_end(chars="/").to_owned() + "/.moon/bin/moon"
   let candidate = canonical_regular_file("Moon toolchain executable", candidate)
   match candidate {

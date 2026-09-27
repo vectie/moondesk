@@ -64,7 +64,7 @@ test "Office editor renders honest live previews for every supported kind" {
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficeDocx, item),
-        draft_items: [{ ..item, bold: true }],
+        draft_items: [{ ..item, bold: true, }],
       }),
     ),
   )
@@ -72,7 +72,7 @@ test "Office editor renders honest live previews for every supported kind" {
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficeXlsx, item),
-        draft_items: [{ ..item, text: "42", formula: "SUM(A1:A6)" }],
+        draft_items: [{ ..item, text: "42", formula: "SUM(A1:A6)", }],
       }),
     ),
   )
@@ -80,7 +80,7 @@ test "Office editor renders honest live previews for every supported kind" {
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficePptx, item),
-        draft_items: [{ ..item, text: "Slide title" }],
+        draft_items: [{ ..item, text: "Slide title", }],
       }),
     ),
   )
@@ -113,7 +113,7 @@ test "Office preview renders every supported item and selected geometry" {
   }
   let initial = office_test_state(OfficePptx, first)
   let document = match initial.document {
-    Some(document) => { ..document, items: [first, second] }
+    Some(document) => { ..document, items: [first, second], }
     None => fail("office test document missing")
   }
   let markup = @rabbita.render_to_string(
@@ -294,7 +294,7 @@ test "Office conflict supports explicit reload and deliberate replacement withou
 ///|
 test "Office request identity rejects stale results after workspace rebind" {
   let opening = update_office_editor(
-    { ..init_office_editor("book-a"), path_input: "documents/a.docx" },
+    { ..init_office_editor("book-a"), path_input: "documents/a.docx", },
     OfficeOpen,
   )
   let stale = office_test_identity(opening)
@@ -349,19 +349,19 @@ test "Office item changes must be saved or discarded before selection moves" {
 ///|
 test "Office open validates authority path safety and supported file type" {
   let unbound = update_office_editor(
-    { ..init_office_editor(""), path_input: "documents/report.docx" },
+    { ..init_office_editor(""), path_input: "documents/report.docx", },
     OfficeOpen,
   )
   assert_false(unbound.loading)
   assert_true(unbound.status.contains("Select a MoonBook"))
   let unsafe_path = update_office_editor(
-    { ..init_office_editor("book"), path_input: "../report.docx" },
+    { ..init_office_editor("book"), path_input: "../report.docx", },
     OfficeOpen,
   )
   assert_false(unsafe_path.loading)
   assert_true(unsafe_path.status.contains("Unsafe Office path"))
   let unsupported = update_office_editor(
-    { ..init_office_editor("book"), path_input: "documents/report.pdf" },
+    { ..init_office_editor("book"), path_input: "documents/report.pdf", },
     OfficeOpen,
   )
   assert_false(unsupported.loading)

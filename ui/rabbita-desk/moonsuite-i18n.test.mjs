@@ -84,6 +84,22 @@ test("accessibility attributes use explicit keys without mixed-language template
   assert.match(sourceText, /data_set\("i18n-aria-label", "code\.search_sessions"\)/);
 });
 
+test("Code runtime messages use complete translations instead of matching fragments", () => {
+  const context = runtime();
+  assert.equal(
+    context.translateTextForTest("MoonClaw is not installed"),
+    "尚未安装 MoonClaw",
+  );
+  assert.equal(context.messageForTest("code.moonclaw_not_installed"), "尚未安装 MoonClaw");
+  assert.equal(context.messageForTest("code.runtime_unavailable"), "代码运行环境不可用");
+  const sourceText = fs.readFileSync(
+    new URL("main/mooncode_views.mbt", import.meta.url),
+    "utf8",
+  );
+  assert.match(sourceText, /"MoonClaw is not installed" => "code\.moonclaw_not_installed"/);
+  assert.match(sourceText, /mooncode_capability_title_i18n_key/);
+});
+
 test("system language choice uses one locale instead of a bilingual label", () => {
   assert.equal(runtime("?locale=en-US").systemLanguageLabelForTest(), "System language");
   assert.equal(runtime("?locale=zh-Hans").systemLanguageLabelForTest(), "系统语言");

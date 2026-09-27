@@ -212,9 +212,9 @@ fn update_office_editor(
       } else if state.loading || state.saving {
         state
       } else if state.workspace_id.trim() == "" {
-        { ..state, status: "Select a MoonBook before opening an Office file" }
+        { ..state, status: "Select a MoonBook before opening an Office file", }
       } else if state.path_input.trim() == "" {
-        { ..state, status: "Enter a DOCX, XLSX, or PPTX workspace path" }
+        { ..state, status: "Enter a DOCX, XLSX, or PPTX workspace path", }
       } else if source_pane_path_is_unsafe(state.path_input.trim().to_owned()) {
         {
           ..state,
@@ -223,7 +223,7 @@ fn update_office_editor(
       } else if !office_editor_path_supported(
           state.path_input.trim().to_owned(),
         ) {
-        { ..state, status: "Choose a DOCX, XLSX, or PPTX workspace file" }
+        { ..state, status: "Choose a DOCX, XLSX, or PPTX workspace file", }
       } else {
         {
           ..state,
@@ -249,7 +249,7 @@ fn update_office_editor(
               conflict_baseline: None,
               status: "Opened supported Office subset",
             }
-          Err(error) => { ..state, loading: false, status: error }
+          Err(error) => { ..state, loading: false, status: error, }
         }
       } else {
         state
@@ -272,7 +272,7 @@ fn update_office_editor(
     OfficeEditFormula(formula) =>
       office_editor_update_selected(state, item => { ..item, formula, })
     OfficeToggleBold =>
-      office_editor_update_selected(state, item => { ..item, bold: !item.bold })
+      office_editor_update_selected(state, item => { ..item, bold: !item.bold, })
     OfficeToggleItalic =>
       office_editor_update_selected(state, item => {
         ..item,
@@ -304,7 +304,7 @@ fn update_office_editor(
       }
     OfficeSave =>
       if office_editor_selected_dirty(state) && !state.saving && !state.loading {
-        { ..state, saving: true, status: "Saving Office bytes..." }
+        { ..state, saving: true, status: "Saving Office bytes...", }
       } else {
         state
       }
@@ -376,10 +376,10 @@ fn update_office_editor(
       }
     OfficeClose =>
       if office_editor_dirty(state) {
-        { ..state, status: "Save before closing this dirty Office draft" }
+        { ..state, status: "Save before closing this dirty Office draft", }
       } else {
         let next = update_office_editor(state, OfficeDispose)
-        { ..next, status: "Closed" }
+        { ..next, status: "Closed", }
       }
     OfficeRefresh =>
       if office_editor_dirty(state) {
@@ -418,7 +418,7 @@ fn update_office_editor(
       }
     OfficeReopen =>
       if office_editor_dirty(state) {
-        { ..state, status: "Save before reopening from disk" }
+        { ..state, status: "Save before reopening from disk", }
       } else if state.path == "" || state.loading || state.saving {
         state
       } else {

@@ -68,7 +68,7 @@ fn moonflow_capability_evidence_from_values(
 
 ///|
 async fn moonflow_capability_evidence() -> Json {
-  let root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  let root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
   let platform = town_platform_evidence()
   moonflow_capability_evidence_from_values(
     platform,

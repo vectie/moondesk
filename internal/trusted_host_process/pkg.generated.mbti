@@ -105,6 +105,9 @@ pub(all) enum ManagedLaunchAgent {
   MoonDesk
   MoonTown
 } derive(Eq, @debug.Debug)
+pub fn ManagedLaunchAgent::equal(Self, Self) -> Bool
+pub fn ManagedLaunchAgent::not_equal(Self, Self) -> Bool
+pub fn ManagedLaunchAgent::to_repr(Self) -> @debug.Repr
 
 pub struct ManagedMoonClawBinding {
   version : String

@@ -1,0 +1,765 @@
+.mooncode-context-bar:has(.mooncode-skill-toggle) {
+  gap: 12px;
+}
+
+.mooncode-context-bar:has(.mooncode-skill-toggle) > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.mooncode-skill-toggle {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 7px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mooncode-github-checkout-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+  font-size: 12px;
+}
+
+.mooncode-github-checkout-status p { margin: 0; }
+
+.mooncode-skill-toggle:focus-visible {
+  outline: 2px solid var(--mooncode-accent, #2563eb);
+  outline-offset: 2px;
+}
+
+.mooncode-skill-catalog {
+  flex: 0 0 auto;
+  max-height: min(36vh, 340px);
+  margin: 10px 16px 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 10px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font-size: 12px;
+}
+
+.mooncode-skill-catalog-heading,
+.mooncode-skill-catalog-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mooncode-skill-catalog-heading p,
+.mooncode-skill-catalog-item p {
+  margin: 4px 0 0;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-skill-catalog-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mooncode-skill-catalog-item {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+}
+
+.mooncode-skill-catalog-title span {
+  flex: 0 0 auto;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-skill-catalog-item code {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--mooncode-muted);
+  font-size: 10px;
+}
+
+.mooncode-center:has(.mooncode-skill-catalog),
+.mooncode-center:has(.mooncode-job-history),
+.mooncode-center:has(.mooncode-schedule-panel) {
+  display: flex;
+  flex-direction: column;
+}
+
+.mooncode-center:has(.mooncode-skill-catalog) .mooncode-chat-surface,
+.mooncode-center:has(.mooncode-job-history) .mooncode-chat-surface,
+.mooncode-center:has(.mooncode-schedule-panel) .mooncode-chat-surface {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.mooncode-schedule-panel {
+  flex: 0 0 auto;
+  max-height: min(52vh, 520px);
+  margin: 10px 16px 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 10px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font-size: 12px;
+}
+
+.mooncode-schedule-heading,
+.mooncode-schedule-row-title,
+.mooncode-schedule-actions,
+.mooncode-schedule-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.mooncode-schedule-heading { justify-content: space-between; }
+.mooncode-schedule-heading p { margin: 4px 0 0; color: var(--mooncode-muted); }
+.mooncode-schedule-list { display: grid; gap: 8px; margin: 10px 0 0; }
+.mooncode-schedule-create-shell { border-top: 1px solid var(--mooncode-line); margin-top: 10px; padding-top: 4px; }
+.mooncode-schedule-create-shell > summary { cursor: pointer; display: list-item; min-height: 36px; padding: 9px 4px; box-sizing: border-box; font-weight: 600; }
+.mooncode-schedule-create-shell > summary:focus-visible { outline: 2px solid var(--mooncode-accent, #2563eb); outline-offset: 2px; border-radius: 5px; }
+.mooncode-schedule-row { min-width: 0; padding: 10px; border: 1px solid var(--mooncode-line); border-left: 3px solid var(--mooncode-accent, #2563eb); border-radius: 8px; }
+.mooncode-schedule-row[data-status="failed"], .mooncode-schedule-row[data-status="uncertain"] { border-left-color: var(--mooncode-danger, #c2413a); }
+.mooncode-schedule-row p { margin: 7px 0; line-height: 1.45; overflow-wrap: anywhere; }
+.mooncode-schedule-status { font-weight: 600; }
+.mooncode-schedule-meta { color: var(--mooncode-muted); }
+.mooncode-schedule-actions { margin-top: 8px; }
+.mooncode-schedule-row .technical-details { margin-top: 8px; }
+.mooncode-schedule-row .technical-details code { display: block; overflow-wrap: anywhere; margin-top: 4px; }
+.mooncode-schedule-create { display: grid; grid-template-columns: minmax(140px, .45fr) minmax(240px, 1fr) minmax(130px, .32fr) auto; align-items: end; gap: 9px; padding: 4px 0 8px; }
+.mooncode-schedule-create label { display: grid; gap: 5px; min-width: 0; }
+.mooncode-schedule-create input, .mooncode-schedule-create textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--mooncode-line-strong); border-radius: 7px; background: var(--mooncode-panel); color: var(--mooncode-ink); font: inherit; }
+.mooncode-schedule-create .primary-button { min-height: 36px; }
+.mooncode-schedule-form-help { grid-column: 1 / -1; margin: 0; color: var(--mooncode-muted); line-height: 1.4; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .mooncode-schedule-create { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .mooncode-schedule-panel { margin: 8px; max-height: 58dvh; }
+  .mooncode-schedule-create { grid-template-columns: minmax(0, 1fr); }
+  .mooncode-schedule-create-shell > summary { min-height: 44px; }
+  .mooncode-schedule-create input, .mooncode-schedule-create textarea, .mooncode-schedule-create .primary-button { min-height: 44px; }
+  .mooncode-schedule-actions > button { min-height: 44px; }
+}
+
+.mooncode-git-context {
+  margin: 10px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 10px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font-size: 12px;
+}
+
+.mooncode-git-context:has(.mooncode-git-diff-panel) {
+  max-height: min(42vh, 360px);
+  overflow: auto;
+}
+
+.mooncode-git-context:has(.mooncode-github-inline-review) {
+  max-height: min(62vh, 620px);
+  overflow: auto;
+}
+
+.mooncode-center:has(.mooncode-git-context) {
+  display: flex;
+  flex-direction: column;
+}
+
+.mooncode-center:has(.mooncode-git-context) .mooncode-context-bar,
+.mooncode-center:has(.mooncode-git-context) .mooncode-git-context,
+.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors,
+.mooncode-center:has(.mooncode-git-context) .mooncode-developer-tools {
+  flex: 0 0 auto;
+}
+
+.mooncode-center:has(.mooncode-git-context) .mooncode-chat-surface {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open] {
+  max-height: min(60vh, 560px);
+  overflow: auto;
+}
+
+.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors-body {
+  max-height: min(54vh, 500px);
+}
+
+.mooncode-git-heading,
+.mooncode-git-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mooncode-git-review-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-git-review-nav span {
+  margin-right: auto;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-hunk-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-git-hunk-nav span {
+  margin-right: auto;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-heading > div,
+.mooncode-git-change-detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mooncode-git-heading span,
+.mooncode-git-change-state,
+.mooncode-git-note,
+.mooncode-git-empty {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-list {
+  max-height: 240px;
+  margin-top: 8px;
+  overflow: auto;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-git-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mooncode-git-search {
+  min-width: 160px;
+  flex: 1 1 190px;
+  padding: 6px 9px;
+  color: var(--mooncode-ink);
+  background: var(--mooncode-panel);
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 7px;
+}
+
+.mooncode-git-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mooncode-git-filter {
+  padding: 5px 8px;
+  color: var(--mooncode-muted);
+  background: transparent;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.mooncode-git-filter.active {
+  color: var(--mooncode-ink);
+  background: var(--mooncode-panel);
+  border-color: var(--mooncode-line-strong);
+}
+
+.mooncode-git-search:focus-visible,
+.mooncode-git-filter:focus-visible {
+  outline: 2px solid var(--mooncode-focus);
+  outline-offset: 2px;
+}
+
+.mooncode-git-filter-count {
+  color: var(--mooncode-muted);
+  font-size: 11px;
+}
+
+.mooncode-git-change {
+  min-height: 40px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--mooncode-line);
+}
+
+.mooncode-git-change-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-git-change-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 11px;
+}
+
+.mooncode-git-change > .mooncode-git-open:first-of-type {
+  margin-left: auto;
+}
+
+.mooncode-git-diff-panel {
+  margin-top: 10px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mooncode-github-inline-review {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+}
+
+.mooncode-github-inline-files {
+  display: flex;
+  gap: 6px;
+  max-height: 110px;
+  margin: 8px 0;
+  overflow: auto;
+}
+
+.mooncode-github-inline-files .mooncode-git-open {
+  flex: 0 0 auto;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-github-inline-files .mooncode-git-open.active {
+  border-color: var(--mooncode-ink);
+}
+
+.mooncode-github-inline-file > strong {
+  overflow-wrap: anywhere;
+}
+
+.mooncode-github-inline-review .mooncode-git-diff-lines {
+  max-height: min(28vh, 280px);
+  overflow: auto;
+}
+
+.mooncode-git-diff-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--mooncode-panel);
+}
+
+.mooncode-git-diff-heading > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mooncode-git-diff-heading strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-git-diff-heading span,
+.mooncode-git-diff-message {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-diff-message {
+  margin: 0;
+  padding: 14px 10px;
+}
+
+.mooncode-git-diff-lines {
+  overflow-x: auto;
+  border-top: 1px solid var(--mooncode-line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.mooncode-git-diff-line {
+  min-height: 1.5em;
+  padding: 0 10px;
+  white-space: pre;
+  width: max-content;
+  min-width: 100%;
+}
+
+.mooncode-git-diff-line.selected {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: -2px;
+}
+
+.mooncode-git-line-number {
+  display: inline-block;
+  width: 4.5em;
+  min-height: 1.5em;
+  margin-right: 8px;
+  padding: 0 4px;
+  border: 0;
+  color: var(--mooncode-muted);
+  background: transparent;
+  text-align: right;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.mooncode-git-line-number:hover,
+button.mooncode-git-line-number:focus-visible {
+  color: var(--mooncode-ink);
+  background: var(--mooncode-panel);
+  outline: 2px solid var(--accent, #2563eb);
+}
+
+.mooncode-git-diff-line.add {
+  background: color-mix(in srgb, #2a9d5b 14%, transparent);
+}
+
+.mooncode-git-diff-line.delete {
+  background: color-mix(in srgb, #d65b55 14%, transparent);
+}
+
+.mooncode-git-diff-line.hunk {
+  position: sticky;
+  top: 0;
+  color: var(--mooncode-ink);
+  background: var(--mooncode-panel);
+  font-weight: 700;
+}
+
+.mooncode-git-diff-line.meta {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-review-controls {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-git-review-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+
+.mooncode-git-review-status span,
+.mooncode-git-review-stale {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-review-comment {
+  margin: 4px 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--mooncode-line-strong);
+  background: var(--mooncode-panel);
+}
+
+.mooncode-git-review-comment p {
+  margin: 3px 0 0;
+  white-space: pre-wrap;
+}
+
+.mooncode-git-review-note {
+  width: 100%;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 7px;
+  color: var(--mooncode-ink);
+  background: var(--mooncode-panel);
+  font: inherit;
+  resize: vertical;
+}
+
+.mooncode-git-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mooncode-git-review-error {
+  color: var(--mooncode-danger, #b44d48);
+}
+
+.mooncode-github-context {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-github-heading,
+.mooncode-github-pull {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  align-items: baseline;
+}
+
+.mooncode-github-heading span,
+.mooncode-github-pull span {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-github-pull a {
+  color: var(--mooncode-ink);
+  overflow-wrap: anywhere;
+}
+
+.mooncode-github-pull .mooncode-github-head-state {
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mooncode-github-pull .mooncode-github-head-state.is-current {
+  color: var(--mooncode-accent);
+  background: color-mix(in srgb, var(--mooncode-accent) 10%, var(--mooncode-panel));
+}
+
+.mooncode-github-pull .mooncode-github-head-state.is-different {
+  color: #8a5200;
+  background: color-mix(in srgb, #d28a1f 12%, var(--mooncode-panel));
+}
+
+.mooncode-github-issues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  width: 100%;
+  padding-left: 8px;
+}
+
+.mooncode-github-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  width: 100%;
+  padding-left: 8px;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-github-comment-draft {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+}
+
+.mooncode-github-comment-draft > p {
+  margin: 0;
+  color: var(--mooncode-muted);
+}
+
+.mooncode-github-comment-draft textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.mooncode-git-refresh,
+.mooncode-git-open {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .mooncode-git-open,
+  .mooncode-git-refresh {
+    min-height: 44px;
+  }
+}
+
+.mooncode-git-refresh:focus-visible,
+.mooncode-git-open:focus-visible {
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 2px;
+}
+
+.mooncode-git-refresh:disabled,
+.mooncode-git-open:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mooncode-git-review-complete {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding-block: 10px 2px;
+  border-top: 1px solid var(--mooncode-line);
+  color: var(--mooncode-ink);
+  font-size: 12px;
+}
+
+.mooncode-git-review-complete span {
+  color: var(--mooncode-muted);
+}
+
+.mooncode-git-review-complete .mooncode-git-open {
+  margin-inline-start: auto;
+}
+
+@media (max-width: 720px) {
+  .mooncode-context-bar:has(.mooncode-skill-toggle) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .mooncode-context-bar:has(.mooncode-skill-toggle) > div {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0;
+  }
+
+  .mooncode-context-bar .mooncode-skill-toggle {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mooncode-skill-toggle,
+  .mooncode-skill-catalog-heading .mooncode-git-open {
+    min-height: 44px;
+  }
+
+  .mooncode-skill-catalog {
+    margin: 8px;
+  }
+
+  .code-main:has(.mooncode-git-context) {
+    grid-template-rows: clamp(180px, 24dvh, 240px) minmax(0, 1fr);
+  }
+
+  .mooncode-center:has(.mooncode-git-context) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mooncode-center:has(.mooncode-git-context) .mooncode-chat-surface {
+    flex: 0 0 auto;
+    min-height: min(520px, 62dvh);
+  }
+
+  .mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open] {
+    max-height: min(260px, 32dvh);
+  }
+
+  .mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open]:has(.mooncode-workspace-editors-body[data-coding-focus="true"]) {
+    max-height: min(680px, 68dvh);
+  }
+
+  .mooncode-git-context {
+    margin: 8px;
+  }
+
+  .mooncode-git-context:has(.mooncode-git-diff-panel) {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mooncode-git-context:has(.mooncode-github-inline-review) {
+    max-height: 62dvh;
+    overflow: auto;
+  }
+
+  .mooncode-git-change {
+    flex-wrap: wrap;
+  }
+
+  .mooncode-git-review-nav {
+    flex-wrap: wrap;
+  }
+
+  .mooncode-git-review-nav span {
+    flex-basis: 100%;
+  }
+
+  .mooncode-git-hunk-nav {
+    flex-wrap: wrap;
+  }
+
+  .mooncode-git-hunk-nav span {
+    flex-basis: 100%;
+  }
+
+  .mooncode-git-change-detail {
+    flex-basis: 100%;
+  }
+
+  .mooncode-git-diff-lines {
+    max-height: 38dvh;
+    overflow: auto;
+  }
+}

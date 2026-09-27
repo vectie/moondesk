@@ -29,10 +29,20 @@ pub(all) struct AppBinding {
   path : String
   audience : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AppBinding::equal(Self, Self) -> Bool
+pub fn AppBinding::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AppBinding::not_equal(Self, Self) -> Bool
+pub fn AppBinding::to_json(Self) -> Json
+pub fn AppBinding::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AppRegistry {
   entrypoints : Array[AppBinding]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AppRegistry::equal(Self, Self) -> Bool
+pub fn AppRegistry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AppRegistry::not_equal(Self, Self) -> Bool
+pub fn AppRegistry::to_json(Self) -> Json
+pub fn AppRegistry::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

@@ -59,7 +59,7 @@ pub async fn discover() -> Client {
       return { base_url, }
     }
   }
-  { base_url: DEFAULT_BASE_URL }
+  { base_url: DEFAULT_BASE_URL, }
 }
 
 ///|

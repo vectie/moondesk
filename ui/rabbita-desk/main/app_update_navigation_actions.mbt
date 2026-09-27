@@ -4,6 +4,9 @@ fn update_navigation_actions(
   msg : Msg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if model.git_review_saving {
+    return (@rabbita.none, model)
+  }
   match msg {
     SelectWorkspaceMode(mode) =>
       if markdown_navigation_needs_confirmation(
@@ -55,7 +58,7 @@ fn update_navigation_actions(
     NavigateDeskBack => navigate_desk_back_action(dispatch, model)
     NavigateDeskForward => navigate_desk_forward_action(dispatch, model)
     SetDeskLocationInput(path) =>
-      (@rabbita.none, { ..model, desk_location_input: path })
+      (@rabbita.none, { ..model, desk_location_input: path, })
     OpenDeskLocation =>
       open_directory_action(
         dispatch,
@@ -90,14 +93,15 @@ fn update_navigation_actions(
     CancelDiscardMarkdownNavigation =>
       (
         @rabbita.none,
-        { ..model, pending_markdown_navigation: NoPendingMarkdownNavigation },
+        { ..model, pending_markdown_navigation: NoPendingMarkdownNavigation, },
       )
     ToggleCommand =>
       (
         @rabbita.none,
-        { ..model, command_open: !model.command_open, command_query: "" },
+        { ..model, command_open: !model.command_open, command_query: "", },
       )
-    SetCommandQuery(query) => (@rabbita.none, { ..model, command_query: query })
+    SetCommandQuery(query) =>
+      (@rabbita.none, { ..model, command_query: query, })
     _ => (@rabbita.none, model)
   }
 }
@@ -115,7 +119,7 @@ fn queue_markdown_navigation(
   model : Model,
   navigation : PendingMarkdownNavigation,
 ) -> (@rabbita.Cmd, Model) {
-  (@rabbita.none, { ..model, pending_markdown_navigation: navigation })
+  (@rabbita.none, { ..model, pending_markdown_navigation: navigation, })
 }
 
 ///|
@@ -219,6 +223,16 @@ fn select_workspace_action(
   workspace_id : String,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if workspace_id != model.selected_workspace_id &&
+    model.git_review_note.trim() != "" {
+    return (
+      @rabbita.none,
+      {
+        ..model,
+        git_review_error: "Save or discard the current review note before changing MoonBooks.",
+      },
+    )
+  }
   (
     @rabbita.batch([
       reload_workspace_cmds(dispatch, workspace_id, ""),
@@ -226,10 +240,41 @@ fn select_workspace_action(
       sync_mooncode_context_cmd(workspace_id, ""),
       stop_mooncode_watch_cmd(),
       stop_wiki_chat_stream_cmd(),
+      if model.workspace_mode == MoonCode {
+        fetch_git_repository_projection_cmd(
+          dispatch,
+          workspace_id,
+          model.git_projection_generation + 1,
+        )
+      } else {
+        @rabbita.none
+      },
     ]),
     clear_markdown_editor({
       ..model,
       selected_workspace_id: workspace_id,
+      git_projection_workspace_id: workspace_id,
+      git_projection_generation: model.git_projection_generation + 1,
+      git_projection: None,
+      git_review_progress: None,
+      git_projection_loading: workspace_id != "" &&
+      model.workspace_mode == MoonCode,
+      git_projection_error: "",
+      git_change_query: "",
+      git_change_filter: "all",
+      git_diff_workspace_id: "",
+      git_diff_path: "",
+      git_diff: None,
+      git_diff_loading: false,
+      git_diff_error: "",
+      git_review: None,
+      git_review_note: "",
+      git_review_loading: false,
+      git_review_saving: false,
+      git_review_error: "",
+      github_context: None,
+      github_context_loading: false,
+      github_context_error: "",
       selected_mooncode_session_id: "",
       mooncode_watch_generation: model.mooncode_watch_generation + 1,
       mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
@@ -492,7 +537,7 @@ fn navigate_desk_back_action(
         "loading previous directory",
       )
     None =>
-      (@rabbita.none, { ..model, preview_status: "no previous directory" })
+      (@rabbita.none, { ..model, preview_status: "no previous directory", })
   }
 }
 
@@ -511,7 +556,7 @@ fn navigate_desk_forward_action(
         remaining_forward,
         "loading next directory",
       )
-    None => (@rabbita.none, { ..model, preview_status: "no next directory" })
+    None => (@rabbita.none, { ..model, preview_status: "no next directory", })
   }
 }
 
@@ -788,11 +833,18 @@ fn select_workspace_mode_action(
     sync_shell_batch(
       mode,
       activity,
-      match model.moonclaw_daemon {
-        Some(daemon) if daemon.running =>
-          fetch_mooncode_sessions_cmd(dispatch, "")
-        _ => @rabbita.none
-      },
+      @rabbita.batch([
+        match model.moonclaw_daemon {
+          Some(daemon) if daemon.running =>
+            fetch_mooncode_sessions_cmd(dispatch, "")
+          _ => @rabbita.none
+        },
+        fetch_git_repository_projection_cmd(
+          dispatch,
+          mooncode_git_workspace_id(model),
+          model.git_projection_generation + 1,
+        ),
+      ]),
     )
   } else if mode == RequestsWorkspace {
     sync_shell_batch(
@@ -845,6 +897,22 @@ fn select_workspace_mode_action(
   let next = {
     ..clear_if_switching_out_of_markdown_editor(model, mode),
     workspace_mode: mode,
+    git_projection_workspace_id: if mode == MoonCode {
+      mooncode_git_workspace_id(model)
+    } else {
+      model.git_projection_workspace_id
+    },
+    git_projection_generation: if mode == MoonCode {
+      model.git_projection_generation + 1
+    } else {
+      model.git_projection_generation
+    },
+    git_projection_loading: if mode == MoonCode &&
+      mooncode_git_workspace_id(model) != "" {
+      true
+    } else {
+      model.git_projection_loading
+    },
     activity,
     command_open: false,
     command_query: "",

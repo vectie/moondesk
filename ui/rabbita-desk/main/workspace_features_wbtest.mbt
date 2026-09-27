@@ -1,7 +1,7 @@
 ///|
 test "synthesis submits provenance paths to the general chat" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_workspace_id: "book-demo" }
+  let base = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, submitted) = update_workspace_features(
     dispatch,
     workspace_feature_msg(
@@ -22,7 +22,7 @@ test "synthesis submits provenance paths to the general chat" {
 ///|
 test "synthesis accepts pinned answer excerpts without treating them as files" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_workspace_id: "book-demo" }
+  let base = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, submitted) = update_workspace_features(
     dispatch,
     workspace_feature_msg(
@@ -43,7 +43,7 @@ test "synthesis accepts pinned answer excerpts without treating them as files" {
 ///|
 test "document conversation archive restores only visible entries and task cursor" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let base = { ..init_model(), selected_workspace_id: "book-demo" }
+  let base = { ..init_model(), selected_workspace_id: "book-demo", }
   let (_, restored) = update_workspace_features(
     dispatch,
     workspace_feature_msg(
@@ -66,8 +66,8 @@ test "workspace bridge projects transcript changes without duplicating content" 
     ..init_model(),
     selected_path: "documents/report.docx",
     wiki_chat_entries: [
-      { role: "user", content: "Check this" },
-      { role: "assistant", content: "No warning found" },
+      { role: "user", content: "Check this", },
+      { role: "assistant", content: "No warning found", },
     ],
   }
   let text = workspace_features_state_payload(model).stringify()
@@ -132,7 +132,7 @@ test "automation cards explain scope, policy, cadence, and manual run" {
 test "background results append once and reject malformed events" {
   let base = {
     ..init_model(),
-    wiki_chat_entries: [{ role: "user", content: "Watch this workbook" }],
+    wiki_chat_entries: [{ role: "user", content: "Watch this workbook", }],
   }
   let payload = "[{\"contract\":\"moondesk.document_automation_result.v1\",\"kind\":\"background_result\",\"id\":\"result-1\",\"status\":\"Completed\",\"title\":\"Workbook check complete\"},{\"contract\":\"unexpected\",\"kind\":\"background_result\",\"id\":\"bad\"}]"
   let (_, appended) = append_wiki_chat_background_results(base, payload)
@@ -153,8 +153,8 @@ test "Try another version starts a fresh general-agent conversation" {
     wiki_chat_stream_task_id: "task-original",
     wiki_chat_stream_cursor: "42",
     wiki_chat_entries: [
-      { role: "user", content: "Prepare the brief" },
-      { role: "assistant", content: "Original structure" },
+      { role: "user", content: "Prepare the brief", },
+      { role: "assistant", content: "Original structure", },
     ],
   }
   let (_, next) = update_workspace_features(

@@ -74,9 +74,9 @@ fn managed_runtime_root_from_values(
 ///|
 fn managed_runtime_root() -> Result[String, String] {
   managed_runtime_root_from_values(
-    @sys.get_env_var("MOONDESK_RUNTIME_ROOT").unwrap_or(""),
-    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
-    @sys.get_env_var("HOME").unwrap_or(""),
+    @env.get_env_var("MOONDESK_RUNTIME_ROOT").unwrap_or(""),
+    @env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    @env.get_env_var("HOME").unwrap_or(""),
   )
 }
 
@@ -91,6 +91,8 @@ fn moonclaw_daemon_environment_from_values(
   lunanexa_issuer : String,
   moongate_control_token : String,
   allow_public_http? : Bool = false,
+  app_data_root? : String = "",
+  private_control_config? : String = "",
 ) -> Map[String, String] {
   let environment : Map[String, String] = {
     "HOME": home,
@@ -116,6 +118,12 @@ fn moonclaw_daemon_environment_from_values(
   if allow_public_http {
     environment["MOONDESK_LUNANEXA_HTTP_ALLOWED"] = "true"
   }
+  if app_data_root != "" && safe_daemon_path(app_data_root) {
+    environment["LEPUSA_APP_DATA_DIR"] = app_data_root
+  }
+  if private_control_config != "" && safe_daemon_path(private_control_config) {
+    environment["MOONDESK_EXECUTION_SANDBOX_CONFIG"] = private_control_config
+  }
   environment
 }
 
@@ -123,12 +131,16 @@ fn moonclaw_daemon_environment_from_values(
 fn moonclaw_daemon_environment(home : String) -> Map[String, String] {
   moonclaw_daemon_environment_from_values(
     home,
-    @sys.get_env_var("MOONDESK_LUNANEXA_ISSUER").unwrap_or(""),
-    @sys.get_env_var("MOONGATE_CONTROL_TOKEN").unwrap_or(""),
-    allow_public_http=@sys.get_env_var("MOONDESK_LUNANEXA_HTTP_ALLOWED").unwrap_or(
+    @env.get_env_var("MOONDESK_LUNANEXA_ISSUER").unwrap_or(""),
+    @env.get_env_var("MOONGATE_CONTROL_TOKEN").unwrap_or(""),
+    allow_public_http=@env.get_env_var("MOONDESK_LUNANEXA_HTTP_ALLOWED").unwrap_or(
         "",
       ) ==
       "true",
+    app_data_root=@env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    private_control_config=@env.get_env_var("MOONDESK_EXECUTION_SANDBOX_CONFIG").unwrap_or(
+      "",
+    ),
   )
 }
 
@@ -231,7 +243,7 @@ pub async fn start_managed_moonclaw_daemon(
     Ok(path) => path
     Err(message) => return Err(message)
   }
-  let home = @sys.get_env_var("HOME").unwrap_or("")
+  let home = @env.get_env_var("HOME").unwrap_or("")
   let home = match canonical_managed_directory("home", home) {
     Ok(path) => path
     Err(message) => return Err(message)

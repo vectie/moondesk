@@ -21,6 +21,20 @@ fn mooncode_sessions_state_title(state : SurfaceState) -> String {
 }
 
 ///|
+fn mooncode_sessions_state_title_i18n_key(state : SurfaceState) -> String {
+  match state {
+    FirstUseEmpty => "code.history_not_loaded"
+    LegitimateZero => "code.history_empty"
+    Loading => "code.history_loading"
+    Stale => "code.history_stale"
+    Disconnected => "code.history_offline"
+    CapabilityLimited => "code.history_unavailable"
+    RecoverableError => "code.history_load_failed"
+    TerminalError => "code.history_terminal"
+  }
+}
+
+///|
 fn mooncode_sessions_state_detail(
   state : SurfaceState,
   has_sessions : Bool,
@@ -42,6 +56,28 @@ fn mooncode_sessions_state_detail(
       "The current runtime contract cannot provide a chat listing."
     RecoverableError => "Retry without leaving Code."
     TerminalError => "Return Home and choose another action."
+  }
+}
+
+///|
+fn mooncode_sessions_state_detail_i18n_key(
+  state : SurfaceState,
+  has_sessions : Bool,
+) -> String {
+  match state {
+    FirstUseEmpty => "code.history_not_loaded_detail"
+    LegitimateZero => "code.history_empty_detail"
+    Loading =>
+      if has_sessions {
+        "code.history_refreshing_detail"
+      } else {
+        "code.history_loading_detail"
+      }
+    Stale => "code.history_stale_detail"
+    Disconnected => "code.history_offline_detail"
+    CapabilityLimited => "code.history_unavailable_detail"
+    RecoverableError => "code.history_load_failed_detail"
+    TerminalError => "code.history_terminal_detail"
   }
 }
 

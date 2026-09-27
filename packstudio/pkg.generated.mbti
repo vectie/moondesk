@@ -33,16 +33,31 @@ pub(all) struct PackBridgeAdoptionRequest {
   intake_operation_id : String
   output_schema_id : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackBridgeAdoptionRequest::equal(Self, Self) -> Bool
+pub fn PackBridgeAdoptionRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackBridgeAdoptionRequest::not_equal(Self, Self) -> Bool
+pub fn PackBridgeAdoptionRequest::to_json(Self) -> Json
+pub fn PackBridgeAdoptionRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PackIdentityRequest {
   pack_id : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackIdentityRequest::equal(Self, Self) -> Bool
+pub fn PackIdentityRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackIdentityRequest::not_equal(Self, Self) -> Bool
+pub fn PackIdentityRequest::to_json(Self) -> Json
+pub fn PackIdentityRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PackInstallRequest {
   source_root : String
   granted_authorities : Array[@pack.AuthorityClass]
   runtime_extensions : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackInstallRequest::equal(Self, Self) -> Bool
+pub fn PackInstallRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackInstallRequest::not_equal(Self, Self) -> Bool
+pub fn PackInstallRequest::to_json(Self) -> Json
+pub fn PackInstallRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PackScaffoldRequest {
   parent_root : String
@@ -52,6 +67,11 @@ pub(all) struct PackScaffoldRequest {
   intake_operation_id : String
   output_schema_id : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackScaffoldRequest::equal(Self, Self) -> Bool
+pub fn PackScaffoldRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackScaffoldRequest::not_equal(Self, Self) -> Bool
+pub fn PackScaffoldRequest::to_json(Self) -> Json
+pub fn PackScaffoldRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PackStudioInspection {
   source_root : String
@@ -67,11 +87,21 @@ pub(all) struct PackStudioInspection {
   authorities : Array[String]
   issues : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackStudioInspection::equal(Self, Self) -> Bool
+pub fn PackStudioInspection::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackStudioInspection::not_equal(Self, Self) -> Bool
+pub fn PackStudioInspection::to_json(Self) -> Json
+pub fn PackStudioInspection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PackVersionRequest {
   pack_id : String
   version : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PackVersionRequest::equal(Self, Self) -> Bool
+pub fn PackVersionRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PackVersionRequest::not_equal(Self, Self) -> Bool
+pub fn PackVersionRequest::to_json(Self) -> Json
+pub fn PackVersionRequest::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

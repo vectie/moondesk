@@ -7,7 +7,7 @@ pub fn workspace(
   status? : WorkspaceStatus = Ready,
   last_seen_at? : String? = None,
 ) -> DeskWorkspace {
-  { id, name, root_path, kind, status, last_seen_at }
+  { id, name, root_path, kind, status, last_seen_at, }
 }
 
 ///|
@@ -106,7 +106,7 @@ pub fn run_artifact(
   title? : String = display_name(path),
   kind? : EntryKind = infer_entry_kind(path),
 ) -> DeskRunArtifact {
-  { id, path, title, kind }
+  { id, path, title, kind, }
 }
 
 ///|

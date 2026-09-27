@@ -67,7 +67,7 @@ test "Flow explains governed readiness and acceptance" {
 
 ///|
 test "Flow exposes failure reasons instead of a status-only dead end" {
-  let blocked = { ..flow_test_item("blocked"), blocker: "source missing" }
+  let blocked = { ..flow_test_item("blocked"), blocker: "source missing", }
   assert_eq(moonflow_item_explanation(blocked), "source missing")
   let failed = {
     ..flow_test_item("failed"),
@@ -102,7 +102,7 @@ test "Flow first-run action requires a selected MoonBook" {
   let (_, selected) = update_workspace_surface_actions(
     code_mode_test_dispatch,
     PrepareMoonFlow,
-    { ..init_model(), selected_workspace_id: "book-demo" },
+    { ..init_model(), selected_workspace_id: "book-demo", },
   )
   assert_true(selected.moonflow_status.contains("up to 30 seconds"))
 }

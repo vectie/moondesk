@@ -9,6 +9,21 @@ test "bundle defaults to lepusa native shell" {
 }
 
 ///|
+test "sidecar artifact follows the MoonBit workspace output layout" {
+  let repo_root = "/repo/moondesk"
+  assert_eq(
+    moondesk_sidecar_build_output(repo_root),
+    @pathx.join(repo_root, "_build/native/release/build/cmd/main/main.exe"),
+  )
+  assert_eq(
+    moondesk_sidecar_build_output(repo_root, workspace_build=true),
+    @pathx.join(
+      repo_root, "_build/native/release/build/vectie/moondesk/cmd/main/main.exe",
+    ),
+  )
+}
+
+///|
 test "bundle parser rejects stale shell flags" {
   assert_true(parse_bundle_args(["--shell", "lepusa"]) is None)
   assert_true(parse_bundle_args(["--shell", "browser"]) is None)

@@ -3,6 +3,7 @@ struct MoonCodeTranscriptRow {
   item_id : String
   role : String
   content : String
+  content_parts : Array[Json]
   status : String
   command_id : String
   client_turn_id : String
@@ -31,7 +32,9 @@ fn render_mooncode_transcript(
     for item in items {
       match item.message {
         Some(row) =>
-          children.push(render_mooncode_transcript_row(dispatch, model, row))
+          children.push(
+            render_mooncode_transcript_row(dispatch, model, session.id, row),
+          )
         None =>
           match item.activity {
             Some(row) =>
@@ -85,20 +88,21 @@ fn mooncode_transcript_items(
 fn mooncode_transcript_message_item(
   row : MoonCodeTranscriptRow,
 ) -> MoonCodeTranscriptItem {
-  { message: Some(row), activity: None }
+  { message: Some(row), activity: None, }
 }
 
 ///|
 fn mooncode_transcript_activity_item(
   row : MoonCodeActivityRow,
 ) -> MoonCodeTranscriptItem {
-  { message: None, activity: Some(row) }
+  { message: None, activity: Some(row), }
 }
 
 ///|
 fn render_mooncode_transcript_row(
   dispatch : Dispatch[Msg],
   model : Model,
+  session_id : String,
   row : MoonCodeTranscriptRow,
 ) -> @rabbita.Html {
   let message_id = if row.item_id == "" {
@@ -114,6 +118,12 @@ fn render_mooncode_transcript_row(
         model.mooncode_copied_item_id,
         row.content,
       ),
+    )
+  } else if row.role == "user" && !row.content_parts.is_empty() {
+    render_mooncode_ordered_user_content(
+      session_id,
+      row.command_id,
+      row.content_parts,
     )
   } else {
     pre(class="mooncode-message-body", row.content)
@@ -140,6 +150,22 @@ fn render_mooncode_transcript_row(
                   "Copy answer"
                 },
               )
+              .data_set(
+                "i18n-aria-label",
+                if model.mooncode_copied_item_id == message_id {
+                  "code.copied_answer_aria"
+                } else {
+                  "code.copy_answer_aria"
+                },
+              )
+              .data_set(
+                "i18n",
+                if model.mooncode_copied_item_id == message_id {
+                  "code.copied_answer"
+                } else {
+                  "code.copy_answer"
+                },
+              )
               .data_set("testid", "mooncode-copy-answer"),
             on_click=dispatch(CopyMoonCodeText(message_id, row.content)),
             if model.mooncode_copied_item_id == message_id {
@@ -152,7 +178,9 @@ fn render_mooncode_transcript_row(
             class="mooncode-inline-action",
             attrs=@html.Attrs::build()
               .data_set("mooncode-compare-from", "true")
-              .aria_label("Try another implementation approach from here"),
+              .aria_label("Try another implementation approach from here")
+              .data_set("i18n-aria-label", "code.try_another_approach_aria")
+              .data_set("i18n", "code.try_another_approach"),
             "Try another approach",
           ),
         ])
@@ -161,6 +189,86 @@ fn render_mooncode_transcript_row(
       },
     ],
   )
+}
+
+///|
+fn mooncode_transcript_part_string(part : Json, key : String) -> String {
+  match part {
+    Object(fields) =>
+      match fields.get(key) {
+        Some(String(value)) => value
+        _ => ""
+      }
+    _ => ""
+  }
+}
+
+///|
+fn render_mooncode_ordered_user_content(
+  session_id : String,
+  command_id : String,
+  parts : Array[Json],
+) -> @rabbita.Html {
+  let children : Array[@rabbita.Html] = []
+  for part in parts {
+    match mooncode_transcript_part_string(part, "type") {
+      "text" =>
+        children.push(
+          pre(
+            class="mooncode-message-text-part",
+            mooncode_transcript_part_string(part, "text"),
+          ),
+        )
+      "image" => {
+        let media_type = mooncode_transcript_part_string(part, "media_type")
+        let index = match part {
+          Object(fields) =>
+            match fields.get("image_index") {
+              Some(Number(value, ..)) => value.to_int()
+              _ => -1
+            }
+          _ => -1
+        }
+        let name = mooncode_transcript_part_string(part, "name")
+        if ["image/png", "image/jpeg", "image/webp"].contains(media_type) &&
+          mooncode_media_path_safe(session_id) &&
+          mooncode_media_path_safe(command_id) &&
+          index >= 0 &&
+          index < 12 {
+          children.push(
+            img(
+              src="/api/mooncode/sessions/\{session_id}/media/\{command_id}/\{index}",
+              alt=if name == "" { "Attached image" } else { name },
+              attrs=@html.Attrs::build().data_set(
+                "testid", "mooncode-user-image",
+              ),
+            ),
+          )
+        }
+      }
+      _ => ()
+    }
+  }
+  div(class="mooncode-message-body mooncode-ordered-content", children)
+}
+
+///|
+fn mooncode_media_path_safe(value : String) -> Bool {
+  if value == "" || value.length() > 160 {
+    return false
+  }
+  for ch in value {
+    if !((ch >= 'a' && ch <= 'z') ||
+      (ch >= 'A' && ch <= 'Z') ||
+      (ch >= '0' && ch <= '9') ||
+      ch == '-' ||
+      ch == '_' ||
+      ch == '.' ||
+      ch == '~') {
+      return false
+    }
+  }
+  true
 }
 
 ///|

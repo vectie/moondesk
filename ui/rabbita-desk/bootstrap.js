@@ -4,6 +4,7 @@ import '/styles/mooncode-workflow.css'
 import '/styles/mooncode-tool-transcript.css'
 import '/styles/mooncode.css'
 import '/styles/mooncode-controls.css'
+import '/styles/mooncode-git.css'
 import '/styles/mooncode-developer-tools.css'
 import '/styles/moondesk-ux.css'
 import {

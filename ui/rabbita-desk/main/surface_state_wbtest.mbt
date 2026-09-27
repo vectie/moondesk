@@ -289,7 +289,7 @@ test "Review transitions distinguish loading zero ready stale and failure" {
   let (_, failed) = update_town_results(
     dispatch,
     LoadedReviewItems(Err("review unavailable")),
-    { ..loading, review_items: [] },
+    { ..loading, review_items: [], },
   )
   assert_true(failed.review_state is Some(RecoverableError))
   assert_eq(failed.review_items.length(), 0)

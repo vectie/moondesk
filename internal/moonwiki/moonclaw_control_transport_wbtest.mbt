@@ -69,7 +69,7 @@ test "MoonClaw control config fails closed when missing or malformed" {
 ///|
 async test "MoonClaw control transport authenticates a fake localhost service" {
   let workspace_root = @pathx.join(
-    @sys.get_env_var("TMPDIR").unwrap_or("/tmp"),
+    @env.get_env_var("TMPDIR").unwrap_or("/tmp"),
     "moondesk-control-transport-" + @async.now().to_string(),
   )
   @fsx.make_directory(workspace_root, recursive=true, exists_ok=true)

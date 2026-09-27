@@ -64,7 +64,7 @@ test "preview request identity rejects stale path and same-path generations" {
   let (_, next_loading) = update_workspace_results(
     dispatch,
     RequestPreview("book-demo", next_path),
-    { ..current, selected_path: next_path },
+    { ..current, selected_path: next_path, },
   )
   assert_true(next_loading.preview is None)
   assert_true(next_loading.preview_state is Some(Loading))

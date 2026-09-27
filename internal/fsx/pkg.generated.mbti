@@ -37,6 +37,9 @@ pub(all) enum ConfinedBytesWriteResult {
   InvalidBytesTarget
   BytesWriteFailed
 } derive(Eq, @debug.Debug)
+pub fn ConfinedBytesWriteResult::equal(Self, Self) -> Bool
+pub fn ConfinedBytesWriteResult::not_equal(Self, Self) -> Bool
+pub fn ConfinedBytesWriteResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ConfinedWriteResult {
   Saved
@@ -45,6 +48,9 @@ pub(all) enum ConfinedWriteResult {
   UnsupportedText
   WriteFailed
 } derive(Eq, @debug.Debug)
+pub fn ConfinedWriteResult::equal(Self, Self) -> Bool
+pub fn ConfinedWriteResult::not_equal(Self, Self) -> Bool
+pub fn ConfinedWriteResult::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

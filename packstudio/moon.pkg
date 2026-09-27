@@ -1,5 +1,6 @@
 import {
   "moonbitlang/async/fs",
+  "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/json",
   "moonbitlang/x/fs" @sync_fs,

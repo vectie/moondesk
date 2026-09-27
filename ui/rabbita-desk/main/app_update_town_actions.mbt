@@ -8,7 +8,7 @@ fn update_town_actions(
     SetRequestPrompt(prompt) =>
       (
         @rabbita.none,
-        { ..model, request_prompt: prompt, request_status: "draft" },
+        { ..model, request_prompt: prompt, request_status: "draft", },
       )
     RemoveRequestMaterial(path) =>
       (
@@ -24,11 +24,11 @@ fn update_town_actions(
       )
     SubmitRequest =>
       if model.selected_workspace_id == "" {
-        (@rabbita.none, { ..model, request_status: "select a book first" })
+        (@rabbita.none, { ..model, request_status: "select a book first", })
       } else if model.request_prompt.trim().is_empty() {
         (
           @rabbita.none,
-          { ..model, request_status: "describe what this book should build" },
+          { ..model, request_status: "describe what this book should build", },
         )
       } else {
         (

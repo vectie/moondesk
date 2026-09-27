@@ -40,7 +40,7 @@ fn approval_conversation(state : String) -> Json {
 ///|
 test "approval evidence decodes retained aggregate variants" {
   for state in ["pending", "approved", "rejected"] {
-    guard decode_mooncode_conversation(approval_conversation(state))
+    guard @core.decode_mooncode_conversation(approval_conversation(state))
       is Ok(conversation) else {
       fail("approval evidence must decode")
     }
@@ -58,7 +58,7 @@ test "approval evidence decodes retained aggregate variants" {
 ///|
 test "approval decoder rejects unsupported state" {
   assert_true(
-    decode_mooncode_conversation(approval_conversation("expired"))
+    @core.decode_mooncode_conversation(approval_conversation("expired"))
     is Err(Malformed("unsupported approval state: expired")),
   )
 }

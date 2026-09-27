@@ -29,7 +29,7 @@ async fn find_run(workspace_root : String, run_id : String) -> RunRef? {
     let run_root = moonclaw_jobs_root(workspace.root_path)
     let candidate = @pathx.join(run_root, run_id)
     if is_directory(candidate) {
-      return Some({ workspace_id: workspace.id, run_id, run_root: candidate })
+      return Some({ workspace_id: workspace.id, run_id, run_root: candidate, })
     }
   }
   None

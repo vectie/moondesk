@@ -749,7 +749,7 @@ fn supervisor_bridge_execution_dispatch(
     }
     None => payload
   }
-  Ok({ endpoint, request_digest, body })
+  Ok({ endpoint, request_digest, body, })
 }
 
 ///|

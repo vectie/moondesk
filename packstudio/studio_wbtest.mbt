@@ -33,7 +33,7 @@ async test "Pack Studio scaffolds validates installs and deactivates a bridge pa
   assert_eq(receipt.pack_id, "mobility-pack")
   let installed = inspect_pack_source(created.source_root, workspace)
   assert_true(installed.active)
-  assert_true(deactivate_pack({ pack_id: "mobility-pack" }, workspace))
+  assert_true(deactivate_pack({ pack_id: "mobility-pack", }, workspace))
   @fs.rmdir(parent, recursive=true)
   @fs.rmdir(workspace, recursive=true)
 }

@@ -26,7 +26,7 @@ test "MoonCode markdown exposes a route-runtime source boundary" {
 ///|
 test "MoonCode markdown accepts every streaming prefix without parsing" {
   let answer = "Result:\n\n- first\n- second\n\n```moonbit\nfn main() {}\n```"
-  let buffer = StringBuilder::new()
+  let buffer = StringBuilder()
   for char in answer {
     buffer.write_char(char)
     let nodes = mooncode_markdown_nodes(

@@ -223,9 +223,12 @@ function workspaceEditorSplitBounds(body) {
   }
 }
 
-function setWorkspaceEditorSplit(body, sourceWidth) {
+let workspaceEditorSplitRatio = null
+
+function setWorkspaceEditorSplit(body, sourceWidth, remember = false) {
   const { rect, minimum, maximum } = workspaceEditorSplitBounds(body)
   const width = Math.min(maximum, Math.max(minimum, sourceWidth))
+  if (remember && rect.width > 0) workspaceEditorSplitRatio = width / rect.width
   body.style.setProperty('--workspace-editor-source-width', `${Math.round(width)}px`)
   const handle = body.querySelector('[data-action="resize-workspace-editors"]')
   if (handle instanceof HTMLElement && rect.width > 0) {
@@ -240,13 +243,12 @@ function syncWorkspaceEditorSplitter() {
     const handle = body.querySelector('[data-action="resize-workspace-editors"]')
     const source = body.querySelector('.source-editor')
     if (!(handle instanceof HTMLElement) || !(source instanceof HTMLElement)) continue
-    const storedWidth = Number.parseFloat(
-      body.style.getPropertyValue('--workspace-editor-source-width')
-    )
-    const width = Number.isFinite(storedWidth)
-      ? storedWidth
-      : source.getBoundingClientRect().width
-    if (width > 0) setWorkspaceEditorSplit(body, width)
+    const width = body.getBoundingClientRect().width
+    if (width > 0) {
+      const ratio = workspaceEditorSplitRatio ??
+        (body.dataset.codingFocus === 'true' ? 0.64 : 0.5)
+      setWorkspaceEditorSplit(body, width * ratio)
+    }
   }
 }
 
@@ -369,6 +371,15 @@ function indentSourceEditorSelection(editor, unindent) {
 
 function installWorkspaceEditorInteractions() {
   document.addEventListener('click', event => {
+    const openSource = event.target instanceof Element
+      ? event.target.closest('[data-action="git-open-source"]')
+      : null
+    if (openSource instanceof HTMLElement) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.querySelector('[data-testid="source-editor"]')?.scrollIntoView({ block: 'start' })
+      }))
+      return
+    }
     const action = event.target instanceof Element
       ? event.target.closest('[data-action^="source-find-"]')
       : null
@@ -416,7 +427,7 @@ function installWorkspaceEditorInteractions() {
     handle.classList.add('is-dragging')
 
     const move = moveEvent => {
-      setWorkspaceEditorSplit(body, moveEvent.clientX - bounds.rect.left)
+      setWorkspaceEditorSplit(body, moveEvent.clientX - bounds.rect.left, true)
     }
     const finish = () => {
       window.removeEventListener('pointermove', move)
@@ -444,7 +455,7 @@ function installWorkspaceEditorInteractions() {
       const direction = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0
       if (direction !== 0) {
         event.preventDefault()
-        setWorkspaceEditorSplit(body, current + direction * (event.shiftKey ? 64 : 24))
+        setWorkspaceEditorSplit(body, current + direction * (event.shiftKey ? 64 : 24), true)
       }
       return
     }
@@ -583,6 +594,8 @@ mooncodeScrollTranscriptToBottom()
 new MutationObserver(syncWorkspaceEditorSplitter).observe(app || document.body, {
   childList: true,
   subtree: true,
+  attributes: true,
+  attributeFilter: ['data-coding-focus'],
 })
 window.addEventListener('resize', syncWorkspaceEditorSplitter, { passive: true })
 syncWorkspaceEditorSplitter()

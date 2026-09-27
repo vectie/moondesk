@@ -15,7 +15,7 @@ change the decision are in
 The distribution implementation and external proof boundaries are in
 [`PHASE9_NATIVE_DISTRIBUTION_REPORT.md`](PHASE9_NATIVE_DISTRIBUTION_REPORT.md).
 
-The latest full local validation completed every functional stage before its
+The last recorded full Phase 9 local validation completed every functional stage before its
 clean-tree assertion: 338 native tests, 501 UI tests, 6 localization tests, 8
 release-verifier tests, the Phase 9 non-credentialed smoke, the production
 build, generated-interface verification, and whitespace checks passed. The
@@ -25,6 +25,118 @@ not claimed.
 No current hosted-CI, Developer ID, notarization, Gatekeeper, hosted update,
 clean-machine, lifecycle, rollback, removal, or 24-hour soak result is inferred
 from local checks.
+
+## Coding workflow checkpoint (2026-09-26)
+
+The current OpenSeek comparison and phase-by-phase implementation record are
+[`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
+[`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md).
+The MoonDesk–MoonTown schedule create/read/pause/resume path passed a connected
+disposable-MoonBook check. A Chinese browser check also verified a duplicate-ID
+conflict gives a specific message without losing the form draft. The source
+editor, local/PR review, durable media, job and skill evidence, and scheduled
+work have local implementation and validation described in that plan.
+After the temporary native QA workspace was removed, `moon info`, `moon fmt`,
+and the MoonDesk native command check passed against the ordinary dependency
+graph; `moon info` still reported 270 warnings. The latest full MoonDesk native
+test command, nested Code UI test command, seven localization checks, and three
+production bundle checks all exited successfully. The focused MoonClaw native
+daemon regression also passed.
+
+This checkpoint does not change the **Not ready** decision. The rebuilt
+MoonClaw daemon now serves the disposable MoonBook fixture. Its exact child
+MoonBook session listing, Code conversation link, skill catalog, failed-job
+history, and byte-free conversation export passed connected checks. The focused
+native daemon regression for child-MoonBook listing and guarded deletion passed.
+Real MoonFort navigation and executor-backed scheduled execution, native PR
+composer QA, connected phone-width schedule execution with a configured
+model, and the external release evidence above still require proof.
+The unsigned preview packaging check also exposed a current dependency issue:
+published `vectie/lepusa@0.1.6` resolves `moonbitlang/x@0.4.45`, whose path
+regex syntax fails under the installed MoonBit 2026-09-20 compiler. The
+preview helper now accepts an explicit local Lepusa checkout, restores the
+ordinary workspace after packaging, and rejects a version that would fail the
+preview-channel contract. With that checkout, the full unsigned
+`0.0.0-preview.4` preview package, five-file checksum verification, release
+identity, and non-hosted channel metadata passed. The packaged sidecar matches
+the workspace build byte for byte, and its Code entry matches the checked-in
+production bundle. Its schedule route returns an actionable 503 when MoonTown
+is not configured, rather than the stale package's 404. The exact
+`0.0.0-preview.4` app's Code setup and schedule form were inspected in its native
+window at desktop and a measured 392 × 854. The schedule panel shows the
+localized MoonTown setup action instead of remaining on Loading after the 503;
+Refresh repeats that actionable state. Its message, fields, and disabled submit
+control remain readable and reachable without horizontal overflow. Native
+keyboard QA moved through schedule ID, task, and cadence, then skipped the
+disabled submit. The latest Code bundle's Chinese answer controls, copied
+feedback, and failed-work status passed connected browser accessibility checks.
+The managed MoonClaw launcher now retains the private path-only control
+binding across a daemon restart; the rebuilt fixture returned ready Code
+status and its image-capable model catalog. The native adapter now sends
+validated images once in the canonical command field. Mixed text/image and
+image-only turns completed against a disposable loopback model, each with one
+image in the model request. Authenticated media replay matched the submitted
+PNG byte for byte, including after daemon restart. Code paste/drop images
+stay out of workspace import. Native QA on the unlocked Mac found that the
+programmatically clicked hidden file input did not open a picker. The composer
+now contains a directly clickable file input. A missing top-level Code message
+route had also silently discarded image intake; its regression test now covers
+attachment and removal through the same handler used by the app. In the
+connected browser, file selection, preview, removal, same-file reattachment,
+image-only submit to the disposable loopback model, and canonical image and
+answer replay after reload all passed. Enter opens the picker from the focused
+file input, and Tab moves from attachment to submit. On the unlocked Mac,
+the isolated `0.0.0-preview.12` app opened the native Open panel from Code,
+accepted the synthetic PNG, displayed its preview and name in the composer,
+and removed it through the visible control. A real provider has not been
+exercised. A disposable MoonTown owner tick dispatched one scheduled Code turn through the
+private MoonClaw control, the loopback model completed it, and a later tick
+reconciled the schedule to done. The schedule is paused and its journal has
+exactly one command. After a managed MoonClaw restart, the same scheduled
+session reopened as done and still had one journaled command. Code's Chinese
+browser UI opened the same scheduled conversation and displayed its completed
+Work and answer. A fresh unsigned `0.0.0-preview.6` package includes the final
+adapter fix and passed five-file checksums, release identity, and
+non-hosted preview verification. The unsigned `0.0.0-preview.7` package
+additionally labels completed and stopped Code sessions explicitly; the
+rebuilt Chinese browser UI displayed 已完成 for the scheduled session. The
+unsigned `0.0.0-preview.8` package passed its five-file checksums, release
+identity, and preview channel; native QA exposed the image-picker defect. The
+unsigned `0.0.0-preview.9` package contains the direct file input but predates
+the message-route fix. The `0.0.0-preview.11` package includes that fix and a
+two-column Code action layout at 390 px. The browser check
+showed no header collision, no horizontal overflow in the composer, and
+reachable transcript and attachment controls. The local Lepusa macOS runtime
+now installs a WKWebView UI delegate that presents an app-owned file panel;
+[Apple's WebKit documentation](https://developer.apple.com/documentation/webkit/wkuidelegate/webview%28_%3Arunopenpanelwith%3Ainitiatedbyframe%3Acompletionhandler%3A%29)
+states that macOS file uploads are disabled without this callback. The
+unsigned `0.0.0-preview.12` package includes this host change and passed
+five-file checksums, release identity, and preview-channel verification.
+Native picker and attachment acceptance passed on the isolated `.12` app;
+the real-provider image turn remains pending.
+Disposable GitHub PR [#5](https://github.com/vectie/moondesk/pull/5) verified
+the connected Code publication path. A saved conversation draft survived page
+reload and published as [comment #5851317380](https://github.com/vectie/moondesk/pull/5#issuecomment-5851317380).
+An exact right-side line 4 review published as
+[discussion #4113537062](https://github.com/vectie/moondesk/pull/5#discussion_r4113537062).
+After the PR head advanced, the server refused a stale line draft, MoonDesk
+retained the text, and a reload showed the saved draft without a post action.
+The stale-request status and rejection decoding were corrected and passed the
+Code UI tests. The QA PR was closed and its remote branch removed. Native PR
+composer QA remains open.
+The latest unsigned `0.0.0-preview.13` package contains the PR failure-status
+and rejection-message fixes. Its five-file checksums, release identity,
+non-hosted preview channel, and packaged UI asset match passed. It was built
+from the current uncommitted working tree; the identity's source commit alone
+does not represent these changes.
+The current source tree now passes the strict MoonBit warning gate at 0/0
+warnings for native and Code UI JavaScript targets. Deprecated environment,
+string-builder, and byte-view calls were updated; derived trait methods are
+explicitly extended, and test-only experimental rendering is scoped at each
+affected test. This is local warning evidence on an uncommitted tree, not
+hosted CI evidence for a release commit.
+The local checkout path is not a clean-checkout dependency fix or signing,
+notarization, and clean-machine evidence.
 
 ## Evidence policy and navigation contract
 

@@ -75,6 +75,11 @@ pub fn desktop_status_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_skills_endpoint() -> String {
+  "/api/mooncode/skills/<workspace-id>"
+}
+
+///|
 pub fn desktop_sessions_endpoint() -> String {
   "/api/mooncode/sessions"
 }
@@ -109,6 +114,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
   [
     desktop_route_contract(desktop_status_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_capabilities_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_skills_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_sessions_endpoint(), ["GET", "HEAD", "POST"]),
     desktop_route_contract(desktop_session_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_watch_endpoint(), ["GET", "HEAD"]),
@@ -185,22 +191,38 @@ pub fn moonclaw_native_turn_endpoint(session_id : String) -> String {
 }
 
 ///|
-pub fn moonclaw_native_session_listing_endpoint(book_root : String) -> String {
-  adapter_native_endpoint(["v1", "code", "sessions"], query=[
+pub fn moonclaw_native_session_listing_endpoint(
+  book_root : String,
+  include_books? : Bool = false,
+) -> String {
+  let query = [("book_root", book_root), ("format", "listing")]
+  if include_books {
+    query.push(("include_books", "true"))
+  }
+  adapter_native_endpoint(["v1", "code", "sessions"], query~)
+}
+
+///|
+pub fn moonclaw_native_skills_endpoint(book_root : String) -> String {
+  adapter_native_endpoint(["v1", "code", "skills"], query=[
     ("book_root", book_root),
-    ("format", "listing"),
   ])
 }
 
 ///|
 pub fn moonclaw_native_archived_session_listing_endpoint(
   book_root : String,
+  include_books? : Bool = false,
 ) -> String {
-  adapter_native_endpoint(["v1", "code", "sessions"], query=[
+  let query = [
     ("book_root", book_root),
     ("format", "listing"),
     ("scope", "archived"),
-  ])
+  ]
+  if include_books {
+    query.push(("include_books", "true"))
+  }
+  adapter_native_endpoint(["v1", "code", "sessions"], query~)
 }
 
 ///|

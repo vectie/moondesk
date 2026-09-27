@@ -64,6 +64,20 @@ test "remote hosts are exact authorities without wildcards or suffix matches" {
 }
 
 ///|
+test "hosted gateway mode only accepts an exact personal Kubernetes service" {
+  let service = "webide-0123456789abcdef.ns.svc.cluster.local:8188"
+  assert_true(moondesk_trusted_workspace_gateway(service, "true"))
+  assert_false(moondesk_trusted_workspace_gateway(service, "false"))
+  assert_false(moondesk_trusted_workspace_gateway("example.com:8188", "true"))
+  assert_false(
+    moondesk_trusted_workspace_gateway(service + ",evil.test", "true"),
+  )
+  assert_false(
+    moondesk_trusted_workspace_gateway("*.svc.cluster.local:8188", "true"),
+  )
+}
+
+///|
 test "remote desktop authority requires active PlatformOperator" {
   assert_true(
     moondesk_active_operator({
@@ -88,8 +102,20 @@ test "remote desktop authority requires active PlatformOperator" {
 
 ///|
 test "identity authority cannot rely on duplicated Host headers" {
-  assert_true(moondesk_identity_authority_matches("http://106.39.18.146:5003", "106.39.18.146:5003"))
-  assert_false(moondesk_identity_authority_matches("http://127.0.0.1:5003", "106.39.18.146:5003"))
-  assert_false(moondesk_identity_authority_matches("http://106.39.18.146:5003/other", "106.39.18.146:5003"))
+  assert_true(
+    moondesk_identity_authority_matches(
+      "http://106.39.18.146:5003", "106.39.18.146:5003",
+    ),
+  )
+  assert_false(
+    moondesk_identity_authority_matches(
+      "http://127.0.0.1:5003", "106.39.18.146:5003",
+    ),
+  )
+  assert_false(
+    moondesk_identity_authority_matches(
+      "http://106.39.18.146:5003/other", "106.39.18.146:5003",
+    ),
+  )
   assert_false(moondesk_identity_authority_matches("http://*", "*"))
 }

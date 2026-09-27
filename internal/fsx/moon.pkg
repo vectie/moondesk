@@ -1,5 +1,6 @@
 import {
   "moonbitlang/async/fs",
+  "moonbitlang/core/debug",
   "vectie/moondesk/internal/pathx",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }

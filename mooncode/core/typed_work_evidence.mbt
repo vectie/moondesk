@@ -11,6 +11,7 @@ priv enum EvidenceKind {
   AssistantSummary
   Approval
   Tool
+  Skill
 } derive(Debug, Eq)
 
 ///|
@@ -139,6 +140,7 @@ fn EvidenceKind::canonical(self : EvidenceKind) -> String {
     AssistantSummary => "assistant_summary"
     Approval => "approval"
     Tool => "tool"
+    Skill => "skill"
   }
 }
 
@@ -176,6 +178,7 @@ fn evidence_kind(source_kind : String, raw_kind : String) -> EvidenceKind? {
         "artifact" => Some(Artifact)
         "approval" => Some(Approval)
         "tool" => Some(Tool)
+        "skill" => Some(Skill)
         _ => None
       }
   }

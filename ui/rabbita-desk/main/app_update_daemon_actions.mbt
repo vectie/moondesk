@@ -103,7 +103,7 @@ fn update_daemon_actions(
     RevealSelection =>
       (
         reveal_selection_cmd(dispatch, model),
-        { ..model, host_status: "revealing selection" },
+        { ..model, host_status: "revealing selection", },
       )
     _ => (@rabbita.none, model)
   }

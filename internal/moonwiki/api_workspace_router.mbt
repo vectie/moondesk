@@ -85,6 +85,117 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "git"] => {
+      let endpoint = @desk.workspace_action_route("git")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_git_projection(
+          workspace_root, workspace_id, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "diff"] => {
+      let endpoint = @desk.workspace_action_route("git/diff")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_git_diff(
+          workspace_root, workspace_id, request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "review"] => {
+      let endpoint = @desk.workspace_action_route("git/review")
+      if desktop_api_route_accepts_read(endpoint, method_) ||
+        desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_git_review(
+          workspace_root, workspace_id, request_path, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "review", "progress"] => {
+      let endpoint = @desk.workspace_action_route("git/review/progress")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_git_review_progress(
+          workspace_root, workspace_id, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github"] => {
+      let endpoint = @desk.workspace_action_route("git/github")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_github_context(
+          workspace_root, workspace_id, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github", "checkout"] => {
+      if method_ is Post {
+        handle_workspace_github_checkout(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github", "comment"] => {
+      let endpoint = @desk.workspace_action_route("git/github/comment")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_github_comment(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github", "draft"] => {
+      let endpoint = @desk.workspace_action_route("git/github/draft")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_github_comment_draft(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github", "inline"] => {
+      let endpoint = @desk.workspace_action_route("git/github/inline")
+      if desktop_api_route_accepts_read(endpoint, method_) ||
+        desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_github_inline_review(
+          workspace_root, workspace_id, request_path, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "github", "inline", "draft"] => {
+      let endpoint = @desk.workspace_action_route("git/github/inline/draft")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_github_inline_draft(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "source"] => {
       let endpoint = @desk.workspace_action_route("source")
       if desktop_api_route_accepts_post(endpoint, method_) {

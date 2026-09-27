@@ -127,6 +127,7 @@ fn moonclaw_auth_has_connected_provider(status : MoonClawAuthStatus?) -> Bool {
 ///|
 struct MoonClawModel {
   name : String
+  input_modalities : Array[String]?
 } derive(FromJson)
 
 ///|

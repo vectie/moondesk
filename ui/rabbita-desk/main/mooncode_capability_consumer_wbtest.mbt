@@ -45,6 +45,7 @@ test "UI maps negotiated unsupported malformed and unavailable states" {
 fn capability_setup_markup(
   state : MoonCodeCapabilityState,
   running? : Bool = false,
+  not_installed? : Bool = false,
 ) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let daemon = if running {
@@ -63,6 +64,24 @@ fn capability_setup_markup(
       installation_evidence: None,
       configuration_evidence: None,
       managed_running: Some(true),
+      platform_evidence: None,
+    })
+  } else if not_installed {
+    Some({
+      ok: Some(false),
+      status: Some("daemon_info_missing"),
+      next_action: Some("install_moonclaw"),
+      model_ready: None,
+      model_readiness: None,
+      repair_available: Some(false),
+      running: false,
+      port: 0,
+      message: "MoonClaw is not installed",
+      service_configured: false,
+      managed_install: Some(false),
+      installation_evidence: None,
+      configuration_evidence: None,
+      managed_running: Some(false),
       platform_evidence: None,
     })
   } else {
@@ -96,8 +115,18 @@ test "unsupported malformed and unavailable render distinct truthful actions" {
   assert_true(malformed.contains("state=\"malformed\""))
   assert_true(malformed.contains("mooncode-capability-refetch"))
   assert_false(malformed.contains("mooncode-capability-retry-daemon"))
-  let unavailable = capability_setup_markup(CapabilityUnavailable("offline"))
+  let unavailable = capability_setup_markup(
+    CapabilityUnavailable("offline"),
+    running=true,
+  )
   assert_true(unavailable.contains("state=\"unavailable\""))
   assert_true(unavailable.contains("mooncode-capability-retry-daemon"))
   assert_false(unavailable.contains("mooncode-capability-refetch"))
+  let absent = capability_setup_markup(
+    CapabilityUnavailable("offline"),
+    not_installed=true,
+  )
+  assert_true(absent.contains("data-state=\"not-installed\""))
+  assert_true(absent.contains("mooncode-install-moonclaw"))
+  assert_false(absent.contains("mooncode-capability-retry-daemon"))
 }

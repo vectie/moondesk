@@ -47,20 +47,51 @@ pub async fn town_service_descriptor(String, String) -> Json
 
 // Types and methods
 type AgentPassportInventory derive(Eq, @debug.Debug)
+pub fn AgentPassportInventory::equal(Self, Self) -> Bool
+pub fn AgentPassportInventory::not_equal(Self, Self) -> Bool
+pub fn AgentPassportInventory::to_repr(Self) -> @debug.Repr
 
 type DocxParagraph derive(Eq, @debug.Debug)
+pub fn DocxParagraph::equal(Self, Self) -> Bool
+pub fn DocxParagraph::not_equal(Self, Self) -> Bool
+pub fn DocxParagraph::to_repr(Self) -> @debug.Repr
 
 type DocxRun derive(Eq, @debug.Debug)
+pub fn DocxRun::equal(Self, Self) -> Bool
+pub fn DocxRun::not_equal(Self, Self) -> Bool
+pub fn DocxRun::to_repr(Self) -> @debug.Repr
+
+type GitChangeProjection derive(ToJson)
+pub fn GitChangeProjection::to_json(Self) -> Json
+
+type GitDiffProjection derive(ToJson)
+pub fn GitDiffProjection::to_json(Self) -> Json
+
+type GitRepositoryProjection derive(ToJson)
+pub fn GitRepositoryProjection::to_json(Self) -> Json
 
 type OfficeDocumentKind derive(Eq, @debug.Debug)
+pub fn OfficeDocumentKind::equal(Self, Self) -> Bool
+pub fn OfficeDocumentKind::not_equal(Self, Self) -> Bool
+pub fn OfficeDocumentKind::to_repr(Self) -> @debug.Repr
 
 type OfficeDocumentModel derive(@debug.Debug)
+pub fn OfficeDocumentModel::to_repr(Self) -> @debug.Repr
 
 type OfficeSupportedModel derive(Eq, @debug.Debug)
+pub fn OfficeSupportedModel::equal(Self, Self) -> Bool
+pub fn OfficeSupportedModel::not_equal(Self, Self) -> Bool
+pub fn OfficeSupportedModel::to_repr(Self) -> @debug.Repr
 
 type PptxSlide derive(Eq, @debug.Debug)
+pub fn PptxSlide::equal(Self, Self) -> Bool
+pub fn PptxSlide::not_equal(Self, Self) -> Bool
+pub fn PptxSlide::to_repr(Self) -> @debug.Repr
 
 type PptxTextObject derive(Eq, @debug.Debug)
+pub fn PptxTextObject::equal(Self, Self) -> Bool
+pub fn PptxTextObject::not_equal(Self, Self) -> Bool
+pub fn PptxTextObject::to_repr(Self) -> @debug.Repr
 
 pub struct Server {
   server : @http.Server
@@ -73,10 +104,19 @@ pub async fn Server::serve_desk(Self, String, String) -> Unit
 pub async fn Server::serve_directory(Self, String) -> Unit
 
 type WorkspaceContext derive(Eq, @debug.Debug)
+pub fn WorkspaceContext::equal(Self, Self) -> Bool
+pub fn WorkspaceContext::not_equal(Self, Self) -> Bool
+pub fn WorkspaceContext::to_repr(Self) -> @debug.Repr
 
 type XlsxCell derive(Eq, @debug.Debug)
+pub fn XlsxCell::equal(Self, Self) -> Bool
+pub fn XlsxCell::not_equal(Self, Self) -> Bool
+pub fn XlsxCell::to_repr(Self) -> @debug.Repr
 
 type XlsxSheet derive(Eq, @debug.Debug)
+pub fn XlsxSheet::equal(Self, Self) -> Bool
+pub fn XlsxSheet::not_equal(Self, Self) -> Bool
+pub fn XlsxSheet::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

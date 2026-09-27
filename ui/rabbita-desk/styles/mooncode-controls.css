@@ -6,6 +6,46 @@
   gap: 8px;
 }
 
+.mooncode-composer-intent,
+.mooncode-guidance-feedback {
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mooncode-guidance-feedback {
+  color: var(--mooncode-ink);
+}
+
+.mooncode-guide-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 9px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mooncode-guide-button:hover:not(:disabled) {
+  border-color: var(--mooncode-primary);
+}
+
+.mooncode-guide-button:focus-visible {
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 2px;
+}
+
+.mooncode-guide-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .mooncode-composer-control-sync {
   display: none;
 }

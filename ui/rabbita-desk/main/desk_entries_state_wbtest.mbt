@@ -141,7 +141,7 @@ test "Desk entry results distinguish zero ready stale and recoverable failure" {
   let (_, ready) = update_workspace_results(
     dispatch,
     LoadedEntries("book-demo", "wiki", 0, Ok([entry])),
-    { ..base, desk_entries_error: "old failure" },
+    { ..base, desk_entries_error: "old failure", },
   )
   assert_true(ready.desk_entries_state is None)
   assert_eq(ready.entries.length(), 1)
@@ -149,7 +149,7 @@ test "Desk entry results distinguish zero ready stale and recoverable failure" {
   let (_, stale) = update_workspace_results(
     dispatch,
     LoadedEntries("book-demo", "wiki", 0, Err("private refresh failure")),
-    { ..ready, desk_entries_state: Some(Loading) },
+    { ..ready, desk_entries_state: Some(Loading), },
   )
   assert_true(stale.desk_entries_state is Some(Stale))
   assert_eq(stale.entries.length(), 1)
@@ -280,7 +280,7 @@ test "Desk filter zero copy requires a successful nonempty listing" {
     entries: [entry],
     desk_filter_query: "missing",
   }
-  let loaded = desk_entries_test_markup({ ..base, desk_entries_state: None })
+  let loaded = desk_entries_test_markup({ ..base, desk_entries_state: None, })
   assert_true(loaded.contains("No matching files"))
   assert_false(loaded.contains("data-testid=\"desk-entries-state-panel\""))
   let stale = desk_entries_test_markup({

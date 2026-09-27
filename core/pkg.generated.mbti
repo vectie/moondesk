@@ -240,6 +240,11 @@ pub struct BrowserAction {
   authority_envelope_id : String
   created_at : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserAction::equal(Self, Self) -> Bool
+pub fn BrowserAction::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserAction::not_equal(Self, Self) -> Bool
+pub fn BrowserAction::to_json(Self) -> Json
+pub fn BrowserAction::to_repr(Self) -> @debug.Repr
 
 pub struct BrowserActionReceipt {
   action_id : String
@@ -252,17 +257,32 @@ pub struct BrowserActionReceipt {
   code_revision : String
   completed_at : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserActionReceipt::equal(Self, Self) -> Bool
+pub fn BrowserActionReceipt::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserActionReceipt::not_equal(Self, Self) -> Bool
+pub fn BrowserActionReceipt::to_json(Self) -> Json
+pub fn BrowserActionReceipt::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserActor {
   User
   Agent
   Replay
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserActor::equal(Self, Self) -> Bool
+pub fn BrowserActor::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserActor::not_equal(Self, Self) -> Bool
+pub fn BrowserActor::to_json(Self) -> Json
+pub fn BrowserActor::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserNetworkPolicy {
   Offline
   ApprovedOriginsOnly
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserNetworkPolicy::equal(Self, Self) -> Bool
+pub fn BrowserNetworkPolicy::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserNetworkPolicy::not_equal(Self, Self) -> Bool
+pub fn BrowserNetworkPolicy::to_json(Self) -> Json
+pub fn BrowserNetworkPolicy::to_repr(Self) -> @debug.Repr
 
 pub struct BrowserObservation {
   observation_id : String
@@ -274,6 +294,11 @@ pub struct BrowserObservation {
   code_revision : String
   captured_at : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserObservation::equal(Self, Self) -> Bool
+pub fn BrowserObservation::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserObservation::not_equal(Self, Self) -> Bool
+pub fn BrowserObservation::to_json(Self) -> Json
+pub fn BrowserObservation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserOperation {
   Navigate
@@ -287,12 +312,22 @@ pub(all) enum BrowserOperation {
   CaptureScreenshot
   CaptureDiagnostics
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserOperation::equal(Self, Self) -> Bool
+pub fn BrowserOperation::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserOperation::not_equal(Self, Self) -> Bool
+pub fn BrowserOperation::to_json(Self) -> Json
+pub fn BrowserOperation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserOriginClass {
   OpaqueLocalPreview
   IsolatedLoopback
   ExternalOrigin
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserOriginClass::equal(Self, Self) -> Bool
+pub fn BrowserOriginClass::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserOriginClass::not_equal(Self, Self) -> Bool
+pub fn BrowserOriginClass::to_json(Self) -> Json
+pub fn BrowserOriginClass::to_repr(Self) -> @debug.Repr
 
 pub struct BrowserSessionScope {
   session_id : String
@@ -309,11 +344,21 @@ pub struct BrowserSessionScope {
   upload_sources : Array[String]
   permitted_effects : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserSessionScope::equal(Self, Self) -> Bool
+pub fn BrowserSessionScope::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserSessionScope::not_equal(Self, Self) -> Bool
+pub fn BrowserSessionScope::to_json(Self) -> Json
+pub fn BrowserSessionScope::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserStorageLifetime {
   Ephemeral
   RunScoped
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BrowserStorageLifetime::equal(Self, Self) -> Bool
+pub fn BrowserStorageLifetime::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BrowserStorageLifetime::not_equal(Self, Self) -> Bool
+pub fn BrowserStorageLifetime::to_json(Self) -> Json
+pub fn BrowserStorageLifetime::to_repr(Self) -> @debug.Repr
 
 pub struct DeskFileEntry {
   id : String
@@ -327,6 +372,11 @@ pub struct DeskFileEntry {
   size_bytes : Int?
   modified_at : String?
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskFileEntry::equal(Self, Self) -> Bool
+pub fn DeskFileEntry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskFileEntry::not_equal(Self, Self) -> Bool
+pub fn DeskFileEntry::to_json(Self) -> Json
+pub fn DeskFileEntry::to_repr(Self) -> @debug.Repr
 
 pub struct DeskPreview {
   entry_id : String
@@ -336,6 +386,11 @@ pub struct DeskPreview {
   metadata : Map[String, String]
   warnings : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskPreview::equal(Self, Self) -> Bool
+pub fn DeskPreview::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskPreview::not_equal(Self, Self) -> Bool
+pub fn DeskPreview::to_json(Self) -> Json
+pub fn DeskPreview::to_repr(Self) -> @debug.Repr
 
 pub struct DeskRunArtifact {
   id : String
@@ -343,6 +398,11 @@ pub struct DeskRunArtifact {
   title : String
   kind : EntryKind
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskRunArtifact::equal(Self, Self) -> Bool
+pub fn DeskRunArtifact::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskRunArtifact::not_equal(Self, Self) -> Bool
+pub fn DeskRunArtifact::to_json(Self) -> Json
+pub fn DeskRunArtifact::to_repr(Self) -> @debug.Repr
 
 pub struct DeskRunProjection {
   run_id : String
@@ -355,6 +415,11 @@ pub struct DeskRunProjection {
   started_at : String?
   updated_at : String?
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskRunProjection::equal(Self, Self) -> Bool
+pub fn DeskRunProjection::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskRunProjection::not_equal(Self, Self) -> Bool
+pub fn DeskRunProjection::to_json(Self) -> Json
+pub fn DeskRunProjection::to_repr(Self) -> @debug.Repr
 
 pub struct DeskTaskSubmission {
   id : String
@@ -367,6 +432,11 @@ pub struct DeskTaskSubmission {
   source_policy : SourcePolicy
   created_at : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskTaskSubmission::equal(Self, Self) -> Bool
+pub fn DeskTaskSubmission::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskTaskSubmission::not_equal(Self, Self) -> Bool
+pub fn DeskTaskSubmission::to_json(Self) -> Json
+pub fn DeskTaskSubmission::to_repr(Self) -> @debug.Repr
 
 pub struct DeskWorkspace {
   id : String
@@ -376,6 +446,11 @@ pub struct DeskWorkspace {
   status : WorkspaceStatus
   last_seen_at : String?
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DeskWorkspace::equal(Self, Self) -> Bool
+pub fn DeskWorkspace::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskWorkspace::not_equal(Self, Self) -> Bool
+pub fn DeskWorkspace::to_json(Self) -> Json
+pub fn DeskWorkspace::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopApiCapabilities {
   component : String
@@ -388,12 +463,22 @@ pub(all) struct DesktopApiCapabilities {
   portable_api_workspace_content_routes : Array[String]
   portable_api_supported_route_patterns : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DesktopApiCapabilities::equal(Self, Self) -> Bool
+pub fn DesktopApiCapabilities::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopApiCapabilities::not_equal(Self, Self) -> Bool
+pub fn DesktopApiCapabilities::to_json(Self) -> Json
+pub fn DesktopApiCapabilities::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopApiRouteContract {
   path : String
   methods : Array[String]
   authority_scope : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DesktopApiRouteContract::equal(Self, Self) -> Bool
+pub fn DesktopApiRouteContract::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopApiRouteContract::not_equal(Self, Self) -> Bool
+pub fn DesktopApiRouteContract::to_json(Self) -> Json
+pub fn DesktopApiRouteContract::to_repr(Self) -> @debug.Repr
 
 pub(all) enum EntryKind {
   Markdown
@@ -405,6 +490,11 @@ pub(all) enum EntryKind {
   Text
   Unknown
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn EntryKind::equal(Self, Self) -> Bool
+pub fn EntryKind::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn EntryKind::not_equal(Self, Self) -> Bool
+pub fn EntryKind::to_json(Self) -> Json
+pub fn EntryKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PreviewRenderer {
   Markdown
@@ -416,6 +506,11 @@ pub(all) enum PreviewRenderer {
   DirectoryListing
   Unsupported
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn PreviewRenderer::equal(Self, Self) -> Bool
+pub fn PreviewRenderer::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PreviewRenderer::not_equal(Self, Self) -> Bool
+pub fn PreviewRenderer::to_json(Self) -> Json
+pub fn PreviewRenderer::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SourceLayer {
   Wiki
@@ -434,6 +529,11 @@ pub(all) enum SourceLayer {
   Config
   Workspace
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn SourceLayer::equal(Self, Self) -> Bool
+pub fn SourceLayer::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SourceLayer::not_equal(Self, Self) -> Bool
+pub fn SourceLayer::to_json(Self) -> Json
+pub fn SourceLayer::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SourcePolicy {
   BookOnly
@@ -441,16 +541,31 @@ pub(all) enum SourcePolicy {
   ProvidedFilesOnly
   Mixed
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn SourcePolicy::equal(Self, Self) -> Bool
+pub fn SourcePolicy::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SourcePolicy::not_equal(Self, Self) -> Bool
+pub fn SourcePolicy::to_json(Self) -> Json
+pub fn SourcePolicy::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SubmissionCadence {
   OneShot
   StandingWatch(String)
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn SubmissionCadence::equal(Self, Self) -> Bool
+pub fn SubmissionCadence::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SubmissionCadence::not_equal(Self, Self) -> Bool
+pub fn SubmissionCadence::to_json(Self) -> Json
+pub fn SubmissionCadence::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WorkspaceKind {
   MoonBook
   SuiteRoot
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WorkspaceKind::equal(Self, Self) -> Bool
+pub fn WorkspaceKind::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WorkspaceKind::not_equal(Self, Self) -> Bool
+pub fn WorkspaceKind::to_json(Self) -> Json
+pub fn WorkspaceKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WorkspaceStatus {
   Ready
@@ -458,6 +573,11 @@ pub(all) enum WorkspaceStatus {
   NeedsAttention
   Unknown
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WorkspaceStatus::equal(Self, Self) -> Bool
+pub fn WorkspaceStatus::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WorkspaceStatus::not_equal(Self, Self) -> Bool
+pub fn WorkspaceStatus::to_json(Self) -> Json
+pub fn WorkspaceStatus::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

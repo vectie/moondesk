@@ -120,7 +120,7 @@ test "command palette query updates and clears on toggle" {
 #warnings("-alert_unstable")
 test "command palette owns dialog semantics and stable focus hooks" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let opened = { ..init_model(), command_open: true }
+  let opened = { ..init_model(), command_open: true, }
   let palette_markup = @rabbita.render_to_string(
     @rabbita.static_cell(render_command_palette(dispatch, opened)),
   )
@@ -138,7 +138,7 @@ test "command palette owns dialog semantics and stable focus hooks" {
   assert_true(open_title_markup.contains("aria-expanded=\"true\""))
   let closed_title_markup = @rabbita.render_to_string(
     @rabbita.static_cell(
-      render_title_bar(dispatch, { ..opened, command_open: false }),
+      render_title_bar(dispatch, { ..opened, command_open: false, }),
     ),
   )
   assert_true(closed_title_markup.contains("aria-expanded=\"false\""))

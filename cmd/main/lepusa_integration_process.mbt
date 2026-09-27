@@ -26,7 +26,10 @@ async fn copy_moondesk_sidecar(
   target : String,
   out_dir : String,
 ) -> Bool {
-  let source = moondesk_sidecar_build_output(repo_root)
+  let workspace_build = @fsx.exists(@pathx.join(repo_root, "moon.work")) catch {
+    _ => false
+  }
+  let source = moondesk_sidecar_build_output(repo_root, workspace_build~)
   let destination = lepusa_integration_sidecar_path(target, out_dir)
   @fsx.make_directory(
     @pathx.dirname(destination).to_owned(),
@@ -291,8 +294,18 @@ async fn copy_moondesk_live_bundle_files(
 }
 
 ///|
-fn moondesk_sidecar_build_output(repo_root : String) -> String {
-  @pathx.join(repo_root, "_build/native/release/build/cmd/main/main.exe")
+fn moondesk_sidecar_build_output(
+  repo_root : String,
+  workspace_build? : Bool = false,
+) -> String {
+  @pathx.join(
+    repo_root,
+    if workspace_build {
+      "_build/native/release/build/vectie/moondesk/cmd/main/main.exe"
+    } else {
+      "_build/native/release/build/cmd/main/main.exe"
+    },
+  )
 }
 
 ///|
@@ -478,9 +491,9 @@ fn lepusa_integration_live_smoke_steps(
   out_dir : String,
   manifest_path : String,
 ) -> Array[LepusaIntegrationProcessStep] {
-  let verify = { ..options, command: "verify" }
-  let bundle = { ..options, command: "bundle-write" }
-  let session = { ..options, command: "runtime-session" }
+  let verify = { ..options, command: "verify", }
+  let bundle = { ..options, command: "bundle-write", }
+  let session = { ..options, command: "runtime-session", }
   [
     {
       name: "verify",
@@ -519,8 +532,8 @@ fn lepusa_integration_live_build_steps(
   out_dir : String,
   manifest_path : String,
 ) -> Array[LepusaIntegrationProcessStep] {
-  let verify = { ..options, command: "verify" }
-  let bundle = { ..options, command: "bundle-write" }
+  let verify = { ..options, command: "verify", }
+  let bundle = { ..options, command: "bundle-write", }
   [
     {
       name: "verify",
@@ -554,9 +567,9 @@ fn lepusa_integration_live_runtime_steps(
     options, project, out_dir, manifest_path,
   )
   let runtime_command = if options.command == "live-launch" {
-    { ..options, command: "runtime-launch" }
+    { ..options, command: "runtime-launch", }
   } else {
-    { ..options, command: "runtime-session" }
+    { ..options, command: "runtime-session", }
   }
   steps.push({
     name: runtime_command.command,
@@ -577,10 +590,10 @@ fn lepusa_integration_smoke_steps(
   out_dir : String,
   manifest_path : String,
 ) -> Array[LepusaIntegrationProcessStep] {
-  let verify = { ..options, command: "verify" }
-  let bundle = { ..options, command: "bundle-write" }
-  let session = { ..options, command: "runtime-session" }
-  let asset = { ..options, command: "runtime-asset" }
+  let verify = { ..options, command: "verify", }
+  let bundle = { ..options, command: "bundle-write", }
+  let session = { ..options, command: "runtime-session", }
+  let asset = { ..options, command: "runtime-asset", }
   [
     {
       name: "verify",

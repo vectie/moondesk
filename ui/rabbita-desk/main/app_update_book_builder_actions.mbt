@@ -5,31 +5,31 @@ fn update_book_builder_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    SetGoalTitle(title) => (@rabbita.none, { ..model, goal_title: title })
+    SetGoalTitle(title) => (@rabbita.none, { ..model, goal_title: title, })
     SetGoalCadenceTicks(value) =>
-      (@rabbita.none, { ..model, goal_cadence_ticks: value })
+      (@rabbita.none, { ..model, goal_cadence_ticks: value, })
     SetGoalReviewPolicy(value) =>
-      (@rabbita.none, { ..model, goal_review_policy: value })
+      (@rabbita.none, { ..model, goal_review_policy: value, })
     SetGoalSourcePolicy(value) =>
-      (@rabbita.none, { ..model, goal_source_policy: value })
+      (@rabbita.none, { ..model, goal_source_policy: value, })
     SetBookPatternBookId(value) =>
-      (@rabbita.none, { ..model, book_pattern_book_id: value })
+      (@rabbita.none, { ..model, book_pattern_book_id: value, })
     SetBookPatternTopic(value) =>
-      (@rabbita.none, { ..model, book_pattern_topic: value })
+      (@rabbita.none, { ..model, book_pattern_topic: value, })
     SetBookPatternPurpose(value) =>
-      (@rabbita.none, { ..model, book_pattern_purpose: value })
+      (@rabbita.none, { ..model, book_pattern_purpose: value, })
     SetBookPatternWebsites(value) =>
-      (@rabbita.none, { ..model, book_pattern_websites: value })
+      (@rabbita.none, { ..model, book_pattern_websites: value, })
     SetBookPatternCadenceMinutes(value) =>
-      (@rabbita.none, { ..model, book_pattern_cadence_minutes: value })
+      (@rabbita.none, { ..model, book_pattern_cadence_minutes: value, })
     SetBookPatternSourcePolicy(value) =>
-      (@rabbita.none, { ..model, book_pattern_source_policy: value })
+      (@rabbita.none, { ..model, book_pattern_source_policy: value, })
     SetBookPatternNotifyRule(value) =>
-      (@rabbita.none, { ..model, book_pattern_notify_rule: value })
+      (@rabbita.none, { ..model, book_pattern_notify_rule: value, })
     SetBookPatternSkillPack(value) =>
-      (@rabbita.none, { ..model, book_pattern_skill_pack: value })
+      (@rabbita.none, { ..model, book_pattern_skill_pack: value, })
     SetBookPatternAnalysisMethod(value) =>
-      (@rabbita.none, { ..model, book_pattern_analysis_method: value })
+      (@rabbita.none, { ..model, book_pattern_analysis_method: value, })
     SelectBookBaseType(base_type) =>
       (@rabbita.none, apply_selected_book_base_type(model, base_type))
     SelectBookPattern(pattern_id) =>

@@ -147,7 +147,7 @@ fn source_pane_capture_active(
 
 ///|
 fn source_pane_commit_active(state : SourcePaneState) -> SourcePaneState {
-  { ..state, buffers: source_pane_capture_active(state) }
+  { ..state, buffers: source_pane_capture_active(state), }
 }
 
 ///|
@@ -334,20 +334,21 @@ fn update_source_pane(
               server_content: None,
               status: "Ready",
             })
-          Err(problem) => { ..state, content: Failed(problem), status: problem }
+          Err(problem) =>
+            { ..state, content: Failed(problem), status: problem, }
         }
       } else {
         state
       }
     PreviewUnsupported(identity, reason) =>
       if source_pane_is_current(state, identity) {
-        { ..state, content: Unsupported(reason), status: reason }
+        { ..state, content: Unsupported(reason), status: reason, }
       } else {
         state
       }
     EditDraft(draft) =>
       if source_pane_editable(state) {
-        source_pane_commit_active({ ..state, draft, status: "Unsaved changes" })
+        source_pane_commit_active({ ..state, draft, status: "Unsaved changes", })
       } else {
         state
       }
@@ -364,9 +365,9 @@ fn update_source_pane(
       }
     Save =>
       if source_pane_dirty(state) && source_pane_editable(state) {
-        { ..state, saving: true, status: "Saving" }
+        { ..state, saving: true, status: "Saving", }
       } else {
-        { ..state, status: "No changes to save" }
+        { ..state, status: "No changes to save", }
       }
     SaveResult(outcome) =>
       match outcome {
@@ -388,7 +389,8 @@ fn update_source_pane(
             server_content: Some(current),
             status: "File changed after this draft was opened",
           })
-        SourceSaveFailed(problem) => { ..state, saving: false, status: problem }
+        SourceSaveFailed(problem) =>
+          { ..state, saving: false, status: problem, }
       }
     ReloadServer =>
       match state.server_content {
@@ -415,7 +417,7 @@ fn update_source_pane(
       }
     SwitchBuffer(path) => {
       guard !state.saving else {
-        { ..state, status: "Wait for the current save before switching tabs" }
+        { ..state, status: "Wait for the current save before switching tabs", }
       }
       let buffers = source_pane_capture_active(state)
       match source_pane_buffer_index(buffers, path) {
@@ -426,7 +428,7 @@ fn update_source_pane(
     }
     CloseBuffer(path) => {
       guard !state.saving else {
-        { ..state, status: "Wait for the current save before closing tabs" }
+        { ..state, status: "Wait for the current save before closing tabs", }
       }
       let buffers = source_pane_capture_active(state)
       guard source_pane_buffer_index(buffers, path) is Some(index) else {
@@ -440,9 +442,9 @@ fn update_source_pane(
       } else {
         let remaining = buffers.filter(buffer => buffer.path != path)
         if state.requested_path != path {
-          { ..state, buffers: remaining }
+          { ..state, buffers: remaining, }
         } else if remaining is [next, ..] {
-          source_pane_activate_buffer({ ..state, buffers: remaining }, next)
+          source_pane_activate_buffer({ ..state, buffers: remaining, }, next)
         } else {
           {
             ..state,

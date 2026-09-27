@@ -54,7 +54,7 @@ fn update_workspace_results(
         },
       )
     LoadedPackApps(Err(error)) =>
-      (@rabbita.none, { ..model, pack_apps_status: error })
+      (@rabbita.none, { ..model, pack_apps_status: error, })
     LoadedAgentCatalog(Ok(catalog)) =>
       (
         @rabbita.none,
@@ -69,7 +69,7 @@ fn update_workspace_results(
         },
       )
     LoadedAgentCatalog(Err(error)) =>
-      (@rabbita.none, { ..model, agent_catalog_status: error })
+      (@rabbita.none, { ..model, agent_catalog_status: error, })
     LoadedMoonFlowCollaboration(workspace_id, result) =>
       if workspace_id != model.selected_workspace_id {
         (@rabbita.none, model)
@@ -148,14 +148,16 @@ fn update_workspace_results(
         } else {
           @rabbita.none
         },
-        { ..model, host_status: error },
+        { ..model, host_status: error, },
       )
     LoadedWorkspaces(Ok(workspaces)) => {
       let selected_known = has_workspace(
         workspaces,
         model.selected_workspace_id,
       )
-      let selected_workspace_id = if selected_known {
+      let preserve_review = model.git_review_note.trim() != "" ||
+        model.git_review_saving
+      let selected_workspace_id = if selected_known || preserve_review {
         model.selected_workspace_id
       } else {
         first_workspace_id(workspaces)
@@ -189,6 +191,15 @@ fn update_workspace_results(
           } else {
             @rabbita.none
           },
+          if model.workspace_mode == MoonCode && !preserve_review {
+            fetch_git_repository_projection_cmd(
+              dispatch,
+              selected_workspace_id,
+              model.git_projection_generation + 1,
+            )
+          } else {
+            @rabbita.none
+          },
         ]),
         {
           ..model,
@@ -202,6 +213,96 @@ fn update_workspace_results(
           },
           workspace_catalog_error: "",
           selected_workspace_id,
+          git_projection_workspace_id: if model.workspace_mode == MoonCode {
+            selected_workspace_id
+          } else {
+            model.git_projection_workspace_id
+          },
+          git_projection_generation: if model.workspace_mode == MoonCode &&
+            !preserve_review {
+            model.git_projection_generation + 1
+          } else {
+            model.git_projection_generation
+          },
+          git_projection: if selected_workspace_changed {
+            None
+          } else {
+            model.git_projection
+          },
+          git_projection_loading: if preserve_review {
+            model.git_projection_loading
+          } else {
+            model.workspace_mode == MoonCode && selected_workspace_id != ""
+          },
+          git_projection_error: "",
+          git_change_query: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_change_query
+          },
+          git_change_filter: if selected_workspace_changed {
+            "all"
+          } else {
+            model.git_change_filter
+          },
+          git_diff_workspace_id: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_diff_workspace_id
+          },
+          git_diff_path: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_diff_path
+          },
+          git_diff: if selected_workspace_changed {
+            None
+          } else {
+            model.git_diff
+          },
+          git_diff_loading: !selected_workspace_changed &&
+          model.git_diff_loading,
+          git_diff_error: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_diff_error
+          },
+          git_review: if selected_workspace_changed {
+            None
+          } else {
+            model.git_review
+          },
+          git_review_progress: if selected_workspace_changed {
+            None
+          } else {
+            model.git_review_progress
+          },
+          git_review_note: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_review_note
+          },
+          git_review_loading: !selected_workspace_changed &&
+          model.git_review_loading,
+          git_review_saving: !selected_workspace_changed &&
+          model.git_review_saving,
+          git_review_error: if selected_workspace_changed {
+            ""
+          } else {
+            model.git_review_error
+          },
+          github_context: if selected_workspace_changed {
+            None
+          } else {
+            model.github_context
+          },
+          github_context_loading: !selected_workspace_changed &&
+          model.github_context_loading,
+          github_context_error: if selected_workspace_changed {
+            ""
+          } else {
+            model.github_context_error
+          },
           collaboration_surface: if selected_workspace_changed {
             empty_collaboration_surface()
           } else {
@@ -418,7 +519,10 @@ fn update_workspace_results(
         },
       )
     LoadedDeskTrash(Err(error)) =>
-      (@rabbita.none, { ..model, desk_trash_status: error, host_status: error })
+      (
+        @rabbita.none,
+        { ..model, desk_trash_status: error, host_status: error, },
+      )
     RequestPreview(workspace_id, path) =>
       if !preview_request_is_current_selection(model, workspace_id, path) {
         (@rabbita.none, model)
@@ -515,9 +619,9 @@ fn update_workspace_results(
         },
       )
     LoadedMoonFlowCapability(Err(error)) =>
-      (@rabbita.none, { ..model, moonflow_capability_error: Some(error) })
+      (@rabbita.none, { ..model, moonflow_capability_error: Some(error), })
     LoadedMoonFlowRuns(Ok(runs)) => {
-      let next = { ..model, moonflow_runs: runs }
+      let next = { ..model, moonflow_runs: runs, }
       let matching = moonflow_selected_runs(next)
       (
         @rabbita.batch(
@@ -639,7 +743,7 @@ fn update_workspace_results(
     LoadedMoonFlowOperatorActions(run_id, Err(error)) =>
       (
         @rabbita.none,
-        { ..model, moonflow_operator_action_status: "\{run_id}: \{error}" },
+        { ..model, moonflow_operator_action_status: "\{run_id}: \{error}", },
       )
     ImportedMoonFlow(Ok(result)) =>
       (
@@ -676,7 +780,7 @@ fn update_workspace_results(
     ImportedMoonFlow(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, moonflow_status: error, moonflow_ingest_preparing: false },
+        { ..model, moonflow_status: error, moonflow_ingest_preparing: false, },
       )
     ControlledMoonFlow(Ok(control)) =>
       (
@@ -689,7 +793,7 @@ fn update_workspace_results(
         },
       )
     ControlledMoonFlow(Err(error)) =>
-      (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+      (@rabbita.none, { ..model, moonflow_status: error, host_status: error, })
     ExecutedMoonFlowOperatorAction(run_id, Ok(receipt)) =>
       (
         @rabbita.batch([
@@ -745,10 +849,13 @@ fn update_workspace_results(
     LoadedPagesSearch(Ok(response)) =>
       (
         @rabbita.none,
-        { ..model, pages_search: model.pages_search.typed_success(response) },
+        { ..model, pages_search: model.pages_search.typed_success(response), },
       )
     LoadedPagesSearch(Err(error)) =>
-      (@rabbita.none, { ..model, pages_search: model.pages_search.fail(error) })
+      (
+        @rabbita.none,
+        { ..model, pages_search: model.pages_search.fail(error), },
+      )
     SavedView(Ok(view)) =>
       (
         fetch_saved_views_cmd(dispatch),
@@ -760,7 +867,7 @@ fn update_workspace_results(
         },
       )
     SavedView(Err(error)) =>
-      (@rabbita.none, { ..model, saved_view_action_status: error })
+      (@rabbita.none, { ..model, saved_view_action_status: error, })
     CreatedDeskEntry(Ok(result)) =>
       (
         @rabbita.batch([
@@ -797,7 +904,7 @@ fn update_workspace_results(
     CreatedDeskEntry(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, desk_new_item_status: error, host_status: error },
+        { ..model, desk_new_item_status: error, host_status: error, },
       )
     RenamedDeskEntry(Ok(result)) =>
       (
@@ -845,7 +952,7 @@ fn update_workspace_results(
     RenamedDeskEntry(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, desk_rename_status: error, host_status: error },
+        { ..model, desk_rename_status: error, host_status: error, },
       )
     MovedDeskEntry(Ok(result)) => {
       let is_cut_paste = model.desk_clipboard_status.has_prefix(
@@ -1053,7 +1160,10 @@ fn update_workspace_results(
         },
       )
     TrashedDeskEntry(Err(error)) =>
-      (@rabbita.none, { ..model, desk_trash_status: error, host_status: error })
+      (
+        @rabbita.none,
+        { ..model, desk_trash_status: error, host_status: error, },
+      )
     RestoredDeskEntry(Ok(result)) =>
       (
         @rabbita.batch([
@@ -1090,7 +1200,10 @@ fn update_workspace_results(
         },
       )
     RestoredDeskEntry(Err(error)) =>
-      (@rabbita.none, { ..model, desk_trash_status: error, host_status: error })
+      (
+        @rabbita.none,
+        { ..model, desk_trash_status: error, host_status: error, },
+      )
     ImportedDeskFiles(Ok(result)) =>
       (
         @rabbita.batch([
@@ -1142,7 +1255,7 @@ fn update_workspace_results(
     ImportedDeskFiles(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, desk_new_item_status: error, host_status: error },
+        { ..model, desk_new_item_status: error, host_status: error, },
       )
     LocalFilesPicked(Ok(files)) =>
       if files.length() == 0 {
@@ -1150,7 +1263,7 @@ fn update_workspace_results(
       } else if model.selected_workspace_id == "" {
         (
           @rabbita.none,
-          { ..model, desk_new_item_status: "select a MoonBook first" },
+          { ..model, desk_new_item_status: "select a MoonBook first", },
         )
       } else {
         (
@@ -1164,13 +1277,13 @@ fn update_workspace_results(
     LocalFilesPicked(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, desk_new_item_status: "local import failed: \{error}" },
+        { ..model, desk_new_item_status: "local import failed: \{error}", },
       )
     LocalMoonBookFolderPicked(Ok(files)) =>
       if files.length() == 0 {
         (
           @rabbita.none,
-          { ..model, import_book_status: "no MoonBook folder selected" },
+          { ..model, import_book_status: "no MoonBook folder selected", },
         )
       } else {
         (
@@ -1222,7 +1335,7 @@ fn update_workspace_results(
         host_status="created MoonBook \{result.name}",
       )
     CreatedBlankMoonBook(Err(error)) =>
-      (@rabbita.none, { ..model, new_book_status: error, host_status: error })
+      (@rabbita.none, { ..model, new_book_status: error, host_status: error, })
     ImportedMoonBook(Ok(result)) =>
       open_created_or_imported_workspace(
         dispatch,
@@ -1238,7 +1351,7 @@ fn update_workspace_results(
     ImportedMoonBook(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, import_book_status: error, host_status: error },
+        { ..model, import_book_status: error, host_status: error, },
       )
     SavedMarkdownEdit(Ok(result)) =>
       (
@@ -1280,7 +1393,7 @@ fn update_workspace_results(
     SavedMarkdownEdit(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, markdown_editor_status: error, preview_status: error },
+        { ..model, markdown_editor_status: error, preview_status: error, },
       )
     _ => (@rabbita.none, model)
   }

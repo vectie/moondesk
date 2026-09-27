@@ -41,7 +41,7 @@ fn update_inbox_results(
           preview_status: "loading saved note",
         },
       )
-    SavedInbox(Err(error)) => (@rabbita.none, { ..model, inbox_status: error })
+    SavedInbox(Err(error)) => (@rabbita.none, { ..model, inbox_status: error, })
     ImportedInbox(Ok(created)) =>
       if task_material_capture_active(model) {
         (
@@ -116,14 +116,14 @@ fn update_inbox_results(
       }
     ImportedInbox(Err(error)) =>
       if task_material_capture_active(model) {
-        (@rabbita.none, { ..model, request_material_status: error })
+        (@rabbita.none, { ..model, request_material_status: error, })
       } else {
-        (@rabbita.none, { ..model, inbox_status: error })
+        (@rabbita.none, { ..model, inbox_status: error, })
       }
     LocalFilesPicked(Ok(files)) =>
       if files.length() == 0 {
         if task_material_capture_active(model) {
-          (@rabbita.none, { ..model, request_material_status: "" })
+          (@rabbita.none, { ..model, request_material_status: "", })
         } else {
           (@rabbita.none, model)
         }
@@ -131,10 +131,13 @@ fn update_inbox_results(
         if task_material_capture_active(model) {
           (
             @rabbita.none,
-            { ..model, request_material_status: "select a book first" },
+            { ..model, request_material_status: "select a book first", },
           )
         } else {
-          (@rabbita.none, { ..model, inbox_status: "select a workspace first" })
+          (
+            @rabbita.none,
+            { ..model, inbox_status: "select a workspace first", },
+          )
         }
       } else {
         let cmds : Array[@rabbita.Cmd] = []
@@ -166,12 +169,12 @@ fn update_inbox_results(
       if task_material_capture_active(model) {
         (
           @rabbita.none,
-          { ..model, request_material_status: "local import failed: \{error}" },
+          { ..model, request_material_status: "local import failed: \{error}", },
         )
       } else {
         (
           @rabbita.none,
-          { ..model, inbox_status: "local import failed: \{error}" },
+          { ..model, inbox_status: "local import failed: \{error}", },
         )
       }
     _ => (@rabbita.none, model)

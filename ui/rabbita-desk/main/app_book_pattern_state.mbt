@@ -122,7 +122,7 @@ fn apply_selected_book_base_type(model : Model, base_type : String) -> Model {
     first_pattern_for_base_type(model.book_patterns, selected)
   }
   apply_selected_book_pattern(
-    { ..model, selected_book_base_type: selected },
+    { ..model, selected_book_base_type: selected, },
     pattern_id,
   )
 }

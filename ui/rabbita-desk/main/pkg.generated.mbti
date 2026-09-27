@@ -83,6 +83,38 @@ type DeskSortKey derive(Eq)
 
 type DeskTrashEntry derive(@json.FromJson)
 
+type GitChangeProjection derive(@json.FromJson)
+
+type GitDiffProjection derive(@json.FromJson)
+
+type GitHubCheckProjection derive(@json.FromJson)
+
+type GitHubCheckoutProjection derive(@json.FromJson)
+
+type GitHubCommentDraftProjection derive(@json.FromJson)
+
+type GitHubContextProjection derive(@json.FromJson)
+
+type GitHubInlineDraftProjection derive(@json.FromJson)
+
+type GitHubInlineFileProjection derive(@json.FromJson)
+
+type GitHubInlineReviewProjection derive(@json.FromJson)
+
+type GitHubIssueProjection derive(@json.FromJson)
+
+type GitHubPullProjection derive(@json.FromJson)
+
+type GitRepositoryProjection derive(@json.FromJson)
+
+type GitReviewFileProgress derive(@json.FromJson)
+
+type GitReviewProgress derive(@json.FromJson)
+
+type GitReviewProjection derive(@json.FromJson)
+
+type GitReviewRecord derive(@json.FromJson)
+
 type InboxCreated derive(@json.FromJson)
 
 type InboxImportResult derive(@json.FromJson)
@@ -119,13 +151,25 @@ type MoonCodeCanonicalTurn
 
 type MoonCodeEvidenceRow
 
+type MoonCodeJobHistory derive(@json.FromJson)
+
+type MoonCodeJobRun derive(@json.FromJson)
+
 type MoonCodeOptimisticRow
+
+type MoonCodeSchedule derive(@json.FromJson)
+
+type MoonCodeScheduleState derive(@json.FromJson)
 
 type MoonCodeSession
 
 type MoonCodeSessionEffect
 
 type MoonCodeSessionGroup
+
+type MoonCodeSkillCatalogProjection derive(@json.FromJson)
+
+type MoonCodeSkillProjection derive(@json.FromJson)
 
 type MoonCodeSummary derive(@json.FromJson)
 

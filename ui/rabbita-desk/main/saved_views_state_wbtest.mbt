@@ -80,7 +80,7 @@ test "saved-view listing distinguishes zero ready stale and recoverable failure"
   let (_, failed) = update_workspace_results(
     dispatch,
     LoadedSavedViews(Err("catalog unavailable")),
-    { ..initial, saved_views_state: Some(Loading) },
+    { ..initial, saved_views_state: Some(Loading), },
   )
   assert_true(failed.saved_views_state is Some(RecoverableError))
   assert_true(failed.saved_views.is_empty())

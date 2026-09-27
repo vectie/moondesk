@@ -5,8 +5,8 @@ test "provider handoff accepts only bounded one-time code syntax" {
     handoff_code: "lnxc_" + "a".repeat(64),
   }
   assert_true(valid_handoff_shape(valid))
-  assert_false(valid_handoff_shape({ ..valid, client_id: "bad/client" }))
-  assert_false(valid_handoff_shape({ ..valid, handoff_code: "lnxc_short" }))
+  assert_false(valid_handoff_shape({ ..valid, client_id: "bad/client", }))
+  assert_false(valid_handoff_shape({ ..valid, handoff_code: "lnxc_short", }))
 }
 
 ///|

@@ -22,6 +22,20 @@ fn mooncode_available_model_names(
 }
 
 ///|
+fn mooncode_available_image_model_names(
+  result : MoonClawModelsResult,
+) -> Array[String] {
+  let names : Array[String] = []
+  for available in result.models {
+    if available.input_modalities.unwrap_or([]).contains("image") &&
+      mooncode_normalize_model_names([available]).length() == 1 {
+      names.push(available.name)
+    }
+  }
+  names
+}
+
+///|
 fn mooncode_reasoning_effort_is_supported(value : String) -> Bool {
   ["none", "minimal", "low", "medium", "high", "xhigh"].contains(value)
 }

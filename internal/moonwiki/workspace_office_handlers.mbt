@@ -145,7 +145,7 @@ async fn handle_workspace_office_open(
       send_json(
         conn,
         method_,
-        office_document_json(clean, document, baseline.view()),
+        office_document_json(clean, document, baseline.exact_view()),
       )
     }
     Err(error) => send_api_error(conn, method_, 400, "Bad Request", error)
@@ -280,7 +280,7 @@ async fn save_workspace_office(
       })
   }
   let saved_fixed = office_document_save_bytes(edited)
-  let saved = Bytes::from_array(saved_fixed.view())
+  let saved = Bytes::from_array(saved_fixed.exact_view())
   let authority_root = workspace_authority_root(workspace.root_path, clean)
   let authority_relative = workspace_authority_relative(clean)
   match
@@ -288,9 +288,9 @@ async fn save_workspace_office(
       authority_root,
       authority_relative,
       expected,
-      saved.view(),
+      saved.exact_view(),
     ) {
-    SavedBytes => Ok(office_document_json(clean, edited, saved.view()))
+    SavedBytes => Ok(office_document_json(clean, edited, saved.exact_view()))
     ConflictBytes(current) =>
       Err({
         "code": 409,

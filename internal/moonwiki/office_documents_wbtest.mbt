@@ -8,7 +8,7 @@ test "structured DOCX edit preserves unknown XML and unsupported ZIP members" {
   let edited = office_document_set_docx_paragraphs(opened, [
     {
       runs: [
-        { text: "Edited DOCX", bold: true, italic: true, underline: false },
+        { text: "Edited DOCX", bold: true, italic: true, underline: false, },
       ],
     },
   ]).unwrap()

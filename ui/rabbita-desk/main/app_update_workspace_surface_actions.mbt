@@ -39,7 +39,7 @@ fn update_workspace_surface_actions(
     SetNewBookId(book_id) =>
       (
         @rabbita.none,
-        { ..model, new_book_id: book_id, new_book_status: "draft" },
+        { ..model, new_book_id: book_id, new_book_status: "draft", },
       )
     CreateBlankMoonBook => create_blank_moonbook_action(dispatch, model)
     SetImportBookPath(path) =>
@@ -55,17 +55,17 @@ fn update_workspace_surface_actions(
     PickImportMoonBookFolder =>
       (
         pick_moonbook_folder_cmd(dispatch),
-        { ..model, import_book_status: "choose a MoonBook folder" },
+        { ..model, import_book_status: "choose a MoonBook folder", },
       )
     PickImportMoonBookArchive =>
       (
         pick_moonbook_archive_cmd(dispatch),
-        { ..model, import_book_status: "choose a MoonBook .zip archive" },
+        { ..model, import_book_status: "choose a MoonBook .zip archive", },
       )
     SetSearchQuery(query) =>
       (
         @rabbita.none,
-        { ..model, pages_search: model.pages_search.with_query(query) },
+        { ..model, pages_search: model.pages_search.with_query(query), },
       )
     SearchNow => search_now_action(dispatch, model)
     SetDeskSort(key) =>
@@ -84,7 +84,7 @@ fn update_workspace_surface_actions(
     SetDeskFilterQuery(query) =>
       desk_filter_query_action(dispatch, model, query)
     SetDeskDensity(density) =>
-      (@rabbita.none, { ..model, desk_density: density })
+      (@rabbita.none, { ..model, desk_density: density, })
     DeskKeyDown(key, shift, accel) =>
       desk_keydown_action(dispatch, key, shift, accel, model)
     DeskMouseDown(path, shift, accel) =>
@@ -117,7 +117,7 @@ fn update_workspace_surface_actions(
     SetDeskRenameName(name) =>
       (
         @rabbita.none,
-        { ..model, desk_rename_name: name, desk_rename_status: "draft rename" },
+        { ..model, desk_rename_name: name, desk_rename_status: "draft rename", },
       )
     RenameDeskSelection => rename_desk_entry_action(dispatch, model)
     SetDeskMoveTargetDirectory(directory) =>
@@ -142,27 +142,27 @@ fn update_workspace_surface_actions(
     ToggleFavorite(path) =>
       (
         @rabbita.none,
-        { ..model, favorites: toggle_string(model.favorites, path) },
+        { ..model, favorites: toggle_string(model.favorites, path), },
       )
     SetViewTitle(title) =>
       (
         @rabbita.none,
-        { ..model, view_title: title, saved_view_action_status: "" },
+        { ..model, view_title: title, saved_view_action_status: "", },
       )
     RefreshSavedViews =>
       (
         fetch_saved_views_cmd(dispatch),
-        { ..model, saved_views_state: Some(Loading), saved_views_error: "" },
+        { ..model, saved_views_state: Some(Loading), saved_views_error: "", },
       )
     SaveCurrentView =>
       (
         save_view_cmd(dispatch, model),
-        { ..model, saved_view_action_status: "Saving view" },
+        { ..model, saved_view_action_status: "Saving view", },
       )
     ControlMoonFlow(run_id, action, detail) =>
       (
         control_moonflow_cmd(dispatch, run_id, action, detail),
-        { ..model, moonflow_status: "Applying " + action + "…" },
+        { ..model, moonflow_status: "Applying " + action + "…", },
       )
     ExecuteMoonFlowOperatorAction(run_id, action_id) =>
       (
@@ -176,7 +176,10 @@ fn update_workspace_surface_actions(
       )
     PrepareMoonFlow =>
       if model.selected_workspace_id == "" {
-        (@rabbita.none, { ..model, moonflow_status: "Select a MoonBook first" })
+        (
+          @rabbita.none,
+          { ..model, moonflow_status: "Select a MoonBook first", },
+        )
       } else if (match model.moonflow_capability_evidence {
           Some(evidence) => !evidence.available
           None => false
@@ -252,7 +255,7 @@ fn update_workspace_surface_actions(
     FlowCanvasFit => flow_canvas_fit_action(model)
     FlowCanvasReset => flow_canvas_reset_action(model)
     SetReviewDecisionNote(note) =>
-      (@rabbita.none, { ..model, review_decision_note: note })
+      (@rabbita.none, { ..model, review_decision_note: note, })
     DecideReviewItem(item, decision) =>
       decide_review_item_action(dispatch, model, item, decision)
     StartMarkdownEdit => start_markdown_edit_action(model)
@@ -280,12 +283,12 @@ fn update_workspace_surface_actions(
       if model.markdown_editor_path == "" {
         (
           @rabbita.none,
-          { ..model, markdown_editor_status: "no markdown document selected" },
+          { ..model, markdown_editor_status: "no markdown document selected", },
         )
       } else {
         (
           save_markdown_cmd(dispatch, model),
-          { ..model, markdown_editor_status: "saving markdown" },
+          { ..model, markdown_editor_status: "saving markdown", },
         )
       }
     NotifyDaily =>
@@ -294,7 +297,7 @@ fn update_workspace_surface_actions(
           "MoonDesk daily surface",
           "\{model.requests.length()} requests, \{model.runs.length()} runs, \{model.standing_goals.length()} standing goals",
         ),
-        { ..model, notification_status: "notification requested" },
+        { ..model, notification_status: "notification requested", },
       )
     RefreshAll =>
       (
@@ -332,13 +335,16 @@ fn update_workspace_surface_actions(
 ///|
 fn start_desk_rename_action(model : Model) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_rename_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_rename_status: "select a MoonBook first", })
   } else if model.selected_path == "" {
-    (@rabbita.none, { ..model, desk_rename_status: "select an item to rename" })
+    (
+      @rabbita.none,
+      { ..model, desk_rename_status: "select an item to rename", },
+    )
   } else if model.desk_selected_paths.length() > 1 {
     (
       @rabbita.none,
-      { ..model, desk_rename_status: "rename one item at a time" },
+      { ..model, desk_rename_status: "rename one item at a time", },
     )
   } else {
     (
@@ -497,7 +503,7 @@ fn import_local_files_to_desk_action(
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_new_item_status: "select a MoonBook first" },
+      { ..model, desk_new_item_status: "select a MoonBook first", },
     )
   } else {
     (
@@ -521,7 +527,7 @@ fn import_local_folder_to_desk_action(
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_new_item_status: "select a MoonBook first" },
+      { ..model, desk_new_item_status: "select a MoonBook first", },
     )
   } else {
     (
@@ -551,10 +557,10 @@ fn copy_desk_selection_action(model : Model) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_clipboard_status: "select a MoonBook first" },
+      { ..model, desk_clipboard_status: "select a MoonBook first", },
     )
   } else if paths.length() == 0 {
-    (@rabbita.none, { ..model, desk_clipboard_status: "select items to copy" })
+    (@rabbita.none, { ..model, desk_clipboard_status: "select items to copy", })
   } else {
     (
       @rabbita.none,
@@ -587,10 +593,10 @@ fn cut_desk_selection_action(model : Model) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_clipboard_status: "select a MoonBook first" },
+      { ..model, desk_clipboard_status: "select a MoonBook first", },
     )
   } else if paths.length() == 0 {
-    (@rabbita.none, { ..model, desk_clipboard_status: "select items to cut" })
+    (@rabbita.none, { ..model, desk_clipboard_status: "select items to cut", })
   } else {
     (
       @rabbita.none,
@@ -612,15 +618,15 @@ fn cut_desk_selection_action(model : Model) -> (@rabbita.Cmd, Model) {
 ///|
 fn copy_desk_path_action(model : Model) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_path_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_path_status: "select a MoonBook first", })
   } else {
     let text = desk_path_clipboard_text(model)
     if text == "" {
-      (@rabbita.none, { ..model, desk_path_status: "nothing to copy" })
+      (@rabbita.none, { ..model, desk_path_status: "nothing to copy", })
     } else {
       (
         copy_text_to_clipboard_cmd(text),
-        { ..model, desk_path_status: desk_path_copied_status(model) },
+        { ..model, desk_path_status: desk_path_copied_status(model), },
       )
     }
   }
@@ -663,10 +669,10 @@ fn paste_desk_clipboard_action(
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_clipboard_status: "select a MoonBook first" },
+      { ..model, desk_clipboard_status: "select a MoonBook first", },
     )
   } else if model.desk_clipboard_paths.length() == 0 {
-    (@rabbita.none, { ..model, desk_clipboard_status: "clipboard empty" })
+    (@rabbita.none, { ..model, desk_clipboard_status: "clipboard empty", })
   } else if model.desk_clipboard_workspace_id != model.selected_workspace_id {
     (
       @rabbita.none,
@@ -706,11 +712,11 @@ fn duplicate_desk_entry_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_copy_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_copy_status: "select a MoonBook first", })
   } else if model.selected_path == "" {
     (
       @rabbita.none,
-      { ..model, desk_copy_status: "select an item to duplicate" },
+      { ..model, desk_copy_status: "select an item to duplicate", },
     )
   } else {
     (
@@ -733,13 +739,13 @@ fn restore_desk_entry_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first", })
   } else if model.desk_last_trash_path == "" {
-    (@rabbita.none, { ..model, desk_trash_status: "nothing to restore" })
+    (@rabbita.none, { ..model, desk_trash_status: "nothing to restore", })
   } else {
     (
       restore_desk_entry_cmd(dispatch, model),
-      { ..model, desk_trash_status: "restoring last trashed item" },
+      { ..model, desk_trash_status: "restoring last trashed item", },
     )
   }
 }
@@ -751,16 +757,16 @@ fn restore_desk_trash_entry_action(
   trash_path : String,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first", })
   } else if trash_path == "" {
     (
       @rabbita.none,
-      { ..model, desk_trash_status: "select a trash item to restore" },
+      { ..model, desk_trash_status: "select a trash item to restore", },
     )
   } else {
     (
       restore_desk_trash_path_cmd(dispatch, model, trash_path),
-      { ..model, desk_trash_status: "restoring trash item" },
+      { ..model, desk_trash_status: "restoring trash item", },
     )
   }
 }
@@ -771,9 +777,9 @@ fn trash_desk_entry_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_trash_status: "select a MoonBook first", })
   } else if model.selected_path == "" {
-    (@rabbita.none, { ..model, desk_trash_status: "select an item to trash" })
+    (@rabbita.none, { ..model, desk_trash_status: "select an item to trash", })
   } else {
     (
       trash_desk_entry_cmd(dispatch, model),
@@ -795,11 +801,11 @@ fn move_desk_entry_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_move_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_move_status: "select a MoonBook first", })
   } else if model.selected_path == "" {
-    (@rabbita.none, { ..model, desk_move_status: "select an item to move" })
+    (@rabbita.none, { ..model, desk_move_status: "select an item to move", })
   } else if model.desk_move_target_directory.trim().to_owned() == "" {
-    (@rabbita.none, { ..model, desk_move_status: "enter a target directory" })
+    (@rabbita.none, { ..model, desk_move_status: "enter a target directory", })
   } else {
     (
       move_desk_entry_cmd(dispatch, model),
@@ -821,20 +827,23 @@ fn rename_desk_entry_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_workspace_id == "" {
-    (@rabbita.none, { ..model, desk_rename_status: "select a MoonBook first" })
+    (@rabbita.none, { ..model, desk_rename_status: "select a MoonBook first", })
   } else if model.selected_path == "" {
-    (@rabbita.none, { ..model, desk_rename_status: "select an item to rename" })
+    (
+      @rabbita.none,
+      { ..model, desk_rename_status: "select an item to rename", },
+    )
   } else if model.desk_selected_paths.length() > 1 {
     (
       @rabbita.none,
-      { ..model, desk_rename_status: "rename one item at a time" },
+      { ..model, desk_rename_status: "rename one item at a time", },
     )
   } else if model.desk_rename_name.trim().to_owned() == "" {
-    (@rabbita.none, { ..model, desk_rename_status: "enter a new name" })
+    (@rabbita.none, { ..model, desk_rename_status: "enter a new name", })
   } else {
     (
       rename_desk_entry_cmd(dispatch, model),
-      { ..model, desk_rename_status: "renaming selection" },
+      { ..model, desk_rename_status: "renaming selection", },
     )
   }
 }
@@ -848,10 +857,10 @@ fn create_desk_entry_action(
   if model.selected_workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, desk_new_item_status: "select a MoonBook first" },
+      { ..model, desk_new_item_status: "select a MoonBook first", },
     )
   } else if model.desk_new_item_name.trim().to_owned() == "" {
-    (@rabbita.none, { ..model, desk_new_item_status: "enter a name" })
+    (@rabbita.none, { ..model, desk_new_item_status: "enter a name", })
   } else {
     (
       create_desk_entry_cmd(dispatch, model, kind),
@@ -875,12 +884,12 @@ fn import_moonbook_action(
   if model.import_book_path.trim().to_owned() == "" {
     (
       @rabbita.none,
-      { ..model, import_book_status: "enter a MoonBook folder path" },
+      { ..model, import_book_status: "enter a MoonBook folder path", },
     )
   } else {
     (
       import_moonbook_cmd(dispatch, model),
-      { ..model, import_book_status: "importing MoonBook" },
+      { ..model, import_book_status: "importing MoonBook", },
     )
   }
 }
@@ -892,11 +901,14 @@ fn create_blank_moonbook_action(
 ) -> (@rabbita.Cmd, Model) {
   if model.new_book_name.trim().to_owned() == "" &&
     model.new_book_id.trim().to_owned() == "" {
-    (@rabbita.none, { ..model, new_book_status: "enter a MoonBook name or id" })
+    (
+      @rabbita.none,
+      { ..model, new_book_status: "enter a MoonBook name or id", },
+    )
   } else {
     (
       create_blank_moonbook_cmd(dispatch, model),
-      { ..model, new_book_status: "creating MoonBook" },
+      { ..model, new_book_status: "creating MoonBook", },
     )
   }
 }
@@ -925,17 +937,17 @@ fn decide_review_item_action(
   if item.workspace_id == "" {
     (
       @rabbita.none,
-      { ..model, review_decision_status: "review item is not book-scoped" },
+      { ..model, review_decision_status: "review item is not book-scoped", },
     )
   } else if decision != "accepted" && decision != "rejected" {
     (
       @rabbita.none,
-      { ..model, review_decision_status: "unknown review decision" },
+      { ..model, review_decision_status: "unknown review decision", },
     )
   } else {
     (
       decide_review_item_cmd(dispatch, model, item, decision),
-      { ..model, review_decision_status: "recording \{decision}" },
+      { ..model, review_decision_status: "recording \{decision}", },
     )
   }
 }
@@ -990,7 +1002,7 @@ fn search_now_action(
         Search,
         fetch_search_cmd(dispatch, query, workspace_id~, mode~),
       ),
-      { ..model, activity: Search, command_open: false, pages_search },
+      { ..model, activity: Search, command_open: false, pages_search, },
     )
   }
 }

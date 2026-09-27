@@ -43,7 +43,12 @@ fn flow_canvas_apply_composition_positions(
   for position in composition.node_positions.unwrap_or([]) {
     positions.push((position.work_item_id, position.x, position.y))
   }
-  { ..canvas, pan_dragging: false, drag_node_id: "", node_positions: positions }
+  {
+    ..canvas,
+    pan_dragging: false,
+    drag_node_id: "",
+    node_positions: positions,
+  }
 }
 
 ///|
@@ -180,7 +185,7 @@ fn flow_set_node_position(
   if !replaced {
     positions.push((item_id, x, y))
   }
-  { ..model, flow_canvas: { ..model.flow_canvas, node_positions: positions } }
+  { ..model, flow_canvas: { ..model.flow_canvas, node_positions: positions, }, }
 }
 
 ///|
@@ -379,7 +384,7 @@ fn flow_node_keydown_action(
 
 ///|
 fn flow_canvas_reset_action(model : Model) -> (@rabbita.Cmd, Model) {
-  (@rabbita.none, { ..model, flow_canvas: init_flow_canvas_state() })
+  (@rabbita.none, { ..model, flow_canvas: init_flow_canvas_state(), })
 }
 
 ///|

@@ -108,7 +108,7 @@ test "Pages and Code expose named workspace landmarks" {
   assert_eq(pages.split("aria-label=\"Document chat\"").length(), 2)
   assert_eq(pages.split("aria-label=\"Document viewer\"").length(), 2)
   let code = render_accessibility_test_html(
-    render_app(dispatch, { ..init_model(), workspace_mode: MoonCode }),
+    render_app(dispatch, { ..init_model(), workspace_mode: MoonCode, }),
   )
   assert_eq(code.split("aria-label=\"Code sessions\"").length(), 2)
 }
@@ -175,7 +175,7 @@ test "all typed surface announcements are polite atomic and exclude diagnostics"
   let desk = render_accessibility_test_html(
     render_desk_entries_state_panel(
       dispatch,
-      { ..init_model(), desk_entries_error: raw_error },
+      { ..init_model(), desk_entries_error: raw_error, },
       RecoverableError,
     ),
   )
@@ -184,7 +184,7 @@ test "all typed surface announcements are polite atomic and exclude diagnostics"
   let preview = render_accessibility_test_html(
     render_preview_state_panel(
       dispatch,
-      { ..init_model(), preview_error: raw_error },
+      { ..init_model(), preview_error: raw_error, },
       RecoverableError,
     ),
   )

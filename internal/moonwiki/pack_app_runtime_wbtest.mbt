@@ -40,6 +40,43 @@ test "pack app runtime accepts a matching installed app" {
 }
 
 ///|
+test "pack app proxy assigns HTML and JSON types to nested app routes" {
+  let entrypoint = "/apps/moonfish/paiwork"
+  assert_eq(
+    pack_app_proxy_content_type(entrypoint, entrypoint),
+    "text/html; charset=utf-8",
+  )
+  assert_eq(
+    pack_app_proxy_content_type(entrypoint + "/", entrypoint),
+    "text/html; charset=utf-8",
+  )
+  assert_eq(
+    pack_app_proxy_content_type(entrypoint + "/api/v1/bootstrap", entrypoint),
+    "application/json; charset=utf-8",
+  )
+  assert_eq(
+    pack_app_proxy_content_type(entrypoint + "/style.css", entrypoint),
+    "text/css; charset=utf-8",
+  )
+}
+
+///|
+test "pack app proxy keeps query filters and rejects unsafe query text" {
+  assert_eq(
+    pack_app_proxy_query_suffix(
+      "/pack-apps/moonfish/apps/moonfish/paiwork/api/v1/items?limit=10&sort=latest",
+    ),
+    Some("?limit=10&sort=latest"),
+  )
+  assert_eq(pack_app_proxy_query_suffix("/pack-apps/moonfish/"), Some(""))
+  assert_eq(
+    pack_app_proxy_query_suffix("/pack-apps/moonfish/?next=#fragment"),
+    None,
+  )
+  assert_eq(pack_app_proxy_query_suffix("/pack-apps/moonfish/?x=one two"), None)
+}
+
+///|
 test "template catalog digest rejects tampered presentation and ceilings" {
   let zero = "sha256:" +
     "0000000000000000000000000000000000000000000000000000000000000000"
@@ -107,6 +144,36 @@ test "pack presentation keeps entrypoint safe and appends strict launch context"
       },
     )
     is None,
+  )
+}
+
+///|
+test "pack runtime presentation is used when typed install omits the optional manifest field" {
+  let record = pack_app_runtime_record(
+    { "pack_id": "sample", "version": "1.0.0" },
+    {
+      "id": "sample",
+      "app_entrypoints": [{ "id": "app", "path": "/index.html" }],
+    },
+    {
+      "contract": "moonsuite.pack-app-runtime.v1",
+      "pack_id": "sample",
+      "app_url": "http://127.0.0.1:4300/index.html",
+      "service_url": "http://127.0.0.1:4300",
+      "app_presentation": {
+        "contract_id": "moonsuite.pack-presentation.v1",
+        "icon": "F",
+        "surface": "paiwork",
+        "primary_action_label": "Open PaiWork",
+      },
+    },
+  )
+  guard record is Some(record) else { fail("expected configured app") }
+  assert_eq(json_string(record, "presentation_icon", default=""), "F")
+  assert_eq(json_string(record, "presentation_surface", default=""), "paiwork")
+  assert_eq(
+    json_string(record, "primary_action_label", default=""),
+    "Open PaiWork",
   )
 }
 

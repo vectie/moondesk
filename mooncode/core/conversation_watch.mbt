@@ -15,12 +15,12 @@ pub fn mooncode_watch_cursor(
       "MoonCode watch cursor must have a nonnegative revision and canonical sequence",
     )
   }
-  { revision, sequence }
+  { revision, sequence, }
 }
 
 ///|
 pub fn mooncode_watch_origin_cursor() -> MoonCodeWatchCursor {
-  { revision: "0", sequence: "0" }
+  { revision: "0", sequence: "0", }
 }
 
 ///|

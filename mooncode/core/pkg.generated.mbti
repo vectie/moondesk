@@ -65,6 +65,9 @@ pub(all) enum MoonCodeApproval {
   Approved(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
   Rejected(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeApproval::equal(Self, Self) -> Bool
+pub fn MoonCodeApproval::not_equal(Self, Self) -> Bool
+pub fn MoonCodeApproval::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeCapability {
   component : String
@@ -77,12 +80,16 @@ pub(all) struct MoonCodeCapability {
   extensions : Map[String, Json]
   ownership_extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeCapability::equal(Self, Self) -> Bool
+pub fn MoonCodeCapability::not_equal(Self, Self) -> Bool
+pub fn MoonCodeCapability::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeCommand {
   kind : MoonCodeCommandKind
   client_turn_id : String
   context_path : String
   message : String
+  content_parts : Array[MoonCodeContentPart]
   model : String
   web_search : Bool
   planner_max_steps : Int?
@@ -92,6 +99,9 @@ pub(all) struct MoonCodeCommand {
   tool_call_id : String
   force_preflight : Bool
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeCommand::equal(Self, Self) -> Bool
+pub fn MoonCodeCommand::not_equal(Self, Self) -> Bool
+pub fn MoonCodeCommand::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MoonCodeCommandKind {
   Prompt
@@ -110,12 +120,29 @@ pub(all) enum MoonCodeCommandKind {
   Cancel
   Note
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeCommandKind::equal(Self, Self) -> Bool
+pub fn MoonCodeCommandKind::not_equal(Self, Self) -> Bool
+pub fn MoonCodeCommandKind::to_repr(Self) -> @debug.Repr
 pub fn MoonCodeCommandKind::to_string(Self) -> String
 
 pub enum MoonCodeCommandStatus {
   Accepted
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeCommandStatus::equal(Self, Self) -> Bool
+pub fn MoonCodeCommandStatus::not_equal(Self, Self) -> Bool
+pub fn MoonCodeCommandStatus::to_repr(Self) -> @debug.Repr
 pub fn MoonCodeCommandStatus::to_string(Self) -> String
+
+pub(all) struct MoonCodeContentPart {
+  kind : String
+  text : String
+  media_type : String
+  data_base64 : String
+  name : String
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeContentPart::equal(Self, Self) -> Bool
+pub fn MoonCodeContentPart::not_equal(Self, Self) -> Bool
+pub fn MoonCodeContentPart::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeConversation {
   kind : String
@@ -131,6 +158,9 @@ pub(all) struct MoonCodeConversation {
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeConversation::equal(Self, Self) -> Bool
+pub fn MoonCodeConversation::not_equal(Self, Self) -> Bool
+pub fn MoonCodeConversation::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeEvidence {
   item_id : String
@@ -149,6 +179,9 @@ pub(all) struct MoonCodeEvidence {
   sandbox_receipt : MoonCodeSandboxReceipt?
   sandbox_receipt_invalid : Bool
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeEvidence::equal(Self, Self) -> Bool
+pub fn MoonCodeEvidence::not_equal(Self, Self) -> Bool
+pub fn MoonCodeEvidence::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MoonCodeFailure {
   Absent
@@ -158,6 +191,9 @@ pub(all) enum MoonCodeFailure {
   Stale(revision~ : String, current_revision~ : String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeFailure::equal(Self, Self) -> Bool
+pub fn MoonCodeFailure::not_equal(Self, Self) -> Bool
+pub fn MoonCodeFailure::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MoonCodeLifecycleAction {
   Rename(String)
@@ -165,6 +201,9 @@ pub(all) enum MoonCodeLifecycleAction {
   Restore
   Delete
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeLifecycleAction::equal(Self, Self) -> Bool
+pub fn MoonCodeLifecycleAction::not_equal(Self, Self) -> Bool
+pub fn MoonCodeLifecycleAction::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeMessage {
   item_id : String
@@ -175,6 +214,9 @@ pub(all) struct MoonCodeMessage {
   client_turn_id : String
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeMessage::equal(Self, Self) -> Bool
+pub fn MoonCodeMessage::not_equal(Self, Self) -> Bool
+pub fn MoonCodeMessage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxChange {
   relative_path : String
@@ -184,6 +226,9 @@ pub(all) struct MoonCodeSandboxChange {
   after_size_bytes : Int64?
   promotable : Bool
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeSandboxChange::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxChange::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxChange::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxLimits {
   wall_clock_ms : Int
@@ -193,11 +238,19 @@ pub(all) struct MoonCodeSandboxLimits {
   processes : Int
   output_bytes : Int
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeSandboxLimits::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxLimits::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxLimits::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxPromotionItem {
   source_relative : String
   destination_relative : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoonCodeSandboxPromotionItem::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionItem::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoonCodeSandboxPromotionItem::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionItem::to_json(Self) -> Json
+pub fn MoonCodeSandboxPromotionItem::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxPromotionRequest {
   retention_id : String
@@ -205,6 +258,11 @@ pub(all) struct MoonCodeSandboxPromotionRequest {
   command_digest : String
   items : Array[MoonCodeSandboxPromotionItem]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoonCodeSandboxPromotionRequest::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoonCodeSandboxPromotionRequest::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionRequest::to_json(Self) -> Json
+pub fn MoonCodeSandboxPromotionRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxPromotionResult {
   completed : Bool
@@ -217,7 +275,12 @@ pub(all) struct MoonCodeSandboxPromotionResult {
   recovery_required : Bool
   error_code : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoonCodeSandboxPromotionResult::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionResult::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn MoonCodeSandboxPromotionResult::locks_receipt(Self) -> Bool
+pub fn MoonCodeSandboxPromotionResult::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxPromotionResult::to_json(Self) -> Json
+pub fn MoonCodeSandboxPromotionResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeSandboxReceipt {
   backend : String
@@ -234,11 +297,17 @@ pub(all) struct MoonCodeSandboxReceipt {
   artifacts : Array[String]
   retention_id : String?
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeSandboxReceipt::equal(Self, Self) -> Bool
+pub fn MoonCodeSandboxReceipt::not_equal(Self, Self) -> Bool
 pub fn MoonCodeSandboxReceipt::promotion_ready(Self) -> Bool
 pub fn MoonCodeSandboxReceipt::review_key(Self) -> String
+pub fn MoonCodeSandboxReceipt::to_repr(Self) -> @debug.Repr
 
 pub struct MoonCodeSessionId(String) derive(Eq, @debug.Debug)
+pub fn MoonCodeSessionId::equal(Self, Self) -> Bool
+pub fn MoonCodeSessionId::not_equal(Self, Self) -> Bool
 pub fn MoonCodeSessionId::parse(String) -> Self?
+pub fn MoonCodeSessionId::to_repr(Self) -> @debug.Repr
 pub fn MoonCodeSessionId::to_string(Self) -> String
 
 pub(all) enum MoonCodeSessionStatus {
@@ -251,7 +320,10 @@ pub(all) enum MoonCodeSessionStatus {
   Cancelled
   Durable
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeSessionStatus::equal(Self, Self) -> Bool
+pub fn MoonCodeSessionStatus::not_equal(Self, Self) -> Bool
 pub fn MoonCodeSessionStatus::parse(String) -> Self?
+pub fn MoonCodeSessionStatus::to_repr(Self) -> @debug.Repr
 pub fn MoonCodeSessionStatus::to_string(Self) -> String
 
 pub(all) struct MoonCodeSessionSummary {
@@ -270,6 +342,9 @@ pub(all) struct MoonCodeSessionSummary {
   archived : Bool
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeSessionSummary::equal(Self, Self) -> Bool
+pub fn MoonCodeSessionSummary::not_equal(Self, Self) -> Bool
+pub fn MoonCodeSessionSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeTurn {
   kind : String
@@ -286,14 +361,20 @@ pub(all) struct MoonCodeTurn {
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeTurn::equal(Self, Self) -> Bool
+pub fn MoonCodeTurn::not_equal(Self, Self) -> Bool
+pub fn MoonCodeTurn::to_repr(Self) -> @debug.Repr
 
 pub struct MoonCodeWatchCursor {
   revision : String
   sequence : String
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeWatchCursor::advance_sequence(Self, String) -> Self raise
+pub fn MoonCodeWatchCursor::equal(Self, Self) -> Bool
+pub fn MoonCodeWatchCursor::not_equal(Self, Self) -> Bool
 pub fn MoonCodeWatchCursor::revision(Self) -> String
 pub fn MoonCodeWatchCursor::sequence(Self) -> String
+pub fn MoonCodeWatchCursor::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MoonCodeWatchResult {
   Snapshot(cursor~ : MoonCodeWatchCursor, session~ : MoonCodeSessionSummary, conversation~ : MoonCodeConversation, terminal~ : Bool)
@@ -304,6 +385,9 @@ pub(all) enum MoonCodeWatchResult {
   Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeWatchResult::cursor(Self) -> MoonCodeWatchCursor
+pub fn MoonCodeWatchResult::equal(Self, Self) -> Bool
+pub fn MoonCodeWatchResult::not_equal(Self, Self) -> Bool
+pub fn MoonCodeWatchResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MoonCodeWork {
   item_id : String
@@ -313,6 +397,9 @@ pub(all) struct MoonCodeWork {
   evidence : Array[MoonCodeEvidence]
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeWork::equal(Self, Self) -> Bool
+pub fn MoonCodeWork::not_equal(Self, Self) -> Bool
+pub fn MoonCodeWork::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

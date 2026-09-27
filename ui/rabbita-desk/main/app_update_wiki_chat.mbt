@@ -5,7 +5,7 @@ fn wiki_chat_append(
   content : String,
 ) -> Array[WikiChatEntry] {
   let next = entries.copy()
-  next.push({ role, content })
+  next.push({ role, content, })
   next
 }
 
@@ -26,7 +26,7 @@ fn wiki_chat_path_is_attachable(path : String) -> Bool {
 fn wiki_chat_attach_file(model : Model, path : String) -> Model {
   let value = path.trim().to_owned()
   if !wiki_chat_path_is_attachable(value) {
-    return { ..model, request_status: "Choose a file from this workspace" }
+    return { ..model, request_status: "Choose a file from this workspace", }
   }
   if model.wiki_chat_file_paths.contains(value) {
     {
@@ -172,7 +172,7 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
   let mut next = model
   let mut terminal = false
   match kind {
-    "lifecycle" => next = { ..next, request_status: "working" }
+    "lifecycle" => next = { ..next, request_status: "working", }
     "answer_delta" => {
       let content = json_field_string(event, "content", default="")
       if content != "" {
@@ -185,9 +185,13 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
             content: entries[index].content + content,
           }
         } else {
-          entries.push({ role: "assistant-stream", content })
+          entries.push({ role: "assistant-stream", content, })
         }
-        next = { ..next, wiki_chat_entries: entries, request_status: "working" }
+        next = {
+          ..next,
+          wiki_chat_entries: entries,
+          request_status: "working",
+        }
       }
     }
     "answer" => {
@@ -207,16 +211,16 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
           },
         }
       } else if content != "" {
-        entries.push({ role: "assistant", content })
+        entries.push({ role: "assistant", content, })
       }
-      next = { ..next, wiki_chat_entries: entries }
+      next = { ..next, wiki_chat_entries: entries, }
     }
     "source_ref" | "artifact_ref" | "automation_suggestion" => {
       let content = event.stringify()
       let entries = next.wiki_chat_entries.copy()
       if !entries.any(entry => entry.role == kind && entry.content == content) {
-        entries.push({ role: kind, content })
-        next = { ..next, wiki_chat_entries: entries }
+        entries.push({ role: kind, content, })
+        next = { ..next, wiki_chat_entries: entries, }
       }
     }
     "snapshot" => {
@@ -230,13 +234,13 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
             entries[entries.length() - 1].role == "assistant-stream" ||
             entries[entries.length() - 1].role == "assistant"
           ) {
-          entries[entries.length() - 1] = { role: "assistant", content }
+          entries[entries.length() - 1] = { role: "assistant", content, }
         } else {
-          entries.push({ role: "assistant", content })
+          entries.push({ role: "assistant", content, })
         }
       }
       let state = json_field_string(event, "state", default="working")
-      next = { ..next, wiki_chat_entries: entries, request_status: state }
+      next = { ..next, wiki_chat_entries: entries, request_status: state, }
       terminal = state == "complete" ||
         state == "cancelled" ||
         state == "failed"
@@ -260,7 +264,7 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
     }
     "terminal" => {
       let state = json_field_string(event, "state", default="complete")
-      next = { ..next, request_status: state }
+      next = { ..next, request_status: state, }
       terminal = true
     }
     _ => ()
@@ -354,13 +358,13 @@ fn update_wiki_chat(
       )
     SubmitWikiChat =>
       if model.selected_workspace_id == "" {
-        (@rabbita.none, { ..model, request_status: "Choose a MoonBook first" })
+        (@rabbita.none, { ..model, request_status: "Choose a MoonBook first", })
       } else if model.request_prompt.trim().is_empty() {
-        (@rabbita.none, { ..model, request_status: "Write a message first" })
+        (@rabbita.none, { ..model, request_status: "Write a message first", })
       } else {
         (
           submit_wiki_chat_cmd(dispatch, model),
-          { ..model, request_status: "sending" },
+          { ..model, request_status: "sending", },
         )
       }
     SubmittedWikiChat(submitted_message, Ok(submission)) =>
@@ -391,7 +395,7 @@ fn update_wiki_chat(
               submission.preference_ids.map(id => Json::string(id)),
             ),
           }
-          entries.push({ role: "preference_usage", content: usage.stringify() })
+          entries.push({ role: "preference_usage", content: usage.stringify(), })
         }
         match submission.automation_suggestion {
           Some(Object(_) as suggestion) =>
@@ -435,7 +439,7 @@ fn update_wiki_chat(
           stop_wiki_chat_stream_cmd(),
           workspace_feature_signal_cmd("followup-failed", submitted_message),
         ]),
-        { ..model, wiki_chat_stream_task_id: "", request_status: error },
+        { ..model, wiki_chat_stream_task_id: "", request_status: error, },
       )
     PollWikiChatStream(task_id) =>
       if model.wiki_chat_stream_task_id == task_id {
@@ -447,7 +451,7 @@ fn update_wiki_chat(
       if model.wiki_chat_stream_task_id != task_id {
         (@rabbita.none, model)
       } else {
-        let mut next = { ..model, wiki_chat_stream_cursor: cursor }
+        let mut next = { ..model, wiki_chat_stream_cursor: cursor, }
         let mut terminal = false
         for event in events {
           let (updated, done) = wiki_chat_apply_stream_event(next, event)
@@ -457,7 +461,7 @@ fn update_wiki_chat(
         if terminal {
           (
             stop_wiki_chat_stream_cmd(),
-            { ..next, wiki_chat_stream_task_id: "" },
+            { ..next, wiki_chat_stream_task_id: "", },
           )
         } else {
           (

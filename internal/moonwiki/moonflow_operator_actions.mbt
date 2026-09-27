@@ -250,7 +250,7 @@ fn decode_moonflow_operator_evidence_refs(
     if moonflow_action_relative_file(reference) is None {
       return None
     }
-    refs.push({ kind, reference, digest })
+    refs.push({ kind, reference, digest, })
   }
   Some(refs)
 }
@@ -278,7 +278,7 @@ fn decode_moonflow_operator_entrypoint(
     fallback_path != "" {
     return None
   }
-  Some({ kind, pack_id, entrypoint_id, path, fallback_path })
+  Some({ kind, pack_id, entrypoint_id, path, fallback_path, })
 }
 
 ///|
@@ -515,7 +515,7 @@ fn decode_moonflow_operator_action_catalog(
     }
     actions.push(action)
   }
-  Some({ run_id, actions })
+  Some({ run_id, actions, })
 }
 
 ///|
@@ -685,7 +685,7 @@ async fn moonflow_recover_receiver_receipts(
   if !moonflow_receiver_recovery_needed(run_root) {
     return true
   }
-  let moonflow_root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  let moonflow_root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
   if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
     return false
   }
@@ -1143,7 +1143,7 @@ async fn handle_moonflow_receiver_receipt(
     )
     return
   }
-  let moonflow_root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  let moonflow_root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
   if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
     send_api_error(
       conn, method_, 503, "Service Unavailable", "MoonFlow host unavailable",
@@ -1327,7 +1327,7 @@ async fn handle_moonflow_operator_action(
     send_api_error(conn, method_, 409, "Conflict", "Action inputs unavailable")
     return
   }
-  let moonflow_root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  let moonflow_root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
   if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
     send_api_error(
       conn, method_, 503, "Service Unavailable", "MoonFlow host unavailable",

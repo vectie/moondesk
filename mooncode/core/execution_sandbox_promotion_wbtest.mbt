@@ -5,7 +5,7 @@ fn sandbox_promotion_core_test_request() -> MoonCodeSandboxPromotionRequest {
     approval_digest: "a".repeat(64),
     command_digest: "b".repeat(64),
     items: [
-      { source_relative: "src/main.mbt", destination_relative: "src/main.mbt" },
+      { source_relative: "src/main.mbt", destination_relative: "src/main.mbt", },
     ],
   }
 }
@@ -76,13 +76,13 @@ test "sandbox promotion core rejects multiple items and contradictory paths" {
     validate_mooncode_sandbox_promotion_request({
       ..request,
       items: request.items +
-      [{ source_relative: "other", destination_relative: "other" }],
+      [{ source_relative: "other", destination_relative: "other", }],
     })
     is Err(_),
   )
   let applied = sandbox_promotion_core_applied(request)
   let invalid : Array[MoonCodeSandboxPromotionResult] = [
-    { ..applied, destination_outcome: "not-applied" },
+    { ..applied, destination_outcome: "not-applied", },
     {
       ..applied,
       completed: false,

@@ -80,7 +80,7 @@ async fn run_pack_studio(args : Array[String]) -> Unit {
         ).to_json()
       ["adopt-bridge", workspace, source, intake_operation_id, output_schema_id] =>
         @packstudio.adopt_pack_bridge(
-          { source_root: source, intake_operation_id, output_schema_id },
+          { source_root: source, intake_operation_id, output_schema_id, },
           workspace,
         ).to_json()
       ["install", workspace, source, authorities, extensions] =>
@@ -93,7 +93,7 @@ async fn run_pack_studio(args : Array[String]) -> Unit {
           workspace,
         ).to_json()
       ["activate", workspace, pack_id, version] =>
-        @packstudio.activate_pack_version({ pack_id, version }, workspace).to_json()
+        @packstudio.activate_pack_version({ pack_id, version, }, workspace).to_json()
       ["deactivate", workspace, pack_id] => {
         let deactivated = @packstudio.deactivate_pack({ pack_id, }, workspace)
         { "pack_id": pack_id, "deactivated": deactivated }

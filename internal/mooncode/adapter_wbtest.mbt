@@ -14,6 +14,45 @@ fn adapter_command_payload(
 }
 
 ///|
+test "native turn journals ordered prompt content once" {
+  let session : Json = {
+    "id": "session-media",
+    "workspace_root": "/tmp/book-media",
+  }
+  let submission : Json = {
+    "action": "prompt",
+    "client_turn_id": "client-media",
+    "message": "Inspect ",
+    "model": "moongate/vision",
+    "content_parts": [
+      { "type": "text", "text": "Inspect " },
+      {
+        "type": "image",
+        "media_type": "image/png",
+        "data_base64": "iVBORw0KGgo=",
+        "name": "screen.png",
+      },
+    ],
+  }
+  guard decode_command_submission(submission) is Ok(command) else {
+    fail("media command must decode")
+  }
+  let body = native_command_body(session, command, "now", submission)
+  assert_eq(json_array_items(body, "content_parts").length(), 2)
+  assert_true(
+    json_object_field_or_empty(body, "payload") is Object(payload) &&
+    payload.get("content_parts") is None,
+  )
+  assert_eq(
+    json_array_items(
+      json_object_field_or_empty(body, "packet"),
+      "content_parts",
+    ).length(),
+    0,
+  )
+}
+
+///|
 test "typed adapter derives stable acceptance identity from caller submission" {
   let session : Json = {
     "id": "session-one",
@@ -222,10 +261,11 @@ test "adapter preserves explicit planner limit and private runtime passthrough" 
 ///|
 test "adapter exposes only the canonical desktop route surface" {
   let routes = desktop_projection_route_contracts()
-  assert_eq(routes.length(), 7)
+  assert_eq(routes.length(), 8)
   let payload = Json::array(routes).stringify()
   assert_true(payload.contains(desktop_session_watch_endpoint()))
   assert_true(payload.contains(desktop_session_lifecycle_endpoint()))
+  assert_true(payload.contains(desktop_skills_endpoint()))
   assert_false(payload.contains("runtime-service"))
   assert_false(payload.contains("runtime-replay"))
   assert_false(payload.contains("session-store"))
@@ -287,6 +327,21 @@ test "listing adapter preserves MoonClaw order and canonical identity" {
   assert_eq(json_int(summary, "verified_test_count", default=-1), 0)
   assert_eq(json_int(summary, "pending_diff_count", default=-1), 0)
   assert_true(json_bool(rows[0], "archived", default=false))
+}
+
+///|
+test "suite session listing requests direct MoonBooks in one native call" {
+  assert_true(
+    moonclaw_native_session_listing_endpoint("/suite", include_books=true).contains(
+      "include_books=true",
+    ),
+  )
+  assert_true(
+    moonclaw_native_archived_session_listing_endpoint(
+      "/suite",
+      include_books=true,
+    ).contains("scope=archived&include_books=true"),
+  )
 }
 
 ///|

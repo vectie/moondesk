@@ -186,7 +186,7 @@ fn launch_agent_label() -> String {
 
 ///|
 fn user_launch_agents_dir() -> String {
-  let home = @sys.get_env_var("HOME").unwrap_or(".")
+  let home = @env.get_env_var("HOME").unwrap_or(".")
   @pathx.join(home, "Library/LaunchAgents")
 }
 

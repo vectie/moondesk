@@ -1,6 +1,6 @@
 ///|
 test "snapshot paths use MoonSuite product home" {
-  let paths = snapshot_paths("/suite")
+  let paths = @moontown.snapshot_paths("/suite")
   assert_eq(
     paths.town_json_path,
     "/suite/.moonsuite/products/moontown/town.json",
@@ -18,7 +18,7 @@ test "snapshot paths use MoonSuite product home" {
 
 ///|
 test "snapshot paths infer suite product home from book root" {
-  let paths = snapshot_paths("/suite/books/research-town")
+  let paths = @moontown.snapshot_paths("/suite/books/research-town")
   assert_eq(
     paths.town_json_path,
     "/suite/.moonsuite/products/moontown/town.json",

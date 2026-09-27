@@ -43,7 +43,7 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
         }
       value =>
         if !seen_root && !value.has_prefix("-") {
-          options = { ..options, workspace_root: value }
+          options = { ..options, workspace_root: value, }
           seen_root = true
           index += 1
         } else {
@@ -132,7 +132,7 @@ async fn run_install_launch_agent(args : Array[String]) -> Unit {
         }
       value =>
         if !seen_root && !value.has_prefix("-") {
-          options = { ..options, workspace_root: value }
+          options = { ..options, workspace_root: value, }
           seen_root = true
           index += 1
         } else {
@@ -341,7 +341,7 @@ fn launch_agent_label(service : String) -> String {
 
 ///|
 fn launch_agent_user_path(label : String) -> String {
-  let home = @sys.get_env_var("HOME").unwrap_or(
+  let home = @env.get_env_var("HOME").unwrap_or(
     @env.current_dir().unwrap_or("."),
   )
   @pathx.join(@pathx.join(home, "Library/LaunchAgents"), label + ".plist")

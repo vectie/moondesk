@@ -5,7 +5,7 @@ fn sandbox_promotion_test_request() -> @mooncode_core.MoonCodeSandboxPromotionRe
     approval_digest: "a".repeat(64),
     command_digest: "b".repeat(64),
     items: [
-      { source_relative: "src/main.mbt", destination_relative: "src/main.mbt" },
+      { source_relative: "src/main.mbt", destination_relative: "src/main.mbt", },
     ],
   }
 }
@@ -220,7 +220,7 @@ test "browser promotion contract requires one safe mapping" {
     @mooncode_core.validate_mooncode_sandbox_promotion_request({
       ..request,
       items: [
-        { source_relative: "../outside", destination_relative: "src/main.mbt" },
+        { source_relative: "../outside", destination_relative: "src/main.mbt", },
       ],
     })
     is Err(_),
@@ -229,8 +229,8 @@ test "browser promotion contract requires one safe mapping" {
     @mooncode_core.validate_mooncode_sandbox_promotion_request({
       ..request,
       items: [
-        { source_relative: "a", destination_relative: "a" },
-        { source_relative: "b", destination_relative: "b" },
+        { source_relative: "a", destination_relative: "a", },
+        { source_relative: "b", destination_relative: "b", },
       ],
     })
     is Err(_),

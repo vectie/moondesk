@@ -31,9 +31,9 @@ test "source pane rejects stale generation workspace and path" {
   )
   let current = source_pane_identity(loading)
   let stale = [
-    { ..current, generation: current.generation - 1 },
-    { ..current, workspace_id: "other" },
-    { ..current, path: "other.mbt" },
+    { ..current, generation: current.generation - 1, },
+    { ..current, workspace_id: "other", },
+    { ..current, path: "other.mbt", },
   ]
   for identity in stale {
     let next = update_source_pane(
@@ -298,11 +298,11 @@ test "source pane derives editor language and line-number chrome" {
   assert_eq(source_pane_line_count(moonbit), 4)
   assert_eq(source_pane_line_numbers(moonbit), "1\n2\n3\n4")
   assert_eq(
-    source_pane_language_label({ ..moonbit, requested_path: "notes/readme.md" }),
+    source_pane_language_label({ ..moonbit, requested_path: "notes/readme.md", }),
     "Markdown",
   )
   assert_eq(
-    source_pane_language_label({ ..moonbit, requested_path: "unknown.data" }),
+    source_pane_language_label({ ..moonbit, requested_path: "unknown.data", }),
     "Plain text",
   )
 }

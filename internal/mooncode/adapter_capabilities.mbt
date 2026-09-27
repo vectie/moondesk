@@ -130,7 +130,7 @@ fn capabilities_json_for(
   ownership_extensions["canonical_conversation"] = capability.session_owner.to_json()
   ownership_extensions["optimistic_rows"] = "moondesk".to_json()
   ownership_extensions["artifacts"] = "moonbook".to_json()
-  let enriched = { ..capability, extensions: extra, ownership_extensions }
+  let enriched = { ..capability, extensions: extra, ownership_extensions, }
   @mooncode_core.encode_mooncode_capability(enriched)
 }
 

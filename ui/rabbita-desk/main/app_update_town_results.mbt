@@ -8,7 +8,7 @@ fn update_town_results(
     LoadedTownMessages(Ok(town_messages)) =>
       (@rabbita.none, { ..model, town_messages, })
     LoadedTownMessages(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (@rabbita.none, { ..model, host_status: error, })
     LoadedRequests(Ok(requests)) =>
       (
         @rabbita.none,
@@ -39,22 +39,22 @@ fn update_town_results(
     LoadedStandingGoals(Ok(standing_goals)) =>
       (@rabbita.none, { ..model, standing_goals, })
     LoadedStandingGoals(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     LoadedAnalytics(Ok(analytics)) =>
-      (@rabbita.none, { ..model, analytics: Some(analytics) })
+      (@rabbita.none, { ..model, analytics: Some(analytics), })
     LoadedAnalytics(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     LoadedTownProgress(Ok(progress)) =>
-      (@rabbita.none, { ..model, town_progress: Some(progress) })
+      (@rabbita.none, { ..model, town_progress: Some(progress), })
     LoadedTownProgress(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     LoadedMoonclawProgress(Ok(progress)) =>
-      (@rabbita.none, { ..model, moonclaw_progress: Some(progress) })
+      (@rabbita.none, { ..model, moonclaw_progress: Some(progress), })
     LoadedMoonclawProgress(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (@rabbita.none, { ..model, host_status: error, })
     LoadedEvents(Ok(events)) => (@rabbita.none, { ..model, events, })
     LoadedEvents(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     LoadedReviewItems(Ok(review_items)) =>
       (
         @rabbita.none,
@@ -120,7 +120,7 @@ fn update_town_results(
         },
       )
     SubmittedRequest(Err(error)) =>
-      (@rabbita.none, { ..model, request_status: error })
+      (@rabbita.none, { ..model, request_status: error, })
     CreatedStandingGoal(Ok(goal)) =>
       (
         sync_activity_batch(
@@ -140,7 +140,7 @@ fn update_town_results(
         },
       )
     CreatedStandingGoal(Err(error)) =>
-      (@rabbita.none, { ..model, dispatch_status: error })
+      (@rabbita.none, { ..model, dispatch_status: error, })
     DecidedReviewItem(Ok(result)) =>
       (
         @rabbita.batch([
@@ -162,7 +162,7 @@ fn update_town_results(
         },
       )
     DecidedReviewItem(Err(error)) =>
-      (@rabbita.none, { ..model, review_decision_status: error })
+      (@rabbita.none, { ..model, review_decision_status: error, })
     _ => (@rabbita.none, model)
   }
 }

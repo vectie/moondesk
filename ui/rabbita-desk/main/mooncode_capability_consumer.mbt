@@ -71,6 +71,19 @@ fn mooncode_capability_title(state : MoonCodeCapabilityState) -> String {
 }
 
 ///|
+fn mooncode_capability_title_i18n_key(
+  state : MoonCodeCapabilityState,
+) -> String {
+  match state {
+    CapabilityPending => "code.runtime_checking"
+    CapabilitySupported(_) => "code.runtime_ready"
+    CapabilityUnsupportedVersion(_) => "code.runtime_incompatible"
+    CapabilityMalformed(_) => "code.runtime_malformed"
+    CapabilityUnavailable(_) => "code.runtime_unavailable"
+  }
+}
+
+///|
 fn mooncode_capability_state_key(state : MoonCodeCapabilityState) -> String {
   match state {
     CapabilityPending => "pending"

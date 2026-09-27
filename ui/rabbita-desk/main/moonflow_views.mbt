@@ -183,7 +183,7 @@ fn render_moonflow_workspace(
     ]),
     render_moonflow_runs_state(
       dispatch,
-      { ..model, moonflow_runs_state: runs_state },
+      { ..model, moonflow_runs_state: runs_state, },
       selected_runs,
     ),
     if selected_runs.is_empty() &&

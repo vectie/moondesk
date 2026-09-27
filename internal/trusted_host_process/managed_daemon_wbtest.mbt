@@ -71,3 +71,31 @@ test "managed MoonClaw receives only the explicit LunaNexa handoff settings" {
   assert_false(rejected.contains("MOONDESK_LUNANEXA_ISSUER"))
   assert_false(rejected.contains("MOONGATE_CONTROL_TOKEN"))
 }
+
+///|
+test "managed MoonClaw retains the private path-only control binding" {
+  let environment = moonclaw_daemon_environment_from_values(
+    "/Users/test",
+    "",
+    "",
+    app_data_root="/Users/test/Library/Application Support/app.vectie.moondesk",
+    private_control_config="/Users/test/Library/Application Support/app.vectie.moondesk/control/execution-sandbox/moonclaw.json",
+  )
+  assert_eq(
+    environment["LEPUSA_APP_DATA_DIR"],
+    "/Users/test/Library/Application Support/app.vectie.moondesk",
+  )
+  assert_eq(
+    environment["MOONDESK_EXECUTION_SANDBOX_CONFIG"],
+    "/Users/test/Library/Application Support/app.vectie.moondesk/control/execution-sandbox/moonclaw.json",
+  )
+  let rejected = moonclaw_daemon_environment_from_values(
+    "/Users/test",
+    "",
+    "",
+    app_data_root="relative/path",
+    private_control_config="/tmp/control.json\nINJECTED=1",
+  )
+  assert_false(rejected.contains("LEPUSA_APP_DATA_DIR"))
+  assert_false(rejected.contains("MOONDESK_EXECUTION_SANDBOX_CONFIG"))
+}

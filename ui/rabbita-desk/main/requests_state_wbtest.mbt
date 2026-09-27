@@ -14,7 +14,7 @@ fn requests_test_record() -> RequestRecord {
 ///|
 test "Requests ledger transitions preserve prior records and composer feedback" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let initial = { ..init_model(), selected_workspace_id: "book-demo" }
+  let initial = { ..init_model(), selected_workspace_id: "book-demo", }
   assert_true(initial.requests_state is Some(FirstUseEmpty))
   let (_, loading) = select_activity_action(dispatch, Town, initial)
   assert_true(loading.requests_state is Some(Loading))
@@ -30,12 +30,12 @@ test "Requests ledger transitions preserve prior records and composer feedback" 
   )
   assert_true(ready.requests_state is None)
   assert_eq(ready.requests.length(), 1)
-  let refreshing = { ..ready, requests_state: Some(Loading) }
+  let refreshing = { ..ready, requests_state: Some(Loading), }
   assert_true(requests_state_keeps_items(refreshing.requests_state))
   let (_, stale) = update_town_results(
     dispatch,
     LoadedRequests(Err("raw ledger failure")),
-    { ..refreshing, request_status: "Task created." },
+    { ..refreshing, request_status: "Task created.", },
   )
   assert_true(stale.requests_state is Some(Stale))
   assert_eq(stale.requests.length(), 1)
@@ -51,7 +51,7 @@ test "Requests ledger transitions preserve prior records and composer feedback" 
   let (_, submitted) = update_town_results(
     dispatch,
     SubmittedRequest(Ok(record)),
-    { ..stale, requests_error: "old error" },
+    { ..stale, requests_error: "old error", },
   )
   assert_true(submitted.requests_state is Some(Loading))
   assert_eq(submitted.requests_error, "")

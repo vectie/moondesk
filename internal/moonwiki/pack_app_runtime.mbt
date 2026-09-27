@@ -243,7 +243,13 @@ fn pack_app_runtime_record_resolved(
     presentation_surface,
     primary_action_label,
     launch_query,
-  ) = pack_app_manifest_presentation(manifest)
+  ) = pack_app_manifest_presentation(
+    if json_object_field(manifest, "app_presentation") is Some(_) {
+      manifest
+    } else {
+      runtime
+    },
+  )
   if !is_safe_pack_id(pack_id) ||
     manifest_id != pack_id ||
     runtime_id != pack_id ||
@@ -852,6 +858,42 @@ async fn configured_pack_app(
 }
 
 ///|
+fn pack_app_proxy_content_type(
+  target_path : String,
+  entrypoint_path : String,
+) -> String {
+  if target_path == entrypoint_path || target_path == entrypoint_path + "/" {
+    "text/html; charset=utf-8"
+  } else if target_path.has_prefix(entrypoint_path + "/api/") ||
+    target_path.has_prefix("/api/") ||
+    target_path.has_prefix(entrypoint_path + "/health") ||
+    target_path.has_prefix("/health") {
+    "application/json; charset=utf-8"
+  } else {
+    @preview.content_type(target_path)
+  }
+}
+
+///|
+fn pack_app_proxy_query_suffix(request_path : String) -> String? {
+  match request_path.find("?") {
+    None => Some("")
+    Some(index) => {
+      let suffix = request_path[index:].to_owned()
+      if suffix.length() > 8192 || suffix.contains("#") {
+        return None
+      }
+      for ch in suffix {
+        if ch.is_control() || ch.is_whitespace() {
+          return None
+        }
+      }
+      Some(suffix)
+    }
+  }
+}
+
+///|
 async fn handle_pack_app_proxy(
   workspace_root : String,
   method_ : @http.RequestMethod,
@@ -859,13 +901,22 @@ async fn handle_pack_app_proxy(
   body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Unit {
-  guard method_ is Get || method_ is Head || method_ is Post else {
+  guard method_ is Get ||
+    method_ is Head ||
+    method_ is Post ||
+    method_ is Put ||
+    method_ is Patch ||
+    method_ is Delete else {
     send_status(conn, 405, "Method Not Allowed", "Method Not Allowed\n")
     return
   }
   let request_route = strip_query(request_path)
   if !is_safe_pack_route_path(request_route) {
     send_status(conn, 400, "Bad Request", "Invalid pack application path\n")
+    return
+  }
+  guard pack_app_proxy_query_suffix(request_path) is Some(query_suffix) else {
+    send_status(conn, 400, "Bad Request", "Invalid pack application query\n")
     return
   }
   let segments = path_segments(request_route)
@@ -887,26 +938,55 @@ async fn handle_pack_app_proxy(
   } else {
     "/" + rest.join("/")
   }
-  let target = service_url + target_path
-  let upstream = if method_ is Post {
+  let target = service_url + target_path + query_suffix
+  let upstream = if method_ is Post ||
+    method_ is Put ||
+    method_ is Patch ||
+    method_ is Delete {
     let payload = body.read_all().text()
-    let json_payload = @json.parse(payload) catch {
-      _ => {
-        send_status(
-          conn, 400, "Bad Request", "Pack application POST requires JSON\n",
-        )
-        return
+    if payload != "" || !(method_ is Delete) {
+      ignore(@json.parse(payload)) catch {
+        _ => {
+          send_status(
+            conn, 400, "Bad Request", "Pack application request requires JSON\n",
+          )
+          return
+        }
       }
     }
-    @http.post(target, json_payload, headers={
+    let headers : Map[String, String] = {
       "Content-Type": "application/json",
       "Accept": "application/json",
-    }) catch {
+      "Content-Length": @encoding/utf8.encode(payload).length().to_string(),
+    }
+    let client = try {
+      if method_ is Post {
+        @http.post_stream(target, headers~)
+      } else {
+        let client = @http.Client(service_url)
+        client.request(
+          method_,
+          target_path + query_suffix,
+          extra_headers=headers,
+        )
+        client
+      }
+    } catch {
       _ => {
         send_status(conn, 502, "Bad Gateway", "Pack application unavailable\n")
         return
       }
     }
+    defer client.close()
+    let response = client..write(payload).end_request() catch {
+        _ => {
+          send_status(
+            conn, 502, "Bad Gateway", "Pack application unavailable\n",
+          )
+          return
+        }
+      }
+    (response, client.read_all())
   } else {
     @http.get(target) catch {
       _ => {
@@ -916,18 +996,22 @@ async fn handle_pack_app_proxy(
     }
   }
   let (response, data) = upstream
-  let response_type = if rest.length() == 0 {
-    "text/html; charset=utf-8"
-  } else if rest[0] == "api" || rest[0].has_prefix("health") {
-    "application/json; charset=utf-8"
-  } else {
-    @preview.content_type(target_path)
-  }
-  conn.send_response(response.code, "Upstream", extra_headers={
-    "content-type": response_type,
+  let fallback_type = pack_app_proxy_content_type(
+    target_path,
+    json_string(app, "entrypoint_path", default="/"),
+  )
+  let headers : Map[String, String] = {
+    "content-type": response.headers
+    .get("content-type")
+    .unwrap_or(fallback_type),
     "cache-control": "no-store",
     "x-content-type-options": "nosniff",
-  })
+  }
+  match response.headers.get("content-disposition") {
+    Some(disposition) => headers["content-disposition"] = disposition
+    None => ()
+  }
+  conn.send_response(response.code, "Upstream", extra_headers=headers)
   if method_ is Head {
     conn.end_response()
     return

@@ -81,14 +81,14 @@ async fn source_semantics_read_bounded_file(
 
 ///|
 async fn source_semantics_load_sandbox_client_config() -> SourceSemanticsSandboxClientConfig? {
-  let configured = @sys.get_env_var("MOONDESK_EXECUTION_SANDBOX_CONFIG").unwrap_or(
+  let configured = @env.get_env_var("MOONDESK_EXECUTION_SANDBOX_CONFIG").unwrap_or(
     "",
   )
   guard configured != "" else { return None }
   let path = @pathx.normalize(configured)
   let control_root = source_semantics_control_root(
-    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
-    @sys.get_env_var("HOME").unwrap_or(""),
+    @env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    @env.get_env_var("HOME").unwrap_or(""),
   )
   guard control_root != "" &&
     @pathx.dirname(path).to_owned() == control_root &&
@@ -163,12 +163,13 @@ fn source_semantics_validate_sandbox_response(
   payload : Json,
   config : SourceSemanticsSandboxClientConfig,
   request_id : String,
+  operation? : String = "moon_diagnostics",
 ) -> Result[Json, SourceSemanticsSandboxClientError] {
   guard json_int(payload, "protocol_version", default=0) == 1 &&
     json_string(payload, "instance_id", default="") == config.instance_id &&
     json_string(payload, "request_id", default="") == request_id &&
     json_string(payload, "workspace_id", default="") == config.workspace_id &&
-    json_string(payload, "operation", default="") == "moon_diagnostics" &&
+    json_string(payload, "operation", default="") == operation &&
     !json_bool(payload, "output_truncated", default=true) &&
     json_object_field(payload, "receipt") is Some(receipt) &&
     source_semantics_safe_hex(
@@ -192,6 +193,82 @@ fn source_semantics_validate_sandbox_response(
     "output": json_string(payload, "output", default=""),
     "receipt": receipt,
   })
+}
+
+///|
+async fn source_semantics_sandbox_ide(
+  workspace_root : String,
+  module_root : String,
+  module_path : String,
+  action : String,
+  symbol : String,
+  line : Int,
+  column : Int,
+) -> Result[Json, SourceSemanticsSandboxClientError] {
+  let config = source_semantics_load_sandbox_client_config() catch {
+    _ => return Err(Unavailable)
+  }
+  guard config is Some(config) && config.workspace_root == workspace_root else {
+    return Err(Unavailable)
+  }
+  let module_directory = if module_root == workspace_root {
+    ""
+  } else {
+    match module_root.strip_prefix(workspace_root + "/") {
+      Some(value) => value.to_owned()
+      None => return Err(Unavailable)
+    }
+  }
+  let daemon = moonclaw_daemon_status(workspace_root)
+  guard json_bool(daemon, "running", default=false) else {
+    return Err(Unavailable)
+  }
+  let port = json_int(daemon, "port", default=0)
+  guard port > 0 else { return Err(Unavailable) }
+  let request_id = match source_semantics_request_id() {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let request : Json = {
+    "protocol_version": 1,
+    "instance_id": config.instance_id,
+    "request_id": request_id,
+    "workspace_id": config.workspace_id,
+    "module_directory": module_directory,
+    "module_path": module_path,
+    "action": action,
+    "symbol": symbol,
+    "line": line,
+    "column": column,
+  }
+  let client = @http.Client("http://127.0.0.1:\{port}") catch {
+    _ => return Err(Unavailable)
+  }
+  defer client.close()
+  let response = client.post("/v1/execution-sandbox/moon-ide", request, extra_headers={
+    "Content-Type": "application/json",
+    "X-MoonClaw-Execution-Token": config.auth_token,
+  }) catch {
+    _ => return Err(Unavailable)
+  }
+  guard response.code == 200 else { return Err(Unavailable) }
+  let text = match source_semantics_read_bounded_response(client) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let payload = @json.parse(text) catch { _ => return Err(InvalidReceipt) }
+  let validated = source_semantics_validate_sandbox_response(
+    payload,
+    config,
+    request_id,
+    operation="moon_ide",
+  )
+  match validated {
+    Ok(result) if json_string(payload, "action", default="") == action =>
+      Ok(result)
+    Ok(_) => Err(InvalidReceipt)
+    Err(error) => Err(error)
+  }
 }
 
 ///|
