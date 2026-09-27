@@ -104,7 +104,8 @@ rg -q 'moondesk_control_route_requires_auth\(Get, \["", "v1", "moongate-route"\]
   fail "MoonClaw route endpoint authentication is not tested"
 
 echo "+ classify all MoonDesk native HTTP clients"
-allowed_clients='^(internal/moonwiki/(moonclaw_control_transport|moonclaw_daemon_api|moonclaw_general_chat_handlers|source_semantics_sandbox_client|execution_sandbox_promotion_handlers|moontown_owner_api|pack_app_runtime)[.]mbt)$'
+# public_access is the bounded LunaNexa identity lookup for shared desktops.
+allowed_clients='^(internal/moonwiki/(moonclaw_control_transport|moonclaw_daemon_api|moonclaw_general_chat_handlers|source_semantics_sandbox_client|execution_sandbox_promotion_handlers|moontown_owner_api|pack_app_runtime|public_access)[.]mbt)$'
 while IFS= read -r source; do
   relative="${source#${moondesk_root}/}"
   [[ "${relative}" =~ ${allowed_clients} ]] || fail "unclassified HTTP client: ${relative}"

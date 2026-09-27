@@ -215,6 +215,7 @@ fn update(
     | RefreshGitDiff
     | LoadedGitDiff(_, _, _, _)
     | CloseGitDiff => update_mooncode_actions(dispatch, msg, model)
+    SetGitHubInlineQuery(_) => update_mooncode_actions(dispatch, msg, model)
     SelectGitDiffHunk(_)
     | SelectGitDiffLine(_, _)
     | LoadedGitReview(_, _, _, _)

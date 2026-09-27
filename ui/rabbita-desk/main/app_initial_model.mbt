@@ -218,6 +218,7 @@ fn init_model() -> Model {
     github_inline_review: None,
     github_inline_loading: false,
     github_inline_error: "",
+    github_inline_query: "",
     github_inline_path: "",
     github_inline_hunk_index: 0,
     github_inline_hunk: "",

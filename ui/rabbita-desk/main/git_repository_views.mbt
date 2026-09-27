@@ -634,7 +634,13 @@ fn render_github_inline_review(
         p(class="mooncode-git-review-error", model.github_inline_error)
       } else {
         match model.github_inline_review {
-          Some(review) if review.head_oid == head =>
+          Some(review) if review.head_oid == head => {
+            let query = model.github_inline_query.trim().to_lower()
+            let visible_files = review.files.filter(file => {
+              query == "" ||
+              file.path.to_lower().contains(query) ||
+              file.previous_path.to_lower().contains(query)
+            })
             div([
               if review.error == "" {
                 @html.nothing
@@ -645,10 +651,47 @@ fn render_github_inline_review(
                   review.error,
                 )
               },
+              div(class="mooncode-git-filters", [
+                input(
+                  class="mooncode-git-search",
+                  attrs=@html.Attrs::build()
+                    .aria_label("Find PR file")
+                    .data_set("i18n-aria-label", "code.github_find_file")
+                    .data_set("i18n-placeholder", "code.github_find_file"),
+                  value=model.github_inline_query,
+                  placeholder="Find PR file",
+                  on_input=fn(value) { dispatch(SetGitHubInlineQuery(value)) },
+                ),
+                span(
+                  class="mooncode-git-filter-count",
+                  attrs=@html.Attrs::build()
+                    .data_set("i18n", "code.github_filter_count")
+                    .data_set(
+                      "i18n-params",
+                      (
+                        {
+                          "visible": visible_files.length(),
+                          "total": review.files.length(),
+                        } : Json).stringify(),
+                    ),
+                  "\{visible_files.length()} of \{review.files.length()} PR files",
+                ),
+              ]),
+              if visible_files.is_empty() {
+                p(
+                  class="mooncode-git-note",
+                  attrs=@html.Attrs::build().data_set(
+                    "i18n", "code.github_no_matching_files",
+                  ),
+                  "No PR files match this search.",
+                )
+              } else {
+                @html.nothing
+              },
               div(
                 class="mooncode-github-inline-files",
                 attrs=@html.Attrs::build().role("list"),
-                review.files.map(file => {
+                visible_files.map(file => {
                   div(attrs=@html.Attrs::build().role("listitem"), [
                     button(
                       class="mooncode-git-open" +
@@ -769,6 +812,7 @@ fn render_github_inline_review(
                 )
               },
             ])
+          }
           _ =>
             if model.github_inline_draft != "" {
               div(class="mooncode-github-comment-draft", [

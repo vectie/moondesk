@@ -67,6 +67,11 @@ test("primary navigation uses explicit keys with catalog parity", () => {
 test("text templates translate dynamic UI copy", () => {
   const context = runtime();
   assert.equal(context.translateTextForTest("3 sessions"), "3 个会话");
+  assert.equal(context.messageForTest("code.github_find_file"), "查找 PR 文件");
+  assert.equal(
+    context.messageForTest("code.github_filter_count", { visible: 1, total: 260 }),
+    "显示 1 / 260 个 PR 文件",
+  );
 });
 
 test("accessibility attributes use explicit keys without mixed-language templates", () => {

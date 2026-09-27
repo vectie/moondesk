@@ -566,6 +566,7 @@ fn update_mooncode_actions(
           github_inline_number: number,
           github_inline_loading: true,
           github_inline_error: "",
+          github_inline_query: "",
           github_inline_published_url: "",
         },
       )
@@ -616,6 +617,7 @@ fn update_mooncode_actions(
           github_inline_number: number,
           github_inline_review: None,
           github_inline_loading: can_fetch,
+          github_inline_query: "",
           github_inline_error: if can_fetch {
             ""
           } else {
@@ -755,6 +757,7 @@ fn update_mooncode_actions(
             github_inline_review: None,
             github_inline_loading: false,
             github_inline_error: "",
+            github_inline_query: "",
             github_inline_path: "",
             github_inline_hunk_index: 0,
             github_inline_hunk: "",
@@ -767,6 +770,8 @@ fn update_mooncode_actions(
           },
         )
       }
+    SetGitHubInlineQuery(query) =>
+      (@rabbita.none, { ..model, github_inline_query: query, })
     SelectGitHubInlineFile(path) =>
       if model.github_inline_saving || model.github_inline_saving_draft {
         (@rabbita.none, model)

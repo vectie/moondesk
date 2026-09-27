@@ -430,6 +430,9 @@ const catalogs = {
     "code.github_public_comments": "Comments here are public on GitHub to PR readers",
     "code.github_remote_excludes_local": "Local staged and working edits are not part of this remote PR patch.",
     "code.github_reading_files": "Reading PR files…",
+    "code.github_find_file": "Find PR file",
+    "code.github_filter_count": "{visible} of {total} PR files",
+    "code.github_no_matching_files": "No PR files match this search.",
     "code.github_line_draft_aria": "GitHub line comment draft",
     "code.github_post_line": "Post line comment",
     "code.github_select_line": "Select a diff line to comment on the PR.",
@@ -945,6 +948,9 @@ const catalogs = {
     "code.github_public_comments": "此处评论会在 GitHub 上对可访问此 PR 的读者公开",
     "code.github_remote_excludes_local": "本地暂存和工作区改动不属于此远程 PR 补丁。",
     "code.github_reading_files": "正在读取 PR 文件…",
+    "code.github_find_file": "查找 PR 文件",
+    "code.github_filter_count": "显示 {visible} / {total} 个 PR 文件",
+    "code.github_no_matching_files": "没有符合搜索条件的 PR 文件。",
     "code.github_line_draft_aria": "GitHub 行评论草稿",
     "code.github_post_line": "发布行评论",
     "code.github_select_line": "选择差异行后即可评论此 PR。",
@@ -1448,6 +1454,9 @@ const zhHans = {
   "Comments here are public on GitHub to PR readers": "此处评论会在 GitHub 上对可访问此 PR 的读者公开",
   "Local staged and working edits are not part of this remote PR patch.": "本地暂存和工作区改动不属于此远程 PR 补丁。",
   "Reading PR files…": "正在读取 PR 文件…",
+  "Find PR file": "查找 PR 文件",
+  "{visible} of {total} PR files": "显示 {visible} / {total} 个 PR 文件",
+  "No PR files match this search.": "没有符合搜索条件的 PR 文件。",
   "GitHub line comment draft": "GitHub 行评论草稿",
   "Post line comment": "发布行评论",
   "Select a diff line to comment on the PR.": "选择差异行后即可评论此 PR。",
@@ -1676,6 +1685,10 @@ const zhHansTemplates = [
     "target": "PR #{number} · 远程文件"
   },
   {
+    "source": "{visible} of {total} PR files",
+    "target": "显示 {visible} / {total} 个 PR 文件"
+  },
+  {
     "source": "PR checkout failed. {error}",
     "target": "PR 检出失败。{error}"
   },
@@ -1733,13 +1746,11 @@ function escapeRegex(value) {
 }
 
 function compileTemplate({ source, target }) {
-  const numericParameters = new Set(["count", "selected", "total", "items", "folders", "files", "ran", "failed"]);
   const names = [];
   let cursor = 0;
   let pattern = "^";
   for (const match of source.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
-    pattern += escapeRegex(source.slice(cursor, match.index)) +
-      (numericParameters.has(match[1]) ? "([0-9]+)" : "(.+?)");
+    pattern += escapeRegex(source.slice(cursor, match.index)) + "(.+?)";
     names.push(match[1]);
     cursor = match.index + match[0].length;
   }

@@ -883,6 +883,16 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
         digest: "sha256:fixture",
         commentable: true,
       },
+      {
+        path: "docs/guide.md",
+        previous_path: "",
+        status: "modified",
+        additions: 1,
+        deletions: 0,
+        patch: "@@ -1 +1,2 @@\n old\n+new\n",
+        digest: "sha256:guide",
+        commentable: true,
+      },
     ],
     drafts: [],
     truncated: false,
@@ -911,6 +921,34 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
   assert_true(markup.contains("From src/old.mbt"))
   assert_true(markup.contains("Some PR files unavailable"))
   assert_true(markup.contains("Select PR right line 1"))
+  let (_, filtered) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    SetGitHubInlineQuery("OLD.MBT"),
+    loaded,
+  )
+  let filtered_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_github_inline_review(
+        code_mode_test_dispatch, filtered, "book-a", head,
+      ),
+    ),
+  )
+  assert_true(filtered_markup.contains("1 of 2 PR files"))
+  assert_true(filtered_markup.contains("Review PR file src/main.mbt"))
+  assert_false(filtered_markup.contains("Review PR file docs/guide.md"))
+  let (_, no_matches) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    SetGitHubInlineQuery("absent"),
+    loaded,
+  )
+  let empty_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_github_inline_review(
+        code_mode_test_dispatch, no_matches, "book-a", head,
+      ),
+    ),
+  )
+  assert_true(empty_markup.contains("No PR files match this search."))
   let (_, selected) = update_mooncode_actions(
     code_mode_test_dispatch,
     SelectGitHubInlineLine("@@ -1 +1 @@", "right", 1),

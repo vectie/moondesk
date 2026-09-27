@@ -129,12 +129,23 @@ and rejection-message fixes. Its five-file checksums, release identity,
 non-hosted preview channel, and packaged UI asset match passed. It was built
 from the current uncommitted working tree; the identity's source commit alone
 does not represent these changes.
+Draft MoonDesk PR [#6](https://github.com/vectie/moondesk/pull/6) carries the
+coding-workflow implementation. In a connected isolated PR worktree, Code
+loaded all 260 changed files in bounded GitHub pages and showed the selected
+base-to-head diff. File-path search reduced that live list to five matching
+files and an unmatched query showed a clear empty state without losing the
+selected diff. The original fixture checkout stayed dirty and unchanged.
+The CI workflow now installs its required `ripgrep` tool; the unsigned preview
+workflow uses pinned companion checkouts and an exact Lepusa preview host
+revision. Local traffic-routing validation and the MoonClaw-producer to
+MoonDesk-consumer protocol probe pass with the current MoonBit dependency.
+Hosted validation of the final PR revision is still required before its status
+can be recorded as passing.
 The current source tree now passes the strict MoonBit warning gate at 0/0
 warnings for native and Code UI JavaScript targets. Deprecated environment,
 string-builder, and byte-view calls were updated; derived trait methods are
 explicitly extended, and test-only experimental rendering is scoped at each
-affected test. This is local warning evidence on an uncommitted tree, not
-hosted CI evidence for a release commit.
+affected test. The final PR revision still needs hosted release evidence.
 The local checkout path is not a clean-checkout dependency fix or signing,
 notarization, and clean-machine evidence.
 

@@ -231,6 +231,7 @@ struct Model {
   github_inline_review : GitHubInlineReviewProjection?
   github_inline_loading : Bool
   github_inline_error : String
+  github_inline_query : String
   github_inline_path : String
   github_inline_hunk_index : Int
   github_inline_hunk : String
@@ -541,6 +542,7 @@ enum Msg {
     Result[GitHubInlineReviewProjection, String]
   )
   CloseGitHubInlineReview
+  SetGitHubInlineQuery(String)
   SelectGitHubInlineFile(String)
   SelectGitHubInlineHunk(Int)
   SelectGitHubInlineLine(String, String, Int)

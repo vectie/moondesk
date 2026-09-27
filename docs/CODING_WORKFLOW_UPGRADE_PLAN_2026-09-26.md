@@ -373,6 +373,17 @@ experimental Rabbita string renderer has scoped annotations. The remote PR
 review now shows its base revision and rename source, and surfaces an owner
 error in the review pane. This does not replace latest-commit hosted CI or the
 credentialed release evidence.
+Draft [MoonDesk PR #6](https://github.com/vectie/moondesk/pull/6) now supplies
+a large connected review case. The first full GitHub file page exceeded the
+server's bounded response; paging 20 files at a time loaded all 260 files.
+The Code review renders their selected base-to-head patch, while a path search
+filters file controls and reports its match count. The live search found five
+matching files and presented an explicit no-match state; a selected diff stayed
+visible during filtering, preserving a possible line draft. The UI and
+localization tests cover case-insensitive and renamed-path search, count
+translation, and empty results. The request still rechecks the exact PR head
+and base after paging, so a changed remote patch cannot silently attach a
+draft to a new revision.
 
 This plan compares the current MoonDesk and MoonClaw workspaces with the local
 OpenSeek 0.4.2 checkout. It improves the MoonCode journey without adding a
