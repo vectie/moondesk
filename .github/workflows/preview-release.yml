@@ -23,12 +23,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  preview:
-    runs-on: macos-14
-    timeout-minutes: 60
+  validation:
+    name: Full repository validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
-
       - name: Checkout pinned MoonClaw integration revision
         uses: actions/checkout@v5
         with:
@@ -47,6 +47,49 @@ jobs:
           repository: vectie/moontown
           ref: 99180427972d0d58b79175dedf158dbc464ecbeb
           path: _integration/moontown
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install repository validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep zsh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/rabbita-desk/package-lock.json
+      - name: Verify pinned MoonBit dependencies
+        run: |
+          moon version --all
+          moon update
+          moon check --target all --warn-list +unnecessary_annotation
+          git diff --exit-code -- moon.mod moon.pkg.json moon.lock
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: ui/rabbita-desk
+      - name: Phase 5 security suite
+        run: |
+          moon test --target native internal/fsx
+          moon test --target native internal/preview
+          moon test --target native internal/moonwiki/archive_security_wbtest.mbt
+          moon test --target native internal/moonwiki/browser_security_wbtest.mbt
+          moon test --target native core/desktop_authority_test.mbt
+          moon test --target native internal/moonwiki/moonflow_action_receipt_wbtest.mbt
+      - name: Validate
+        run: scripts/validate.sh full
+        env:
+          MOONCLAW_ROOT: ${{ github.workspace }}/_integration/moonclaw
+          MOONBOOK_ROOT: ${{ github.workspace }}/_integration/moonbook
+          MOONTOWN_ROOT: ${{ github.workspace }}/_integration/moontown
+
+  preview:
+    needs: validation
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
       - name: Checkout pinned Lepusa preview host
         uses: actions/checkout@v5
         with:
@@ -95,12 +138,8 @@ jobs:
         run: npm ci
         working-directory: ui/rabbita-desk
 
-      - name: Run mandatory validation
-        run: scripts/validate.sh full
-        env:
-          MOONCLAW_ROOT: ${{ github.workspace }}/_integration/moonclaw
-          MOONBOOK_ROOT: ${{ github.workspace }}/_integration/moonbook
-          MOONTOWN_ROOT: ${{ github.workspace }}/_integration/moontown
+      - name: Run native preview gate
+        run: scripts/validate.sh fast
 
       - name: Build unsigned preview
         run: |
