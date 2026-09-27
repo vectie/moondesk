@@ -110,10 +110,18 @@ if [ -n "$LEPUSA_ROOT" ]; then
     printf 'preview release: Lepusa checkout is missing moon.mod: %s\n' "$LEPUSA_ROOT" >&2
     exit 66
   }
-  LEPUSA_ROOT=$(CDPATH= cd -- "$LEPUSA_ROOT" && pwd)
+  LEPUSA_ROOT=$(CDPATH= cd -- "$LEPUSA_ROOT" && pwd -P)
   [ ! -e "$REPO_ROOT/moon.work" ] || {
     printf '%s\n' 'preview release: --lepusa requires no existing moon.work' >&2
     exit 66
+  }
+  # Build before joining the workspace so Lepusa can find its own runtime.
+  (cd "$LEPUSA_ROOT" && moon build cmd/runtime --target native --release)
+  lepusa_runtime="$LEPUSA_ROOT/_build/native/release/build/cmd/runtime/runtime.exe"
+  [ -x "$lepusa_runtime" ] || {
+    printf 'preview release: Lepusa runtime is missing: %s\n' \
+      "$lepusa_runtime" >&2
+    exit 67
   }
   TEMP_MOON_WORK="$REPO_ROOT/moon.work"
   (cd "$REPO_ROOT" && moon work init . "$LEPUSA_ROOT")
