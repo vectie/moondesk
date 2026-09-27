@@ -29,10 +29,41 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Checkout pinned MoonClaw integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moonclaw
+          ref: a41b6355bd7b22fe6f39f9cee28c945ad003243d
+          path: _integration/moonclaw
+      - name: Checkout pinned MoonBook integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moonbook
+          ref: d75aaaa6a3f3c7aba71df68007436d54fc2ded59
+          path: _integration/moonbook
+      - name: Checkout pinned MoonTown integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moontown
+          ref: a37a60fdcfbd743d0f26061f8600c1638963e3ff
+          path: _integration/moontown
+      - name: Checkout pinned Lepusa preview host
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/lepusa
+          ref: ca8cbeecd6fc8a12b252c176424fef2e05d66d60
+          path: _integration/lepusa
+
       - name: Install MoonBit
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install repository validation tools
+        run: |
+          if ! command -v rg >/dev/null 2>&1; then
+            brew install ripgrep
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -66,13 +97,21 @@ jobs:
 
       - name: Run mandatory validation
         run: scripts/validate.sh full
+        env:
+          MOONCLAW_ROOT: ${{ github.workspace }}/_integration/moonclaw
+          MOONBOOK_ROOT: ${{ github.workspace }}/_integration/moonbook
+          MOONTOWN_ROOT: ${{ github.workspace }}/_integration/moontown
 
       - name: Build unsigned preview
         run: |
+          mkdir -p _build/preview-tmp
           sh scripts/preview_release.sh \
             --version "${{ steps.release.outputs.version }}" \
             --notes "${{ steps.release.outputs.notes }}" \
-            --out "${{ steps.release.outputs.output }}"
+            --out "${{ steps.release.outputs.output }}" \
+            --lepusa "${{ github.workspace }}/_integration/lepusa"
+        env:
+          TMPDIR: ${{ github.workspace }}/_build/preview-tmp
 
       - name: Reverify immutable artifact
         run: |

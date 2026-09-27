@@ -28,7 +28,7 @@ from local checks.
 
 ## Coding workflow checkpoint (2026-09-26)
 
-The current OpenSeek comparison and phase-by-phase implementation record are
+The coding-workflow gap analysis and phase-by-phase implementation record are
 [`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md).
 The MoonDesk–MoonTown schedule create/read/pause/resume path passed a connected
