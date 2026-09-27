@@ -432,6 +432,11 @@
   gap: 2px;
 }
 
+.mooncode-git-diff-heading > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .mooncode-git-diff-heading strong {
   overflow: hidden;
   text-overflow: ellipsis;
