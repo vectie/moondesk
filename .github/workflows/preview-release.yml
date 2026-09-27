@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: vectie/lepusa
-          ref: 7037b02a48ac1220eaef8a6702243f186605a0fa
+          ref: 55aa50e1887cc84aac85587091cdd93956773845
           path: _integration/lepusa
 
       - name: Install MoonBit

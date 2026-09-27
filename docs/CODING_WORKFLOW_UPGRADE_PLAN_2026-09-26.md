@@ -4,6 +4,17 @@ Status: active implementation plan, 2026-09-26.
 
 ## Latest checkpoint (2026-09-27)
 
+The `7ebaa3cc` hosted push, PR, and unsigned `.21` preview workflows passed.
+Downloaded artifact `10928757034` independently passed five-file verification
+and names that exact source commit. The native app served its own sidecar and
+refused a second launch on the occupied readiness endpoint, avoiding the
+earlier cross-instance UI collision. A failed launch still returned process
+exit code 0; Lepusa `55aa50e` now maps failed and unsupported runtime status
+to a nonzero exit code. Its focused runtime CLI suite passed 20/20, and a
+temporary copy of the hosted app with the rebuilt runtime returned code 1
+for that collision. The next MoonDesk preview pins `55aa50e`; the hosted
+package for that new source head requires separate verification.
+
 The repository-owned coding workflow is implemented across MoonDesk,
 MoonClaw, MoonTown, and the Lepusa macOS host. The Code surface now joins
 conversations, Git changes, exact-patch local and PR review, source editing,

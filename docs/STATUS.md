@@ -29,6 +29,23 @@ removal, and 24-hour soak results cannot be inferred from local checks.
 
 ## Coding workflow checkpoint (2026-09-27)
 
+At `7ebaa3cc`, hosted [push](https://github.com/vectie/moondesk/actions/runs/36309434915)
+and [PR](https://github.com/vectie/moondesk/actions/runs/36309438059)
+validation passed. The [exact-head unsigned `.21` preview](https://github.com/vectie/moondesk/actions/runs/36309440270)
+passed full Linux validation, the focused macOS gate, packaging, and upload.
+Downloaded artifact `10928757034` independently passed five-file
+verification, identifies source `7ebaa3cc3057db550e5375658d3cd31e2f35b722`,
+declares `hosted: false`, and contains the arm64 Lepusa runtime and MoonDesk
+sidecar. A native collision check against that artifact started one instance,
+received HTTP 200 from its health route, and saw the second instance refuse
+the occupied endpoint instead of displaying the first instance's UI. That
+check also found that the failed second launch returned process exit code 0.
+Lepusa [PR #2](https://github.com/vectie/lepusa/pull/2) now fixes that exit
+status at `55aa50e`; the first-instance and collision check against a
+temporary copy of the app with the rebuilt runtime produced exit code 1 for
+the failed second launch. The next MoonDesk preview pins this newer runtime;
+its hosted package needs separate exact-head verification.
+
 The latest native coding-workflow checkpoint is in
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):
 the exact-commit unsigned `0.0.0-preview.21` package at `720cf267` passed
