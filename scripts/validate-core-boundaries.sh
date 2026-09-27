@@ -396,6 +396,9 @@ run_moon "${moonbook_root}" test --target native --warn-list +73 --diagnostic-li
 
 run_if_package_exists "${moontown_root}" "src/core" check
 run_if_package_exists "${moontown_root}" "src/adapters/moonbook" test
+run_if_package_exists "${moontown_root}" "src/code_schedules" test
+run_if_package_exists "${moontown_root}" "src/scheduler" test
+run_if_package_exists "${moontown_root}" "src/town_contract" test
 run_if_package_exists "${moontown_root}" "src/moonbook_contracts" check
 run_if_package_exists "${moontown_root}" "src/standing_watch_contracts" check
 run_if_package_exists "${moontown_root}" "src/pdf_evidence_watch" check

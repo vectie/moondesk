@@ -21,19 +21,19 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: vectie/moonclaw
-          ref: main
+          ref: cd479814f7a8436390e4bb086ca173bc59ec9b37
           path: _integration/moonclaw
       - name: Checkout MoonBook integration revision
         uses: actions/checkout@v5
         with:
           repository: vectie/moonbook
-          ref: main
+          ref: d75aaaa6a3f3c7aba71df68007436d54fc2ded59
           path: _integration/moonbook
       - name: Checkout MoonTown integration revision
         uses: actions/checkout@v5
         with:
           repository: vectie/moontown
-          ref: main
+          ref: 99180427972d0d58b79175dedf158dbc464ecbeb
           path: _integration/moontown
       - name: Install MoonBit
         run: |

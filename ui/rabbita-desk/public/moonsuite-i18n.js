@@ -433,6 +433,19 @@ const catalogs = {
     "code.github_find_file": "Find PR file",
     "code.github_filter_count": "{visible} of {total} PR files",
     "code.github_no_matching_files": "No PR files match this search.",
+    "code.github_review_file_aria": "Review PR file {path}",
+    "code.github_files_truncated": "GitHub has more than 300 files; only the first 300 are shown.",
+    "code.github_line_location_left": "Line comment on {path} · left line {line}",
+    "code.github_line_location_right": "Line comment on {path} · right line {line}",
+    "code.github_line_reanchor": "Retained draft needs a new line in {path}",
+    "code.github_saved_line_location_left": "Saved line draft for {path} · left line {line}",
+    "code.github_saved_line_location_right": "Saved line draft for {path} · right line {line}",
+    "code.github_saved_lines_aria": "Saved PR line drafts",
+    "code.github_saved_line_summary": "Saved line draft · PR #{number} · {path}",
+    "code.github_saved_line_side_left": "left line {line}",
+    "code.github_saved_line_side_right": "right line {line}",
+    "code.github_open_saved_line": "Open saved line draft",
+    "code.github_conversation_context": "PR conversation comment at {head} · visible on GitHub to everyone with access to this PR",
     "code.github_line_draft_aria": "GitHub line comment draft",
     "code.github_post_line": "Post line comment",
     "code.github_select_line": "Select a diff line to comment on the PR.",
@@ -951,6 +964,19 @@ const catalogs = {
     "code.github_find_file": "查找 PR 文件",
     "code.github_filter_count": "显示 {visible} / {total} 个 PR 文件",
     "code.github_no_matching_files": "没有符合搜索条件的 PR 文件。",
+    "code.github_review_file_aria": "审阅 PR 文件 {path}",
+    "code.github_files_truncated": "此 PR 在 GitHub 上超过 300 个文件；这里只显示前 300 个。",
+    "code.github_line_location_left": "评论 {path} · 原文件第 {line} 行",
+    "code.github_line_location_right": "评论 {path} · 新文件第 {line} 行",
+    "code.github_line_reanchor": "保留的草稿需要在 {path} 中重新选择行",
+    "code.github_saved_line_location_left": "已保存 {path} 原文件第 {line} 行的评论草稿",
+    "code.github_saved_line_location_right": "已保存 {path} 新文件第 {line} 行的评论草稿",
+    "code.github_saved_lines_aria": "已保存的 PR 行评论草稿",
+    "code.github_saved_line_summary": "已保存的行评论草稿 · PR #{number} · {path}",
+    "code.github_saved_line_side_left": "原文件第 {line} 行",
+    "code.github_saved_line_side_right": "新文件第 {line} 行",
+    "code.github_open_saved_line": "打开已保存的行草稿",
+    "code.github_conversation_context": "在提交 {head} 评论 PR 对话 · 评论将对有权访问此 PR 的读者公开",
     "code.github_line_draft_aria": "GitHub 行评论草稿",
     "code.github_post_line": "发布行评论",
     "code.github_select_line": "选择差异行后即可评论此 PR。",
@@ -1457,6 +1483,19 @@ const zhHans = {
   "Find PR file": "查找 PR 文件",
   "{visible} of {total} PR files": "显示 {visible} / {total} 个 PR 文件",
   "No PR files match this search.": "没有符合搜索条件的 PR 文件。",
+  "Review PR file {path}": "审阅 PR 文件 {path}",
+  "GitHub has more than 300 files; only the first 300 are shown.": "此 PR 在 GitHub 上超过 300 个文件；这里只显示前 300 个。",
+  "Line comment on {path} · left line {line}": "评论 {path} · 原文件第 {line} 行",
+  "Line comment on {path} · right line {line}": "评论 {path} · 新文件第 {line} 行",
+  "Retained draft needs a new line in {path}": "保留的草稿需要在 {path} 中重新选择行",
+  "Saved line draft for {path} · left line {line}": "已保存 {path} 原文件第 {line} 行的评论草稿",
+  "Saved line draft for {path} · right line {line}": "已保存 {path} 新文件第 {line} 行的评论草稿",
+  "Saved PR line drafts": "已保存的 PR 行评论草稿",
+  "Saved line draft · PR #{number} · {path}": "已保存的行评论草稿 · PR #{number} · {path}",
+  "left line {line}": "原文件第 {line} 行",
+  "right line {line}": "新文件第 {line} 行",
+  "Open saved line draft": "打开已保存的行草稿",
+  "PR conversation comment at {head} · visible on GitHub to everyone with access to this PR": "在提交 {head} 评论 PR 对话 · 评论将对有权访问此 PR 的读者公开",
   "GitHub line comment draft": "GitHub 行评论草稿",
   "Post line comment": "发布行评论",
   "Select a diff line to comment on the PR.": "选择差异行后即可评论此 PR。",
@@ -1689,6 +1728,46 @@ const zhHansTemplates = [
     "target": "显示 {visible} / {total} 个 PR 文件"
   },
   {
+    "source": "Review PR file {path}",
+    "target": "审阅 PR 文件 {path}"
+  },
+  {
+    "source": "Line comment on {path} · left line {line}",
+    "target": "评论 {path} · 原文件第 {line} 行"
+  },
+  {
+    "source": "Line comment on {path} · right line {line}",
+    "target": "评论 {path} · 新文件第 {line} 行"
+  },
+  {
+    "source": "Retained draft needs a new line in {path}",
+    "target": "保留的草稿需要在 {path} 中重新选择行"
+  },
+  {
+    "source": "Saved line draft for {path} · left line {line}",
+    "target": "已保存 {path} 原文件第 {line} 行的评论草稿"
+  },
+  {
+    "source": "Saved line draft for {path} · right line {line}",
+    "target": "已保存 {path} 新文件第 {line} 行的评论草稿"
+  },
+  {
+    "source": "Saved line draft · PR #{number} · {path}",
+    "target": "已保存的行评论草稿 · PR #{number} · {path}"
+  },
+  {
+    "source": "left line {line}",
+    "target": "原文件第 {line} 行"
+  },
+  {
+    "source": "right line {line}",
+    "target": "新文件第 {line} 行"
+  },
+  {
+    "source": "PR conversation comment at {head} · visible on GitHub to everyone with access to this PR",
+    "target": "在提交 {head} 评论 PR 对话 · 评论将对有权访问此 PR 的读者公开"
+  },
+  {
     "source": "PR checkout failed. {error}",
     "target": "PR 检出失败。{error}"
   },
@@ -1746,11 +1825,13 @@ function escapeRegex(value) {
 }
 
 function compileTemplate({ source, target }) {
+  const numericParameters = new Set(["count", "selected", "total", "items", "folders", "files", "ran", "failed"]);
   const names = [];
   let cursor = 0;
   let pattern = "^";
   for (const match of source.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
-    pattern += escapeRegex(source.slice(cursor, match.index)) + "(.+?)";
+    pattern += escapeRegex(source.slice(cursor, match.index)) +
+      (numericParameters.has(match[1]) ? "([0-9]+)" : "(.+?)");
     names.push(match[1]);
     cursor = match.index + match[0].length;
   }

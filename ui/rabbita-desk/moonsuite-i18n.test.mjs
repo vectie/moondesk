@@ -72,6 +72,16 @@ test("text templates translate dynamic UI copy", () => {
     context.messageForTest("code.github_filter_count", { visible: 1, total: 260 }),
     "显示 1 / 260 个 PR 文件",
   );
+  assert.equal(
+    context.messageForTest("code.github_conversation_context", { head: "4abc2389" }),
+    "在提交 4abc2389 评论 PR 对话 · 评论将对有权访问此 PR 的读者公开",
+  );
+  assert.equal(
+    context.messageForTest("code.github_line_location_right", {
+      path: ".github/workflows/ci.yml", line: 45,
+    }),
+    "评论 .github/workflows/ci.yml · 新文件第 45 行",
+  );
 });
 
 test("accessibility attributes use explicit keys without mixed-language templates", () => {

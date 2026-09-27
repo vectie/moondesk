@@ -702,6 +702,13 @@ fn render_github_inline_review(
                         }),
                       attrs=@html.Attrs::build()
                         .aria_label("Review PR file " + file.path)
+                        .data_set(
+                          "i18n-aria-label", "code.github_review_file_aria",
+                        )
+                        .data_set(
+                          "i18n-params",
+                          ({ "path": file.path } : Json).stringify(),
+                        )
                         .aria_pressed(
                           if file.path == model.github_inline_path {
                             "true"
@@ -720,6 +727,9 @@ fn render_github_inline_review(
               if review.truncated {
                 p(
                   class="mooncode-git-note",
+                  attrs=@html.Attrs::build().data_set(
+                    "i18n", "code.github_files_truncated",
+                  ),
                   "GitHub has more than 300 files; only the first 300 are shown.",
                 )
               } else {
@@ -729,20 +739,36 @@ fn render_github_inline_review(
               if model.github_inline_line > 0 || model.github_inline_draft != "" {
                 div(class="mooncode-github-comment-draft", [
                   p(
-                    (if model.github_inline_line > 0 {
-                      "Line comment on "
-                    } else {
-                      "Retained draft needs a new line in "
-                    }) +
-                    model.github_inline_path +
-                    (if model.github_inline_line > 0 {
+                    attrs=@html.Attrs::build()
+                      .data_set(
+                        "i18n",
+                        if model.github_inline_line <= 0 {
+                          "code.github_line_reanchor"
+                        } else if model.github_inline_side == "left" {
+                          "code.github_line_location_left"
+                        } else {
+                          "code.github_line_location_right"
+                        },
+                      )
+                      .data_set(
+                        "i18n-params",
+                        (
+                          {
+                            "path": model.github_inline_path,
+                            "line": model.github_inline_line,
+                          } : Json).stringify(),
+                      ),
+                    if model.github_inline_line > 0 {
+                      "Line comment on " +
+                      model.github_inline_path +
                       " · " +
                       model.github_inline_side +
                       " line " +
                       model.github_inline_line.to_string()
                     } else {
-                      ""
-                    }),
+                      "Retained draft needs a new line in " +
+                      model.github_inline_path
+                    },
                   ),
                   textarea(
                     class="mooncode-git-review-note",
@@ -817,6 +843,23 @@ fn render_github_inline_review(
             if model.github_inline_draft != "" {
               div(class="mooncode-github-comment-draft", [
                 p(
+                  attrs=@html.Attrs::build()
+                    .data_set(
+                      "i18n",
+                      if model.github_inline_side == "left" {
+                        "code.github_saved_line_location_left"
+                      } else {
+                        "code.github_saved_line_location_right"
+                      },
+                    )
+                    .data_set(
+                      "i18n-params",
+                      (
+                        {
+                          "path": model.github_inline_path,
+                          "line": model.github_inline_line,
+                        } : Json).stringify(),
+                    ),
                   "Saved line draft for " +
                   model.github_inline_path +
                   " · " +
@@ -964,18 +1007,44 @@ fn render_github_inline_draft_inventory(
   }
   div(
     class="mooncode-github-inline-drafts",
-    attrs=@html.Attrs::build().aria_label("Saved PR line drafts"),
+    attrs=@html.Attrs::build()
+      .aria_label("Saved PR line drafts")
+      .data_set("i18n-aria-label", "code.github_saved_lines_aria"),
     context.inline_drafts.map(draft => {
       div(class="mooncode-github-comment-draft", [
         strong(
+          attrs=@html.Attrs::build()
+            .data_set("i18n", "code.github_saved_line_summary")
+            .data_set(
+              "i18n-params",
+              ({ "number": draft.number, "path": draft.path } : Json).stringify(),
+            ),
           "Saved line draft · PR #" +
           draft.number.to_string() +
           " · " +
           draft.path,
         ),
-        span(draft.side + " line " + draft.line.to_string()),
+        span(
+          attrs=@html.Attrs::build()
+            .data_set(
+              "i18n",
+              if draft.side == "left" {
+                "code.github_saved_line_side_left"
+              } else {
+                "code.github_saved_line_side_right"
+              },
+            )
+            .data_set(
+              "i18n-params",
+              ({ "line": draft.line } : Json).stringify(),
+            ),
+          draft.side + " line " + draft.line.to_string(),
+        ),
         button(
           class="mooncode-git-open",
+          attrs=@html.Attrs::build().data_set(
+            "i18n", "code.github_open_saved_line",
+          ),
           on_click=dispatch(OpenGitHubSavedInlineDraft(draft)),
           disabled=model.github_inline_saving ||
             model.github_inline_saving_draft ||
@@ -1313,6 +1382,17 @@ fn render_github_context(
                   model.github_comment_number == pull.number {
                   div(class="mooncode-github-comment-draft", [
                     p(
+                      attrs=@html.Attrs::build()
+                        .data_set("i18n", "code.github_conversation_context")
+                        .data_set(
+                          "i18n-params",
+                          (
+                            {
+                              "head": pull.head_oid[:pull.head_oid
+                              .length()
+                              .min(8)].to_owned(),
+                            } : Json).stringify(),
+                        ),
                       "PR conversation comment at " +
                       pull.head_oid[:pull.head_oid.length().min(8)].to_owned() +
                       " · visible on GitHub to everyone with access to this PR",

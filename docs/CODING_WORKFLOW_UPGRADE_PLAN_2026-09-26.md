@@ -2,6 +2,42 @@
 
 Status: active implementation plan, 2026-09-26.
 
+## Latest checkpoint (2026-09-27)
+
+The repository-owned coding workflow is implemented across MoonDesk,
+MoonClaw, MoonTown, and the Lepusa macOS host. The Code surface now joins
+conversations, Git changes, exact-patch local and PR review, source editing,
+MoonFort-routed navigation, durable image turns, work evidence, skills, job
+history, export, and MoonTown-owned schedules. The detailed record below is
+chronological; earlier pending notes describe the state at those checkpoints.
+The schedule owner is isolated in draft MoonTown
+[#1](https://github.com/vectie/moontown/pull/1), alongside MoonDesk
+[#6](https://github.com/vectie/moondesk/pull/6), MoonClaw
+[#2](https://github.com/vectie/moonclaw/pull/2), and Lepusa
+[#2](https://github.com/vectie/lepusa/pull/2).
+
+The exact-commit unsigned `0.0.0-preview.14` package passed release-manifest
+and five-file checksum verification. In its native window, an isolated PR #6
+worktree opened at the live head, loaded 268 changed files, filtered them by
+path, and showed a base-to-head diff. A conversation draft and an exact-line
+draft saved locally and survived review navigation; the unsaved line draft
+disabled Close until it was saved. Both disposable drafts were discarded.
+The connected publication path was already checked on disposable PR #5; no
+comment was posted to PR #6. Native QA exposed English contextual PR copy in
+the Chinese interface, which is now keyed for localization in source.
+
+Current native and Code UI MoonBit warning checks are both 0/0. Hosted CI on
+the final revision and an exact package including the latest localization
+change still need verification. Real provider media, operator-configured
+MoonFort execution, Developer ID signing and notarization, clean-machine
+update/rollback/removal, and the 24-hour soak need external infrastructure
+and evidence before release readiness can change.
+MoonDesk CI now pins the companion revisions, runs the MoonTown schedule
+packages, and keeps the full MoonClaw suite. The preceding hosted run reached
+MoonClaw but failed on path behavior under the current MoonBit dependency;
+MoonClaw's wrapper is fixed and its focused native/JS path tests pass. The
+new pinned-revision hosted result is pending.
+
 ## Implementation checkpoint
 
 The implementation now covers Phases 1 and 2 and a substantial local review

@@ -28,6 +28,17 @@ from local checks.
 
 ## Coding workflow checkpoint (2026-09-26)
 
+The latest native coding-workflow checkpoint is in
+[`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):
+an exact-commit unsigned `0.0.0-preview.14` package passed its release
+verification, and its native PR review loaded 268 files at PR #6's live head.
+Local conversation and exact-line drafts survived navigation and were
+discarded after QA. The latest source also localizes contextual PR review
+copy exposed by this native check. The MoonTown schedule owner has a separate
+draft [PR #1](https://github.com/vectie/moontown/pull/1), with focused local
+tests passing. This evidence does not establish the external Phase 9 release
+gates.
+
 The coding-workflow gap analysis and phase-by-phase implementation record are
 [`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md).
