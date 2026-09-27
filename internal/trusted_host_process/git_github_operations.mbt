@@ -333,12 +333,12 @@ pub fn github_get_pull_files(
   {
     args: [
       "api",
-      "repos/\{repository}/pulls/\{number}/files?per_page=100&page=\{page}",
+      "repos/\{repository}/pulls/\{number}/files?per_page=20&page=\{page}",
     ],
     valid: safe_github_repository(repository) &&
     safe_pr_number(number) &&
     page >= 1 &&
-    page <= 4,
+    page <= 15,
     timeout_ms: 12000,
   }
 }

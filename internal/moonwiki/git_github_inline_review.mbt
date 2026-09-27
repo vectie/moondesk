@@ -236,7 +236,7 @@ async fn github_inline_review_snapshot(
   }
   let files : Array[Json] = []
   let mut truncated = false
-  for page in 1..<=4 {
+  for page in 1..<=15 {
     let response = match
       github_api_json(
         root,
@@ -258,10 +258,10 @@ async fn github_inline_review_snapshot(
         None => ()
       }
     }
-    if items.length() < 100 || truncated {
+    if items.length() < 20 || truncated {
       break
     }
-    if page == 4 {
+    if page == 15 {
       truncated = true
     }
   }

@@ -270,6 +270,18 @@ fn save_github_inline_draft_cmd(
 }
 
 ///|
+fn decode_github_inline_review(
+  payload : Json,
+) -> Result[GitHubInlineReviewProjection, String] {
+  if json_field_string(payload, "error", default="") != "" {
+    return Err(github_publication_error(payload))
+  }
+  Ok(@json.from_json(payload)) catch {
+    _ => Err("GitHub PR file response is unreadable")
+  }
+}
+
+///|
 fn fetch_github_inline_review_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
@@ -282,10 +294,7 @@ fn fetch_github_inline_review_cmd(
   )
   @http.get(url).expect_json(result => {
     let decoded : Result[GitHubInlineReviewProjection, String] = match result {
-      Ok(payload) =>
-        Ok(@json.from_json(payload)) catch {
-          _ => Err("GitHub PR file response is unreadable")
-        }
+      Ok(payload) => decode_github_inline_review(payload)
       Err(error) => Err(error.to_string())
     }
     dispatch(LoadedGitHubInlineReview(workspace_id, number, head, decoded))

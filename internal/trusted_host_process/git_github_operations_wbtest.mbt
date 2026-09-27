@@ -10,7 +10,8 @@ test "Git host operations reject path and ref escape" {
 ///|
 test "GitHub host operations bind repository and publish target" {
   assert_false(github_list_pulls("owner/../repo").valid)
-  assert_false(github_get_pull_files("owner/repo", 42, 5).valid)
+  assert_false(github_get_pull_files("owner/repo", 42, 16).valid)
+  assert_true(github_get_pull_files("owner/repo", 42, 15).valid)
   assert_false(github_post_pr_comment("owner/repo", 42, "").valid)
   assert_false(
     github_post_pr_line(

@@ -100,6 +100,19 @@ test "GitHub publication keeps a precise stale-head rejection" {
 }
 
 ///|
+test "GitHub PR file error keeps server recovery detail" {
+  let result = decode_github_inline_review({
+    "error": "GitHub response exceeds the display limit",
+    "ok": false,
+  })
+  match result {
+    Err(message) =>
+      assert_eq(message, "GitHub response exceeds the display limit")
+    Ok(_) => fail("expected GitHub PR file error")
+  }
+}
+
+///|
 #warnings("-alert_unstable")
 test "Code diff result stays scoped to the selected file and HEAD" {
   let projection : GitRepositoryProjection = {
