@@ -71,3 +71,23 @@ routine gate: it can consume minutes and several GiB for a zero-test target.
 Native validation now supplies `--strip` to MoonDesk and pinned cross-repository test suites. This keeps the same tests and warning settings while omitting native debug symbols from the test binaries. It does not change production package or release builds. A future MoonBit toolchain may avoid linking empty blackbox suites or improve debug-symbol link performance; this gate can be revisited then.
 
 The Mac and Ubuntu durations are from different machines and are not a controlled cross-host speed comparison. The controlled comparison is the identical local linker input with and without `-g`.
+
+## Why the current release workflow still takes time
+
+The successful unsigned preview run [36310732346](https://github.com/vectie/moondesk/actions/runs/36310732346) provides a separate, post-mitigation timing breakdown. These are GitHub log timestamps, so they include compilation, test execution, and runner overhead rather than isolated linker measurements.
+
+| Step | UTC interval | Elapsed |
+| --- | --- | ---: |
+| Linux MoonDesk native suite, 491 tests | 09:53:52–09:54:20 | 28 s |
+| Linux UI production build | 09:54:29–09:56:07 | 98 s |
+| Linux cross-repository boundary validation | 09:56:10–10:02:22 | 372 s |
+| Of that, MoonClaw's full native suite, 1,959 tests | about 09:56:36–10:01:09 | about 273 s |
+| macOS preview's native validation gate | 10:02:59–10:04:08 | 69 s |
+| macOS unsigned preview build and packaging | 10:04:08–10:10:03 | 355 s |
+| Of that, the macOS Vite production build | 10:04:37–10:06:38 | 121 s |
+
+Within MoonClaw's 273 seconds, the first `Started` test line appears at 09:59:19: about 164 seconds after `moon test` began. About 110 seconds then elapsed before its 1,959-test summary. The first interval is build/setup time, which includes the many native link targets; the log does not identify how much of it was link-core specifically. MoonBook's 369-test suite took another 49 seconds.
+
+The macOS preview build invokes `moon build cmd/runtime --target native --release`, runs the UI build, then runs `moon run cmd/main` to package and verify the app. The current log does not timestamp the individual native link and packaging substeps; the roughly 205 seconds after Vite cannot accurately be assigned to the linker alone. The Linux UI build and the macOS UI build are separate full Vite builds. The Linux cross-repository gate runs the full pinned MoonClaw and MoonBook suites even for a MoonDesk UI-only change. The ordinary `CI` workflow also runs on both `push` and `pull_request`, producing two concurrent full validations for the same commit. These repeated jobs explain much of the elapsed release wait after the native debug-symbol issue was fixed.
+
+The `--strip` mitigation should stay. Further speed work should measure the macOS preview's native build and packaging substeps independently, then assess caching or passing a verified UI bundle between jobs. The full cross-repository tests remain valuable release evidence; a targeted change gate can run earlier to give faster feedback without redefining the full release gate.
