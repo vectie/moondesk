@@ -1061,6 +1061,8 @@ fn render_mooncode_center(
                 "MoonClaw is not installed" => "code.moonclaw_not_installed"
                 "MoonClaw is running but no default model is available" =>
                   "code.moonclaw_no_model"
+                "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it" =>
+                  "code.moonclaw_copied_runtime_unavailable"
                 "MoonCode workspace ready" => "code.workspace_ready"
                 status if status ==
                   "\{model.mooncode_sessions.length()} MoonCode session(s)" =>

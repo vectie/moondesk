@@ -641,6 +641,14 @@ button.mooncode-git-line-number:focus-visible {
   color: var(--mooncode-muted);
 }
 
+.mooncode-github-check {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 0.25em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .mooncode-github-comment-draft {
   display: grid;
   gap: 8px;

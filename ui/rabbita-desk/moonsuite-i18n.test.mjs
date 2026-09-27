@@ -67,6 +67,12 @@ test("primary navigation uses explicit keys with catalog parity", () => {
 test("text templates translate dynamic UI copy", () => {
   const context = runtime();
   assert.equal(context.translateTextForTest("3 sessions"), "3 个会话");
+  assert.equal(
+    context.translateTextForTest(
+      "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it",
+    ),
+    "复制的 MoonClaw 服务配置指向不可用的托管运行时；请重新安装 MoonClaw 以修复。",
+  );
   assert.equal(context.messageForTest("code.github_find_file"), "查找 PR 文件");
   assert.equal(
     context.messageForTest("code.github_filter_count", { visible: 1, total: 260 }),

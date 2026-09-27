@@ -58,6 +58,36 @@ fn git_change_status_i18n_key(change : GitChangeProjection) -> String {
 }
 
 ///|
+fn github_check_status_i18n_key(status : String) -> String {
+  match status {
+    "SUCCESS" | "success" => "code.github_check_success"
+    "FAILURE" | "failure" => "code.github_check_failure"
+    "ERROR" | "error" | "STARTUP_FAILURE" => "code.github_check_error"
+    "TIMED_OUT" => "code.github_check_timed_out"
+    "CANCELLED" | "cancelled" => "code.github_check_cancelled"
+    "ACTION_REQUIRED" => "code.github_check_action_required"
+    "NEUTRAL" => "code.github_check_neutral"
+    "SKIPPED" => "code.github_check_skipped"
+    "STALE" => "code.github_check_stale"
+    "IN_PROGRESS" => "code.github_check_in_progress"
+    "QUEUED" | "PENDING" => "code.github_check_queued"
+    "COMPLETED" => "code.github_check_completed"
+    "unknown" => "code.github_check_unknown"
+    _ => ""
+  }
+}
+
+///|
+fn github_review_decision_i18n_key(decision : String) -> String {
+  match decision {
+    "APPROVED" => "code.github_review_approved"
+    "CHANGES_REQUESTED" => "code.github_review_changes_requested"
+    "REVIEW_REQUIRED" => "code.github_review_required"
+    _ => ""
+  }
+}
+
+///|
 fn git_change_review_status(
   progress : GitReviewProgress?,
   path : String,
@@ -1132,7 +1162,11 @@ fn render_github_context(
   branch : String,
 ) -> @rabbita.Html {
   if model.github_context_loading {
-    return p(class="mooncode-git-note", "Checking GitHub pull requests…")
+    return p(
+      class="mooncode-git-note",
+      attrs=@html.Attrs::build().data_set("i18n", "code.github_checking"),
+      "Checking GitHub pull requests…",
+    )
   }
   if model.github_context_error != "" {
     let repository = match model.github_context {
@@ -1240,13 +1274,21 @@ fn render_github_context(
     class="mooncode-github-context",
     attrs=@html.Attrs::build()
       .aria_label("GitHub pull requests")
+      .data_set("i18n-aria-label", "code.github_context_aria")
       .data_set("testid", "mooncode-github-context"),
     [
       div(class="mooncode-github-heading", [
         strong("GitHub · " + context.repository),
         span(
           attrs=@html.Attrs::build()
-            .data_set("i18n", "code.github_open_prs")
+            .data_set(
+              "i18n",
+              if branch == "" {
+                "code.github_open_prs_detached"
+              } else {
+                "code.github_open_prs"
+              },
+            )
             .data_set(
               "i18n-params",
               (
@@ -1331,18 +1373,24 @@ fn render_github_context(
             let check_views : Array[@rabbita.Html] = []
             for index in 0..<pull.checks.length().min(8) {
               let check = pull.checks[index]
+              let status = if check.conclusion != "" {
+                check.conclusion
+              } else if check.status != "" {
+                check.status
+              } else {
+                "unknown"
+              }
               check_views.push(
-                span(
-                  check.name +
-                  " · " +
-                  (if check.conclusion != "" {
-                    check.conclusion
-                  } else if check.status != "" {
-                    check.status
-                  } else {
-                    "unknown"
-                  }),
-                ),
+                div(class="mooncode-github-check", [
+                  span(check.name + " ·"),
+                  span(
+                    attrs=@html.Attrs::build().data_set(
+                      "i18n",
+                      github_check_status_i18n_key(status),
+                    ),
+                    status,
+                  ),
+                ]),
               )
             }
             div(class="mooncode-github-pull", [
@@ -1413,7 +1461,13 @@ fn render_github_context(
               if pull.review_decision == "" {
                 @html.nothing
               } else {
-                span(pull.review_decision)
+                span(
+                  attrs=@html.Attrs::build().data_set(
+                    "i18n",
+                    github_review_decision_i18n_key(pull.review_decision),
+                  ),
+                  pull.review_decision,
+                )
               },
               if !pull.head_matches && pull.head_oid != "" {
                 span(
@@ -2098,7 +2152,19 @@ fn render_git_repository_context(
               )
             None => @html.nothing
           },
-          span(branch),
+          span(
+            attrs=@html.Attrs::build().data_set(
+              "i18n",
+              if projection.branch != "" {
+                ""
+              } else if projection.head == "" {
+                "code.repo_new_repository"
+              } else {
+                "code.repo_detached_head"
+              },
+            ),
+            branch,
+          ),
           span(
             attrs=@html.Attrs::build().data_set(
               "i18n",
