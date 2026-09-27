@@ -7,7 +7,7 @@
     {
       "id": "moonclaw",
       "repository": "vectie/moonclaw",
-      "ref": "52f708fce28513b667b2421c3ce178984f7baaec",
+      "ref": "35cd11e4864c70281e2798ceec6098fa451d19f6",
       "checkout_path": "_integration/moonclaw",
       "root_env": "MOONCLAW_ROOT",
       "module": "vectie/moonclaw"

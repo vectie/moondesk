@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: vectie/moonclaw
-          ref: 52f708fce28513b667b2421c3ce178984f7baaec
+          ref: 35cd11e4864c70281e2798ceec6098fa451d19f6
           path: _integration/moonclaw
       - name: Checkout MoonBook integration revision
         uses: actions/checkout@v5
