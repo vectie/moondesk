@@ -390,6 +390,93 @@ fn render_github_unmatched_draft(
 }
 
 ///|
+fn github_inline_file_group(path : String) -> String {
+  if !path.contains("/") {
+    return "/"
+  }
+  for segment in path.split("/") {
+    return segment.to_owned()
+  }
+  "/"
+}
+
+///|
+fn render_github_inline_file_button(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  file : GitHubInlineFileProjection,
+) -> @rabbita.Html {
+  button(
+    class="mooncode-git-open" +
+      (if file.path == model.github_inline_path { " active" } else { "" }),
+    attrs=@html.Attrs::build()
+      .aria_label("Review PR file " + file.path)
+      .data_set("i18n-aria-label", "code.github_review_file_aria")
+      .data_set("i18n-params", ({ "path": file.path } : Json).stringify())
+      .aria_pressed(
+        if file.path == model.github_inline_path {
+          "true"
+        } else {
+          "false"
+        },
+      ),
+    on_click=dispatch(SelectGitHubInlineFile(file.path)),
+    disabled=model.github_inline_saving || model.github_inline_saving_draft,
+    file.path,
+  )
+}
+
+///|
+fn render_github_inline_file_groups(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  files : Array[GitHubInlineFileProjection],
+) -> @rabbita.Html {
+  let order : Array[String] = []
+  let grouped : Map[String, Array[GitHubInlineFileProjection]] = Map([])
+  for file in files {
+    let group = github_inline_file_group(file.path)
+    if !grouped.contains(group) {
+      order.push(group)
+      grouped[group] = []
+    }
+    let siblings = grouped.get(group).unwrap_or([])
+    siblings.push(file)
+    grouped[group] = siblings
+  }
+  div(
+    class="mooncode-github-inline-files",
+    order.map(group => {
+      let siblings = grouped.get(group).unwrap_or([])
+      div(
+        class="mooncode-github-file-group" +
+          (if group == github_inline_file_group(model.github_inline_path) {
+            " selected"
+          } else {
+            ""
+          }),
+        attrs=@html.Attrs::build().role("group").aria_label(group),
+        [
+          div(class="mooncode-github-file-group-heading", [
+            span(group),
+            span(siblings.length().to_string()),
+          ]),
+          div(
+            class="mooncode-github-file-group-items",
+            attrs=@html.Attrs::build().role("list"),
+            siblings.map(file => {
+              div(attrs=@html.Attrs::build().role("listitem"), [
+                render_github_inline_file_button(dispatch, model, file),
+              ])
+            }),
+          ),
+        ],
+      )
+    }),
+  )
+}
+
+///|
 fn render_github_inline_review(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -688,42 +775,7 @@ fn render_github_inline_review(
               } else {
                 @html.nothing
               },
-              div(
-                class="mooncode-github-inline-files",
-                attrs=@html.Attrs::build().role("list"),
-                visible_files.map(file => {
-                  div(attrs=@html.Attrs::build().role("listitem"), [
-                    button(
-                      class="mooncode-git-open" +
-                        (if file.path == model.github_inline_path {
-                          " active"
-                        } else {
-                          ""
-                        }),
-                      attrs=@html.Attrs::build()
-                        .aria_label("Review PR file " + file.path)
-                        .data_set(
-                          "i18n-aria-label", "code.github_review_file_aria",
-                        )
-                        .data_set(
-                          "i18n-params",
-                          ({ "path": file.path } : Json).stringify(),
-                        )
-                        .aria_pressed(
-                          if file.path == model.github_inline_path {
-                            "true"
-                          } else {
-                            "false"
-                          },
-                        ),
-                      on_click=dispatch(SelectGitHubInlineFile(file.path)),
-                      disabled=model.github_inline_saving ||
-                        model.github_inline_saving_draft,
-                      file.path,
-                    ),
-                  ])
-                }),
-              ),
+              render_github_inline_file_groups(dispatch, model, visible_files),
               if review.truncated {
                 p(
                   class="mooncode-git-note",

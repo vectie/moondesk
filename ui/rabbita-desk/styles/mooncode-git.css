@@ -357,19 +357,50 @@
 }
 
 .mooncode-github-inline-files {
-  display: flex;
-  gap: 6px;
-  max-height: 110px;
+  max-height: 220px;
   margin: 8px 0;
   overflow: auto;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 6px;
 }
 
-.mooncode-github-inline-files .mooncode-git-open {
-  flex: 0 0 auto;
-  max-width: 260px;
+.mooncode-github-file-group + .mooncode-github-file-group {
+  border-top: 1px solid var(--mooncode-line-strong);
+}
+
+.mooncode-github-file-group-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mooncode-github-file-group.selected .mooncode-github-file-group-heading {
+  color: var(--mooncode-ink);
+}
+
+.mooncode-github-file-group-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 4px;
+  padding: 4px;
+}
+
+.mooncode-github-file-group-items .mooncode-git-open {
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 
 .mooncode-github-inline-files .mooncode-git-open.active {

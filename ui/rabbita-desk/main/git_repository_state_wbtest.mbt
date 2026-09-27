@@ -818,6 +818,13 @@ test "GitHub saved draft restores and discard waits for storage receipt" {
 }
 
 ///|
+test "GitHub PR file groups identify root and top directory" {
+  assert_eq(github_inline_file_group("README.md"), "/")
+  assert_eq(github_inline_file_group("src/main.mbt"), "src")
+  assert_eq(github_inline_file_group("src/nested/file.mbt"), "src")
+}
+
+///|
 #warnings("-alert_unstable")
 test "GitHub remote line review stays bound to exact PR head and retains failed post" {
   let head = "0123456789abcdef0123456789abcdef01234567"
@@ -921,6 +928,9 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
   assert_true(markup.contains("From src/old.mbt"))
   assert_true(markup.contains("Some PR files unavailable"))
   assert_true(markup.contains("Select PR right line 1"))
+  assert_true(markup.contains("mooncode-github-file-group selected"))
+  assert_true(markup.contains("aria-label=\"src\""))
+  assert_true(markup.contains("aria-label=\"docs\""))
   let (_, filtered) = update_mooncode_actions(
     code_mode_test_dispatch,
     SetGitHubInlineQuery("OLD.MBT"),
