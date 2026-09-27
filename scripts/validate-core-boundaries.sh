@@ -47,7 +47,12 @@ run_if_package_exists() {
   local package="$2"
   shift 2
   if [[ -f "${root}/${package}/moon.pkg" ]]; then
-    run_moon "${root}" "$@" "${package}" --target native --warn-list +73 --diagnostic-limit 80
+    if [[ "$1" == "test" ]]; then
+      # Native test symbols dominate link time for the large MoonBook graph.
+      run_moon "${root}" "$@" "${package}" --target native --strip --warn-list +73 --diagnostic-limit 80
+    else
+      run_moon "${root}" "$@" "${package}" --target native --warn-list +73 --diagnostic-limit 80
+    fi
   else
     echo "skip: ${root}/${package}/moon.pkg not found"
   fi
@@ -391,8 +396,8 @@ run_if_package_exists "${moondesk_root}" "mooncode/core" test
 run_if_package_exists "${moondesk_root}" "internal/mooncode" test
 run_if_package_exists "${moondesk_root}" "internal/moonwiki" test
 
-run_moon "${moonclaw_root}" test --target native --warn-list +73 --diagnostic-limit 80
-run_moon "${moonbook_root}" test --target native --warn-list +73 --diagnostic-limit 80
+run_moon "${moonclaw_root}" test --target native --strip --warn-list +73 --diagnostic-limit 80
+run_moon "${moonbook_root}" test --target native --strip --warn-list +73 --diagnostic-limit 80
 
 run_if_package_exists "${moontown_root}" "src/core" check
 run_if_package_exists "${moontown_root}" "src/adapters/moonbook" test

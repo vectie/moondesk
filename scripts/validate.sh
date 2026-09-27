@@ -83,7 +83,8 @@ stage 'Maturity manifest validation' node "$SCRIPT_DIR/verify_maturity_manifests
 stage 'MoonBit format check' sh -c 'cd "$1" && moon fmt --check' sh "$REPO_ROOT"
 stage 'MoonBit warning budget' node "$SCRIPT_DIR/check_moon_warning_budget.mjs"
 stage 'MoonBit check' sh -c 'cd "$1" && moon check --target all --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$REPO_ROOT"
-stage 'MoonBit native tests' sh -c 'cd "$1" && moon test --target native --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$REPO_ROOT"
+# Keep all native tests; avoid the expensive debug-symbol pass in moonc link-core.
+stage 'MoonBit native tests' sh -c 'cd "$1" && moon test --target native --strip --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$REPO_ROOT"
 stage 'UI check' sh -c 'cd "$1" && moon check --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$UI_DIR"
 stage 'UI tests' sh -c 'cd "$1" && moon test --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$UI_DIR"
 
