@@ -32,7 +32,11 @@ draft saved and was discarded without posting. The native review showed the
 grouped file list and selected diff at desktop size. A connected 390-pixel
 browser check had already shown no page overflow and a single-line Close
 control. The checkout failure localization and exact-head retry path pass a
-focused state test; a live checkout failure still needs a disposable PR run.
+focused state test. Against the live native sidecar, requesting obsolete PR
+head `720cf267` after PR #6 advanced returned 409 with a refresh action;
+retrying with current head `5f078004` returned a new isolated MoonBook at
+that exact commit. The earlier worktree remained at `720cf267`, and the
+source branch remained clean.
 
 ## Interface and editing detail
 
@@ -68,7 +72,6 @@ session-root fix in the same fixture.
 The implemented request-to-local-review path is substantial, but the whole
 Phase 0–7 program is not complete. The exact open items are real-provider
 image proof, real-executor scheduled Code proof, live MoonFort navigation,
-complete accessibility/localization QA, a live failure check for the PR retry
-controls, and the external distribution proofs in
+complete accessibility/localization QA and the external distribution proofs in
 `STATUS.md`. A source-level check or fixture test is never presented as a
 live connected acceptance result.

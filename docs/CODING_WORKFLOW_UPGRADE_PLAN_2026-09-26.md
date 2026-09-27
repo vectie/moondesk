@@ -28,6 +28,10 @@ file load an in-place Retry action and localizes checkout failure while
 keeping exact-head retry available. The 626-test Code UI suite, bundle and
 localization checks, and strict 0/0 warning checks passed locally. Hosted
 validation for this revision is pending.
+The live native sidecar refused checkout of obsolete PR #6 head `720cf267`
+with 409 after the PR advanced, then accepted exact head `5f078004` into a
+new isolated MoonBook. Both worktrees retained their respective commits and
+the source branch stayed clean.
 
 The exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
 release-manifest and five-file checksum verification. Its packaged UI assets
