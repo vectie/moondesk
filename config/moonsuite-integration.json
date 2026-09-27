@@ -1,13 +1,13 @@
 {
   "contract": "moonsuite-integration.v1",
   "owner_module": "vectie/moondesk",
-  "development_ref_policy": "live-main",
+  "development_ref_policy": "pinned-commit-sha",
   "release_ref_policy": "full-commit-sha",
   "repositories": [
     {
       "id": "moonclaw",
       "repository": "vectie/moonclaw",
-      "ref": "main",
+      "ref": "cd479814f7a8436390e4bb086ca173bc59ec9b37",
       "checkout_path": "_integration/moonclaw",
       "root_env": "MOONCLAW_ROOT",
       "module": "vectie/moonclaw"
@@ -15,7 +15,7 @@
     {
       "id": "moonbook",
       "repository": "vectie/moonbook",
-      "ref": "main",
+      "ref": "d75aaaa6a3f3c7aba71df68007436d54fc2ded59",
       "checkout_path": "_integration/moonbook",
       "root_env": "MOONBOOK_ROOT",
       "module": "vectie/moonbook"
@@ -23,7 +23,7 @@
     {
       "id": "moontown",
       "repository": "vectie/moontown",
-      "ref": "main",
+      "ref": "99180427972d0d58b79175dedf158dbc464ecbeb",
       "checkout_path": "_integration/moontown",
       "root_env": "MOONTOWN_ROOT",
       "module": "vectie/moontown"
