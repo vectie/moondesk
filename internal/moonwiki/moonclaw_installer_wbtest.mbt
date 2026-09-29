@@ -4,11 +4,12 @@ test "platform support is explicit and independent of string validity" {
   assert_true(macos.supported)
   assert_eq(macos.platform, "macos")
   assert_eq(macos.architecture, "arm64")
-  assert_false(
-    moonclaw_platform_support_from_values("linux", "arm64").supported,
+  assert_true(moonclaw_platform_support_from_values("linux", "arm64").supported)
+  assert_true(
+    moonclaw_platform_support_from_values("linux", "x86_64").supported,
   )
   assert_false(
-    moonclaw_platform_support_from_values("linux", "x86_64").supported,
+    moonclaw_platform_support_from_values("linux", "unsupported").supported,
   )
   assert_false(
     moonclaw_platform_support_from_values("macos", "x86_64").supported,
@@ -57,6 +58,19 @@ async test "supported updater fails closed without a host fallback" {
   assert_false(json_bool(boundary, "available", default=true))
   assert_eq(json_string(boundary, "fallback", default=""), "deny")
   assert_false(json_bool(boundary, "host_process_fallback", default=true))
+}
+
+///|
+async test "Linux host is supported but updater still fails closed" {
+  let result = install_moonclaw_release_for_platform(
+    "/tmp/moondesk-moonclaw-linux-updater-refusal-wbtest",
+    moonclaw_platform_support_from_values("linux", "arm64"),
+  )
+  assert_false(json_bool(result, "ok", default=true))
+  assert_eq(
+    json_string(result, "status", default=""),
+    "updater_sandbox_unavailable",
+  )
 }
 
 ///|

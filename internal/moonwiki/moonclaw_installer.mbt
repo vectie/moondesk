@@ -43,11 +43,12 @@ fn moonclaw_platform_support_from_values(
   platform : String,
   architecture : String,
 ) -> MoonClawPlatformSupport {
-  {
-    supported: platform == "macos" && architecture == "arm64",
-    platform,
-    architecture,
+  let supported = match platform {
+    "macos" => architecture == "arm64"
+    "linux" => architecture == "x86_64" || architecture == "arm64"
+    _ => false
   }
+  { supported, platform, architecture, }
 }
 
 ///|

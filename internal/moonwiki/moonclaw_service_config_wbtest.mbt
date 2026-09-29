@@ -327,7 +327,7 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
   assert_true(architecture != "")
   assert_eq(
     json_bool(platform_evidence, "supported", default=false),
-    platform == "macos" && architecture == "arm64",
+    moonclaw_platform_support_from_values(platform, architecture).supported,
   )
 }
 
