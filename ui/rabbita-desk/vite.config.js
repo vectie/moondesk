@@ -26,6 +26,8 @@ function moondeskMoonbitBrowserShim() {
 }
 
 export default defineConfig({
+  // The platform build is mounted below /moondesk/; standalone preview keeps /.
+  base: process.env.MOONDESK_BASE_PATH || '/',
   build: {
     minify: 'terser',
     terserOptions: {
