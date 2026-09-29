@@ -59,7 +59,7 @@ test "managed MoonClaw receives only the explicit LunaNexa handoff settings" {
   assert_eq(environment["MOONGATE_CONTROL_TOKEN"], "control-token")
   let public_http = moonclaw_daemon_environment_from_values(
     "/Users/test",
-    "http://106.39.18.146:5002",
+    "http://198.51.100.10:5002",
     "control-token",
     allow_public_http=true,
   )

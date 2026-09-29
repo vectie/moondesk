@@ -50,11 +50,11 @@ test "browser host and origin validation reject rebinding and opaque API calls" 
 
 ///|
 test "remote hosts are exact authorities without wildcards or suffix matches" {
-  let allowed = "106.39.18.146:5001,192.168.2.175:5001"
-  assert_true(moondesk_host_matches("106.39.18.146:5001", allowed))
+  let allowed = "198.51.100.10:5001,192.0.2.10:5001"
+  assert_true(moondesk_host_matches("198.51.100.10:5001", allowed))
   for
     host in [
-      "106.39.18.146", "106.39.18.146:5002", "106.39.18.146.evil:5001", "x.test",
+      "198.51.100.10", "198.51.100.10:5002", "198.51.100.10.evil:5001", "x.test",
       "localhost:abc", "localhost:0", "localhost:65536", "localhost:5001@evil",
     ] {
     assert_false(moondesk_host_matches(host, allowed))
@@ -104,17 +104,17 @@ test "remote desktop authority requires active PlatformOperator" {
 test "identity authority cannot rely on duplicated Host headers" {
   assert_true(
     moondesk_identity_authority_matches(
-      "http://106.39.18.146:5003", "106.39.18.146:5003",
+      "http://198.51.100.10:5003", "198.51.100.10:5003",
     ),
   )
   assert_false(
     moondesk_identity_authority_matches(
-      "http://127.0.0.1:5003", "106.39.18.146:5003",
+      "http://127.0.0.1:5003", "198.51.100.10:5003",
     ),
   )
   assert_false(
     moondesk_identity_authority_matches(
-      "http://106.39.18.146:5003/other", "106.39.18.146:5003",
+      "http://198.51.100.10:5003/other", "198.51.100.10:5003",
     ),
   )
   assert_false(moondesk_identity_authority_matches("http://*", "*"))

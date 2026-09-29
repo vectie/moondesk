@@ -7,10 +7,10 @@ users. Never expose the local-only mode through an unauthenticated forwarder.
 Set these server-side values before exposing a remote operator instance:
 
 ```text
-MOONDESK_ALLOWED_HOSTS=106.39.18.146:5001,192.168.2.175:5001
+MOONDESK_ALLOWED_HOSTS=198.51.100.10:5001,192.0.2.10:5001
 MOONDESK_PUBLIC_SCHEME=http
-MOONDESK_IDENTITY_ENDPOINT=http://106.39.18.146:5003
-MOONDESK_IDENTITY_HOST=106.39.18.146:5003
+MOONDESK_IDENTITY_ENDPOINT=http://198.51.100.10:5003
+MOONDESK_IDENTITY_HOST=198.51.100.10:5003
 ```
 
 Allowed hosts are exact authorities including the port, not wildcard patterns.
