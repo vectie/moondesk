@@ -82,6 +82,8 @@ fn desktop_api_route_authority_scope(
   match path {
     p if p == workspaces_route() => "library-root"
     p if p == workspace_import_route() => "import-staging"
+    p if p == agent_import_route() || p == agent_import_operation_route() =>
+      "import-staging"
     p if p == workspace_action_route("entries") => "selected-book"
     p if p == workspace_action_route("entries/import") => "import-staging"
     p if p == workspace_action_route("inbox") => "selected-book"
@@ -523,6 +525,10 @@ fn desktop_portable_api_workspace_content_route_supported(
 ///|
 pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
   [
+    desktop_api_route_contract(agent_import_route(), ["POST"]),
+    desktop_api_route_contract(agent_import_operation_route(), [
+      "GET", "HEAD", "POST",
+    ]),
     desktop_api_route_contract(desktop_capabilities_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(
       desktop_api_path(["api", "desktop", "pack-apps"]),
@@ -570,6 +576,13 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(workspace_action_route("document"), [
       "GET", "HEAD",
     ]),
+    desktop_api_route_contract(workspace_action_route("agent-export"), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(
+      workspace_action_route("agent-export/<export-id>"),
+      ["GET", "HEAD"],
+    ),
     desktop_api_route_contract(workspace_action_route("raw"), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_action_route("artifact"), [
       "GET", "HEAD",
@@ -621,6 +634,13 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(town_route("calendar.ics"), ["GET", "HEAD"]),
     desktop_api_route_contract(town_route("messages"), ["GET", "HEAD"]),
     desktop_api_route_contract(town_route("requests"), ["GET", "HEAD", "POST"]),
+    desktop_api_route_contract(town_route("native-work"), ["GET"]),
+    desktop_api_route_contract(town_native_work_route(), ["GET"]),
+    desktop_api_route_contract(town_native_work_route(action="refresh"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(town_native_work_route(action="cancel"), ["POST"]),
+    desktop_api_route_contract(town_native_work_route(action="sync"), ["POST"]),
     desktop_api_route_contract(town_route("standing-goals"), [
       "GET", "HEAD", "POST",
     ]),
@@ -734,6 +754,28 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     ]),
     desktop_api_route_contract(living_artifacts_route(), ["GET", "HEAD", "POST"]),
   ]
+}
+
+///|
+pub fn agent_import_route() -> String {
+  "/api/agent-import"
+}
+
+///|
+pub fn agent_import_operation_route() -> String {
+  "/api/agent-import/<operation-id>"
+}
+
+///|
+pub fn agent_import_url(
+  operation_id : String,
+  expected_library : String,
+) -> String {
+  let segments = ["api", "agent-import"]
+  if operation_id != "" {
+    segments.push(operation_id)
+  }
+  desktop_api_url(segments, query=[("expected_library", expected_library)])
 }
 
 ///|

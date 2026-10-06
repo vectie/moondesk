@@ -339,9 +339,13 @@ fn supervisor_bridge_grant_from_runtime_command(
 
 ///|
 fn supervisor_bridge_installed_book_marker_exists(book_root : String) -> Bool {
+  // Canonical CLI/imported Books use TOML metadata. Match its file-presence
+  // semantics without requiring installation state or parsing its contents.
   @nativefs.path_exists(@pathx.join(book_root, "book.json")) ||
   @nativefs.path_exists(@pathx.join(book_root, "book/book.json")) ||
-  @nativefs.path_exists(@pathx.join(book_root, "book/moonbook-ui-state.json"))
+  @nativefs.path_exists(@pathx.join(book_root, "book/moonbook-ui-state.json")) ||
+  (@nativefs.is_file(@pathx.join(book_root, "book.toml")) catch { _ => false }) ||
+  (@nativefs.is_file(@pathx.join(book_root, "wiki.toml")) catch { _ => false })
 }
 
 ///|
@@ -436,7 +440,7 @@ fn supervisor_bridge_delegate_intent_payload(
   if task_id == "" ||
     conversation_id == "" ||
     title == "" ||
-    model != "gpt-5.6-sol" ||
+    !supervisor_bridge_model_selector_valid(model) ||
     !(metadata is Object(_)) {
     return Err("delegate task is incomplete or uses a non-allowlisted model")
   }
@@ -1241,6 +1245,30 @@ async fn supervisor_bridge_pump_activation(
   daemon : Json,
 ) -> Json {
   let target_id = json_string(handoff, "handoff_id", default="")
+  let binding = json_object_field_or_empty(
+    json_object_field_or_empty(handoff, "payload"),
+    "runtime_binding",
+  )
+  let route = if json_string(binding, "model", default="") == "" {
+    match moonclaw_get_json(daemon, "/v1/moongate-route") {
+      Ok(value) => value
+      Err(_) => Json::null()
+    }
+  } else {
+    Json::null()
+  }
+  let handoff = match
+    supervisor_bridge_resolve_activation_model(handoff, route) {
+    Ok(value) => value
+    Err(error) =>
+      return {
+        "kind": "activation",
+        "target_id": target_id,
+        "status": "model_route_required",
+        "error": error,
+        "next_action": "configure_moongate_and_retry_activation",
+      }
+  }
   let request_digest = json_string(handoff, "request_digest", default="")
   let grant = match
     supervisor_bridge_materialized_grant(
@@ -1261,6 +1289,7 @@ async fn supervisor_bridge_pump_activation(
       "kind": "activation",
       "handoffId": target_id,
       "expectedCursor": expected_cursor,
+      "modelRoute": route,
       "evaluatedAt": json_string(grant, "evaluated_at", default=""),
       "authority": json_object_field(grant, "authority").unwrap_or(Json::null()),
     }) {

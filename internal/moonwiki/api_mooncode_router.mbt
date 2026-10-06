@@ -8,6 +8,33 @@ async fn route_mooncode_api(
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "mooncode", "work-handoff", "human-revisions"] => {
+      if method_ is Post {
+        handle_mooncode_work_human_revision(workspace_root, body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
+    ["api", "mooncode", "work-handoff", "continuations"] => {
+      if method_ is Post {
+        handle_mooncode_work_continuation(workspace_root, body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
+    ["api", "mooncode", "work-handoff"] => {
+      let endpoint = @mooncode.desktop_work_handoff_endpoint()
+      if mooncode_route_accepts_read(endpoint, method_) {
+        handle_mooncode_work_handoff(
+          workspace_root, request_path, method_, conn,
+        )
+      } else {
+        send_mooncode_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "mooncode", "status"] => {
       let endpoint = @mooncode.desktop_status_endpoint()
       if mooncode_route_accepts_read(endpoint, method_) {
@@ -132,9 +159,20 @@ async fn route_mooncode_api(
       }
       true
     }
-    ["api", "mooncode", "execution-sandbox", "promote"] => {
+    [
+      "api",
+      "mooncode",
+      "execution-sandbox",
+      "promote"
+      | "promotion-receipt" as action,
+    ] => {
       if method_ is Post {
-        handle_execution_sandbox_promotion(body, method_, conn)
+        handle_execution_sandbox_promotion(
+          body,
+          method_,
+          conn,
+          read_receipt=action == "promotion-receipt",
+        )
       } else {
         send_method_not_allowed_with_methods(conn, method_, ["POST"])
       }

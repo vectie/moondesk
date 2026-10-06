@@ -17,6 +17,26 @@ type ActivityButton
 
 type AgentCatalog derive(@json.FromJson)
 
+type AgentImportEffect
+
+type AgentImportMembers derive(@json.FromJson)
+
+type AgentImportMsg
+
+type AgentImportOperation derive(Eq, @debug.Debug)
+
+type AgentImportPending derive(Eq, @debug.Debug)
+
+type AgentImportRecovery derive(ToJson, @json.FromJson)
+
+type AgentImportReply
+
+type AgentImportSession
+
+type AgentImportState
+
+type AgentImportWire derive(@json.FromJson)
+
 type AgentPassportRecord derive(@json.FromJson)
 
 type BookBaseTypeRecord derive(@json.FromJson)
@@ -78,6 +98,8 @@ type DeskEntryTrashed derive(@json.FromJson)
 type DeskEvent derive(@json.FromJson)
 
 type DeskFilesImported derive(@json.FromJson)
+
+type DeskQuickAccessBook
 
 type DeskSortKey derive(Eq)
 
@@ -267,6 +289,22 @@ type MoonclawProgress derive(@json.FromJson)
 
 type Msg
 
+type NativeWorkAction derive(Eq, @debug.Debug)
+
+type NativeWorkEffect derive(Eq, @debug.Debug)
+
+type NativeWorkEnvelope derive(ToJson, @json.FromJson)
+
+type NativeWorkMsg
+
+type NativeWorkOperation derive(Eq, @debug.Debug)
+
+type NativeWorkPending derive(Eq, @debug.Debug)
+
+type NativeWorkState derive(Eq, @debug.Debug)
+
+type NativeWorkStatus derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
 type OfficeEditorDocument derive(Eq, @debug.Debug)
 
 type OfficeEditorItem derive(Eq, @debug.Debug)
@@ -305,6 +343,38 @@ type PagesSearchResponse derive(@json.FromJson)
 
 type PendingMarkdownNavigation derive(Eq)
 
+type PortableBookCatalog derive(@json.FromJson)
+
+type PortableBookEffect derive(Eq, @debug.Debug)
+
+type PortableBookExclusion derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookExport derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookHumanRecord derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookHumanResult derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookHumanRevision derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookInspection derive(ToJson, @json.FromJson)
+
+type PortableBookMember derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type PortableBookMsg
+
+type PortableBookOperation derive(Eq, @debug.Debug)
+
+type PortableBookPending derive(Eq, @debug.Debug)
+
+type PortableBookPrepared derive(ToJson, @json.FromJson)
+
+type PortableBookSource derive(ToJson, @json.FromJson)
+
+type PortableBookState
+
+type PortableBookVerification derive(ToJson, @json.FromJson)
+
 type PreviewTab
 
 type RequestRecord derive(@json.FromJson)
@@ -326,6 +396,8 @@ type SourcePaneContent derive(Eq, @debug.Debug)
 type SourcePaneMsg derive(Eq, @debug.Debug)
 
 type SourcePaneRequestIdentity derive(Eq, @debug.Debug)
+
+type SourcePaneSaveRequest derive(Eq, @debug.Debug)
 
 type SourcePaneState derive(Eq, @debug.Debug)
 
@@ -352,6 +424,24 @@ type WikiChatSubmission derive(Eq, @debug.Debug, @json.FromJson)
 type WorkAgendaItem
 
 type WorkAgendaState derive(Eq, @debug.Debug)
+
+type WorkContinuationMsg
+
+type WorkContinuationState
+
+type WorkHandoffCanonical derive(Eq, @debug.Debug)
+
+type WorkHandoffMsg
+
+type WorkHandoffState
+
+type WorkHandoffTarget derive(Eq, @debug.Debug)
+
+type WorkHumanRevisionMsg
+
+type WorkHumanRevisionState
+
+type WorkResumeState
 
 type WorkspaceMetadata derive(@json.FromJson)
 

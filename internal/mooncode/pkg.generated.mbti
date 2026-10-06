@@ -44,6 +44,8 @@ pub fn desktop_skills_endpoint() -> String
 
 pub fn desktop_status_endpoint() -> String
 
+pub fn desktop_work_handoff_endpoint() -> String
+
 pub fn engine_status_projection_json(daemon~ : Json, moonclaw_root~ : String, checkout_ready~ : Bool, running~ : Bool, models_ready~ : Bool, runtime_contract_ready~ : Bool, model_evidence~ : String, runtime_evidence~ : String) -> Json
 
 pub fn moonclaw_native_archived_session_listing_endpoint(String, include_books? : Bool) -> String
@@ -51,6 +53,12 @@ pub fn moonclaw_native_archived_session_listing_endpoint(String, include_books? 
 pub fn moonclaw_native_capabilities_ready(Json) -> Bool
 
 pub fn moonclaw_native_capabilities_unavailable(String) -> Json
+
+pub fn moonclaw_native_runtime_claim_endpoint(String, String) -> String
+
+pub fn moonclaw_native_runtime_events_endpoint(String, String) -> String
+
+pub fn moonclaw_native_runtime_service_endpoint(String, String) -> String
 
 pub fn moonclaw_native_session_lifecycle_endpoint(String) -> String
 

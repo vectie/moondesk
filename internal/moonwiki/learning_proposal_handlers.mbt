@@ -77,7 +77,7 @@ fn learning_proposal_decide(
 ) -> Result[Json, String] {
   let id = json_string(payload, "id", default="").trim().to_owned()
   let action = json_string(payload, "action", default="").trim().to_owned()
-  if id == "" || !["accept", "reject"].contains(action) {
+  if id == "" || !["accept", "reject", "persist"].contains(action) {
     return Err("invalid_learning_decision")
   }
   let current = match learning_proposal_find(records, id) {
@@ -89,7 +89,11 @@ fn learning_proposal_decide(
     json_string(current, "workspace_id", default="") != workspace_id {
     return Err("learning_proposal_not_found")
   }
-  if json_string(current, "status", default="") != "proposed" {
+  let status = json_string(current, "status", default="")
+  if status == "accepted" && ["accept", "persist"].contains(action) {
+    return Ok(current)
+  }
+  if action == "persist" || status != "proposed" {
     return Err("learning_proposal_already_decided")
   }
   let decided = @mooncore.session_with_field(
@@ -136,6 +140,7 @@ async fn apply_learning_proposal(
   workspace_root : String,
   payload : Json,
   now : String,
+  save? : async (String, Array[Json], Json) -> Bool = save_learning_record,
 ) -> Result[Json, String] {
   let workspace_id = json_string(payload, "workspace_id", default="")
     .trim()
@@ -143,8 +148,9 @@ async fn apply_learning_proposal(
   if workspace_id == "" {
     return Err("workspace_id_required")
   }
-  if find_workspace(workspace_root, workspace_id) is None {
-    return Err("unknown_workspace")
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => return Err("unknown_workspace")
   }
   learning_proposal_write_mutex.acquire()
   defer learning_proposal_write_mutex.release()
@@ -154,7 +160,10 @@ async fn apply_learning_proposal(
     recursive=true,
     exists_ok=true,
   )
-  let records = read_json_array_file(path)
+  let records = match read_learning_proposals(workspace_root) {
+    Ok(records) => records
+    Err(error) => return Err(error)
+  }
   let action = json_string(payload, "action", default="propose")
   let record = if action == "propose" {
     learning_proposal_create(payload, now)
@@ -165,12 +174,38 @@ async fn apply_learning_proposal(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let next = upsert_record_by_id(records, record)
-  while next.length() > LearningProposalMaxRecords {
-    next.pop() |> ignore
+  if json_string(record, "status", default="") != "accepted" {
+    if !save(workspace_root, records, record) {
+      return Err("learning_journal_write_failed")
+    }
+    return Ok(record)
   }
-  write_learning_proposals(workspace_root, next)
-  Ok(record)
+  if !(workspace.kind is MoonBook) {
+    let desk_only = learning_book_receipt(
+      record, "unsupported", "learning_requires_moonbook",
+    )
+    if !save(workspace_root, records, desk_only) {
+      return Err("learning_journal_write_failed")
+    }
+    return Ok(desk_only)
+  }
+  // Journal the human decision first. A crash leaves one explicit retryable
+  // accepted record, never an unjournaled Book lesson or a second decision time.
+  let pending = learning_book_receipt(record, "pending", "")
+  if !save(workspace_root, records, pending) {
+    return Err("learning_journal_write_failed")
+  }
+  let persisted = persist_learning_in_book(workspace.root_path, record) catch {
+    _ => Err("learning_book_write_failed")
+  }
+  let saved = match persisted {
+    Ok(_) => learning_book_receipt(record, "persisted", "")
+    Err(error) => learning_book_receipt(record, "failed", error)
+  }
+  if !save(workspace_root, records, saved) {
+    return Err("learning_journal_write_failed")
+  }
+  Ok(saved)
 }
 
 ///|
@@ -213,10 +248,18 @@ async fn handle_learning_proposals(
     )
     return
   }
-  let proposals = read_json_array_file(learning_proposals_path(workspace_root)).filter(record => {
-      json_string(record, "workspace_id", default="") == workspace_id
-    },
-  )
+  let records = match read_learning_proposals(workspace_root) {
+    Ok(records) => records
+    Err(_) => {
+      send_api_error(
+        conn, method_, 503, "Service Unavailable", "Learning journal is unavailable; retry after restoring access",
+      )
+      return
+    }
+  }
+  let proposals = records.filter(record => {
+    json_string(record, "workspace_id", default="") == workspace_id
+  })
   send_json(conn, method_, {
     "contract": "moondesk.learning-proposals.v1",
     "workspace_id": workspace_id,
@@ -250,6 +293,12 @@ async fn handle_update_learning_proposal(
     Err("learning_proposal_already_decided") =>
       send_api_error(
         conn, method_, 409, "Conflict", "Learning proposal was already decided",
+      )
+    Err("learning_journal_write_failed")
+    | Err("learning_journal_unreadable")
+    | Err("learning_journal_invalid") =>
+      send_api_error(
+        conn, method_, 503, "Service Unavailable", "Learning decision could not be confirmed; reload and retry",
       )
     Err(error) => send_api_error(conn, method_, 400, "Bad Request", error)
   }

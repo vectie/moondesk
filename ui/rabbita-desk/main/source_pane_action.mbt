@@ -25,19 +25,14 @@ fn source_pane_action(
         (@rabbita.none, next)
       }
     }
-    Save =>
-      if source_pane.saving {
+    Save | ReplaceServer =>
+      if source_pane.saving &&
+        source_pane.pending_save != model.source_pane.pending_save {
         (save_source_pane_cmd(dispatch, source_pane), next)
       } else {
         (@rabbita.none, next)
       }
-    ReplaceServer =>
-      if source_pane.saving {
-        (save_source_pane_cmd(dispatch, source_pane), next)
-      } else {
-        (@rabbita.none, next)
-      }
-    SaveResult(_) => (@rabbita.none, next)
+    SaveResult(_, _) => (@rabbita.none, next)
     _ => (@rabbita.none, next)
   }
 }

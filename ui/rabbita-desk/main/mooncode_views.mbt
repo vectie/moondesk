@@ -3,6 +3,9 @@ fn render_mooncode_pane(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  if work_handoff_active(model) {
+    return render_work_handoff_rail(dispatch, model)
+  }
   aside(
     class="activity-pane mooncode-rail",
     attrs=@html.Attrs::build()
@@ -681,6 +684,8 @@ fn mooncode_session_status_line(session : MoonCodeSession) -> String {
     "Completed"
   } else if session.status == "cancelled" {
     "Stopped"
+  } else if session.status == "unknown" {
+    "Status not loaded"
   } else {
     match session.updated_at {
       Some(value) if value != "" => browser_mooncode_relative_time(value)
@@ -701,6 +706,8 @@ fn mooncode_session_status_i18n_key(session : MoonCodeSession) -> String {
     "code.session_completed"
   } else if session.status == "cancelled" {
     "code.session_stopped"
+  } else if session.status == "unknown" {
+    "code.session_unknown"
   } else {
     match session.updated_at {
       Some(value) if value != "" => ""
@@ -724,6 +731,9 @@ fn render_mooncode_center(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  if work_handoff_active(model) {
+    return render_work_handoff(dispatch, model)
+  }
   let session = selected_mooncode_session(model)
   let empty = session is None
   section(
@@ -870,6 +880,7 @@ fn render_mooncode_center(
       render_git_repository_context(dispatch, model),
       render_mooncode_workspace_editors(dispatch, model),
       render_mooncode_developer_tools(model),
+      render_requested_selection(dispatch, model),
       section(
         class=if empty {
           "mooncode-chat-surface empty"
@@ -883,6 +894,7 @@ fn render_mooncode_center(
               div(class="mooncode-session-surface", [
                 render_mooncode_transcript(dispatch, model, session),
               ])
+            None if mooncode_selection_unavailable(model) => @html.nothing
             None =>
               div(class="mooncode-empty", [
                 h1(
@@ -1039,6 +1051,7 @@ fn render_mooncode_center(
                       model.mooncode_images.is_empty()
                     ) ||
                     model.mooncode_image_submit_pending ||
+                    mooncode_selection_unavailable(model) ||
                     (
                       !model.mooncode_images.is_empty() &&
                       !mooncode_selected_model_accepts_images(model)
@@ -1261,7 +1274,7 @@ fn render_source_editor(
         button(
           class="secondary-button",
           attrs=@html.Attrs::build().data_set("testid", "source-reload"),
-          disabled=source.server_content is None,
+          disabled=source.server_content is None || source.saving,
           on_click=dispatch(SourcePane(ReloadServer)),
           "Reload external version",
         ),
@@ -1441,11 +1454,13 @@ fn render_source_editor(
               pre("External version:\n" + current),
               button(
                 class="secondary-button",
+                disabled=source.saving,
                 on_click=dispatch(SourcePane(ReloadServer)),
                 "Reload external",
               ),
               button(
                 class="primary-button",
+                disabled=source.saving,
                 on_click=dispatch(SourcePane(ReplaceServer)),
                 "Replace external",
               ),

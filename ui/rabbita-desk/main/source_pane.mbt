@@ -24,6 +24,14 @@ struct SourcePaneRequestIdentity {
 } derive(Eq, Debug)
 
 ///|
+struct SourcePaneSaveRequest {
+  generation : Int
+  source : SourcePaneRequestIdentity
+  baseline : String
+  content : String
+} derive(Eq, Debug)
+
+///|
 struct SourcePaneBuffer {
   path : String
   content : SourcePaneContent
@@ -47,6 +55,8 @@ struct SourcePaneState {
   draft : String
   server_content : String?
   saving : Bool
+  save_generation : Int
+  pending_save : SourcePaneSaveRequest?
   status : String
   buffers : Array[SourcePaneBuffer]
 } derive(Eq, Debug)
@@ -65,7 +75,7 @@ enum SourcePaneMsg {
   EditDraft(String)
   DiscardDraft
   Save
-  SaveResult(SourceSaveOutcome)
+  SaveResult(SourcePaneSaveRequest, SourceSaveOutcome)
   ReloadServer
   ReplaceServer
   SwitchBuffer(String)
@@ -90,6 +100,8 @@ fn init_source_pane(
     draft: "",
     server_content: None,
     saving: false,
+    save_generation: 0,
+    pending_save: None,
     status: "",
     buffers: [],
   }
@@ -205,6 +217,26 @@ fn source_pane_dirty(state : SourcePaneState) -> Bool {
 }
 
 ///|
+fn source_pane_begin_save(
+  state : SourcePaneState,
+  status : String,
+) -> SourcePaneState {
+  let generation = state.save_generation + 1
+  {
+    ..state,
+    saving: true,
+    save_generation: generation,
+    pending_save: Some({
+      generation,
+      source: source_pane_identity(state),
+      baseline: state.baseline,
+      content: state.draft,
+    }),
+    status,
+  }
+}
+
+///|
 fn source_pane_editable(state : SourcePaneState) -> Bool {
   state.content is Ready(_) && !state.saving
 }
@@ -270,7 +302,7 @@ fn update_source_pane(
     Rebind(workspace_id, session_id) =>
       if state.workspace_id == workspace_id {
         { ..state, session_id, }
-      } else if source_pane_any_dirty(state) {
+      } else if state.saving || source_pane_any_dirty(state) {
         {
           ..state,
           status: "Save or discard the unsaved draft before changing workspace",
@@ -282,10 +314,17 @@ fn update_source_pane(
           open: state.open,
           collapsed: state.collapsed,
           request_generation: state.request_generation + 1,
+          save_generation: state.save_generation,
         }
       }
     OpenPathInput => update_source_pane(state, RequestSource(state.path_input))
     RequestSource(path) => {
+      guard !state.saving else {
+        {
+          ..state,
+          status: "Wait for the current save before opening another file",
+        }
+      }
       let path = path.trim().to_owned()
       let buffers = source_pane_capture_active(state)
       match source_pane_buffer_index(buffers, path) {
@@ -323,7 +362,7 @@ fn update_source_pane(
       }
     }
     PreviewResult(identity, result) =>
-      if source_pane_is_current(state, identity) {
+      if !state.saving && source_pane_is_current(state, identity) {
         match result {
           Ok(preview) =>
             source_pane_commit_active({
@@ -341,7 +380,7 @@ fn update_source_pane(
         state
       }
     PreviewUnsupported(identity, reason) =>
-      if source_pane_is_current(state, identity) {
+      if !state.saving && source_pane_is_current(state, identity) {
         { ..state, content: Unsupported(reason), status: reason, }
       } else {
         state
@@ -353,7 +392,7 @@ fn update_source_pane(
         state
       }
     DiscardDraft =>
-      if source_pane_dirty(state) {
+      if !state.saving && source_pane_dirty(state) {
         source_pane_commit_active({
           ..state,
           draft: state.baseline,
@@ -364,35 +403,59 @@ fn update_source_pane(
         state
       }
     Save =>
-      if source_pane_dirty(state) && source_pane_editable(state) {
-        { ..state, saving: true, status: "Saving", }
+      if state.saving {
+        state
+      } else if source_pane_dirty(state) && source_pane_editable(state) {
+        source_pane_begin_save(state, "Saving")
       } else {
         { ..state, status: "No changes to save", }
       }
-    SaveResult(outcome) =>
+    SaveResult(request, outcome) => {
+      guard state.saving &&
+        state.pending_save == Some(request) &&
+        source_pane_is_current(state, request.source) else {
+        return state
+      }
       match outcome {
         SourceSaved(payload) => {
-          let saved = json_field_string(payload, "content", default=state.draft)
+          let saved = json_field_string(
+            payload,
+            "content",
+            default=request.content,
+          )
+          let newer_draft = state.draft != request.content
           source_pane_commit_active({
             ..state,
             baseline: saved,
-            draft: saved,
+            draft: if newer_draft {
+              state.draft
+            } else {
+              saved
+            },
             saving: false,
+            pending_save: None,
             server_content: None,
-            status: "Saved",
+            status: if newer_draft {
+              "Saved earlier edit; newer changes are unsaved"
+            } else {
+              "Saved"
+            },
           })
         }
         SourceConflict(current) =>
           source_pane_commit_active({
             ..state,
             saving: false,
+            pending_save: None,
             server_content: Some(current),
             status: "File changed after this draft was opened",
           })
         SourceSaveFailed(problem) =>
-          { ..state, saving: false, status: problem, }
+          { ..state, saving: false, pending_save: None, status: problem, }
       }
-    ReloadServer =>
+    }
+    ReloadServer => {
+      guard !state.saving else { return state }
       match state.server_content {
         Some(current) =>
           source_pane_commit_active({
@@ -404,17 +467,20 @@ fn update_source_pane(
           })
         None => state
       }
-    ReplaceServer =>
+    }
+    ReplaceServer => {
+      guard !state.saving else { return state }
       match state.server_content {
         Some(current) =>
-          source_pane_commit_active({
-            ..state,
-            baseline: current,
-            saving: true,
-            status: "Replacing external version",
-          })
+          source_pane_commit_active(
+            source_pane_begin_save(
+              { ..state, baseline: current, },
+              "Replacing external version",
+            ),
+          )
         None => state
       }
+    }
     SwitchBuffer(path) => {
       guard !state.saving else {
         { ..state, status: "Wait for the current save before switching tabs", }

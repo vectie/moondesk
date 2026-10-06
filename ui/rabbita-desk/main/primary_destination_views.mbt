@@ -261,6 +261,7 @@ fn render_publish_workspace(
             ],
           )
         },
+        render_portable_book(dispatch, model),
         details(class="technical-details publish-technical", [
           summary("Technical and portable exports"),
           p("Generated output path: book/site/generated"),

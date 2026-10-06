@@ -317,6 +317,15 @@ fn moonclaw_runtime_full_session_base(
   let canonical = moonclaw_runtime_record_conversation_belongs_to_session(
     conversation, session_id,
   )
+  let listing_status = json_string(row, "status", default="unknown")
+  let execution_status = if canonical {
+    match json_array_items(conversation, "turns").last() {
+      Some(turn) => json_string(turn, "status", default=listing_status)
+      None => listing_status
+    }
+  } else {
+    listing_status
+  }
   let workspace_id = if canonical {
     json_string(
       conversation,
@@ -336,6 +345,11 @@ fn moonclaw_runtime_full_session_base(
     json_string(row, "workspace_name", default="")
   }
   let base = @mooncode.native_runtime_session_projection(book_root, session_id)
+  let base = match json_object_field(row, "runtime_binding_status") {
+    Some(status) =>
+      mooncode_session_with_field(base, "runtime_binding_status", status)
+    None => base
+  }
   let session = base
     |> mooncode_session_with_field(
       "title",
@@ -344,10 +358,7 @@ fn moonclaw_runtime_full_session_base(
     |> mooncode_session_with_field("workspace_id", workspace_id.to_json())
     |> mooncode_session_with_field("workspace_name", workspace_name.to_json())
     |> mooncode_session_with_field("cwd", book_root.to_json())
-    |> mooncode_session_with_field(
-      "status",
-      json_string(row, "status", default="durable").to_json(),
-    )
+    |> mooncode_session_with_field("status", execution_status.to_json())
     |> mooncode_session_with_field(
       "model",
       json_string(row, "model", default="").to_json(),

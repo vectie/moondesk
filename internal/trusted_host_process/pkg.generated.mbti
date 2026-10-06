@@ -92,6 +92,10 @@ pub async fn machine_name() -> String
 
 pub fn managed_moonclaw_binding(String) -> Result[ManagedMoonClawBinding, String]
 
+pub async fn moonbook_export_runtime() -> Result[MoonBookExportRuntime, String]
+
+pub async fn moonbook_import_runtime() -> Result[MoonBookExportRuntime, String]
+
 pub async fn notarize_archive(NotaryProfile, String) -> Int
 
 pub fn notary_profile(String) -> Result[NotaryProfile, String]
@@ -162,6 +166,20 @@ pub fn ManagedLaunchAgent::to_repr(Self) -> @debug.Repr
 pub struct ManagedMoonClawBinding {
   version : String
 }
+
+pub(all) enum MoonBookExportOperation {
+  Pack(version~ : String, output~ : String, selection~ : String)
+  Inspect(package_path~ : String)
+  Verify(package_path~ : String)
+  Source(package_path~ : String)
+  Import(destination~ : String, package_path~ : String, source_path~ : String)
+  VerifyImport(destination~ : String, package_path~ : String)
+}
+
+pub struct MoonBookExportRuntime {
+  // private fields
+}
+pub async fn MoonBookExportRuntime::run(Self, String, MoonBookExportOperation, may_run? : () -> Bool) -> Result[String, String]
 
 pub struct NotaryProfile {
   value : String

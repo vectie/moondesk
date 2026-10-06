@@ -3781,36 +3781,40 @@ details[open] > .desk-disclosure-summary::after {
     overflow: visible;
   }
 
-  .file-desk-main > .desk-browser {
-    order: 1;
-    width: 100%;
-    max-width: 100%;
-    min-height: calc(100dvh - 56px);
-  }
-
+  .file-desk-main > .desk-sidebar,
+  .file-desk-main > .desk-browser,
   .file-desk-main > .desk-details {
-    order: 2;
     width: 100%;
     max-width: 100%;
-    max-height: none;
-    min-height: 180px;
+    min-height: 0;
+    overflow: visible;
   }
 
   .file-desk-main > .desk-sidebar {
-    order: 3;
-    width: 100%;
-    max-width: 100%;
-    min-height: 240px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .file-desk-main > .desk-browser {
+    border-right: 0;
+  }
+
+  .file-desk-main > .desk-details {
+    max-height: none;
+  }
+
+  .desk-workspace-list {
+    max-height: 240px;
+    overflow-y: auto;
   }
 
   .desk-sidebar > .pane-heading {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
   }
 
   .desk-sidebar > .pane-heading > * {
     min-width: 0;
-    width: 100%;
   }
 
   .desk-file-row {

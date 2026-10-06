@@ -144,6 +144,7 @@ async fn call_moonclaw_sandbox_promotion(
   request : @mooncode_core.MoonCodeSandboxPromotionRequest,
   config : SourceSemanticsSandboxClientConfig,
   request_id : String,
+  read_receipt? : Bool = false,
 ) -> Result[@mooncode_core.MoonCodeSandboxPromotionResult, String] {
   let daemon = moonclaw_daemon_status(config.workspace_root)
   guard json_bool(daemon, "running", default=false) else {
@@ -156,17 +157,30 @@ async fn call_moonclaw_sandbox_promotion(
   }
   defer client.close()
   let response = client.post(
-    "/v1/execution-sandbox/promote",
+    if read_receipt {
+      "/v1/execution-sandbox/promotion-receipt"
+    } else {
+      "/v1/execution-sandbox/promote"
+    },
     sandbox_promotion_bound_request(request, config, request_id),
     extra_headers={
       "Content-Type": "application/json",
       "X-MoonClaw-Execution-Token": config.auth_token,
     },
   ) catch {
-    _ => return Err("Execution sandbox promotion was unavailable")
+    _ =>
+      return Err(
+        "Return acknowledgement is unavailable. Recover the receipt before considering another return.",
+      )
   }
   guard response.code == 200 else {
-    return Err("Execution sandbox promotion was refused")
+    return Err(
+      if read_receipt {
+        "No matching saved return receipt is available. The destination outcome remains unresolved; no promotion was retried. Ask the operator to inspect it."
+      } else {
+        "Return outcome could not be confirmed. Recover its receipt before considering another return."
+      },
+    )
   }
   let text = match source_semantics_read_bounded_response(client) {
     Ok(value) => value
@@ -185,6 +199,7 @@ async fn handle_execution_sandbox_promotion(
   body : &@io.Reader,
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
+  read_receipt? : Bool = false,
 ) -> Unit {
   let request = match read_sandbox_promotion_body(body) {
     Ok(value) => value
@@ -209,7 +224,8 @@ async fn handle_execution_sandbox_promotion(
       return
     }
   }
-  match call_moonclaw_sandbox_promotion(request, config, request_id) {
+  match
+    call_moonclaw_sandbox_promotion(request, config, request_id, read_receipt~) {
     Ok(result) => send_json(conn, method_, result.to_json())
     Err(error) =>
       send_api_error(conn, method_, 503, "Service Unavailable", error)

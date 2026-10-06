@@ -261,11 +261,12 @@ test "adapter preserves explicit planner limit and private runtime passthrough" 
 ///|
 test "adapter exposes only the canonical desktop route surface" {
   let routes = desktop_projection_route_contracts()
-  assert_eq(routes.length(), 8)
+  assert_eq(routes.length(), 9)
   let payload = Json::array(routes).stringify()
   assert_true(payload.contains(desktop_session_watch_endpoint()))
   assert_true(payload.contains(desktop_session_lifecycle_endpoint()))
   assert_true(payload.contains(desktop_skills_endpoint()))
+  assert_true(payload.contains(desktop_work_handoff_endpoint()))
   assert_false(payload.contains("runtime-service"))
   assert_false(payload.contains("runtime-replay"))
   assert_false(payload.contains("session-store"))
@@ -380,6 +381,41 @@ test "session defaults never expose a second transcript" {
   assert_true(@mooncore.json_object_field(session, "transcript") is None)
   assert_eq(json_string(session, "cwd", default=""), "/tmp/book-one")
   assert_false(json_bool(session, "archived", default=true))
+}
+
+///|
+test "native listing binding statuses do not invent execution state" {
+  // Shape and status values emitted by MoonClaw's native listing producer.
+  guard runtime_session_listing_rows({
+      "kind": "mooncode-session-listing",
+      "protocol": "mooncode.v1",
+      "owner": "moonclaw",
+      "sessions": [
+        { "id": "live", "book_root": "/suite/books/a", "status": "live" },
+        { "id": "saved", "book_root": "/suite/books/a", "status": "durable" },
+        { "id": "unresolved", "book_root": "/suite", "status": "unknown" },
+      ],
+    })
+    is Ok(rows) else {
+    fail("native live/durable/unknown listing must be readable")
+  }
+  assert_eq(rows.length(), 3)
+  assert_eq(json_string(rows[0], "status", default=""), "unknown")
+  assert_eq(json_string(rows[0], "runtime_binding_status", default=""), "live")
+  assert_eq(json_string(rows[1], "status", default=""), "durable")
+  assert_eq(json_string(rows[2], "status", default=""), "unknown")
+  assert_eq(
+    json_string(rows[2], "runtime_binding_status", default=""),
+    "unknown",
+  )
+  assert_eq(json_string(rows[0], "book_root", default=""), "/suite/books/a")
+  for status in ["running", "queued", "idle", "done", "failed", "cancelled"] {
+    guard runtime_session_listing_rows([{ "id": "canonical", "status": status }])
+      is Ok([row]) else {
+      fail("canonical execution status must remain readable")
+    }
+    assert_eq(json_string(row, "status", default=""), status)
+  }
 }
 
 ///|

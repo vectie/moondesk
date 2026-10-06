@@ -11,6 +11,12 @@ pub fn agent_catalog_route() -> String
 
 pub fn agent_catalog_url() -> String
 
+pub fn agent_import_operation_route() -> String
+
+pub fn agent_import_route() -> String
+
+pub fn agent_import_url(String, String) -> String
+
 pub fn agent_preferences_route() -> String
 
 pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry
@@ -109,6 +115,8 @@ pub fn moonclaw_workspace_url(String, String) -> String
 
 pub fn mooncode_archived_session_listing_url() -> String
 
+pub fn mooncode_sandbox_promotion_receipt_url() -> String
+
 pub fn mooncode_sandbox_promotion_url() -> String
 
 pub fn mooncode_session_chat_url(String, Int) -> String
@@ -182,6 +190,10 @@ pub fn task_recipes_route() -> String
 pub fn town_calendar_url() -> String
 
 pub fn town_endpoint_url(String) -> String
+
+pub fn town_native_work_route(action? : String) -> String
+
+pub fn town_native_work_url(String, action? : String) -> String
 
 pub fn town_route(String) -> String
 

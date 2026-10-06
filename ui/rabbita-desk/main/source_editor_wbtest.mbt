@@ -60,9 +60,10 @@ test "source draft survives tab navigation and remains dirty after save failure"
   assert_eq(opening_other.requested_path, "src/other.mbt")
   let restored = update_source_pane(opening_other, SwitchBuffer("src/main.mbt"))
   assert_eq(restored.draft, "fn direct_edit {}")
+  let saving = update_source_pane(restored, Save)
   let failed = update_source_pane(
-    restored,
-    SaveResult(SourceConflict("fn external {}")),
+    saving,
+    SaveResult(saving.pending_save.unwrap(), SourceConflict("fn external {}")),
   )
   assert_eq(failed.draft, "fn direct_edit {}")
   assert_true(failed.server_content is Some("fn external {}"))

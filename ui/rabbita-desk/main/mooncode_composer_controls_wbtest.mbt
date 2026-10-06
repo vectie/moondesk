@@ -68,3 +68,18 @@ test "MoonCode composer exposes lazy model and reasoning control state" {
   assert_true(markup.contains("data-mooncode-control-sync=\"model\""))
   assert_true(markup.contains("data-mooncode-control-sync=\"reasoning\""))
 }
+
+///|
+#warnings("-alert_unstable")
+test "MoonCode task intent is visible and defaults to Auto" {
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_mooncode_composer_controls(
+        fn(_msg) { @rabbita.none },
+        init_model(),
+      ),
+    ),
+  )
+  assert_true(markup.contains("data-task-intent=\"auto\""))
+  assert_true(markup.contains("data-mooncode-control-sync=\"task-intent\""))
+}

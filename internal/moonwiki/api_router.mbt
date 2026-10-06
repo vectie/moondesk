@@ -5,17 +5,24 @@ async fn handle_api_request(
   request_path : String,
   body : &@io.Reader,
   conn : @http.ServerConnection,
+  active_root? : Ref[String],
 ) -> Unit {
   let segments = path_segments(strip_query(request_path))
   if route_desktop_api(workspace_root, segments, method_, body, conn) {
     return
   }
   if route_workspace_api(
-      workspace_root, segments, method_, request_path, body, conn,
+      workspace_root,
+      segments,
+      method_,
+      request_path,
+      body,
+      conn,
+      active_root?,
     ) {
     return
   }
-  if route_town_api(workspace_root, segments, method_, body, conn) {
+  if route_town_api(workspace_root, segments, method_, request_path, body, conn) {
     return
   }
   if route_book_requests(

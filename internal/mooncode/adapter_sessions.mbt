@@ -128,6 +128,22 @@ pub fn selected_session_response(session : Json) -> Result[Json, String] {
 ///|
 fn normalized_listing_row(row : Json) -> Json? {
   guard json_string(row, "id", default="") != "" else { return None }
+  // The native listing reports binding availability, not turn execution.
+  // Keep that evidence separately until the canonical conversation is loaded.
+  let status = json_string(row, "status", default="durable")
+  let row = if status == "live" || status == "unknown" || status == "durable" {
+    row
+    |> json_with_field(
+      "runtime_binding_status",
+      json_string(row, "runtime_binding_status", default=status).to_json(),
+    )
+    |> json_with_field(
+      "status",
+      (if status == "live" { "unknown" } else { status }).to_json(),
+    )
+  } else {
+    row
+  }
   let session_id = json_string(row, "id", default="")
   let summary = json_object_field_or_empty(row, "mooncode_summary")
   let workspace_root = json_string(

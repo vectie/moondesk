@@ -2540,8 +2540,19 @@
     grid-template-columns: minmax(270px, 0.44fr) minmax(400px, 0.56fr);
   }
 
-  .wiki-viewer-actions .link-button {
-    display: none;
+  .wiki-viewer-header {
+    flex-wrap: wrap;
+  }
+
+  .wiki-viewer-actions {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .wiki-viewer-actions .secondary-button {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 

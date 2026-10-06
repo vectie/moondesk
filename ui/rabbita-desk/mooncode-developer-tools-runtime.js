@@ -8,6 +8,11 @@ const REASONING_OPTIONS = [
   ['high', 'High', 'code.reasoning_high'],
   ['xhigh', 'Extra high', 'code.reasoning_xhigh'],
 ]
+const TASK_INTENT_OPTIONS = [
+  ['auto', 'Auto', 'code.task_auto'],
+  ['read_only', 'Review only', 'code.task_read_only'],
+  ['workspace_change', 'Make changes', 'code.task_workspace_change'],
+]
 let developerToolsOpen = false
 let selectedDeveloperTool = 'terminal'
 const DEVELOPER_TOOLS_OPEN_KEY = 'moondesk.mooncode.developerToolsOpen'
@@ -145,12 +150,12 @@ function composerControl(title, kind, options, selected, disabled = false) {
   const caption = document.createElement('span')
   caption.className = 'mooncode-composer-control-label'
   caption.textContent = title
-  caption.dataset.i18n = kind === 'model' ? 'code.model' : 'code.reasoning'
+  caption.dataset.i18n = kind === 'model' ? 'code.model' : kind === 'task-intent' ? 'code.task' : 'code.reasoning'
   const select = document.createElement('select')
   select.className = 'mooncode-composer-select'
   select.dataset.testid = `mooncode-${kind}-select`
-  select.setAttribute('aria-label', `MoonCode ${kind === 'model' ? 'model' : 'reasoning effort'}`)
-  select.dataset.i18nAriaLabel = kind === 'model' ? 'code.model_aria' : 'code.reasoning_aria'
+  select.setAttribute('aria-label', `MoonCode ${kind === 'model' ? 'model' : kind === 'task-intent' ? 'task purpose' : 'reasoning effort'}`)
+  select.dataset.i18nAriaLabel = kind === 'model' ? 'code.model_aria' : kind === 'task-intent' ? 'code.task_aria' : 'code.reasoning_aria'
   select.disabled = disabled
   for (const [value, text, key] of options) {
     const option = document.createElement('option')
@@ -187,12 +192,15 @@ function installComposerControls(root) {
       modelSelect.disabled = models.length === 0
       modelSelect.value = root.dataset.selectedModel || modelOptions[0][0]
     }
+    const taskSelect = root.querySelector('[data-testid="mooncode-task-intent-select"]')
+    if (taskSelect instanceof HTMLSelectElement) taskSelect.value = root.dataset.taskIntent || 'auto'
     return
   }
   root.dataset.controlsInstalled = 'true'
   root.prepend(
     composerControl('Model', 'model', modelOptions, root.dataset.selectedModel || '', models.length === 0),
     composerControl('Reasoning', 'reasoning', REASONING_OPTIONS, root.dataset.reasoning || 'none'),
+    composerControl('Task', 'task-intent', TASK_INTENT_OPTIONS, root.dataset.taskIntent || 'auto'),
   )
 }
 
@@ -436,6 +444,6 @@ if (typeof document !== 'undefined') {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['data-models', 'data-selected-model'],
+    attributeFilter: ['data-models', 'data-selected-model', 'data-task-intent'],
   })
 }

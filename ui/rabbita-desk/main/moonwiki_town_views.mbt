@@ -15,6 +15,7 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ]),
       render_requests_capability(dispatch, model),
       render_request_list(dispatch, model),
+      render_native_work(dispatch, model.native_work),
       section(class="side-section task-composer", [
         h3("Build or update this book"),
         textarea(

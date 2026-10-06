@@ -354,13 +354,16 @@ fn update_mooncode_session_results(
           )
         None => ()
       }
-      let selected = if model.selected_mooncode_session_id != "" &&
-        mooncode_session_exists(
-          mooncode_sessions,
-          model.selected_mooncode_session_id,
-        ) {
+      // A selected identity remains authoritative even before its first row
+      // arrives. An absent listing row is not permission to open another chat.
+      let selected = if model.selected_mooncode_session_id != "" {
         model.selected_mooncode_session_id
-      } else if draft_active || model.mooncode_sessions.length() > 0 {
+      } else if draft_active ||
+        !model.mooncode_auto_select_session ||
+        (
+          model.mooncode_sessions.length() > 0 &&
+          !requested_workspace_active(model)
+        ) {
         ""
       } else {
         first_mooncode_session_id(
@@ -368,7 +371,8 @@ fn update_mooncode_session_results(
           model.selected_workspace_id,
         )
       }
-      let selected_workspace_id = if selected == "" {
+      let selected_workspace_id = if selected == "" ||
+        requested_workspace_active(model) {
         model.selected_workspace_id
       } else {
         mooncode_workspace_id_for_selected_session(session_model, selected)
@@ -386,6 +390,8 @@ fn update_mooncode_session_results(
         mooncode_sessions_error: "",
         selected_workspace_id,
         selected_mooncode_session_id: selected,
+        mooncode_auto_select_session: model.mooncode_auto_select_session &&
+        selected == "",
         mooncode_new_chat_active: selected == "" && draft_active,
         mooncode_watch_generation: if selection_changed {
           model.mooncode_watch_generation + 1
@@ -446,15 +452,44 @@ fn update_mooncode_session_results(
         session.id != session_id {
         (@rabbita.none, model)
       } else {
+        let next = {
+          ..model,
+          mooncode_sessions: mooncode_upsert_session_if_revision_changed(
+            model.mooncode_sessions,
+            session,
+          ),
+          mooncode_selected_session_loading: false,
+          mooncode_sessions_error: "",
+        }
+        let workspace_id = if requested_workspace_active(model) {
+          model.selected_workspace_id
+        } else {
+          mooncode_workspace_id_for_selected_session(next, session_id)
+        }
+        let next = { ..next, selected_workspace_id: workspace_id, }
         (
-          @rabbita.none,
-          {
-            ..model,
-            mooncode_sessions: mooncode_upsert_session_if_revision_changed(
-              model.mooncode_sessions,
-              session,
-            ),
-            mooncode_sessions_error: "",
+          @rabbita.batch([
+            mooncode_listing_watch_cmd(dispatch, model, next),
+            if workspace_id != model.selected_workspace_id {
+              fetch_git_repository_projection_cmd(
+                dispatch,
+                workspace_id,
+                model.git_projection_generation + 1,
+              )
+            } else {
+              @rabbita.none
+            },
+          ]),
+          if workspace_id != model.selected_workspace_id {
+            {
+              ..next,
+              git_projection_workspace_id: workspace_id,
+              git_projection_generation: model.git_projection_generation + 1,
+              git_projection: None,
+              git_projection_loading: workspace_id != "",
+            }
+          } else {
+            next
           },
         )
       }
@@ -466,6 +501,7 @@ fn update_mooncode_session_results(
           @rabbita.none,
           {
             ..model,
+            mooncode_selected_session_loading: false,
             mooncode_sessions_error: error,
             mooncode_composer_status: error,
           },
@@ -490,6 +526,7 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
+          mooncode_task_intent_submit_pending: false,
           mooncode_image_submit_pending: false,
           mooncode_prompt: if model.mooncode_image_submit_pending &&
             model.mooncode_image_submit_revision ==
@@ -516,6 +553,7 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
+          mooncode_task_intent_submit_pending: false,
           mooncode_image_submit_pending: false,
           mooncode_prompt: if model.mooncode_image_submit_pending &&
             model.mooncode_image_submit_revision ==
@@ -816,7 +854,8 @@ fn mooncode_listing_watch_cmd(
   previous : Model,
   next : Model,
 ) -> @rabbita.Cmd {
-  if next.selected_mooncode_session_id == "" {
+  if next.selected_mooncode_session_id == "" ||
+    selected_mooncode_session(next) is None {
     if previous.selected_mooncode_session_id != "" {
       stop_mooncode_watch_cmd()
     } else {
@@ -875,6 +914,13 @@ fn mooncode_session_mutation_succeeded(
     } else {
       model.mooncode_images
     },
+    mooncode_task_intent: if model.mooncode_task_intent_submit_pending &&
+      model.mooncode_image_submit_revision == model.mooncode_draft_revision {
+      "auto"
+    } else {
+      model.mooncode_task_intent
+    },
+    mooncode_task_intent_submit_pending: false,
     mooncode_image_submit_pending: false,
     mooncode_image_submit_prompt: "",
     workspace_mode: MoonCode,

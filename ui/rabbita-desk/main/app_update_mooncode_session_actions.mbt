@@ -70,6 +70,15 @@ fn update_mooncode_session_actions(
           },
         )
       } else {
+        let model = {
+          ..model,
+          requested_workspace_id: "",
+          selected_workspace_id: if requested_workspace_unavailable(model) {
+            ""
+          } else {
+            model.selected_workspace_id
+          },
+        }
         (
           @rabbita.batch([
             sync_shell_cmd(MoonCode, model.activity),
@@ -87,6 +96,8 @@ fn update_mooncode_session_actions(
             workspace_mode: MoonCode,
             command_open: false,
             selected_mooncode_session_id: "",
+            mooncode_selected_session_loading: false,
+            mooncode_auto_select_session: false,
             git_projection_workspace_id: model.selected_workspace_id,
             git_projection_generation: model.git_projection_generation + 1,
             git_projection: None,
@@ -112,6 +123,8 @@ fn update_mooncode_session_actions(
             mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
             mooncode_watch_status: "idle",
             mooncode_watch_failure_count: 0,
+            mooncode_task_intent: "auto",
+            mooncode_task_intent_submit_pending: false,
             mooncode_composer_status: "new session draft",
           },
         )
@@ -207,6 +220,20 @@ fn update_mooncode_session_actions(
       } else {
         (@rabbita.none, model)
       }
+    SetMoonCodeTaskIntent(value) =>
+      if ["auto", "read_only", "workspace_change"].contains(value) {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_task_intent: value,
+            mooncode_draft_revision: model.mooncode_draft_revision + 1,
+            mooncode_composer_status: mooncode_task_intent_status(value),
+          },
+        )
+      } else {
+        (@rabbita.none, model)
+      }
     SetMoonCodeReasoningEffort(value) =>
       if mooncode_reasoning_effort_is_supported(value) {
         (
@@ -231,9 +258,12 @@ fn update_mooncode_session_actions(
     DecideMoonCodeTool(approval, decision) =>
       mooncode_decide_tool(dispatch, model, approval, decision)
     ToggleMoonCodeSandboxFile(receipt, path) => {
+      if model.mooncode_sandbox_promotion_pending &&
+        model.mooncode_sandbox_review_key == receipt.review_key() {
+        return (@rabbita.none, model)
+      }
       let key = receipt.review_key()
       let allowed = receipt.promotion_ready() &&
-        !model.mooncode_sandbox_locked_review_keys.contains(key) &&
         receipt.changes.any(change => {
           change.promotable && change.relative_path == path
         })
@@ -258,12 +288,18 @@ fn update_mooncode_session_actions(
             ..model,
             mooncode_sandbox_review_key: key,
             mooncode_sandbox_selected_paths: selected,
+            mooncode_sandbox_promotion_pending: false,
+            mooncode_sandbox_request_generation: model.mooncode_sandbox_request_generation +
+            1,
             mooncode_sandbox_promotion_status: "",
           },
         )
       }
     }
     PromoteMoonCodeSandboxReceipt(receipt) => {
+      if model.mooncode_sandbox_promotion_pending {
+        return (@rabbita.none, model)
+      }
       let key = receipt.review_key()
       let selected = if model.mooncode_sandbox_review_key == key &&
         !model.mooncode_sandbox_locked_review_keys.contains(key) {
@@ -284,18 +320,66 @@ fn update_mooncode_session_actions(
           )
         Ok(_) =>
           (
-            mooncode_sandbox_promotion_cmd(dispatch, receipt, selected),
+            mooncode_sandbox_promotion_cmd(
+              dispatch,
+              receipt,
+              selected,
+              generation=model.mooncode_sandbox_request_generation + 1,
+            ),
             {
               ..model,
               mooncode_sandbox_review_key: key,
               mooncode_sandbox_promotion_pending: true,
+              mooncode_sandbox_request_generation: model.mooncode_sandbox_request_generation +
+              1,
               mooncode_sandbox_promotion_status: "Promoting one reviewed file…",
             },
           )
       }
     }
-    CompletedMoonCodeSandboxPromotion(key, result) =>
-      if key != model.mooncode_sandbox_review_key {
+    RecoverMoonCodeSandboxReceipt(receipt) => {
+      if model.mooncode_sandbox_promotion_pending {
+        return (@rabbita.none, model)
+      }
+      let key = receipt.review_key()
+      let selected = if model.mooncode_sandbox_review_key == key {
+        model.mooncode_sandbox_selected_paths
+      } else {
+        []
+      }
+      match mooncode_sandbox_promotion_request(receipt, selected) {
+        Err(error) =>
+          (
+            @rabbita.none,
+            {
+              ..model,
+              mooncode_sandbox_review_key: key,
+              mooncode_sandbox_promotion_status: error,
+            },
+          )
+        Ok(_) =>
+          (
+            mooncode_sandbox_promotion_cmd(
+              dispatch,
+              receipt,
+              selected,
+              read_receipt=true,
+              generation=model.mooncode_sandbox_request_generation + 1,
+            ),
+            {
+              ..model,
+              mooncode_sandbox_review_key: key,
+              mooncode_sandbox_promotion_pending: true,
+              mooncode_sandbox_request_generation: model.mooncode_sandbox_request_generation +
+              1,
+              mooncode_sandbox_promotion_status: "Reading the saved return receipt. No execution or promotion will be retried…",
+            },
+          )
+      }
+    }
+    CompletedMoonCodeSandboxPromotion(key, generation, result) =>
+      if key != model.mooncode_sandbox_review_key ||
+        generation != model.mooncode_sandbox_request_generation {
         (@rabbita.none, model)
       } else {
         match result {
@@ -307,13 +391,15 @@ fn update_mooncode_session_actions(
             }
             let status = match receipt.destination_outcome {
               "applied-durable" if receipt.completed =>
-                "Promoted the reviewed file. This retention is now consumed."
+                "Return receipt confirms " +
+                receipt.promoted_paths[0] +
+                ". This retention is now consumed."
               "applied-durable" =>
                 "The reviewed file was promoted, but retention cleanup could not be verified. Retry is disabled; operator attention is required."
               "not-applied" if receipt.recovery_required =>
                 "The file was not applied, but retention recovery is required. Retry is disabled pending operator recovery."
               "not-applied" =>
-                "The file was not applied. Verify that its canonical destination parent already exists, then review and retry."
+                "This return attempt did not apply the file. If an earlier attempt was interrupted, inspect its destination before retrying. Otherwise verify that its canonical destination parent already exists, then review and retry."
               "recovery-required" =>
                 "The destination outcome is uncertain for " +
                 receipt.uncertain_paths[0] +
@@ -324,11 +410,7 @@ fn update_mooncode_session_actions(
               @rabbita.none,
               {
                 ..model,
-                mooncode_sandbox_selected_paths: if locked {
-                  []
-                } else {
-                  model.mooncode_sandbox_selected_paths
-                },
+                mooncode_sandbox_selected_paths: model.mooncode_sandbox_selected_paths,
                 mooncode_sandbox_promotion_pending: false,
                 mooncode_sandbox_promotion_status: status,
                 mooncode_sandbox_locked_review_keys: locked_keys,
@@ -528,8 +610,22 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
   )
   {
     ..model,
+    requested_workspace_id: "",
+    mooncode_selected_session_loading: session_id != "",
+    mooncode_auto_select_session: false,
     selected_workspace_id: workspace_id,
     selected_mooncode_session_id: session_id,
+    mooncode_task_intent: if session_id == model.selected_mooncode_session_id {
+      model.mooncode_task_intent
+    } else {
+      "auto"
+    },
+    mooncode_task_intent_submit_pending: if session_id ==
+      model.selected_mooncode_session_id {
+      model.mooncode_task_intent_submit_pending
+    } else {
+      false
+    },
     mooncode_new_chat_active: session_id == "",
     mooncode_watch_generation: model.mooncode_watch_generation + 1,
     mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
@@ -566,6 +662,15 @@ fn mooncode_send_composer(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if mooncode_selection_unavailable(model) {
+    return (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_composer_status: "The selected chat or MoonBook is unavailable. Retry or choose another chat before sending.",
+      },
+    )
+  }
   if model.mooncode_image_submit_pending {
     return (@rabbita.none, model)
   }
@@ -660,6 +765,7 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: false,
             mooncode_prompt: "",
+            mooncode_task_intent_submit_pending: true,
             mooncode_image_submit_pending: !model.mooncode_images.is_empty(),
             mooncode_image_submit_revision: model.mooncode_draft_revision,
             mooncode_image_submit_prompt: prompt,
@@ -697,6 +803,7 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: true,
             mooncode_prompt: "",
+            mooncode_task_intent_submit_pending: true,
             mooncode_image_submit_pending: !model.mooncode_images.is_empty(),
             mooncode_image_submit_revision: model.mooncode_draft_revision,
             mooncode_image_submit_prompt: prompt,

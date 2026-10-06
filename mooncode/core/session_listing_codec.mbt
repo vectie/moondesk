@@ -26,6 +26,7 @@ pub(all) enum MoonCodeSessionStatus {
   Failed
   Cancelled
   Durable
+  Unknown
 } derive(Debug, Eq)
 
 ///|
@@ -39,6 +40,7 @@ pub fn MoonCodeSessionStatus::parse(value : String) -> MoonCodeSessionStatus? {
     "failed" => Some(Failed)
     "cancelled" => Some(Cancelled)
     "durable" => Some(Durable)
+    "unknown" => Some(Unknown)
     _ => None
   }
 }
@@ -54,6 +56,7 @@ pub fn MoonCodeSessionStatus::to_string(self : MoonCodeSessionStatus) -> String 
     Failed => "failed"
     Cancelled => "cancelled"
     Durable => "durable"
+    Unknown => "unknown"
   }
 }
 

@@ -88,6 +88,12 @@ pub fn mooncode_sandbox_promotion_url() -> String {
 }
 
 ///|
+/// Read a stored return receipt without retrying execution or promotion.
+pub fn mooncode_sandbox_promotion_receipt_url() -> String {
+  desktop_api_url(["api", "mooncode", "execution-sandbox", "promotion-receipt"])
+}
+
+///|
 pub fn url_component(value : String) -> String {
   let pieces : Array[String] = []
   for byte in @encoding/utf8.encode(value) {

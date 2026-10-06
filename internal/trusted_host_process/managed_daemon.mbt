@@ -93,6 +93,8 @@ fn moonclaw_daemon_environment_from_values(
   allow_public_http? : Bool = false,
   app_data_root? : String = "",
   private_control_config? : String = "",
+  moonfort_config? : String,
+  moonfort_promotion_config? : String,
 ) -> Map[String, String] {
   let environment : Map[String, String] = {
     "HOME": home,
@@ -124,6 +126,14 @@ fn moonclaw_daemon_environment_from_values(
   if private_control_config != "" && safe_daemon_path(private_control_config) {
     environment["MOONDESK_EXECUTION_SANDBOX_CONFIG"] = private_control_config
   }
+  // Preserve presence and exact operator-owned references. The existing
+  // MoonFort loaders validate them; an invalid value must not become absence.
+  if moonfort_config is Some(reference) {
+    environment["MOONCLAW_MOONFORT_CONFIG"] = reference
+  }
+  if moonfort_promotion_config is Some(reference) {
+    environment["MOONCLAW_MOONFORT_PROMOTION_CONFIG"] = reference
+  }
   environment
 }
 
@@ -140,6 +150,10 @@ fn moonclaw_daemon_environment(home : String) -> Map[String, String] {
     app_data_root=@env.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
     private_control_config=@env.get_env_var("MOONDESK_EXECUTION_SANDBOX_CONFIG").unwrap_or(
       "",
+    ),
+    moonfort_config?=@env.get_env_var("MOONCLAW_MOONFORT_CONFIG"),
+    moonfort_promotion_config?=@env.get_env_var(
+      "MOONCLAW_MOONFORT_PROMOTION_CONFIG",
     ),
   )
 }

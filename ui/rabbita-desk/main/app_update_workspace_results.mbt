@@ -151,13 +151,22 @@ fn update_workspace_results(
         { ..model, host_status: error, },
       )
     LoadedWorkspaces(Ok(workspaces)) => {
+      let retained_workspace = requested_workspace_active(model) &&
+        !has_workspace(workspaces, model.requested_workspace_id) &&
+        has_workspace(model.workspaces, model.requested_workspace_id)
+      let workspaces = preserve_requested_workspace(model, workspaces)
       let selected_known = has_workspace(
         workspaces,
         model.selected_workspace_id,
       )
       let preserve_review = model.git_review_note.trim() != "" ||
         model.git_review_saving
-      let selected_workspace_id = if selected_known || preserve_review {
+      let selected_workspace_id = if selected_known ||
+        preserve_review ||
+        model.requested_workspace_id != "" ||
+        model.selected_mooncode_session_id != "" ||
+        !model.mooncode_auto_select_session ||
+        model.mooncode_new_chat_active {
         model.selected_workspace_id
       } else {
         first_workspace_id(workspaces)
@@ -165,7 +174,7 @@ fn update_workspace_results(
       let selected_workspace_changed = selected_workspace_id !=
         model.selected_workspace_id
       let selected_path = if model.workspace_mode == Desk {
-        if selected_known {
+        if selected_known || !selected_workspace_changed {
           model.selected_path
         } else {
           ""
@@ -206,7 +215,9 @@ fn update_workspace_results(
           loading: false,
           host_status: "local host ready",
           workspaces,
-          workspace_catalog_state: if workspaces.is_empty() {
+          workspace_catalog_state: if retained_workspace {
+            Some(Stale)
+          } else if workspaces.is_empty() {
             Some(LegitimateZero)
           } else {
             None
@@ -1438,6 +1449,7 @@ fn open_created_or_imported_workspace(
       fetch_runs_cmd(dispatch, result.workspace_id),
       sync_workspace_context_cmd(result.workspace_id, selected_path),
       sync_mooncode_context_cmd(result.workspace_id, ""),
+      stop_mooncode_watch_cmd(),
     ]),
     {
       ..model,
@@ -1445,6 +1457,14 @@ fn open_created_or_imported_workspace(
       workspace_catalog_state: Some(Loading),
       workspace_catalog_error: "",
       selected_workspace_id: result.workspace_id,
+      requested_workspace_id: result.workspace_id,
+      selected_mooncode_session_id: "",
+      mooncode_auto_select_session: false,
+      mooncode_selected_session_loading: false,
+      mooncode_new_chat_active: false,
+      mooncode_watch_generation: model.mooncode_watch_generation + 1,
+      mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
+      mooncode_watch_status: "idle",
       selected_path,
       desk_selected_paths: if selected_path == "" {
         []

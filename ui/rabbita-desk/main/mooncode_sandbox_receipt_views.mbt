@@ -113,16 +113,13 @@ fn render_mooncode_sandbox_receipt(
                 if change.promotable {
                   (if checked { "Remove " } else { "Select " }) +
                   change.relative_path +
-                  " for promotion"
+                  " for return or receipt lookup"
                 } else {
                   change.relative_path + " cannot be promoted"
                 },
               )
               .data_set("testid", "sandbox-file-toggle"),
-            disabled=!change.promotable ||
-              !receipt.promotion_ready() ||
-              pending ||
-              locked,
+            disabled=!change.promotable || !receipt.promotion_ready() || pending,
             on_click=dispatch(
               ToggleMoonCodeSandboxFile(receipt, change.relative_path),
             ),
@@ -278,7 +275,24 @@ fn render_mooncode_sandbox_receipt(
             "Promote reviewed file"
           },
         ),
+        button(
+          class="mooncode-inline-action",
+          attrs=@html.Attrs::build()
+            .aria_label(
+              "Recover the selected file's saved return receipt without retrying execution or promotion",
+            )
+            .data_set("testid", "sandbox-recover-receipt"),
+          disabled=selected.length() != 1 ||
+            !receipt.promotion_ready() ||
+            pending,
+          on_click=dispatch(RecoverMoonCodeSandboxReceipt(receipt)),
+          "Recover return receipt",
+        ),
       ]),
+      p(
+        class="meta",
+        "After a lost acknowledgement or reload, select the same reviewed file and recover its saved return receipt. Receipt lookup never runs the command or copies the file again.",
+      ),
       if status == "" {
         @html.nothing
       } else {

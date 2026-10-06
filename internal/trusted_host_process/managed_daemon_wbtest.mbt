@@ -37,7 +37,9 @@ test "managed MoonClaw daemon command and environment are fixed" {
     moonclaw_daemon_arguments("/srv/moonsuite"),
     content="[\"daemon\", \"--port\", \"0\", \"--serve\", \"/srv/moonsuite\"]",
   )
-  let environment = moonclaw_daemon_environment("/Users/test")
+  let environment = moonclaw_daemon_environment_from_values(
+    "/Users/test", "", "",
+  )
   assert_eq(environment.length(), 5)
   assert_eq(environment["HOME"], "/Users/test")
   assert_eq(environment["LANG"], "C.UTF-8")

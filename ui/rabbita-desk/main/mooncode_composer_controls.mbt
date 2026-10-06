@@ -62,8 +62,17 @@ fn render_mooncode_composer_controls(
       .data_set("models", model.mooncode_models.join("\n"))
       .data_set("selected-model", model.mooncode_model)
       .data_set("reasoning", model.mooncode_reasoning_effort)
+      .data_set("task-intent", model.mooncode_task_intent)
       .aria_label("MoonCode model controls"),
     [
+      input(
+        class="mooncode-composer-control-sync",
+        attrs=@html.Attrs::build()
+          .data_set("mooncode-control-sync", "task-intent")
+          .aria_hidden("true"),
+        value=model.mooncode_task_intent,
+        on_input=fn(value) { dispatch(SetMoonCodeTaskIntent(value)) },
+      ),
       input(
         class="mooncode-composer-control-sync",
         attrs=@html.Attrs::build()
@@ -82,4 +91,15 @@ fn render_mooncode_composer_controls(
       ),
     ],
   )
+}
+
+///|
+fn mooncode_task_intent_status(value : String) -> String {
+  match value {
+    "read_only" =>
+      "Review only: inspect source and report findings without authoring changes"
+    "workspace_change" =>
+      "Make changes: request implementation and verification"
+    _ => "Task purpose inferred from this request"
+  }
 }

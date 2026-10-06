@@ -3,10 +3,15 @@ async fn route_town_api(
   workspace_root : String,
   segments : Array[String],
   method_ : @http.RequestMethod,
+  request_path : String,
   body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "town", "native-work", ..] => {
+      handle_town_native_work(workspace_root, request_path, method_, body, conn)
+      true
+    }
     ["api", "town", "state"] => {
       let endpoint = @desk.town_route("state")
       if desktop_api_route_accepts_read(endpoint, method_) {

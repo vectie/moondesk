@@ -19,6 +19,21 @@ pub(all) enum MoonCodeCommandKind {
 } derive(Debug, Eq)
 
 ///|
+/// Optional explicit task purpose. An absent value leaves native inference on.
+pub(all) enum MoonCodeTaskIntent {
+  ReadOnly
+  WorkspaceChange
+} derive(Debug, Eq)
+
+///|
+pub fn MoonCodeTaskIntent::to_string(self : MoonCodeTaskIntent) -> String {
+  match self {
+    ReadOnly => "read_only"
+    WorkspaceChange => "workspace_change"
+  }
+}
+
+///|
 /// The daemon-owned status of an accepted command packet.
 #warnings("-unused_constructor")
 pub enum MoonCodeCommandStatus {
@@ -35,7 +50,9 @@ pub(all) struct MoonCodeCommand {
   message : String
   content_parts : Array[MoonCodeContentPart]
   model : String
+  model_workspace : String
   web_search : Bool
+  task_intent : MoonCodeTaskIntent?
   planner_max_steps : Int?
   planner_reasoning_effort : String
   approval_id : String
@@ -110,6 +127,18 @@ fn command_codec_bool(fields : Map[String, Json], key : String) -> Bool? {
     Some(False) => Some(false)
     Some(_) => None
     None => Some(false)
+  }
+}
+
+///|
+fn command_codec_task_intent(
+  fields : Map[String, Json],
+) -> Result[MoonCodeTaskIntent?, String] {
+  match fields.get("task_intent") {
+    None | Some(Null) => Ok(None)
+    Some(String("read_only")) => Ok(Some(ReadOnly))
+    Some(String("workspace_change")) => Ok(Some(WorkspaceChange))
+    _ => Err("task_intent must be read_only or workspace_change when supplied")
   }
 }
 
@@ -222,6 +251,10 @@ pub fn decode_mooncode_command(
     Ok(value) => value
     Err(error) => return Err(error)
   }
+  let task_intent = match command_codec_task_intent(fields) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   let planner_max_steps = match command_codec_planner_max_steps(fields) {
     Ok(value) => value
     Err(error) => return Err(error)
@@ -233,7 +266,7 @@ pub fn decode_mooncode_command(
   }
   let string_keys = [
     "client_turn_id", "context_path", "message", "model", "approval_id", "target_command_id",
-    "tool_call_id",
+    "tool_call_id", "model_workspace",
   ]
   let strings : Array[String] = []
   for key in string_keys {
@@ -257,7 +290,9 @@ pub fn decode_mooncode_command(
     message: strings[2],
     content_parts,
     model: strings[3],
+    model_workspace: strings[7],
     web_search,
+    task_intent,
     planner_max_steps,
     planner_reasoning_effort,
     approval_id: strings[4],
@@ -299,6 +334,13 @@ pub fn encode_mooncode_command(
     Some(error) => Err(error)
     None => {
       let fields = command_codec_submission_fields(command)
+      if command.model_workspace != "" {
+        fields["model_workspace"] = command.model_workspace.to_json()
+      }
+      match command.task_intent {
+        Some(intent) => fields["task_intent"] = intent.to_string().to_json()
+        None => ()
+      }
       if !command.content_parts.is_empty() {
         fields["content_parts"] = Json::array(
           command.content_parts.map(mooncode_content_part_json),

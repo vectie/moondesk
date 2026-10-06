@@ -22,7 +22,37 @@ fn update(
   msg : Msg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  let model = rebind_desk_quick_access(model, refresh_paths=false)
+  if work_handoff_active(model) && work_handoff_blocks(msg) {
+    return (@rabbita.none, model)
+  }
+  if work_handoff_active(model) &&
+    (work_handoff_leaves(msg) || msg is WorkHandoff(Exit)) &&
+    (
+      !work_continuation_draft_allow_departure(model.work_handoff.continuation) ||
+      !work_human_revision_allow_departure(model.work_handoff.human_revision)
+    ) {
+    return (@rabbita.none, model)
+  }
+  let leaving_handoff = work_handoff_active(model) && work_handoff_leaves(msg)
+  let previous_model = model
+  let model = portable_book_library_transition(msg, model)
+  let model = agent_import_library_transition(msg, model)
+  let model = if leaving_handoff {
+    let (_, next) = update_work_handoff(dispatch, Exit, model)
+    next
+  } else {
+    model
+  }
   let (command, next) = match msg {
+    ForgetResumableWork(scope, query) =>
+      (@rabbita.none, forget_resumable_work(model, scope, Some(query)))
+    ClearResumableWork(scope) =>
+      (@rabbita.none, forget_resumable_work(model, scope, None))
+    AgentImport(action) => update_agent_import(dispatch, action, model)
+    PortableBook(action) => update_portable_book(dispatch, action, model)
+    NativeWork(action) => update_native_work(dispatch, action, model)
+    WorkHandoff(action) => update_work_handoff(dispatch, action, model)
     SourcePane(source_msg) => source_pane_action(dispatch, source_msg, model)
     OfficeEditor(office_msg) =>
       office_editor_action(dispatch, office_msg, model)
@@ -156,6 +186,8 @@ fn update(
     SetDeskLocationInput(_) => update_navigation_actions(dispatch, msg, model)
     OpenDeskLocation => update_navigation_actions(dispatch, msg, model)
     OpenQuickPath(_) => update_navigation_actions(dispatch, msg, model)
+    OpenDeskQuickPath(scope, path) =>
+      open_desk_quick_path_action(dispatch, model, scope, path)
     SelectSearchHit(_, _) => update_navigation_actions(dispatch, msg, model)
     ConfirmDiscardMarkdownNavigation =>
       update_navigation_actions(dispatch, msg, model)
@@ -202,6 +234,7 @@ fn update(
     MoonCodeImagesPicked(_) => update_mooncode_actions(dispatch, msg, model)
     RemoveMoonCodeImage(_) => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodeModel(_) => update_mooncode_actions(dispatch, msg, model)
+    SetMoonCodeTaskIntent(_) => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodeReasoningEffort(_) =>
       update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage(_) => update_mooncode_actions(dispatch, msg, model)
@@ -275,7 +308,9 @@ fn update(
       update_mooncode_actions(dispatch, msg, model)
     PromoteMoonCodeSandboxReceipt(_) =>
       update_mooncode_actions(dispatch, msg, model)
-    CompletedMoonCodeSandboxPromotion(_, _) =>
+    RecoverMoonCodeSandboxReceipt(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    CompletedMoonCodeSandboxPromotion(_, _, _) =>
       update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
     StartMoonClawAuth(_) => update_mooncode_actions(dispatch, msg, model)
@@ -396,8 +431,36 @@ fn update(
     RequestBrowserHostControl(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
   }
+  let (native_command, next) = sync_native_work_context(dispatch, next)
+  let next = sync_desk_quick_access_transition(previous_model, next, msg)
+  let next = sync_work_resume(previous_model, next, msg)
+  let (portable_command, next) = sync_portable_book_context(dispatch, next)
+  let (import_command, next) = sync_agent_import_context(dispatch, next)
+  work_continuation_draft_unload_guard(
+    work_handoff_active(next) &&
+    work_continuation_draft_unsaved(next.work_handoff.continuation),
+  )
+  work_human_revision_unload_guard(
+    work_handoff_active(next) && !next.work_handoff.human_revision.local_saved,
+  )
   (
-    @rabbita.batch([command, workspace_features_bridge_cmd(dispatch)]),
+    @rabbita.batch([
+      command,
+      native_command,
+      portable_command,
+      import_command,
+      if leaving_handoff {
+        @rabbita.batch([handoff_departure_cmd(next), bootstrap_cmd(dispatch)])
+      } else {
+        @rabbita.none
+      },
+      sync_departed_session_context_cmd(previous_model, next),
+      if work_handoff_active(next) {
+        @rabbita.none
+      } else {
+        workspace_features_bridge_cmd(dispatch)
+      },
+    ]),
     sync_workspace_editor_context(next),
   )
 }

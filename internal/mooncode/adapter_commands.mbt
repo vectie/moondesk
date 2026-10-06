@@ -177,6 +177,10 @@ fn native_payload(
   // The typed command owns validated media. Keep the bytes only in the
   // native top-level content_parts field, not in the generic payload copy.
   fields.remove("content_parts")
+  match command.task_intent {
+    Some(intent) => fields["task_intent"] = intent.to_string().to_json()
+    None => fields.remove("task_intent")
+  }
   fields["planner_guidance"] = planner_guidance()
   match command.planner_max_steps {
     Some(steps) => fields["planner_max_steps"] = steps.to_json()
@@ -233,6 +237,11 @@ pub fn native_command_body(
   }
   if !content_parts.is_empty() {
     fields["content_parts"] = Json::array(content_parts)
+  }
+  // Keep the owner root in the typed fingerprint and the native top-level
+  // binding. The runtime inherits it for existing sessions and rejects changes.
+  if command.model_workspace != "" {
+    fields["model_workspace"] = command.model_workspace.to_json()
   }
   Json::object(fields)
 }

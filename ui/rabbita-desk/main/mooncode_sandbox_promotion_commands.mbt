@@ -29,15 +29,25 @@ fn mooncode_sandbox_promotion_cmd(
   dispatch : Dispatch[Msg],
   receipt : @mooncode_core.MoonCodeSandboxReceipt,
   selected_paths : Array[String],
+  read_receipt? : Bool = false,
+  generation? : Int = 0,
 ) -> @rabbita.Cmd {
   let key = receipt.review_key()
   let request = match
     mooncode_sandbox_promotion_request(receipt, selected_paths) {
     Ok(value) => value
     Err(error) =>
-      return dispatch(CompletedMoonCodeSandboxPromotion(key, Err(error)))
+      return dispatch(
+        CompletedMoonCodeSandboxPromotion(key, generation, Err(error)),
+      )
   }
-  @http.post(@desk.mooncode_sandbox_promotion_url())
+  @http.post(
+    if read_receipt {
+      @desk.mooncode_sandbox_promotion_receipt_url()
+    } else {
+      @desk.mooncode_sandbox_promotion_url()
+    },
+  )
   .with_json(request.to_json())
   .expect_json(result => {
     let decoded = match result {
@@ -49,6 +59,7 @@ fn mooncode_sandbox_promotion_cmd(
             return dispatch(
               CompletedMoonCodeSandboxPromotion(
                 key,
+                generation,
                 Err("MoonDesk returned an invalid promotion receipt"),
               ),
             )
@@ -57,8 +68,15 @@ fn mooncode_sandbox_promotion_cmd(
           response, request,
         )
       }
-      Err(error) => Err("Promotion was refused: \{error}")
+      Err(_) =>
+        Err(
+          if read_receipt {
+            "No matching return receipt could be recovered. No execution or promotion was retried. If the return was interrupted before its receipt was saved, ask the operator to inspect the destination."
+          } else {
+            "Return acknowledgement is unavailable. Keep this file selected and recover its receipt before considering another return."
+          },
+        )
     }
-    dispatch(CompletedMoonCodeSandboxPromotion(key, decoded))
+    dispatch(CompletedMoonCodeSandboxPromotion(key, generation, decoded))
   })
 }

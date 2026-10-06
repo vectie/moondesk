@@ -45,6 +45,10 @@ test "mooncode desktop routes live in core boundary" {
     @core.mooncode_sandbox_promotion_url(),
     "/api/mooncode/execution-sandbox/promote",
   )
+  assert_eq(
+    @core.mooncode_sandbox_promotion_receipt_url(),
+    "/api/mooncode/execution-sandbox/promotion-receipt",
+  )
 }
 
 ///|

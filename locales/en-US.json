@@ -40,6 +40,7 @@
   "code.session_completed": "Completed",
   "code.session_stopped": "Stopped",
   "code.session_ready": "Ready",
+  "code.session_unknown": "Status not loaded",
   "code.work_label": "Work",
   "code.work_status_queued": "queued",
   "code.work_status_running": "running",
@@ -549,5 +550,10 @@
   "code.assistance_action_retry": "Check again",
   "code.assistance_installing": "Installing Code assistance…",
   "code.assistance_repairing": "Repairing Code assistance…",
-  "code.assistance_install_progress": "Preparing Code assistance. This can take a moment."
+  "code.assistance_install_progress": "Preparing Code assistance. This can take a moment.",
+  "code.task": "Task",
+  "code.task_aria": "MoonCode task purpose",
+  "code.task_auto": "Auto",
+  "code.task_read_only": "Review only",
+  "code.task_workspace_change": "Make changes"
 }

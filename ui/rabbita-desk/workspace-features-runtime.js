@@ -1,5 +1,9 @@
 const rootSelector = '[data-testid="workspace-feature-overlays"]'
 let serverState = {}
+let learningRequestGeneration = 0
+// Captured work owns an ephemeral, explicitly bound Learning Review. It never
+// borrows the ordinary document toolbox's draft or ambient workspace.
+let capturedLearning = null
 let lastThreadPersistenceFingerprint = ''
 let lastHistoryPersistenceFingerprint = ''
 const restoredDocumentKeys = new Set()
@@ -202,6 +206,225 @@ function learningProposalCounts(records) {
   }), { proposed: 0, accepted: 0, rejected: 0 })
 }
 
+function learningBookState(record) {
+  if (record?.status !== 'accepted') return { label: record?.status === 'proposed' ? 'Review' : record?.status, action: '', message: record?.status === 'rejected' ? 'Proposal dismissed' : 'Waiting for your review' }
+  const persistence = record.book_learning
+  if (persistence?.status === 'unsupported') return { label: 'Desk only', action: '', message: 'Accepted for Desk guidance, but not saved to a Book. Select a MoonBook workspace to teach portable lessons.' }
+  if (persistence?.status === 'persisted') return { label: 'Saved to book', action: '', message: 'Saved to this book’s portable learning' }
+  if (!persistence) return { label: 'Desk only', action: 'Save to book', message: 'Accepted in Desk. Save this lesson to the book to make it portable.' }
+  return {
+    label: 'Book save incomplete',
+    action: 'Retry book save',
+    message: persistence.error === 'learning_book_content_conflict'
+      ? 'Accepted in Desk, but the book contains different content for this lesson. Nothing was overwritten.'
+      : 'Accepted in Desk, but not yet saved to the book. Retry the book save.',
+  }
+}
+
+function learningRequestMatches(request, workspaceId, generation) {
+  return request.workspaceId === String(workspaceId || '').trim() && request.generation === generation
+}
+
+function currentCapturedWork() {
+  try {
+    const root = document.querySelector(rootSelector)
+    const binding = JSON.parse(root?.dataset.state || '{}').captured_work
+    if (binding?.active !== true || binding.phase !== 'ready' ||
+      !Number.isSafeInteger(binding.generation) || binding.generation < 0) return null
+    for (const key of ['binding_key', 'workspace_id', 'book_root', 'session_id',
+      'original_command_id', 'task_id', 'run_id', 'target_query']) {
+      if (typeof binding[key] !== 'string' || !binding[key].trim()) return null
+    }
+    if (!globalThis.location) return null
+    const actual = new URLSearchParams(globalThis.location.search)
+    const expected = new URLSearchParams(binding.target_query)
+    if (!['work_task', 'work_run', 'session', 'command', 'book_root', 'return_to']
+      .every(key => (actual.get(key) || '') === (expected.get(key) || ''))) return null
+    if (![['work_output_command', 'command_id'], ['work_output_path', 'path'],
+      ['work_output_evidence', 'evidence_id']].every(([key, field]) =>
+      (actual.get(key) || '') === (binding.output_hint?.[field] || ''))) return null
+    return binding
+  } catch {
+    return null
+  }
+}
+
+function sameCapturedBinding(left, right) {
+  return Boolean(left && right &&
+    ['binding_key', 'generation', 'workspace_id', 'book_root', 'session_id',
+      'original_command_id', 'task_id', 'run_id', 'target_query'].every(key =>
+      left[key] === right[key]) &&
+    ['command_id', 'path', 'evidence_id'].every(key =>
+      (left.output_hint?.[key] || '') === (right.output_hint?.[key] || '')))
+}
+
+function capturedLearningIsCurrent(context) {
+  return context === capturedLearning && sameCapturedBinding(context?.binding, currentCapturedWork())
+}
+
+function capturedLearningSource(binding, source) {
+  if (!source || typeof source.command_id !== 'string' || !source.command_id.trim() ||
+    typeof source.turn_id !== 'string' || !source.turn_id.trim() ||
+    typeof source.content !== 'string' || !source.content.trim()) return null
+  const identities = [
+    ['Workspace', binding.workspace_id], ['Book root', binding.book_root],
+    ['Session', binding.session_id], ['Original command', binding.original_command_id],
+    ['Source command', source.command_id], ['Turn', source.turn_id],
+    ['Item', source.item_id], ['Client turn', source.client_turn_id],
+    ['Conversation revision', source.conversation_revision], ['Continuation', source.continuation_id],
+  ]
+  if (identities.some(([, value]) => value != null && !['string', 'number'].includes(typeof value))) return null
+  const header = 'Captured work learning source\n' + identities
+    .filter(([, value]) => value != null && value !== '')
+    .map(([label, value]) => `${label}: ${JSON.stringify(value)}`).join('\n') + '\n\nAnswer excerpt:\n'
+  const marker = '\n[Answer excerpt truncated; source identity retained]'
+  const available = 8000 - header.length
+  if (available < marker.length) return null
+  let excerpt = source.content
+  if (excerpt.length > available) {
+    excerpt = excerpt.slice(0, available - marker.length).replace(/[\uD800-\uDBFF]$/, '') + marker
+  }
+  return header + excerpt
+}
+
+function openCapturedLearning(action, value) {
+  let payload
+  try { payload = JSON.parse(value) } catch { return }
+  const binding = currentCapturedWork()
+  if (!sameCapturedBinding(payload?.binding, binding)) return
+  const source = action === 'teach-captured-work' ? capturedLearningSource(binding, payload.source) : ''
+  if (source === null) return
+  if (!capturedLearningIsCurrent(capturedLearning)) {
+    capturedLearning = {
+      binding, open: false, drafts: new Map(), learning_draft: null,
+      learning_proposals: [], learning_loaded_for: '', learning_status: '',
+      request_generation: 0, load_inflight: false, save_inflight: false, save_uncertain: false,
+    }
+  }
+  const context = capturedLearning
+  if (source && !context.save_inflight && !context.save_uncertain) {
+    if (!context.drafts.has(source)) {
+      context.drafts.set(source, { kind: 'knowledge', detail: '', source })
+    }
+    context.learning_draft = context.drafts.get(source)
+  }
+  context.open = true
+  featureState.search_open = false
+  featureState.synthesis_open = false
+  featureState.toolbox_open = false
+  loadCapturedLearningProposals(context)
+  render()
+}
+
+function loadCapturedLearningProposals(context, reload = false) {
+  if (!capturedLearningIsCurrent(context) || context.save_inflight || context.load_inflight ||
+    (!reload && context.learning_loaded_for === context.binding.binding_key)) return
+  const workspaceId = context.binding.workspace_id
+  const generation = ++context.request_generation
+  context.load_inflight = true
+  context.learning_loaded_for = context.binding.binding_key
+  context.learning_status = 'Loading learning…'
+  fetch(`/api/learning-proposals?workspace_id=${encodeURIComponent(workspaceId)}`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
+    .then(payload => {
+      if (!capturedLearningIsCurrent(context) || generation !== context.request_generation) return
+      if (payload?.workspace_id !== workspaceId || !Array.isArray(payload.proposals)) throw new Error('invalid learning response')
+      context.load_inflight = false
+      context.learning_proposals = payload.proposals.filter(item =>
+        item?.workspace_id === workspaceId && typeof item.id === 'string' && item.id)
+      context.learning_status = ''
+      if (context.save_uncertain) {
+        const draft = context.learning_draft
+        const found = draft && context.learning_proposals.some(item =>
+          item.kind === draft.kind && item.detail === draft.detail.trim() && item.source === draft.source.trim())
+        if (found) {
+          context.drafts.delete(draft.source)
+          context.learning_draft = null
+        }
+        context.learning_status = found
+          ? 'The previously submitted proposal is saved. Review it below.'
+          : 'Learning reloaded. Check the saved proposals before retrying any unconfirmed save.'
+        context.save_uncertain = false
+      }
+      render()
+    })
+    .catch(() => {
+      if (!capturedLearningIsCurrent(context) || generation !== context.request_generation) return
+      context.load_inflight = false
+      context.learning_status = context.save_uncertain
+        ? 'Save is still unconfirmed. Learning Review could not be loaded. Use Reload before retrying.'
+        : 'Learning Review could not be loaded. Use Reload to try again.'
+      render()
+    })
+}
+
+function saveCapturedLearningProposal(context, record, draft = null) {
+  if (!capturedLearningIsCurrent(context) || context.load_inflight || context.save_inflight || context.save_uncertain) return
+  if (record.action === 'propose') {
+    if (!draft || context.learning_draft !== draft || !record.detail.trim()) return
+  } else if (!context.learning_proposals.some(item => item.id === record.id)) return
+  const workspaceId = context.binding.workspace_id
+  const generation = ++context.request_generation
+  context.save_inflight = true
+  context.learning_status = record.action === 'propose' ? 'Saving proposal…' : 'Saving decision…'
+  fetch('/api/learning-proposals', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...record, workspace_id: workspaceId }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('save failed')))
+    .then(saved => {
+      if (!capturedLearningIsCurrent(context) || generation !== context.request_generation) return
+      const expectedStatus = record.action === 'propose' ? 'proposed'
+        : record.action === 'reject' ? 'rejected' : 'accepted'
+      const matchesSubmitted = record.action === 'propose'
+        ? saved?.kind === record.kind && saved?.detail === record.detail.trim() &&
+          saved?.source === String(record.source || '').trim()
+        : saved?.id === record.id
+      if (typeof saved?.id !== 'string' || !saved.id.trim() ||
+        saved.workspace_id !== workspaceId || saved.status !== expectedStatus ||
+        !matchesSubmitted) throw new Error('invalid learning response')
+      context.save_inflight = false
+      context.learning_proposals = learningProposalTransition(context.learning_proposals, saved)
+      if (draft && context.learning_draft === draft) {
+        context.drafts.delete(draft.source)
+        context.learning_draft = null
+      }
+      context.learning_status = learningBookState(saved).message
+      render()
+    })
+    .catch(() => {
+      if (!capturedLearningIsCurrent(context) || generation !== context.request_generation) return
+      context.save_inflight = false
+      context.save_uncertain = true
+      context.learning_status = 'Save could not be confirmed. Your draft is kept. Use Reload to check saved proposals before retrying; nothing is automatically resubmitted.'
+      render()
+    })
+  render()
+}
+
+function emitCapturedLearning(action, bindingKey, id) {
+  const context = capturedLearning
+  if (!capturedLearningIsCurrent(context) || context.binding.binding_key !== bindingKey) return
+  if (action === 'captured-learning-close') {
+    context.open = false
+  } else if (context.save_inflight) {
+    return
+  } else if (action === 'captured-learning-cancel') {
+    if (context.learning_draft) context.drafts.delete(context.learning_draft.source)
+    context.learning_draft = null
+  } else if (action === 'captured-learning-reload') {
+    loadCapturedLearningProposals(context, true)
+  } else if (action === 'captured-learning-new' && !context.save_uncertain) {
+    if (!context.drafts.has('')) context.drafts.set('', { kind: 'preference', detail: '', source: '' })
+    context.learning_draft = context.drafts.get('')
+  } else if (['captured-learning-accept', 'captured-learning-reject', 'captured-learning-persist'].includes(action)) {
+    saveCapturedLearningProposal(context, { action: action.replace('captured-learning-', ''), id })
+    return
+  }
+  render()
+}
+
 function taskRecipeMissingFields(recipe, inputs) {
   return (recipe?.fields || [])
     .filter(field => field.required === true && !String(inputs?.[field.key] || '').trim())
@@ -349,6 +572,15 @@ function chatProjectionFingerprint(state) {
   ].join('|')
 }
 
+function hasNonWhitespaceText(content) {
+  // A leading printable ASCII character proves the text is nonblank. Lexical
+  // comparisons can inspect a concatenated stream without flattening the whole
+  // string; indexing, slicing, regexes, and trim can materialize every byte.
+  // Keep trim as the exact Unicode-whitespace fallback and preserve the original
+  // content in the projection, including all leading/trailing whitespace.
+  return (content >= '!' && content < '\x7f') || content.trim().length > 0
+}
+
 function chatEntryFromNode(node) {
   if (!(node instanceof HTMLElement)) return null
   if (node.classList.contains('wiki-chat-fragment')) {
@@ -359,7 +591,7 @@ function chatEntryFromNode(node) {
   if (!node.classList.contains('wiki-chat-message')) return null
   const role = String(node.dataset.chatRole || '').trim()
   const content = node.querySelector(':scope > p')?.textContent || ''
-  return role && content.trim() ? { role, content } : null
+  return role && hasNonWhitespaceText(content) ? { role, content } : null
 }
 
 function projectChatFromDom(state, previousChat = [], previousFingerprint = '') {
@@ -721,6 +953,7 @@ function saveAgentPreference(record) {
 function loadLearningProposals() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   if (!workspaceId) {
+    learningRequestGeneration += 1
     featureState.learning_proposals = []
     featureState.learning_loaded_for = ''
     return
@@ -728,40 +961,45 @@ function loadLearningProposals() {
   if (featureState.learning_loaded_for === workspaceId) return
   featureState.learning_proposals = []
   featureState.learning_loaded_for = workspaceId
+  featureState.learning_status = 'Loading learning…'
+  const request = { workspaceId, generation: ++learningRequestGeneration }
   fetch(`/api/learning-proposals?workspace_id=${encodeURIComponent(workspaceId)}`)
     .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
     .then(payload => {
+      if (!learningRequestMatches(request, serverState.workspace_id, learningRequestGeneration)) return
       featureState.learning_proposals = Array.isArray(payload.proposals) ? payload.proposals : []
       featureState.learning_status = ''
       render()
     })
     .catch(() => {
-      featureState.learning_loaded_for = ''
-      featureState.learning_status = 'Learning Review could not be loaded'
+      if (!learningRequestMatches(request, serverState.workspace_id, learningRequestGeneration)) return
+      featureState.learning_status = 'Learning Review could not be loaded. Use Reload to try again.'
       render()
     })
 }
 
 function saveLearningProposal(record) {
+  const workspaceId = String(serverState.workspace_id || '').trim()
+  const request = { workspaceId, generation: ++learningRequestGeneration }
   featureState.learning_status = record.action === 'propose' ? 'Saving proposal…' : 'Saving decision…'
   fetch('/api/learning-proposals', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ workspace_id: serverState.workspace_id || '', ...record }),
+    body: JSON.stringify({ ...record, workspace_id: workspaceId }),
   })
     .then(response => response.ok ? response.json() : Promise.reject(new Error('save failed')))
     .then(saved => {
+      if (!learningRequestMatches(request, serverState.workspace_id, learningRequestGeneration)) return
       featureState.learning_proposals = learningProposalTransition(featureState.learning_proposals, saved)
       featureState.learning_draft = null
-      featureState.learning_status = saved.status === 'accepted'
-        ? 'Learned for future work in this book'
-        : saved.status === 'rejected'
-          ? 'Proposal dismissed'
-          : 'Waiting for your review'
+      featureState.learning_status = learningBookState(saved).message
+      featureState.learning_loaded_for = ''
       render()
     })
     .catch(() => {
-      featureState.learning_status = 'Learning proposal could not be saved'
+      if (!learningRequestMatches(request, serverState.workspace_id, learningRequestGeneration)) return
+      featureState.learning_loaded_for = ''
+      featureState.learning_status = 'Save could not be confirmed. Reload the lesson and retry if needed.'
       render()
     })
 }
@@ -1213,6 +1451,10 @@ function pin(workspaceId, path, title, kind) {
 }
 
 function emit(action, first = '', second = '', third = '', fourth = '') {
+  if (action.startsWith('captured-learning-')) {
+    emitCapturedLearning(action, first, second)
+    return
+  }
   switch (action) {
     case 'close-toolbox':
       featureState.toolbox_open = false
@@ -1353,6 +1595,14 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       return
     case 'learning-reject':
       saveLearningProposal({ action: 'reject', id: first })
+      return
+    case 'learning-persist':
+      saveLearningProposal({ action: 'persist', id: first })
+      return
+    case 'learning-reload':
+      featureState.learning_loaded_for = ''
+      loadLearningProposals()
+      render()
       return
     case 'recipe-select':
       featureState.task_recipe_selected = first
@@ -2805,8 +3055,18 @@ function renderPreferencesTab() {
   return content
 }
 
-function renderLearningTab() {
-  loadLearningProposals()
+function renderLearningTab(captured = null) {
+  if (captured) loadCapturedLearningProposals(captured)
+  else loadLearningProposals()
+  const learning = captured || featureState
+  const blocked = captured && (captured.load_inflight || captured.save_inflight || captured.save_uncertain)
+  const learningButton = (className, text, action, args = []) => button(
+    className, text, captured ? `captured-${action}` : action,
+    captured ? [captured.binding.binding_key, ...args] : args,
+    { disabled: Boolean(captured && (action === 'learning-reload'
+      ? captured.load_inflight || captured.save_inflight
+      : action === 'learning-cancel' ? captured.save_inflight : blocked)) },
+  )
   const content = element('div', 'document-tool-content learning-review')
   const intro = element('div', 'document-tool-intro with-action')
   const copy = element('div')
@@ -2814,11 +3074,18 @@ function renderLearningTab() {
     element('h3', '', 'Learning Review'),
     element('p', '', 'Teach this book deliberately. Nothing becomes future guidance until you accept it.'),
   )
-  intro.append(copy, button('secondary-button', 'Add learning', 'learning-new'))
+  intro.append(copy,
+    learningButton('secondary-button', 'Reload', 'learning-reload'),
+    learningButton('secondary-button', 'Add learning', 'learning-new'))
   content.append(intro)
-  const draft = featureState.learning_draft
+  const draft = learning.learning_draft
   if (draft) {
     const form = element('form', 'learning-proposal-form')
+    if (captured) {
+      const warning = element('p', 'status-line', 'This unsaved draft stays here when you close this panel. A full-page reload, Refresh exact work, starting a follow-up, or leaving this captured work discards unsaved drafts. Save for review to keep it.')
+      warning.setAttribute('role', 'note')
+      form.append(warning)
+    }
     const kind = element('select')
     for (const [value, label] of [
       ['knowledge', 'Knowledge'], ['preference', 'Preference'],
@@ -2833,6 +3100,17 @@ function renderLearningTab() {
     detail.placeholder = 'What should this book know or do next time?'
     detail.required = true
     detail.value = draft.detail || ''
+    if (captured) {
+      kind.disabled = Boolean(blocked)
+      detail.disabled = Boolean(blocked)
+      detail.maxLength = 4000
+      kind.addEventListener('change', () => {
+        if (capturedLearningIsCurrent(captured) && captured.learning_draft === draft && !captured.save_inflight && !captured.save_uncertain) draft.kind = kind.value
+      })
+      detail.addEventListener('input', () => {
+        if (capturedLearningIsCurrent(captured) && captured.learning_draft === draft && !captured.save_inflight && !captured.save_uncertain) draft.detail = detail.value
+      })
+    }
     if (draft.source) {
       const source = element('details', 'learning-source')
       source.append(element('summary', '', 'Answer that prompted this'), element('p', '', draft.source))
@@ -2841,34 +3119,38 @@ function renderLearningTab() {
     const actions = element('div', 'learning-proposal-actions')
     const submit = element('button', 'primary-button', 'Save for review')
     submit.type = 'submit'
-    actions.append(button('secondary-button', 'Cancel', 'learning-cancel'), submit)
+    if (captured) submit.disabled = Boolean(blocked)
+    actions.append(learningButton('secondary-button', 'Cancel', 'learning-cancel'), submit)
     form.append(kind, detail, actions)
     form.addEventListener('submit', event => {
       event.preventDefault()
       if (!detail.value.trim()) return
-      saveLearningProposal({
+      const record = {
         action: 'propose',
-        kind: kind.value,
-        detail: detail.value.trim(),
+        kind: captured ? draft.kind : kind.value,
+        detail: (captured ? draft.detail : detail.value).trim(),
         source: draft.source || '',
-      })
+      }
+      if (captured) saveCapturedLearningProposal(captured, record, draft)
+      else saveLearningProposal(record)
     })
     content.append(form)
   }
-  const counts = learningProposalCounts(featureState.learning_proposals)
+  const counts = learningProposalCounts(learning.learning_proposals)
   const summary = element('div', 'learning-review-summary')
   summary.append(
     element('span', '', `${counts.proposed} to review`),
-    element('span', '', `${counts.accepted} learned`),
+    element('span', '', `${counts.accepted} accepted`),
   )
   content.append(summary)
   const list = element('div', 'learning-proposal-list')
-  for (const item of featureState.learning_proposals) {
+  for (const item of learning.learning_proposals) {
+    const bookState = learningBookState(item)
     const row = element('article', `learning-proposal-row ${item.status || 'proposed'}`)
     const heading = element('div', 'learning-proposal-heading')
     heading.append(
       element('strong', '', item.detail),
-      element('span', 'learning-proposal-state', item.status === 'proposed' ? 'Review' : item.status),
+      element('span', 'learning-proposal-state', bookState.label),
     )
     row.append(
       heading,
@@ -2882,22 +3164,57 @@ function renderLearningTab() {
     if (item.status === 'proposed') {
       const actions = element('div', 'learning-proposal-actions')
       actions.append(
-        button('secondary-button', 'Dismiss', 'learning-reject', [item.id]),
-        button('primary-button', 'Accept learning', 'learning-accept', [item.id]),
+        learningButton('secondary-button', 'Dismiss', 'learning-reject', [item.id]),
+        learningButton('primary-button', 'Accept learning', 'learning-accept', [item.id]),
       )
       row.append(actions)
+    } else if (bookState.action) {
+      const actions = element('div', 'learning-proposal-actions')
+      actions.append(learningButton('secondary-button', bookState.action, 'learning-persist', [item.id]))
+      row.append(element('p', 'status-line', bookState.message), actions)
+    } else if (item.book_learning?.status === 'unsupported') {
+      row.append(element('p', 'status-line', bookState.message))
+    } else if (item.book_learning?.path) {
+      row.append(element('small', '', item.book_learning.path))
     }
     list.append(row)
   }
-  if (!featureState.learning_proposals.length) {
+  if (!learning.learning_proposals.length) {
     list.append(element(
       'p',
       'document-tool-empty',
       'No learning proposals yet. Use “Teach this book” on an answer, or add one directly.',
     ))
   }
-  content.append(list, element('p', 'status-line', featureState.learning_status))
+  content.append(list, element('p', 'status-line', learning.learning_status))
+  if (learning.learning_proposals.some(item => item.status === 'accepted' && item.book_learning?.status === 'persisted')) {
+    const next = element('p', 'status-line', captured
+      ? `Optional next step: close Learning Review, then choose Exit inspection. Keep this same Book selected (${captured.binding.workspace_id} · ${captured.binding.book_root}) and open Publish → Experienced Book package to inspect and decide whether to package its saved learning.`
+      : 'Optional next step: close Document tools, keep this same Book selected, and open Publish → Experienced Book package to inspect and decide whether to package its saved learning.')
+    next.setAttribute('role', 'note')
+    content.append(next, element('p', 'status-line', 'Packaging is optional. Nothing is packaged or transferred to Town automatically.'))
+  }
   return content
+}
+
+function renderCapturedLearning(context) {
+  const close = () => emit('captured-learning-close', context.binding.binding_key)
+  const backdrop = element('div', 'document-toolbox-backdrop')
+  backdrop.addEventListener('click', close)
+  const panel = element('aside', 'document-toolbox')
+  panel.dataset.testid = 'captured-learning-review'
+  panel.setAttribute('role', 'dialog')
+  panel.setAttribute('aria-modal', 'true')
+  panel.setAttribute('aria-label', 'Captured work Learning Review')
+  panel.addEventListener('click', event => event.stopPropagation())
+  const header = element('header', 'document-toolbox-header')
+  header.append(
+    heading('Captured work', 'Learning Review'),
+    button('icon-button', '×', 'captured-learning-close', [context.binding.binding_key], { label: 'Close Learning Review' }),
+  )
+  panel.append(header, element('p', 'status-line', `Learning destination: ${context.binding.workspace_id} · ${context.binding.book_root}`), renderLearningTab(context))
+  backdrop.append(panel)
+  return backdrop
 }
 
 function renderTaskRecipesTab() {
@@ -3502,6 +3819,7 @@ function render() {
   )
   nextServerState.chat_projection_fingerprint = chatProjectionFingerprint(nextServerState)
   serverState = nextServerState
+  if (capturedLearning && !capturedLearningIsCurrent(capturedLearning)) capturedLearning = null
   const followupIdentity = `${serverState.workspace_id || ''}:${serverState.task_id || ''}`
   if (featureState.followup_identity !== followupIdentity) {
     featureState.followup_identity = followupIdentity
@@ -3536,7 +3854,8 @@ function render() {
   root.replaceChildren()
   if (state.search_open) root.append(renderSearch(state))
   if (state.synthesis_open) root.append(renderSynthesis(state))
-  if (state.toolbox_open) root.append(renderToolbox(state))
+  if (capturedLearning?.open) root.append(renderCapturedLearning(capturedLearning))
+  else if (state.toolbox_open) root.append(renderToolbox(state))
   const selectionToolbar = renderSelectionToolbar()
   if (selectionToolbar) root.append(selectionToolbar)
   if (state.export_status) {
@@ -3619,6 +3938,10 @@ function workPackageFromState() {
 }
 
 globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
+  if (action === 'teach-captured-work' || action === 'review-captured-learning') {
+    openCapturedLearning(action, value)
+    return
+  }
   if (action === 'open-search') {
     featureState.search_open = true
     featureState.synthesis_open = false
@@ -3720,11 +4043,18 @@ function install() {
   })
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return
+    if (capturedLearning?.open) capturedLearning.open = false
     featureState.selection_toolbar = null
     if (featureState.toolbox_open) featureState.toolbox_open = false
     if (featureState.search_open) featureState.search_open = false
     if (featureState.synthesis_open) featureState.synthesis_open = false
     render()
+  })
+  globalThis.addEventListener('popstate', () => {
+    if (capturedLearning && !capturedLearningIsCurrent(capturedLearning)) {
+      capturedLearning = null
+      render()
+    }
   })
   render()
 }
@@ -3785,6 +4115,8 @@ export {
   conversationPersistenceFingerprint,
   historyChanges,
   learningProposalCounts,
+  learningBookState,
+  learningRequestMatches,
   learningProposalTransition,
   mergeFollowupQueues,
   modeLabel,

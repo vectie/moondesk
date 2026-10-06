@@ -40,6 +40,7 @@
   "code.session_completed": "已完成",
   "code.session_stopped": "已停止",
   "code.session_ready": "就绪",
+  "code.session_unknown": "状态未加载",
   "code.work_label": "工作",
   "code.work_status_queued": "已排队",
   "code.work_status_running": "运行中",
@@ -549,5 +550,10 @@
   "code.assistance_action_retry": "再次检查",
   "code.assistance_installing": "正在安装代码辅助…",
   "code.assistance_repairing": "正在修复代码辅助…",
-  "code.assistance_install_progress": "正在准备代码辅助，请稍候。"
+  "code.assistance_install_progress": "正在准备代码辅助，请稍候。",
+  "code.task": "任务",
+  "code.task_aria": "MoonCode 任务目的",
+  "code.task_auto": "自动",
+  "code.task_read_only": "仅审查",
+  "code.task_workspace_change": "修改代码"
 }

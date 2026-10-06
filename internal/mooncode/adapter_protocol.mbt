@@ -85,6 +85,11 @@ pub fn desktop_sessions_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_work_handoff_endpoint() -> String {
+  "/api/mooncode/work-handoff"
+}
+
+///|
 pub fn desktop_session_endpoint() -> String {
   "/api/mooncode/sessions/<session-id>"
 }
@@ -116,6 +121,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
     desktop_route_contract(desktop_capabilities_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_skills_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_sessions_endpoint(), ["GET", "HEAD", "POST"]),
+    desktop_route_contract(desktop_work_handoff_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_watch_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_commands_endpoint(), ["POST"]),
@@ -240,6 +246,39 @@ pub fn moonclaw_native_session_show_endpoint(
   adapter_native_endpoint(["v1", "code", "sessions", session_id], query=[
     ("book_root", book_root),
   ])
+}
+
+///|
+pub fn moonclaw_native_runtime_claim_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  adapter_native_endpoint(
+    ["v1", "code", "sessions", session_id, "runtime-claim"],
+    query=[("book_root", book_root)],
+  )
+}
+
+///|
+pub fn moonclaw_native_runtime_events_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  adapter_native_endpoint(
+    ["v1", "code", "sessions", session_id, "runtime-events"],
+    query=[("book_root", book_root)],
+  )
+}
+
+///|
+pub fn moonclaw_native_runtime_service_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  adapter_native_endpoint(
+    ["v1", "code", "sessions", session_id, "runtime-service"],
+    query=[("book_root", book_root)],
+  )
 }
 
 ///|

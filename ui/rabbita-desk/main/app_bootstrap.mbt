@@ -6,11 +6,21 @@ fn bootstrap_action(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if work_handoff_active(model) {
+    if model.bootstrapped {
+      return (@rabbita.none, model)
+    }
+    let (cmd, next) = update_work_handoff(dispatch, Resolve, model)
+    return (cmd, { ..next, bootstrapped: true, loading: false, })
+  }
   if model.bootstrapped {
     (@rabbita.none, model)
   } else {
     (
-      bootstrap_cmd(dispatch),
+      @rabbita.batch([
+        bootstrap_cmd(dispatch),
+        fetch_requested_selection_cmd(dispatch, model),
+      ]),
       {
         ..model,
         bootstrapped: true,
@@ -53,14 +63,23 @@ fn bootstrap_retry_action(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if work_handoff_active(model) {
+    return update_work_handoff(dispatch, Resolve, model)
+  }
   (
-    bootstrap_fetch_cmd(dispatch),
+    @rabbita.batch([
+      bootstrap_fetch_cmd(dispatch),
+      fetch_requested_selection_cmd(dispatch, model),
+    ]),
     {
       ..model,
       loading: true,
       host_status: "Connecting to your library",
       workspace_catalog_state: Some(Loading),
       workspace_catalog_error: "",
+      mooncode_selected_session_loading: model.selected_mooncode_session_id !=
+      "",
+      mooncode_sessions_error: "",
     },
   )
 }

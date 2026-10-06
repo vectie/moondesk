@@ -29,6 +29,10 @@ fn create_mooncode_session_cmd(
     prompt,
     model.mooncode_images,
   )
+  let submission = mooncode_submission_with_task_intent(
+    submission,
+    model.mooncode_task_intent,
+  )
   let encoded = match typed_mooncode_command_body(submission) {
     Ok(value) => value
     Err(error) => return dispatch(CreatedMoonCodeSession(Err(error)))
@@ -115,6 +119,11 @@ fn mooncode_session_command_cmd(
   }
   let submission = if action == "prompt" {
     mooncode_prompt_with_images(submission, message, images)
+  } else {
+    submission
+  }
+  let submission = if action == "prompt" {
+    mooncode_submission_with_task_intent(submission, model.mooncode_task_intent)
   } else {
     submission
   }
@@ -352,4 +361,19 @@ fn schedule_mooncode_metadata_refresh(
   generation : Int,
 ) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(RefreshMoonCodeMetadata(generation)), 5000)
+}
+
+///|
+fn mooncode_submission_with_task_intent(
+  submission : Json,
+  intent : String,
+) -> Json {
+  guard submission is Object(fields) else { return submission }
+  let next = fields.copy()
+  if intent == "read_only" || intent == "workspace_change" {
+    next["task_intent"] = intent.to_json()
+  } else {
+    next.remove("task_intent")
+  }
+  Json::object(next)
 }

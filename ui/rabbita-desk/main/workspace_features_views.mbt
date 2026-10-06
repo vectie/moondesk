@@ -80,6 +80,7 @@ fn workspace_features_state_payload(model : Model) -> Json {
     ),
     "workspace": workspace_name(model),
     "workspace_id": model.selected_workspace_id,
+    "captured_work": work_learning_binding(model),
     "workspace_path": workspace_root(model),
     "selected_document": model.selected_path,
     "task_id": model.wiki_agent_task_id,

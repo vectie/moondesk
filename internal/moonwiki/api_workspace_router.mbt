@@ -6,8 +6,57 @@ async fn route_workspace_api(
   request_path : String,
   body : &@io.Reader,
   conn : @http.ServerConnection,
+  active_root? : Ref[String],
 ) -> Bool {
   match segments {
+    ["api", "agent-import"] => {
+      handle_agent_import(
+        workspace_root,
+        None,
+        request_path,
+        method_,
+        body,
+        conn,
+        active_root?,
+      )
+      true
+    }
+    ["api", "agent-import", operation_id] => {
+      handle_agent_import(
+        workspace_root,
+        Some(operation_id),
+        request_path,
+        method_,
+        body,
+        conn,
+        active_root?,
+      )
+      true
+    }
+    ["api", "workspaces", workspace_id, "agent-export"] => {
+      handle_agent_export(
+        workspace_root,
+        workspace_id,
+        None,
+        request_path,
+        method_,
+        body,
+        conn,
+      )
+      true
+    }
+    ["api", "workspaces", workspace_id, "agent-export", export_id] => {
+      handle_agent_export(
+        workspace_root,
+        workspace_id,
+        Some(export_id),
+        request_path,
+        method_,
+        body,
+        conn,
+      )
+      true
+    }
     ["api", "workspaces"] => {
       let endpoint = @desk.workspaces_route()
       if desktop_api_route_accepts_read(endpoint, method_) {
@@ -38,6 +87,14 @@ async fn route_workspace_api(
       true
     }
     ["api", "workspaces", workspace_id, "entries"] => {
+      if query_value(request_path, "expected_library") is Some(expected) &&
+        decode_query_value(expected) !=
+        workspace_context(workspace_root).books_root {
+        send_api_error(
+          conn, method_, 409, "Conflict", "The selected library changed. Refresh the Book before selecting output files.",
+        )
+        return true
+      }
       let endpoint = @desk.workspace_action_route("entries")
       if desktop_api_route_accepts_read(endpoint, method_) {
         handle_workspace_entries(

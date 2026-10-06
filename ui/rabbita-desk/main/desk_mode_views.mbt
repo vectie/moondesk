@@ -20,7 +20,9 @@ fn render_desk_workspace_sidebar(
   let cold_start = classify_cold_start(model)
   aside(
     class="desk-sidebar",
-    attrs=@html.Attrs::build().aria_label("MoonBook library"),
+    attrs=@html.Attrs::build()
+      .aria_label("MoonBook library")
+      .data_set("testid", "desk-book-controls"),
     [
       div(class="pane-heading", [
         div([h2("MoonBooks")]),
@@ -34,24 +36,30 @@ fn render_desk_workspace_sidebar(
           "Refresh",
         ),
       ]),
-      render_desk_library_location(dispatch, model),
-      render_moongate_setup(dispatch, model),
-      match cold_start {
-        EmptyLibrary => render_new_moonbook_panel_open(dispatch, model)
-        OneBook | ManyBooks => render_new_moonbook_panel(dispatch, model)
-        Connecting | LibraryUnavailable | CatalogUnavailable => @html.nothing
+      if requested_workspace_unavailable(model) {
+        render_requested_selection(dispatch, model)
+      } else {
+        @html.nothing
       },
       div(
         class="desk-workspace-list",
         attrs=@html.Attrs::build().data_set("testid", "desk-workspace-list"),
         render_desk_workspace_rows(dispatch, model, cold_start),
       ),
-      if model.favorites.length() > 0 || model.recent_paths.length() > 0 {
+      match cold_start {
+        EmptyLibrary => render_new_moonbook_panel_open(dispatch, model)
+        OneBook | ManyBooks => render_new_moonbook_panel(dispatch, model)
+        Connecting | LibraryUnavailable | CatalogUnavailable => @html.nothing
+      },
+      render_desk_library_location(dispatch, model),
+      render_moongate_setup(dispatch, model),
+      if model.selected_workspace_id != "" {
         render_desk_quick_access(dispatch, model)
       } else {
         div(class="desk-quick-access-empty", [@html.nothing])
       },
       render_desk_folder_outline(dispatch, model),
+      render_work_resume(dispatch, model),
     ],
   )
 }
@@ -842,6 +850,15 @@ fn render_desk_quick_access(
       ),
     )
   }
+  if groups.is_empty() {
+    groups.push(
+      p(
+        class="status-line",
+        attrs=@html.Attrs::build().data_set("testid", "desk-quick-access-empty"),
+        "No favorites or recent files in this MoonBook yet. Open a file or add a favorite from More actions.",
+      ),
+    )
+  }
   section(
     class="desk-quick-access",
     attrs=@html.Attrs::build().data_set("testid", "desk-quick-access"),
@@ -871,7 +888,9 @@ fn render_desk_quick_path_group(
           attrs=@html.Attrs::build()
             .data_set("testid", testid)
             .data_set("path", path),
-          on_click=dispatch(OpenQuickPath(path)),
+          on_click=dispatch(
+            OpenDeskQuickPath(desk_quick_access_scope(model), path),
+          ),
           [
             span(class="tree-icon", icon_for_kind(quick_path_kind(model, path))),
             span(class="folder-label", empty_root_path(path)),
@@ -1156,6 +1175,7 @@ fn render_new_moonbook_panel_with_open(
           ),
           render_desk_operation_status("status-line", model.import_book_status),
         ]),
+        render_agent_import(dispatch, model),
       ]),
     ],
   )

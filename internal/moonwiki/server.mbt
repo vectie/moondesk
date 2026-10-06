@@ -152,7 +152,14 @@ async fn handle_desk_request(
       conn,
     )
   } else if path == "/api" || path.has_prefix("/api/") {
-    handle_api_request(workspace_root, request.meth, request.path, body, conn)
+    handle_api_request(
+      workspace_root,
+      request.meth,
+      request.path,
+      body,
+      conn,
+      active_root~,
+    )
   } else {
     handle_file_request(ui_root, request.meth, path, conn)
   }

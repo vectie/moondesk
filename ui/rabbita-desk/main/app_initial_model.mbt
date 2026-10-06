@@ -1,13 +1,30 @@
 ///|
 fn init_model() -> Model {
-  let initial_path = browser_initial_path()
-  let initial_workspace_id = browser_initial_workspace()
+  let handoff = work_handoff_from_query(work_handoff_initial_query())
+  let initial_path = if handoff.target is Some(_) {
+    ""
+  } else {
+    browser_initial_path()
+  }
+  let initial_workspace_id = if handoff.target is Some(_) {
+    ""
+  } else {
+    browser_initial_workspace()
+  }
   let initial_session_id = browser_initial_mooncode_session()
   {
+    agent_import: init_agent_import(),
+    portable_book: init_portable_book(),
+    native_work: init_native_work(),
+    work_handoff: handoff,
     source_pane: init_source_pane(initial_workspace_id, initial_session_id),
     office_editor: init_office_editor(initial_workspace_id),
     bootstrapped: false,
-    workspace_mode: initial_workspace_mode(),
+    workspace_mode: if handoff.target is Some(_) {
+      MoonCode
+    } else {
+      initial_workspace_mode()
+    },
     activity: initial_activity(),
     command_open: false,
     command_query: "",
@@ -30,6 +47,7 @@ fn init_model() -> Model {
     workspace_catalog_state: Some(Loading),
     workspace_catalog_error: "",
     selected_workspace_id: initial_workspace_id,
+    requested_workspace_id: initial_workspace_id,
     new_book_name: "Untitled MoonBook",
     new_book_id: "research-untitled-moonbook",
     new_book_status: "ready to create MoonBook",
@@ -129,6 +147,8 @@ fn init_model() -> Model {
     mooncode_sessions: [],
     mooncode_sessions_state: Some(FirstUseEmpty),
     mooncode_sessions_error: "",
+    mooncode_selected_session_loading: initial_session_id != "",
+    mooncode_auto_select_session: handoff.target is None,
     mooncode_archived_sessions: [],
     selected_mooncode_session_id: initial_session_id,
     mooncode_session_query: "",
@@ -146,6 +166,8 @@ fn init_model() -> Model {
     mooncode_model: "",
     mooncode_models: [],
     mooncode_image_models: [],
+    mooncode_task_intent: "auto",
+    mooncode_task_intent_submit_pending: false,
     mooncode_reasoning_effort: "none",
     mooncode_web_search: true,
     mooncode_composer_status: "mooncode idle",
@@ -241,6 +263,7 @@ fn init_model() -> Model {
     mooncode_sandbox_review_key: "",
     mooncode_sandbox_selected_paths: [],
     mooncode_sandbox_promotion_pending: false,
+    mooncode_sandbox_request_generation: 0,
     mooncode_sandbox_promotion_status: "",
     mooncode_sandbox_locked_review_keys: [],
     events: [],
@@ -275,6 +298,10 @@ fn init_model() -> Model {
     inbox_status: "draft",
     pages_search: pages_search_initial_state(),
     favorites: [],
+    desk_quick_access_owner: "",
+    work_resume: empty_work_resume(),
+    desk_quick_access_books: [],
+    desk_quick_access_directories: [],
     saved_views: [],
     saved_views_state: Some(FirstUseEmpty),
     saved_views_error: "",

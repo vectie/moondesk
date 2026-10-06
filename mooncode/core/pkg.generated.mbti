@@ -91,7 +91,9 @@ pub(all) struct MoonCodeCommand {
   message : String
   content_parts : Array[MoonCodeContentPart]
   model : String
+  model_workspace : String
   web_search : Bool
+  task_intent : MoonCodeTaskIntent?
   planner_max_steps : Int?
   planner_reasoning_effort : String
   approval_id : String
@@ -319,6 +321,7 @@ pub(all) enum MoonCodeSessionStatus {
   Failed
   Cancelled
   Durable
+  Unknown
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeSessionStatus::equal(Self, Self) -> Bool
 pub fn MoonCodeSessionStatus::not_equal(Self, Self) -> Bool
@@ -345,6 +348,12 @@ pub(all) struct MoonCodeSessionSummary {
 pub fn MoonCodeSessionSummary::equal(Self, Self) -> Bool
 pub fn MoonCodeSessionSummary::not_equal(Self, Self) -> Bool
 pub fn MoonCodeSessionSummary::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MoonCodeTaskIntent {
+  ReadOnly
+  WorkspaceChange
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeTaskIntent::to_string(Self) -> String
 
 pub(all) struct MoonCodeTurn {
   kind : String

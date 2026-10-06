@@ -128,6 +128,13 @@ fn confirm_markdown_navigation_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   let navigation = model.pending_markdown_navigation
+  if navigation is PendingDeskQuickPath(scope, _) &&
+    scope != desk_quick_access_scope(model) {
+    return (
+      @rabbita.none,
+      { ..model, pending_markdown_navigation: NoPendingMarkdownNavigation, },
+    )
+  }
   let cleared = clear_markdown_editor({
     ..model,
     pending_markdown_navigation: NoPendingMarkdownNavigation,
@@ -143,6 +150,8 @@ fn confirm_markdown_navigation_action(
     PendingPath(path) => select_path_action(dispatch, cleared, path)
     PendingDirectory(path) => open_directory_action(dispatch, cleared, path)
     PendingQuickPath(path) => open_quick_path_action(dispatch, path, cleared)
+    PendingDeskQuickPath(scope, path) =>
+      open_desk_quick_path_action(dispatch, cleared, scope, path)
     PendingSearchHit(workspace_id, path) =>
       select_search_hit_action(dispatch, workspace_id, path, cleared)
   }
@@ -154,6 +163,11 @@ fn select_activity_action(
   activity : Activity,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  let model = if workspace_mode_for_activity(activity) != model.workspace_mode {
+    leave_unresolved_session(model)
+  } else {
+    model
+  }
   (
     sync_activity_batch(
       activity,
@@ -253,6 +267,9 @@ fn select_workspace_action(
     clear_markdown_editor({
       ..model,
       selected_workspace_id: workspace_id,
+      requested_workspace_id: workspace_id,
+      mooncode_selected_session_loading: false,
+      mooncode_auto_select_session: false,
       git_projection_workspace_id: workspace_id,
       git_projection_generation: model.git_projection_generation + 1,
       git_projection: None,
@@ -383,6 +400,16 @@ fn open_quick_path_action(
       selected_path: path,
       current_directory: parent_path(path),
       desk_location_input: parent_path(path),
+      desk_back_stack: if parent_path(path) == model.current_directory {
+        model.desk_back_stack
+      } else {
+        desk_history_push(model.desk_back_stack, model.current_directory)
+      },
+      desk_forward_stack: if parent_path(path) == model.current_directory {
+        model.desk_forward_stack
+      } else {
+        []
+      },
       desk_filter_query: "",
       desk_selected_paths: if path == "" {
         []
@@ -426,6 +453,7 @@ fn select_search_hit_action(
   path : String,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  let model = leave_unresolved_session(model)
   let directory = parent_path(path)
   let target_mode = if model.workspace_mode == MoonWiki {
     MoonWiki
@@ -460,6 +488,15 @@ fn select_search_hit_action(
       command_open: false,
       command_query: "",
       selected_workspace_id: workspace_id,
+      requested_workspace_id: workspace_id,
+      selected_mooncode_session_id: if workspace_id !=
+        model.selected_workspace_id {
+        ""
+      } else {
+        model.selected_mooncode_session_id
+      },
+      mooncode_selected_session_loading: false,
+      mooncode_auto_select_session: false,
       office_editor,
       selected_path: path,
       desk_selected_paths: if path == "" {
@@ -788,6 +825,11 @@ fn select_workspace_mode_action(
   mode : WorkspaceMode,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  let model = if mode != model.workspace_mode && mode != MoonCode {
+    leave_unresolved_session(model)
+  } else {
+    model
+  }
   let activity = match mode {
     PackHome => Files
     Desk => Files

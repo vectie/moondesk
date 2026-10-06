@@ -421,3 +421,30 @@ test "desktop api capability schema lives in core boundary" {
     ),
   )
 }
+
+///|
+test "local agent receive has bounded staging and recovery routes" {
+  assert_eq(
+    @core.agent_import_url("", "/suite/books"),
+    "/api/agent-import?expected_library=%2Fsuite%2Fbooks",
+  )
+  assert_eq(@core.agent_import_route(), "/api/agent-import")
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.agent_import_route()),
+    ["POST"],
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.agent_import_operation_route(),
+    ),
+    ["GET", "HEAD", "POST"],
+  )
+  assert_eq(
+    @core.desktop_api_route_authority(@core.agent_import_route()),
+    Some("import-staging"),
+  )
+  assert_eq(
+    @core.agent_import_url("abc", "/suite/books"),
+    "/api/agent-import/abc?expected_library=%2Fsuite%2Fbooks",
+  )
+}

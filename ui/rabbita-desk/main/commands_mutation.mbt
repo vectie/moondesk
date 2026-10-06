@@ -73,27 +73,40 @@ fn save_source_pane_cmd(
   dispatch : Dispatch[Msg],
   source : SourcePaneState,
 ) -> @rabbita.Cmd {
+  guard source.pending_save is Some(request) else { return @rabbita.none }
   let body : Json = {
-    "path": source.requested_path,
-    "content": source.draft,
-    "expected_content": source.baseline,
+    "path": request.source.path,
+    "content": request.content,
+    "expected_content": request.baseline,
   }
-  @http.post(@desk.workspace_endpoint_url(source.workspace_id, "source"))
+  @http.post(
+    @desk.workspace_endpoint_url(request.source.workspace_id, "source"),
+  )
   .with_json(body)
-  .expect_json(result => {
+  .expect_json(fn(result : Result[Json, Error]) {
     let outcome = match result {
       Ok(payload) =>
-        if json_field_string(payload, "current_content", default="") != "" {
-          SourceConflict(
-            json_field_string(payload, "current_content", default=""),
-          )
-        } else {
+        // Rabbita returns parsed error bodies as Ok too. Only the host's
+        // explicit save acknowledgement retires the draft; an empty external
+        // file is still a conflict, not a missing conflict response.
+        if payload
+          is { "code": Number(409, ..), "current_content": String(current), .. } {
+          SourceConflict(current)
+        } else if payload is { "ok": True, "content": String(_), .. } {
           SourceSaved(payload)
+        } else {
+          SourceSaveFailed(
+            json_field_string(
+              payload,
+              "error",
+              default="Could not save source file; the draft is preserved",
+            ),
+          )
         }
       Err(_) =>
         SourceSaveFailed("Could not save source file; the draft is preserved")
     }
-    dispatch(SourcePane(SaveResult(outcome)))
+    dispatch(SourcePane(SaveResult(request, outcome)))
   })
 }
 

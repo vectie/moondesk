@@ -30,6 +30,7 @@ enum PendingMarkdownNavigation {
   PendingPath(String)
   PendingDirectory(String)
   PendingQuickPath(String)
+  PendingDeskQuickPath(String, String)
   PendingSearchHit(String, String)
 } derive(Eq)
 

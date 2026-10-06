@@ -21,6 +21,10 @@ enum DeskDensity {
 
 ///|
 struct Model {
+  agent_import : AgentImportState
+  portable_book : PortableBookState
+  native_work : NativeWorkState
+  work_handoff : WorkHandoffState
   source_pane : SourcePaneState
   office_editor : OfficeEditorState
   bootstrapped : Bool
@@ -47,6 +51,7 @@ struct Model {
   workspace_catalog_state : SurfaceState?
   workspace_catalog_error : String
   selected_workspace_id : String
+  requested_workspace_id : String
   new_book_name : String
   new_book_id : String
   new_book_status : String
@@ -142,6 +147,8 @@ struct Model {
   mooncode_sessions : Array[MoonCodeSession]
   mooncode_sessions_state : SurfaceState?
   mooncode_sessions_error : String
+  mooncode_selected_session_loading : Bool
+  mooncode_auto_select_session : Bool
   mooncode_archived_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
   mooncode_session_query : String
@@ -159,6 +166,8 @@ struct Model {
   mooncode_model : String
   mooncode_models : Array[String]
   mooncode_image_models : Array[String]
+  mooncode_task_intent : String
+  mooncode_task_intent_submit_pending : Bool
   mooncode_reasoning_effort : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
@@ -254,6 +263,7 @@ struct Model {
   mooncode_sandbox_review_key : String
   mooncode_sandbox_selected_paths : Array[String]
   mooncode_sandbox_promotion_pending : Bool
+  mooncode_sandbox_request_generation : Int
   mooncode_sandbox_promotion_status : String
   mooncode_sandbox_locked_review_keys : Array[String]
   events : Array[DeskEvent]
@@ -289,6 +299,10 @@ struct Model {
   inbox_status : String
   pages_search : PagesSearchState
   favorites : Array[String]
+  desk_quick_access_owner : String
+  work_resume : WorkResumeState
+  desk_quick_access_books : Array[DeskQuickAccessBook]
+  desk_quick_access_directories : Array[String]
   saved_views : Array[SavedViewRecord]
   saved_views_state : SurfaceState?
   saved_views_error : String
@@ -321,6 +335,12 @@ struct Model {
 
 ///|
 enum Msg {
+  ForgetResumableWork(String, String)
+  ClearResumableWork(String)
+  AgentImport(AgentImportMsg)
+  PortableBook(PortableBookMsg)
+  NativeWork(NativeWorkMsg)
+  WorkHandoff(WorkHandoffMsg)
   SourcePane(SourcePaneMsg)
   OfficeEditor(OfficeEditorMsg)
   Bootstrap
@@ -467,6 +487,7 @@ enum Msg {
   MoonCodeImagesPicked(Result[Array[Json], String])
   RemoveMoonCodeImage(Int)
   SetMoonCodeModel(String)
+  SetMoonCodeTaskIntent(String)
   SetMoonCodeReasoningEffort(String)
   SendMoonCodeMessage(String)
   SendMoonCodeGuidance(String)
@@ -565,8 +586,10 @@ enum Msg {
   DecideMoonCodeTool(@mooncode_core.MoonCodeApproval, MoonCodeApprovalIntent)
   ToggleMoonCodeSandboxFile(@mooncode_core.MoonCodeSandboxReceipt, String)
   PromoteMoonCodeSandboxReceipt(@mooncode_core.MoonCodeSandboxReceipt)
+  RecoverMoonCodeSandboxReceipt(@mooncode_core.MoonCodeSandboxReceipt)
   CompletedMoonCodeSandboxPromotion(
     String,
+    Int,
     Result[@mooncode_core.MoonCodeSandboxPromotionResult, String]
   )
   ManageMoonClaw(String)
@@ -584,6 +607,7 @@ enum Msg {
   SetDeskLocationInput(String)
   OpenDeskLocation
   OpenQuickPath(String)
+  OpenDeskQuickPath(String, String)
   SelectSearchHit(String, String)
   ConfirmDiscardMarkdownNavigation
   CancelDiscardMarkdownNavigation

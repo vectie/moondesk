@@ -54,3 +54,30 @@ test "Code rail names completed and stopped sessions by outcome" {
   assert_eq(mooncode_session_status_line(stopped), "Stopped")
   assert_eq(mooncode_session_status_i18n_key(stopped), "code.session_stopped")
 }
+
+///|
+test "Code rail does not call unknown execution state ready or completed" {
+  let session = {
+    ..code_mode_test_session("live", workspace_id="book-a"),
+    status: "unknown",
+    updated_at: None,
+  }
+  assert_eq(mooncode_session_status_line(session), "Status not loaded")
+  assert_false(mooncode_can_guide_running_work(session))
+  assert_eq(mooncode_session_status_i18n_key(session), "code.session_unknown")
+}
+
+///|
+test "native binding metadata refresh preserves canonical execution status" {
+  let active = {
+    ..code_mode_test_session("active", workspace_id="book-a"),
+    status: "running",
+  }
+  for status in ["unknown", "durable"] {
+    let listed = { ..active, status, }
+    assert_eq(
+      mooncode_merge_selected_listing_session(active, listed).status,
+      "running",
+    )
+  }
+}

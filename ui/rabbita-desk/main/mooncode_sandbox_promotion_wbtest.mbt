@@ -180,7 +180,7 @@ test "sandbox promotion locks applied and recovery outcomes but not safe refusal
   )
   let (_, retryable) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    CompletedMoonCodeSandboxPromotion(key, Ok(safe_refusal)),
+    CompletedMoonCodeSandboxPromotion(key, 0, Ok(safe_refusal)),
     base,
   )
   assert_false(retryable.mooncode_sandbox_locked_review_keys.contains(key))
@@ -200,11 +200,11 @@ test "sandbox promotion locks applied and recovery outcomes but not safe refusal
   )
   let (_, cleanup_locked) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    CompletedMoonCodeSandboxPromotion(key, Ok(cleanup)),
+    CompletedMoonCodeSandboxPromotion(key, 0, Ok(cleanup)),
     base,
   )
   assert_true(cleanup_locked.mooncode_sandbox_locked_review_keys.contains(key))
-  assert_true(cleanup_locked.mooncode_sandbox_selected_paths.is_empty())
+  assert_eq(cleanup_locked.mooncode_sandbox_selected_paths, ["src/main.mbt"])
   assert_true(
     cleanup_locked.mooncode_sandbox_promotion_status.contains("was promoted"),
   )
@@ -220,7 +220,7 @@ test "sandbox promotion locks applied and recovery outcomes but not safe refusal
   )
   let (_, recovery_locked) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    CompletedMoonCodeSandboxPromotion(key, Ok(recovery)),
+    CompletedMoonCodeSandboxPromotion(key, 0, Ok(recovery)),
     base,
   )
   assert_true(recovery_locked.mooncode_sandbox_locked_review_keys.contains(key))
@@ -268,6 +268,7 @@ test "sandbox promotion fails closed for degraded, unclean, stale, or empty rece
     code_mode_test_dispatch,
     CompletedMoonCodeSandboxPromotion(
       "stale",
+      0,
       Err("stale response should be ignored"),
     ),
     model,

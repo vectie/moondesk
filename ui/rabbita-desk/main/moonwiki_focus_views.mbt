@@ -452,6 +452,9 @@ fn render_wiki_document_viewer(
               href=raw_url(model, model.selected_path),
               target=Blank,
               rel="noreferrer",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "wiki-open-original",
+              ),
               "Open original",
             )
           } else {

@@ -3,6 +3,13 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
   if model.selected_mooncode_session_id != "" {
     for session in model.mooncode_sessions {
       if session.id == model.selected_mooncode_session_id {
+        if requested_workspace_active(model) &&
+          !mooncode_session_matches_workspace_id(
+            session,
+            model.requested_workspace_id,
+          ) {
+          return None
+        }
         return Some(session)
       }
     }
@@ -296,7 +303,9 @@ fn mooncode_merge_selected_listing_session(
     } else {
       listed.model
     },
-    status: if listed.status == "" {
+    status: if listed.status == "" ||
+      listed.status == "unknown" ||
+      listed.status == "durable" {
       existing.status
     } else {
       listed.status

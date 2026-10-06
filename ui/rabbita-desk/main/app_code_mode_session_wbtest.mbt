@@ -3604,7 +3604,7 @@ test "code mode session listing prefers selected session" {
 }
 
 ///|
-test "code mode session listing selects first session when selected is missing" {
+test "code mode session listing retains an explicitly selected missing session" {
   let session = code_mode_test_session("session-b")
   let model = {
     ..init_model(),
@@ -3616,7 +3616,7 @@ test "code mode session listing selects first session when selected is missing" 
     LoadedMoonCodeSessions(Ok([session])),
     model,
   )
-  assert_eq(next.selected_mooncode_session_id, "session-b")
+  assert_eq(next.selected_mooncode_session_id, "missing-session")
 }
 
 ///|
