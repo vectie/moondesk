@@ -297,6 +297,102 @@ fn pack_app_runtime_record(
 }
 
 ///|
+fn pack_app_runtime_identity_declaration(
+  manifest : Json,
+) -> (Bool, Bool, String, String) {
+  match json_object_field(manifest, "app_runtime_identity") {
+    None => (false, true, "", "")
+    Some(Object(_) as declaration) => {
+      let entrypoints = json_array_items(manifest, "app_entrypoints")
+      if entrypoints.is_empty() {
+        return (true, false, "", "")
+      }
+      let entrypoint = json_string(entrypoints[0], "path", default="")
+      let path = json_string(declaration, "path", default="")
+      let contract = json_string(declaration, "contract", default="")
+      let valid = is_safe_pack_route_path(entrypoint) &&
+        is_safe_pack_route_path(path) &&
+        path.has_prefix(entrypoint + "/") &&
+        contract.length() > 0 &&
+        contract.length() <= 128 &&
+        !contract.contains("\n")
+      (true, valid, path, contract)
+    }
+    Some(_) => (true, false, "", "")
+  }
+}
+
+///|
+fn pack_app_workspace_ref(canonical_workspace_root : String) -> String {
+  "sha256:" +
+  @crypto.bytes_to_hex_string(
+    @crypto.sha256(
+      @encoding/utf8.encode(canonical_workspace_root).to_fixedarray(),
+    ),
+  )
+}
+
+///|
+fn pack_app_runtime_identity_matches(
+  identity : Json,
+  contract : String,
+  pack_id : String,
+  version : String,
+  workspace_ref : String,
+) -> Bool {
+  json_string(identity, "contract", default="") == contract &&
+  json_string(identity, "pack_id", default="") == pack_id &&
+  json_string(identity, "version", default="") == version &&
+  json_string(identity, "workspace_ref", default="") == workspace_ref
+}
+
+///|
+async fn pack_app_runtime_identity_verified(
+  workspace_root : String,
+  active : Json,
+  manifest : Json,
+  runtime : Json,
+) -> Bool {
+  let (declared, valid, path, contract) = pack_app_runtime_identity_declaration(
+    manifest,
+  )
+  if !declared {
+    return true
+  }
+  if !valid {
+    return false
+  }
+  let service_url = json_string(runtime, "service_url", default="")
+  let pack_id = json_string(active, "pack_id", default="")
+  let version = json_string(active, "version", default="")
+  if !is_safe_local_pack_service_url(service_url) ||
+    !is_safe_pack_id(pack_id) ||
+    version == "" ||
+    version != json_string(manifest, "version", default="") {
+    return false
+  }
+  let canonical_workspace_root = @fs.realpath(workspace_root) catch {
+    _ => return false
+  }
+  let (response, body) = @async.with_timeout(3000, () => {
+    @http.get(service_url + path)
+  }) catch {
+    _ => return false
+  }
+  if response.code != 200 {
+    return false
+  }
+  let identity = @json.parse(body.text()) catch { _ => return false }
+  pack_app_runtime_identity_matches(
+    identity,
+    contract,
+    pack_id,
+    version,
+    pack_app_workspace_ref(canonical_workspace_root),
+  )
+}
+
+///|
 fn pack_app_catalog_record_resolved(
   active : Json,
   manifest : Json,
@@ -850,10 +946,18 @@ async fn configured_pack_app(
     return None
   }
   let runtime = read_json_file_or_object(runtime_path)
-  match area_override {
+  let app = match area_override {
     Some(area) =>
       pack_app_runtime_record_resolved(active, manifest, runtime, Some(area))
     None => pack_app_runtime_record(active, manifest, runtime)
+  }
+  if app is None ||
+    !pack_app_runtime_identity_verified(
+      workspace_root, active, manifest, runtime,
+    ) {
+    None
+  } else {
+    app
   }
 }
 
@@ -894,10 +998,35 @@ fn pack_app_proxy_query_suffix(request_path : String) -> String? {
 }
 
 ///|
+const PackAppProxyMaximumBodyBytes : Int = 20 * 1024 * 1024
+
+///|
+fn pack_app_proxy_binary_body(content_type : String) -> Bool {
+  content_type.to_lower() == "application/octet-stream"
+}
+
+///|
+async fn pack_app_proxy_bounded_body(body : &@io.Reader) -> Bytes? {
+  let output = @buffer.Buffer(size_hint=4096)
+  for ;; {
+    let remaining = PackAppProxyMaximumBodyBytes - output.length() + 1
+    guard body.read_some(max_len=remaining.min(65536)) is Some(chunk) else {
+      break
+    }
+    if output.length() + chunk.length() > PackAppProxyMaximumBodyBytes {
+      return None
+    }
+    output.write_bytes(chunk)
+  }
+  Some(output.to_bytes())
+}
+
+///|
 async fn handle_pack_app_proxy(
   workspace_root : String,
   method_ : @http.RequestMethod,
   request_path : String,
+  content_type : String,
   body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Unit {
@@ -943,9 +1072,18 @@ async fn handle_pack_app_proxy(
     method_ is Put ||
     method_ is Patch ||
     method_ is Delete {
-    let payload = body.read_all().text()
-    if payload != "" || !(method_ is Delete) {
-      ignore(@json.parse(payload)) catch {
+    let payload = match pack_app_proxy_bounded_body(body) {
+      Some(bytes) => bytes
+      None => {
+        send_status(
+          conn, 413, "Payload Too Large", "Pack application request exceeds size limit\n",
+        )
+        return
+      }
+    }
+    let binary_upload = pack_app_proxy_binary_body(content_type)
+    if !binary_upload && (payload.length() > 0 || !(method_ is Delete)) {
+      ignore(@json.parse(@encoding/utf8.decode(payload))) catch {
         _ => {
           send_status(
             conn, 400, "Bad Request", "Pack application request requires JSON\n",
@@ -955,9 +1093,13 @@ async fn handle_pack_app_proxy(
       }
     }
     let headers : Map[String, String] = {
-      "Content-Type": "application/json",
+      "Content-Type": if binary_upload {
+        "application/octet-stream"
+      } else {
+        "application/json"
+      },
       "Accept": "application/json",
-      "Content-Length": @encoding/utf8.encode(payload).length().to_string(),
+      "Content-Length": payload.length().to_string(),
     }
     let client = try {
       if method_ is Post {
@@ -1060,10 +1202,27 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     } else {
       None
     }
+    let identity_valid = match runtime {
+      Some(value) =>
+        pack_app_runtime_identity_verified(
+          workspace_root, active, manifest, value,
+        )
+      None => true
+    }
+    let projected_runtime = if identity_valid {
+      runtime
+    } else {
+      Some(Json::object({}))
+    }
     let projected = match area_override {
       Some(area) =>
-        pack_app_catalog_record_resolved(active, manifest, runtime, Some(area))
-      None => pack_app_catalog_record(active, manifest, runtime)
+        pack_app_catalog_record_resolved(
+          active,
+          manifest,
+          projected_runtime,
+          Some(area),
+        )
+      None => pack_app_catalog_record(active, manifest, projected_runtime)
     }
     match projected {
       Some(app) => {
@@ -1074,6 +1233,9 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
           Object(fields) => {
             fields["templates"] = Json::array(templates)
             fields["template_count"] = templates.length().to_json()
+            if !identity_valid {
+              fields["configuration_message"] = "The pack service identity does not match this workspace and active version.".to_json()
+            }
           }
           _ => ()
         }

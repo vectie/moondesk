@@ -569,15 +569,18 @@ async test "receive rejects stable workspace identifier collisions before import
       run,
     )
     assert_eq(json_string(imported, "status", default=""), "imported")
-    @fs.mkdir(context.books_root + "/Received")
-    let ambiguous = agent_import_inspect_with(
-      context,
-      receive_test_id(),
-      context.books_root,
-      run,
-    )
-    assert_eq(json_string(ambiguous, "status", default=""), "partial")
-    assert_true(ambiguous is { "created": Null, .. })
+    // Case-insensitive filesystems already resolve Received to received.
+    if !@fs.exists(context.books_root + "/Received") {
+      @fs.mkdir(context.books_root + "/Received")
+      let ambiguous = agent_import_inspect_with(
+        context,
+        receive_test_id(),
+        context.books_root,
+        run,
+      )
+      assert_eq(json_string(ambiguous, "status", default=""), "partial")
+      assert_true(ambiguous is { "created": Null, .. })
+    }
   }
 }
 

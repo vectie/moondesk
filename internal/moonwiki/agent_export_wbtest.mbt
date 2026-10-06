@@ -21,12 +21,13 @@ fn export_test_library() -> String {
 
 ///|
 async fn export_test_workspace() -> @desk.DeskWorkspace {
-  let temporary = @fs.tmpdir(prefix="moondesk-agent-export-")
-  let root = if export_test_library() == "/tmp" {
+  let temporary = @fs.realpath(@fs.tmpdir(prefix="moondesk-agent-export-"))
+  let library = export_test_library()
+  let root = if @pathx.dirname(temporary).to_owned() == library {
     temporary
   } else {
-    @fsx.make_directory(export_test_library(), recursive=true, exists_ok=true)
-    let destination = export_test_library() +
+    @fsx.make_directory(library, recursive=true, exists_ok=true)
+    let destination = library +
       "/" +
       temporary.split("/").last().unwrap().to_owned()
     @fs.rename(temporary, destination, replace=false)
