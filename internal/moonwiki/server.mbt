@@ -148,6 +148,7 @@ async fn handle_desk_request(
       workspace_root,
       request.meth,
       request.path,
+      request.headers.get("content-type").unwrap_or(""),
       body,
       conn,
     )

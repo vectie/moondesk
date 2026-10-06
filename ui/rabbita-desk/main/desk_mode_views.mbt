@@ -2066,13 +2066,24 @@ fn render_desk_details(
                   on_click=dispatch(RevealSelection),
                   "Reveal in File Manager",
                 ),
-                if entry.kind is Html {
-                  @html.nothing
-                } else {
+                if entry.kind is Directory {
+                  button(
+                    class="secondary-button full",
+                    on_click=dispatch(OpenDirectory(entry.path)),
+                    "Browse folder",
+                  )
+                } else if wiki_document_path_supported(entry.path) {
                   button(
                     class="secondary-button full",
                     on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
                     "Open in Wiki",
+                  )
+                } else {
+                  button(
+                    class="secondary-button full",
+                    title="This file is available in the Desk preview; the Wiki document workspace supports Office, PDF, and living artifacts",
+                    on_click=dispatch(SelectPath(entry.path)),
+                    "Preview in Desk",
                   )
                 },
                 render_desk_single_selection_more_actions(
