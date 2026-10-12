@@ -86,6 +86,17 @@ fn render_work_human_revision(
               } else {
                 @html.nothing
               },
+              render_work_human_revision_comparison(
+                state.baseline,
+                state.draft,
+                "Review my changes",
+                "baseline file for this edit",
+                if state.phase == "editing" {
+                  "my draft"
+                } else {
+                  "retained draft for this save"
+                },
+              ),
               if ["editing", "retry"].contains(state.phase) {
                 button(
                   attrs=@html.Attrs::build().disabled(
@@ -112,7 +123,23 @@ fn render_work_human_revision(
                 Some(current) if state.phase == "conflict" =>
                   details(open=true, [
                     summary("Current file after the conflict"),
-                    pre(current),
+                    p(
+                      "The working file changed since editing began. Compare all three versions before choosing a new baseline.",
+                    ),
+                    render_work_human_revision_comparison(
+                      state.baseline,
+                      current,
+                      "What changed in the working file?",
+                      "baseline file for this edit",
+                      "current working file",
+                    ),
+                    render_work_human_revision_comparison(
+                      current,
+                      state.draft,
+                      "Compare current file with my draft",
+                      "current working file",
+                      "my preserved draft",
+                    ),
                     button(
                       on_click=dispatch(
                         WorkHandoff(HumanRevision(RevisionRebase)),
@@ -148,6 +175,13 @@ fn render_work_human_revision(
               p(
                 "Retained SHA-256: " +
                 handoff_text(handoff_field(revision, "content"), "sha256"),
+              ),
+              render_work_human_revision_comparison(
+                state.baseline,
+                state.draft,
+                "Review my saved changes",
+                "baseline file for this edit",
+                "confirmed retained human revision",
               ),
               a(
                 href=work_human_revision_download_url(state.draft),
@@ -198,7 +232,13 @@ fn render_work_human_revision_pending(
     p(
       "Capture may already exist. Return confirmation is pending native identity verification. Refresh exact work to retry; your exact draft is retained below.",
     ),
-    pre(state.draft),
+    render_work_human_revision_comparison(
+      state.baseline,
+      state.draft,
+      "Review my retained changes",
+      "baseline file for this edit",
+      "retained draft; save confirmation pending",
+    ),
     button(
       on_click=dispatch(WorkHandoff(HumanRevision(RevisionCopy))),
       "Copy retained draft",

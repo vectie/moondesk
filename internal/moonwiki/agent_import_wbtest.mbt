@@ -26,6 +26,7 @@ fn receive_test_stage(
     expected_library: context.books_root,
     filename: "experienced.moonbook-agent",
     bytes: b"synthetic reviewed package",
+    town_binding: None,
   }
 }
 
@@ -39,6 +40,7 @@ fn receive_test_request(
     expected_library: context.books_root,
     destination_folder: folder,
     package_sha256: agent_import_hash(b"synthetic reviewed package"),
+    binding_digest: None,
   }
 }
 
@@ -602,6 +604,7 @@ async test "actual retained package receive imports and opens original Book iden
     expected_library: context.books_root,
     filename: "reviewed-local.moonbook-agent",
     bytes,
+    town_binding: None,
   }
   let staged = agent_import_stage_with(context, request, run)
   assert_eq(json_string(staged, "status", default=""), "inspected")
@@ -617,6 +620,7 @@ async test "actual retained package receive imports and opens original Book iden
       expected_library: context.books_root,
       destination_folder: "local-received",
       package_sha256: agent_import_hash(bytes),
+      binding_digest: None,
     },
     run,
   )

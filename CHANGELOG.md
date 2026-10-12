@@ -6,6 +6,9 @@ version.
 
 ## Unreleased
 
+- Added named XLSX worksheet selection to the local table explorer, with
+  sheet-preserving filters, reset and CSV/XLSX export.
+
 - Replaced legacy Flow graph import with exact catalog validation and conformant
   MoonFlow import, added digest-bound evidence and delegated controls, and made
   the generic composition canvas fit and inspect the complete 63-stage

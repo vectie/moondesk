@@ -48,6 +48,10 @@ The surrounding ownership is explicit:
 | Review, authority and artifact surfaces | available |
 | Composition canvas | available locally for published Work graphs; unsupported or unvalidated nodes remain unavailable |
 | Catalog-backed conformant MoonFlow import | available locally when a valid catalog and configured MoonFlow runtime are present |
+| Current-draft JSON value exploration | source implemented with focused Node coverage: exact nested-value selection/download; packaged UI rebuild and browser qualification remain separate |
+| Structured JSON version comparison | source implemented with focused Node/DOM-adapter coverage: pasted-reference vs current-draft differences, exact location selection and complete report download; packaged build and browser/native qualification remain separate |
+| Reviewed current-draft JSON value replacement | source implemented with focused Node/DOM-adapter coverage: exact pointer, before/after preview, one ordinary draft input event; compiled history/save and browser qualification remain separate |
+| Current-draft Markdown link maintenance | source implemented with focused Node/DOM-adapter coverage: bounded inline link/image inventory, exact selection and reviewed destination replacement; packaged UI rebuild, browser/native and actual Save/Undo qualification remain separate |
 | Direct code editing | available locally, including save, reload, diff and conflict preservation |
 | Direct DOCX/XLSX/PPTX editing | available locally for the supported fidelity contract |
 | Universal Find & Add | available across files, code, book knowledge, tasks, runs, reviews and artifacts; importing remains explicit |

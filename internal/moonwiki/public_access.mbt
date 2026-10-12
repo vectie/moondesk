@@ -106,14 +106,14 @@ async fn moondesk_bounded_identity_text(
 ///|
 // Reuse LunaNexa's cookie session and authoritative role lookup. A claimed
 // client role, forwarded header or public Host is never authentication.
-async fn moondesk_operator_authorized(cookie : String) -> Bool {
+async fn moondesk_authenticated_account(cookie : String) -> Json? {
   let endpoint = moondesk_access_env("MOONDESK_IDENTITY_ENDPOINT")
   let host = moondesk_access_env("MOONDESK_IDENTITY_HOST")
   guard !cookie.is_empty() &&
     cookie.length() <= 16384 &&
     !endpoint.is_empty() &&
     moondesk_identity_authority_matches(endpoint, host) else {
-    return false
+    return None
   }
   let client = @http.Client(endpoint, headers={
     "Cookie": cookie,
@@ -124,22 +124,30 @@ async fn moondesk_operator_authorized(cookie : String) -> Bool {
   })
   defer client.close()
   let response = client.get("/auth/session")
-  guard response.code == 200 else { return false }
+  guard response.code == 200 else { return None }
   guard moondesk_bounded_identity_text(client, 16384) is Some(text) else {
-    return false
+    return None
   }
   guard @json.parse(text) is { "session_token": String(bearer), .. } &&
     bearer.has_prefix("lnxs_") else {
-    return false
+    return None
   }
   let response = client.get("/v1/auth/self", extra_headers={
     "Authorization": "Bearer " + bearer,
   })
-  guard response.code == 200 else { return false }
+  guard response.code == 200 else { return None }
   guard moondesk_bounded_identity_text(client, 65536) is Some(text) else {
-    return false
+    return None
   }
-  moondesk_active_operator(@json.parse(text))
+  Some(@json.parse(text))
+}
+
+///|
+async fn moondesk_operator_authorized(cookie : String) -> Bool {
+  match moondesk_authenticated_account(cookie) {
+    Some(account) => moondesk_active_operator(account)
+    None => false
+  }
 }
 
 ///|

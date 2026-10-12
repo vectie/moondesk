@@ -59,6 +59,10 @@ fn moonflow_runs_test_run(
       recorded_at: "2026-07-31T00:00:00Z",
     }),
     operator_surface: None,
+    owner_summary: None,
+    owner_summary_observation: None,
+    single_step_actions: None,
+    single_step_setup: None,
   }
 }
 
@@ -266,10 +270,12 @@ test "Flow capability limits preparation without erasing run history" {
     @rabbita.static_cell(render_moonflow_workspace(dispatch, limited)),
   )
   assert_true(markup.contains("data-state=\"capability-limited\""))
-  assert_eq(markup.split("Executable work isn’t available").length(), 3)
+  assert_eq(markup.split("Execution controls are unavailable").length(), 3)
   assert_eq(
     markup
-    .split("This setup cannot provide governed runs for the selected book.")
+    .split(
+      "Existing run evidence stays visible. Declared-plan editing and one digital Mold step use separate host setup; generic execution remains unavailable.",
+    )
     .length(),
     3,
   )

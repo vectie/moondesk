@@ -164,3 +164,14 @@ journeys, methodology, and release acceptance evidence.
 - Keep domain workflows in their owning product packs and expose only typed
   operations and pack-owned applications to MoonDesk.
 - Prove clean-machine native install/update behavior with Lepusa bundles.
+
+- [Explore JSON values](SOURCE_JSON_VALUES.md): inspect current-draft nested
+  objects/arrays by JSON Pointer and download exact subtrees.
+
+- [Review and replace a JSON value](SOURCE_JSON_REPLACEMENT.md): correct one nested draft value after before/after review, preserving all surrounding source tokens.
+
+## Source Markdown link maintenance
+
+[Inspect and retarget Markdown links](MARKDOWN_LINK_MAINTENANCE.md) inventories
+supported current-draft inline destinations, selects exact source locations and
+previews one/all exact-match replacements before an ordinary unsaved draft edit.

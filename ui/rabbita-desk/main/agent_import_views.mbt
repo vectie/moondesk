@@ -19,14 +19,30 @@ fn render_agent_import(
       p(
         "Choose a .moonbook-agent file, inspect its contents, then import into a new folder in this library.",
       ),
-      if session.reply is None && !session.import_started {
-        button(
-          class="primary-button full",
-          attrs=@html.Attrs::build().data_set("testid", "agent-import-choose"),
-          disabled=!ready,
-          on_click=choose_agent_package_click(dispatch),
-          "1. Choose package",
-        )
+      if session.reply is None &&
+        !session.import_started &&
+        state.package_file is None {
+        div([
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build().data_set("testid", "agent-import-choose"),
+            disabled=!ready,
+            on_click=choose_agent_package_click(dispatch),
+            "1. Choose package",
+          ),
+          button(
+            class="secondary-button full",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "agent-import-choose-exact",
+            ),
+            disabled=!ready,
+            on_click=choose_agent_package_click(dispatch, exact=true),
+            "Choose a package received through Town",
+          ),
+          p(
+            "For a Town package, keep the original .binding.json saved with the download. You will select both files. Desk checks the existing binding; it does not create one or sign its publisher identity.",
+          ),
+        ])
       } else {
         @html.nothing
       },
@@ -34,6 +50,8 @@ fn render_agent_import(
         match state.pending {
           Some({ operation: PickingPackage, .. }) =>
             p("Choose a package from your computer…")
+          Some({ operation: PickingBinding, .. }) =>
+            p("Choose the original Town binding file…")
           Some({ operation: StagingPackage, .. }) =>
             p("Inspecting package contents…")
           Some({ operation: ImportingPackage, .. }) =>
@@ -61,12 +79,41 @@ fn render_agent_import(
           _ => @html.nothing
         },
       ]),
+      if session.status == "awaiting-binding" {
+        div([
+          p("Selected package: " + session.filename),
+          p(
+            "Now choose its original Town .binding.json. The separate .receipt.json records transfer bytes and cannot replace the binding. If you only have a local export, cancel and use Choose package.",
+          ),
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "agent-import-choose-binding",
+            ),
+            disabled=!ready,
+            on_click=dispatch(AgentImport(ChooseBinding)),
+            "Choose matching Town binding and inspect",
+          ),
+          p(
+            "Both selected files are sent only to this Desk host for local inspection. Selection does not import a Book, share it through Town, or run agent work. File selections before inspection are kept only in this tab.",
+          ),
+        ])
+      } else {
+        @html.nothing
+      },
       if session.status == "imported" {
         div([
           strong(
             "Book imported. Every included file matches the inspected package.",
           ),
           p("Folder: " + session.destination),
+          if session.exact_required {
+            p(
+              "The original Town source binding was retained and every included file was checked. In Town, refresh Imported outputs for this same Book library or catalog. This does not upload or publish the Book.",
+            )
+          } else {
+            @html.nothing
+          },
           button(
             class="primary-button full",
             attrs=@html.Attrs::build().data_set("testid", "agent-import-open"),
@@ -263,6 +310,42 @@ fn render_agent_import_inspection(reply : AgentImportReply) -> @rabbita.Html {
       p(
         "Import retains the included knowledge and learning. Opening the Book does not launch packaged apps or start agent work.",
       ),
+      if reply.town_binding is Null {
+        p("Ordinary local import. No Town listing provenance is created.")
+      } else {
+        div(
+          attrs=@html.Attrs::build().data_set(
+            "testid", "agent-import-binding-inspection",
+          ),
+          [
+            h3("Original Town source binding"),
+            p("Listing: " + handoff_text(reply.town_binding, "listing_id")),
+            p(
+              "Publisher principal: " +
+              handoff_text(reply.town_binding, "publisher_principal_id"),
+            ),
+            p("Tenant: " + handoff_text(reply.town_binding, "tenant_id")),
+            p(
+              "Expected package: " +
+              handoff_text(
+                handoff_field(reply.town_binding, "source"),
+                "package_filename",
+              ),
+            ),
+            p(
+              "Binding digest: " +
+              handoff_text(reply.town_binding, "binding_digest"),
+            ),
+            p(
+              "This publisher-declared expectation matches the inspected package bytes. It is not a signature, factual review, or permission to run the Book. Import preserves the binding for Town's read-only imported outputs view.",
+            ),
+            details(class="technical-details", [
+              summary("Inspect complete original binding"),
+              pre(reply.town_binding.stringify(indent=2)),
+            ]),
+          ],
+        )
+      },
       h3("Included contents"),
       ul(
         inspection.files.map(file => {

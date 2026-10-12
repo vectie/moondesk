@@ -210,7 +210,55 @@ struct MoonFlowRunProjection {
   intervention_scorecard : MoonFlowInterventionScorecard?
   run_control : MoonFlowRunControl?
   operator_surface : MoonFlowOperatorSurface?
+  owner_summary : MoonFlowOwnerSummary?
+  owner_summary_observation : String?
+  single_step_actions : Array[MoonFlowSingleStepAction]?
+  single_step_setup : Json?
 } derive(FromJson)
+
+///|
+struct MoonFlowOwnerSummary {
+  contract_id : String
+  run_id : String
+  book_id : String
+  declaration_revision : String
+  source_digest : String
+  last_sequence : Int
+  last_event_id : String?
+  recorded_at : String?
+  outcome : String
+  outcome_label : String
+  next_action : String
+  next_actor_id : String?
+  next_role : String?
+  actions : Array[MoonFlowOwnerAction]
+  evidence : Array[MoonFlowOwnerEvidence]
+  acceptance_boundary : String
+} derive(FromJson, ToJson)
+
+///|
+struct MoonFlowOwnerAction {
+  work_item_id : String
+  product_id : String
+  status : String
+  action : String
+  next_actor_id : String?
+  next_role : String?
+  reasons : Array[String]
+  depends_on : Array[String]
+} derive(FromJson, ToJson)
+
+///|
+struct MoonFlowOwnerEvidence {
+  work_item_id : String
+  attempt_id : String
+  result_id : String
+  output_digest : String
+  artifacts : Array[String]
+  review_id : String
+  review_artifact : String
+  reviewer_id : String
+} derive(FromJson, ToJson)
 
 ///|
 struct MoonFlowCompositionItem {
@@ -244,6 +292,10 @@ struct MoonFlowCompositionNodePosition {
 
 ///|
 struct MoonFlowComposition {
+  workspace_id : String?
+  plan_source_unconfirmed : Bool?
+  source_graph : Json?
+  plan_editor : MoonFlowPlanEditor?
   selected_item_ids : Array[String]
   items : Array[MoonFlowCompositionItem]
   node_positions : Array[MoonFlowCompositionNodePosition]?

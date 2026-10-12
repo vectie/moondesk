@@ -8,6 +8,11 @@ MoonDesk is a pure MoonBit desktop host and Rabbita UI for browsing MoonBook
 workspaces, staging inbox notes, inspecting MoonFind-authored work, and
 reviewing MoonClaw run artifacts.
 
+Saved data tools include [duplicate review and one-record-per-key downloads](docs/TABLE_DUPLICATES.md), [JSON/JSONL record downloads](docs/TABLE_RECORD_EXPORT.md) from filtered rows or grouped summaries, and [reshaping wide columns into long rows](docs/LOCAL_TABLE_RESHAPE.md) with CSV/XLSX downloads.
+
+For unsaved JSON corrections, [review and replace one nested value](docs/SOURCE_JSON_REPLACEMENT.md) by exact pointer while preserving surrounding tokens.
+For nested JSON review, [compare a pasted reference with the current draft](docs/SOURCE_JSON_COMPARISON.md), select changed values and download an exact-token difference report.
+
 Current milestone slice:
 
 - workspace explorer, previews, raw links, search, favorites, and inbox

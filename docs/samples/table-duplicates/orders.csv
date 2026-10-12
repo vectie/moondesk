@@ -1,0 +1,6 @@
+id,region,amount,status
+A,East,10,Open
+B,West,7,Open
+A,West,30,Open
+A,East,20,Closed
+C,East,2,Open

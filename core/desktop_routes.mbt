@@ -201,6 +201,18 @@ pub fn workspace_preview_url(workspace_id : String, path : String) -> String {
 }
 
 ///|
+pub fn workspace_json_table_url(
+  workspace_id : String,
+  path : String,
+  format? : String = "html",
+) -> String {
+  desktop_api_url(["api", "workspaces", workspace_id, "json-table"], query=[
+    ("path", path),
+    ("format", format),
+  ])
+}
+
+///|
 pub fn workspace_document_url(workspace_id : String, path : String) -> String {
   desktop_api_url(["api", "workspaces", workspace_id, "document"], query=[
     ("path", path),
@@ -596,6 +608,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
       "POST",
     ]),
     desktop_api_route_contract(workspace_action_route("office"), ["GET", "HEAD"]),
+    desktop_api_route_contract(workspace_action_route("json-table"), [
+      "GET", "HEAD",
+    ]),
     desktop_api_route_contract(workspace_action_route("office/save"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("office/export"), [
       "GET", "HEAD",

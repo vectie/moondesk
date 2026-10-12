@@ -45,9 +45,22 @@ fn agent_import_url(library : String, id : String) -> String {
 }
 
 ///|
-fn choose_agent_package_click(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+fn choose_agent_package_click(
+  dispatch : Dispatch[Msg],
+  exact? : Bool = false,
+) -> @rabbita.Cmd {
   @cmd.custom_cmd(scheduler => {
-    scheduler.add(dispatch(AgentImport(ChoosePackage(portable_book_new_id()))))
+    scheduler.add(
+      dispatch(
+        AgentImport(
+          if exact {
+            ChooseExactPackage(portable_book_new_id())
+          } else {
+            ChoosePackage(portable_book_new_id())
+          },
+        ),
+      ),
+    )
   })
 }
 
@@ -72,17 +85,61 @@ fn agent_import_effect_cmd(
           parse_browser_import_batch(text)
         },
       )
+    PickAgentBinding(generation, request) =>
+      return @rabbita.perform(
+        result => {
+          dispatch(AgentImport(BindingPicked(generation, request, result)))
+        },
+        async fn() noraise {
+          let text : String = browser_pick_agent_binding().wait().cast() catch {
+              _ => return Err("Could not choose the Town binding file.")
+            }
+          parse_browser_import_batch(text)
+        },
+      )
+    StageExactAgentPackage(generation, request, file, binding) =>
+      (
+        generation,
+        request,
+        @http.post(agent_import_url(session.library, ""))
+        .with_json(
+          (
+            {
+              "expected_library": session.library,
+              "operation_id": session.operation_id,
+              "filename": file.name,
+              "data_url": file.content,
+              "town_binding": binding,
+            } : Json),
+        )
+        .expect_json(result => {
+          dispatch(
+            AgentImport(
+              ImportResponse(
+                generation,
+                request,
+                http_result(
+                  result, "Could not inspect this package and Town binding. Check they are the unchanged matching files.",
+                ),
+              ),
+            ),
+          )
+        }),
+      )
     StageAgentPackage(generation, request, file) =>
       (
         generation,
         request,
         @http.post(agent_import_url(session.library, ""))
-        .with_json({
-          "expected_library": session.library,
-          "operation_id": session.operation_id,
-          "filename": file.name,
-          "data_url": file.content,
-        })
+        .with_json(
+          (
+            {
+              "expected_library": session.library,
+              "operation_id": session.operation_id,
+              "filename": file.name,
+              "data_url": file.content,
+            } : Json),
+        )
         .expect_json(result => {
           dispatch(
             AgentImport(
@@ -103,12 +160,20 @@ fn agent_import_effect_cmd(
         generation,
         request,
         @http.post(agent_import_url(session.library, session.operation_id))
-        .with_json({
-          "expected_library": session.library,
-          "operation_id": session.operation_id,
-          "destination_folder": session.destination,
-          "package_sha256": reply.source.package_sha256,
-        })
+        .with_json(
+          (
+            {
+              "expected_library": session.library,
+              "operation_id": session.operation_id,
+              "destination_folder": session.destination,
+              "package_sha256": reply.source.package_sha256,
+              "binding_digest": if session.exact_required {
+                session.binding_digest.to_json()
+              } else {
+                Json::null()
+              },
+            } : Json),
+        )
         .expect_json(result => {
           dispatch(
             AgentImport(

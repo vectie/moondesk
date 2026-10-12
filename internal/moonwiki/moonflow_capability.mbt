@@ -70,7 +70,7 @@ fn moonflow_capability_evidence_from_values(
 async fn moonflow_capability_evidence() -> Json {
   let root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
   let platform = town_platform_evidence()
-  moonflow_capability_evidence_from_values(
+  let evidence = moonflow_capability_evidence_from_values(
     platform,
     false,
     root != "",
@@ -80,6 +80,20 @@ async fn moonflow_capability_evidence() -> Json {
     root,
     execution_sandbox_available=execution_sandbox_client_available(),
   )
+  guard evidence is Object(fields) else { return evidence }
+  let planning = @trusted_host.moonflow_planning_runtime()
+  fields["planning_available"] = (planning is Ok(_)).to_json()
+  fields["planning_boundary"] = {
+    "kind": "trusted-native-flow-planning.v1",
+    "available": planning is Ok(_),
+    "operations": ["prepare-form", "apply-prepared"],
+    "dispatch_allowed": false,
+    "message": match planning {
+      Ok(_) => "Local plan preparation and import are available"
+      Err(message) => message
+    },
+  }
+  evidence
 }
 
 ///|
@@ -99,7 +113,7 @@ async fn handle_moonflow_capability(
       message=if available {
         "Flow preparation is available"
       } else {
-        "Flow preparation is not available in the current setup"
+        "Flow execution controls are unavailable; local plan preparation uses its separate bounded route"
       },
       next_action=if available { "prepare_flow" } else { "review_flow_setup" },
     ),

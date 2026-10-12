@@ -11,12 +11,16 @@ fn agent_import_runtime_runner(
       ("source", [package_path]) => @trusted_host.Source(package_path~)
       ("import", [destination, package_path, source_path]) =>
         @trusted_host.Import(destination~, package_path~, source_path~)
+      ("import-exact", [destination, package_path, source_path]) =>
+        @trusted_host.ImportExact(destination~, package_path~, source_path~)
       ("verify-import", [destination, package_path]) =>
         @trusted_host.VerifyImport(destination~, package_path~)
       _ => return Err("Unsupported MoonBook receive operation")
     }
     runtime.run(root, operation, may_run=() => {
-      !(operation is @trusted_host.Import(..)) || is_current()
+      !(operation is @trusted_host.Import(..) ||
+      operation is @trusted_host.ImportExact(..)) ||
+      is_current()
     })
   }
 }
@@ -127,7 +131,11 @@ async fn handle_agent_import(
     )
     return
   }
-  let runtime = match @trusted_host.moonbook_import_runtime() {
+  let needs_exact = stage
+    .map(value => value.town_binding is Some(_))
+    .unwrap_or(false) ||
+    request.map(value => value.binding_digest is Some(_)).unwrap_or(false)
+  let runtime = match @trusted_host.moonbook_import_runtime(exact=needs_exact) {
     Ok(value) => value
     Err(message) => {
       send_api_error(conn, method_, 503, "Service Unavailable", message)
@@ -157,7 +165,7 @@ async fn handle_agent_import(
   } catch {
     _ => {
       send_api_error(
-        conn, method_, 409, "Conflict", "This package or destination could not be verified. Check this operation before starting another import; existing files were left in place.",
+        conn, method_, 409, "Conflict", "This package, its Town binding, or the destination could not be verified. For Town imports, choose the original matching package and .binding.json files. Check this operation before starting another import; existing files were left in place.",
       )
       return
     }

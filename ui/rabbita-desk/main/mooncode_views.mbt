@@ -1169,6 +1169,7 @@ fn render_source_editor(
     class="source-editor",
     attrs=@html.Attrs::build()
       .data_set("testid", "source-editor")
+      .data_set("search-engine", "moonedit")
       .data_set("workspace-id", source.workspace_id)
       .data_set("source-path", source.requested_path)
       .data_set(
@@ -1232,6 +1233,7 @@ fn render_source_editor(
         )
       },
       div(class="source-editor-toolbar", [
+        render_source_json_table_action(source),
         @html.label(class="editor-path-field", [
           span("Source path"),
           input(
@@ -1279,41 +1281,11 @@ fn render_source_editor(
           "Reload external version",
         ),
       ]),
-      div(class="source-editor-find", [
-        @html.label([
-          span("Find"),
-          input(
-            attrs=@html.Attrs::build()
-              .data_set("testid", "source-find")
-              .aria_label("Find in source file")
-              .disabled(!source_pane_editable(source)),
-            placeholder="Find in file",
-          ),
-        ]),
-        button(
-          class="secondary-button",
-          attrs=@html.Attrs::build()
-            .data_set("action", "source-find-previous")
-            .data_set("testid", "source-find-previous"),
-          disabled=!source_pane_editable(source),
-          "Previous",
-        ),
-        button(
-          class="secondary-button",
-          attrs=@html.Attrs::build()
-            .data_set("action", "source-find-next")
-            .data_set("testid", "source-find-next"),
-          disabled=!source_pane_editable(source),
-          "Next",
-        ),
-        span(
-          class="source-find-result",
-          attrs=@html.Attrs::build()
-            .data_set("testid", "source-find-result")
-            .aria_live("polite"),
-          "No search",
-        ),
-      ]),
+      render_source_literal_search(dispatch, source),
+      render_source_line_authoring(dispatch, source),
+      render_source_json_layout(dispatch, source),
+      render_source_table_import(dispatch, source),
+      render_source_outline(dispatch, source),
       div(class="source-editor-workbench", [
         pre(
           class="source-editor-line-numbers",
@@ -1337,6 +1309,26 @@ fn render_source_editor(
             .wrap("off")
             .spellcheck(false)
             .autocapitalize("off")
+            .on_keydown(keyboard => {
+              if !source_pane_editable(source) {
+                return @rabbita.none
+              }
+              match
+                source_line_shortcut(
+                  keyboard.key(),
+                  keyboard.ctrl_key() || keyboard.meta_key(),
+                  keyboard.shift_key(),
+                  keyboard.alt_key(),
+                  keyboard.is_composing(),
+                ) {
+                Some(action) => {
+                  @dom.IsEvent::prevent_default(keyboard)
+                  @dom.IsEvent::stop_propagation(keyboard)
+                  dispatch(SourcePane(action))
+                }
+                None => @rabbita.none
+              }
+            })
             .disabled(!source_pane_editable(source)),
           rows=12,
           value=source.draft,

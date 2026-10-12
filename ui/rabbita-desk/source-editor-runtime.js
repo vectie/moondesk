@@ -1,3 +1,9 @@
+import { syncMarkdownLinks, changeMarkdownLinks, actMarkdownLinks } from './source-markdown-links-ui.js'
+import { syncJsonExplorer, actJsonExplorer, changeJsonReplacement } from './source-json-explorer.js'
+import { syncJsonComparison, changeJsonComparison, actJsonComparison } from './source-json-comparison-ui.js'
+import { codeOutline } from './source-code-outline.js'
+import { parseSourceLocation, SourceNavigation } from './source-navigation.js'
+
 const KEYWORDS = {
   MoonBit: [
     'async', 'break', 'catch', 'const', 'continue', 'derive', 'else', 'enum',
@@ -38,7 +44,7 @@ const MAX_HIGHLIGHT_CHARACTERS = 120_000
 let installed = false
 let completionState = null
 let completionListSequence = 0
-let pendingReveal = null
+const navigation = new SourceNavigation()
 const renderedHighlights = new WeakMap()
 
 function editorParts(element) {
@@ -169,7 +175,59 @@ function syncEditor(element) {
     if (parts.diagnostics.textContent !== message) parts.diagnostics.textContent = message
     parts.diagnostics.classList.toggle('has-problem', Boolean(problem))
   }
+  syncNavigation(parts)
+  syncCodeOutline(parts)
+  syncJsonExplorer(parts)
+  syncJsonComparison(parts)
+  syncMarkdownLinks(parts)
   applyPendingReveal(parts)
+}
+
+const outlineCache = new WeakMap()
+
+function syncCodeOutline(parts) {
+  let panel = parts.surface.querySelector('[data-code-outline]')
+  if (!panel) {
+    panel = document.createElement('div'); panel.setAttribute('data-code-outline', '')
+    panel.setAttribute('aria-label', 'Local code declaration outline')
+    const filter = document.createElement('input'); filter.setAttribute('data-code-outline-filter', '')
+    filter.placeholder = 'Filter declarations'; filter.setAttribute('aria-label', 'Filter local code declarations')
+    const status = document.createElement('p'); status.setAttribute('data-code-outline-status', ''); status.setAttribute('role', 'status')
+    const list = document.createElement('div'); list.setAttribute('data-code-outline-list', '')
+    panel.append(filter, status, list); parts.surface.append(panel)
+  }
+  const filter = panel.querySelector('[data-code-outline-filter]')
+  const context = semanticContext(parts)
+  const identity = `${context.workspaceId}\0${context.path}`
+  const previous = outlineCache.get(panel)
+  if (previous && previous.identity !== identity) filter.value = ''
+  const signature = `${identity}\0${parts.language}\0${parts.editor.disabled}\0${filter.value}\0${parts.editor.value}`
+  if (previous?.signature === signature) return
+  const outline = codeOutline(parts.editor.value, parts.language)
+  const entries = outline.entries.filter(entry => entry.name.toLowerCase().includes(filter.value.toLowerCase()))
+  panel.hidden = !outline.supported
+  filter.disabled = parts.editor.disabled || Boolean(outline.unavailable)
+  panel.querySelector('[data-code-outline-status]').textContent = outline.unavailable ||
+    `Local declaration hints · ${entries.length} matching; showing ${Math.min(entries.length, 100)}. Not compiler symbols.`
+  panel.querySelector('[data-code-outline-list]').replaceChildren(...entries.slice(0, 100).map(entry => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'secondary-button'
+    button.dataset.action = 'source-code-outline-select'; button.dataset.codeOutlineStart = String(entry.start)
+    button.textContent = `${entry.kind} ${entry.name} · L${entry.line}`; button.disabled = parts.editor.disabled
+    return button
+  }))
+  outlineCache.set(panel, { identity, signature, text: parts.editor.value, entries })
+}
+
+function selectCodeOutline(parts, action) {
+  if (!parts || parts.editor.disabled) return
+  const panel = parts.surface.querySelector('[data-code-outline]')
+  const snapshot = outlineCache.get(panel)
+  const context = semanticContext(parts)
+  if (!snapshot || snapshot.text !== parts.editor.value || snapshot.identity !== `${context.workspaceId}\0${context.path}`) {
+    syncCodeOutline(parts); return
+  }
+  const entry = snapshot.entries.find(entry => entry.start === Number(action.dataset.codeOutlineStart))
+  if (entry) revealSourceLocation(parts, { path: context.path, ...entry })
 }
 
 function wordRange(editor) {
@@ -272,11 +330,8 @@ function revealLocalDefinition(element) {
     const match = pattern.exec(line)
     if (match) {
       const start = offset + match.index + match[0].lastIndexOf(word)
-      parts.editor.focus()
-      parts.editor.setSelectionRange(start, start + word.length)
-      const lineHeight = Number.parseFloat(getComputedStyle(parts.editor).lineHeight) || 20
-      parts.editor.scrollTop = Math.max(0, lineIndex * lineHeight - lineHeight * 3)
-      syncEditor(parts.editor)
+      revealSourceLocation(parts, { path: semanticContext(parts).path, start, end: start + word.length,
+        line: lineIndex + 1, column: 1 })
       if (parts.diagnostics instanceof HTMLElement) parts.diagnostics.textContent = `Local definition: ${word}`
       return true
     }
@@ -434,43 +489,115 @@ export function semanticLocations(payload) {
   })
 }
 
-function revealSourceLocation(parts, location) {
-  if (!location?.path) return
+function navigationSnapshot(parts) {
+  return { path: semanticContext(parts).path, start: parts.editor.selectionStart,
+    end: parts.editor.selectionEnd, direction: parts.editor.selectionDirection,
+    scrollTop: parts.editor.scrollTop, scrollLeft: parts.editor.scrollLeft,
+    text: parts.editor.value }
+}
+
+function navigationMessage(parts, message) {
+  const status = parts.surface.querySelector('[data-source-navigation-status]')
+  if (status && status.textContent !== message) status.textContent = message
+}
+
+function syncNavigation(parts) {
+  navigation.context(semanticContext(parts).workspaceId)
+  let toolbar = parts.surface.querySelector('[data-source-navigation]')
+  if (!toolbar) {
+    toolbar = document.createElement('div')
+    toolbar.className = 'source-editor-toolbar'
+    toolbar.setAttribute('data-source-navigation', '')
+    toolbar.setAttribute('aria-label', 'Source location navigation')
+    for (const [action, label] of [['back', 'Back to location'], ['forward', 'Forward to location'], ['cancel', 'Cancel navigation']]) {
+      const button = document.createElement('button')
+      button.type = 'button'; button.className = 'secondary-button'
+      button.dataset.action = `source-navigation-${action}`; button.textContent = label
+      toolbar.append(button)
+    }
+    const input = document.createElement('input')
+    input.dataset.sourceLocation = ''; input.placeholder = 'Line:column'
+    input.setAttribute('aria-label', 'Go to source line and UTF-16 column')
+    toolbar.append(input)
+    const go = document.createElement('button')
+    go.type = 'button'; go.className = 'secondary-button'
+    go.dataset.action = 'source-navigation-go'; go.textContent = 'Go to location'
+    toolbar.append(go)
+    const status = document.createElement('span')
+    status.setAttribute('data-source-navigation-status', '')
+    status.setAttribute('role', 'status'); toolbar.append(status)
+    parts.surface.append(toolbar)
+  }
+  for (const direction of ['back', 'forward']) {
+    toolbar.querySelector(`[data-action="source-navigation-${direction}"]`).disabled =
+      parts.editor.disabled || Boolean(navigation.pending) || navigation[direction].length === 0
+  }
+  toolbar.querySelector('[data-action="source-navigation-cancel"]').disabled = !navigation.pending
+  toolbar.querySelector('[data-action="source-navigation-go"]').disabled = parts.editor.disabled
+}
+
+function navigateAction(parts, action) {
+  if (!parts) return
+  if (action === 'cancel') { navigation.cancel(); navigationMessage(parts, 'Navigation canceled'); syncNavigation(parts); return }
+  if (parts.editor.disabled) return
+  if (action === 'go') {
+    try {
+      const location = parseSourceLocation(parts.surface.querySelector('[data-source-location]').value, parts.editor.value)
+      revealSourceLocation(parts, { path: semanticContext(parts).path, ...location })
+    } catch (error) { navigationMessage(parts, error.message) }
+  } else {
+    const target = navigation[action]?.at(-1)
+    if (target && !navigation.pending) revealSourceLocation(parts, target, action)
+  }
+}
+
+function revealSourceLocation(parts, location, direction = 'jump') {
+  if (!location?.path || parts.editor.disabled) return
   const context = semanticContext(parts)
+  navigation.context(context.workspaceId)
+  navigation.begin(navigationSnapshot(parts), location, direction)
   if (context.path !== location.path) {
-    pendingReveal = { ...location, workspaceId: context.workspaceId, originPath: context.path }
     const pathInput = parts.surface.querySelector('[data-testid="source-path"]')
     const open = parts.surface.querySelector('[data-testid="source-open"]')
-    if (pathInput instanceof HTMLInputElement && open instanceof HTMLButtonElement) {
+    if (pathInput instanceof HTMLInputElement && open instanceof HTMLButtonElement && !open.disabled) {
       pathInput.value = location.path
       pathInput.dispatchEvent(new Event('input', { bubbles: true }))
       open.click()
-    }
+      navigationMessage(parts, `Opening ${location.path}…`)
+    } else navigation.cancel()
+    syncNavigation(parts)
     return
   }
-  const lines = parts.editor.value.split('\n')
-  const lineIndex = Math.max(0, Math.min(lines.length - 1, location.line - 1))
-  let offset = 0
-  for (let index = 0; index < lineIndex; index += 1) offset += lines[index].length + 1
-  const columnOffset = Math.max(0, Math.min(lines[lineIndex].length, location.column - 1))
-  const start = offset + columnOffset
-  parts.editor.focus()
-  parts.editor.setSelectionRange(start, start)
-  const lineHeight = Number.parseFloat(getComputedStyle(parts.editor).lineHeight) || 20
-  parts.editor.scrollTop = Math.max(0, lineIndex * lineHeight - lineHeight * 3)
-  pendingReveal = null
-  syncEditor(parts.editor)
+  applyPendingReveal(parts)
 }
 
 function applyPendingReveal(parts) {
-  if (!pendingReveal) return
+  const pending = navigation.pending
+  if (!pending) return
   const context = semanticContext(parts)
-  if (context.workspaceId !== pendingReveal.workspaceId ||
-    (context.path !== pendingReveal.path && context.path !== pendingReveal.originPath)) {
-    pendingReveal = null
-    return
+  if (context.path !== pending.target.path && context.path !== pending.origin.path) {
+    navigation.cancel(); syncNavigation(parts); return
   }
-  if (context.path === pendingReveal.path) revealSourceLocation(parts, pendingReveal)
+  if (context.path !== pending.target.path || parts.editor.disabled) return
+  const location = navigation.arrive(context.path)
+  const lines = parts.editor.value.split('\n')
+  const lineIndex = Math.max(0, Math.min(lines.length - 1, (location.line || 1) - 1))
+  const base = lines.slice(0, lineIndex).reduce((sum, line) => sum + line.length + 1, 0)
+  const clamp = value => {
+    let offset = Math.max(0, Math.min(parts.editor.value.length, value))
+    if (/[\uD800-\uDBFF]/.test(parts.editor.value[offset - 1] || '') && /[\uDC00-\uDFFF]/.test(parts.editor.value[offset] || '')) offset -= 1
+    return offset
+  }
+  const start = clamp(location.start ?? location.offset ?? (base + Math.min(lines[lineIndex].length, (location.column || 1) - 1)))
+  const end = clamp(location.end ?? start)
+  parts.editor.focus(); parts.editor.setSelectionRange(start, end, location.direction || 'none')
+  const lineHeight = Number.parseFloat(getComputedStyle(parts.editor).lineHeight) || 20
+  parts.editor.scrollTop = location.scrollTop ?? Math.max(0, lineIndex * lineHeight - lineHeight * 3)
+  parts.editor.scrollLeft = location.scrollLeft ?? 0
+  navigationMessage(parts, location.text !== undefined && location.text !== parts.editor.value
+    ? 'Returned to location; text changed, selection is bounded to current content'
+    : `Location: ${context.path}`)
+  syncEditor(parts.editor)
 }
 
 async function runCompilerDiagnostics(element) {
@@ -516,7 +643,20 @@ export function installSourceEditorRuntime() {
   if (installed) return
   installed = true
   document.addEventListener('input', event => {
+    if (event.target instanceof HTMLInputElement && event.target.matches('[data-markdown-links-replacement]')) {
+      changeMarkdownLinks(editorParts(event.target))
+    }
+    if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-json-compare-reference]')) {
+      changeJsonComparison(editorParts(event.target))
+    }
+    if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-json-replacement]')) {
+      changeJsonReplacement(editorParts(event.target))
+    }
+    if (event.target instanceof HTMLInputElement && event.target.matches('[data-code-outline-filter]')) {
+      const parts = editorParts(event.target); if (parts) syncCodeOutline(parts)
+    }
     if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-testid="source-editor-input"]')) {
+      navigation.cancel()
       const parts = editorParts(event.target)
       if (parts) parts.surface.dataset.sourceRuntimeDirty = 'true'
       syncEditor(event.target)
@@ -545,14 +685,33 @@ export function installSourceEditorRuntime() {
     }
     const action = event.target instanceof Element ? event.target.closest('[data-action]') : null
     if (!(action instanceof HTMLElement)) return
-    if (action.dataset.action === 'source-compiler-check') void runCompilerDiagnostics(action)
+    if (action.dataset.action.startsWith('source-markdown-links-')) actMarkdownLinks(editorParts(action), action, revealSourceLocation)
+    else if (action.dataset.action.startsWith('source-json-compare-')) actJsonComparison(editorParts(action), action, revealSourceLocation)
+    else if (action.dataset.action.startsWith('source-json-')) actJsonExplorer(editorParts(action), action, revealSourceLocation)
+    else if (action.dataset.action === 'source-code-outline-select') selectCodeOutline(editorParts(action), action)
+    else if (action.dataset.action.startsWith('source-navigation-')) navigateAction(editorParts(action), action.dataset.action.slice('source-navigation-'.length))
+    else if (action.dataset.action === 'source-compiler-check') void runCompilerDiagnostics(action)
     else if (action.dataset.action === 'source-go-definition') void runDefinitionLookup(action)
     else if (action.dataset.action === 'source-find-references') void runReferencesLookup(action)
   }, true)
   document.addEventListener('keydown', event => {
     const editor = event.target
+    if (editor instanceof HTMLInputElement && editor.matches('[data-json-pointer]') && event.key === 'Enter' && !event.isComposing) {
+      event.preventDefault()
+      const parts = editorParts(editor)
+      const action = parts?.surface.querySelector('[data-action="source-json-go"]')
+      if (action) actJsonExplorer(parts, action, revealSourceLocation)
+      return
+    }
+    if (editor instanceof HTMLInputElement && editor.matches('[data-source-location]') && event.key === 'Enter') {
+      event.preventDefault(); navigateAction(editorParts(editor), 'go'); return
+    }
     if (!(editor instanceof HTMLTextAreaElement) || !editor.matches('[data-testid="source-editor-input"]')) return
-    if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
+    if (event.isComposing) return
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'g' && !event.altKey && !event.shiftKey) {
+      event.preventDefault()
+      editorParts(editor)?.surface.querySelector('[data-source-location]')?.focus()
+    } else if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
       event.preventDefault()
       showCompletions(editor)
     } else if (event.key === 'F12' && event.shiftKey) {

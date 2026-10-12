@@ -5,6 +5,7 @@ pub struct MoonBookExportRuntime {
   priv executable : String
   priv stamp : MoonBookExecutableStamp
   priv supports_import : Bool
+  priv supports_exact_import : Bool
 }
 
 ///|
@@ -16,6 +17,11 @@ pub(all) enum MoonBookExportOperation {
   Verify(package_path~ : String)
   Source(package_path~ : String)
   Import(destination~ : String, package_path~ : String, source_path~ : String)
+  ImportExact(
+    destination~ : String,
+    package_path~ : String,
+    source_path~ : String
+  )
   VerifyImport(destination~ : String, package_path~ : String)
 }
 
@@ -106,14 +112,25 @@ fn moonbook_operation_arguments(
       }
       Ok(["agent", command, package_path])
     }
-    Import(destination~, package_path~, source_path~) => {
+    Import(destination~, package_path~, source_path~)
+    | ImportExact(destination~, package_path~, source_path~) => {
       guard moonbook_import_arguments_valid(root, destination, package_path) &&
         moonbook_path_within(root, source_path) &&
         path_parent(source_path) == path_parent(package_path) &&
         source_path != package_path else {
         return Err("MoonBook import arguments are invalid")
       }
-      Ok(["agent", "import", package_path, destination, source_path])
+      Ok([
+        "agent",
+        if operation is ImportExact(..) {
+          "import-exact"
+        } else {
+          "import"
+        },
+        package_path,
+        destination,
+        source_path,
+      ])
     }
     VerifyImport(destination~, package_path~) => {
       guard moonbook_import_arguments_valid(root, destination, package_path) else {
@@ -327,8 +344,25 @@ fn moonbook_compatible_import_help(status : Int, help : String) -> Bool {
 }
 
 ///|
-pub async fn moonbook_import_runtime() -> Result[MoonBookExportRuntime, String] {
+fn moonbook_compatible_exact_import_help(status : Int, help : String) -> Bool {
+  moonbook_compatible_import_help(status, help) &&
+  help
+  .split("\n")
+  .any(line => {
+    line.trim() ==
+    "moonbook agent import-exact <bundle> <new-book> <town-binding.json>"
+  })
+}
+
+///|
+pub async fn moonbook_import_runtime(
+  exact? : Bool = false,
+) -> Result[MoonBookExportRuntime, String] {
   match moonbook_resolve_runtime(true) {
+    Ok(runtime) if exact && !runtime.supports_exact_import =>
+      Err(
+        "The configured MoonBook executable needs agent import-exact support for a Town binding. Ordinary local package import remains available.",
+      )
     Ok(runtime) if runtime.supports_import => Ok(runtime)
     _ => Err("A compatible native MoonBook package importer is unavailable")
   }
@@ -381,7 +415,11 @@ async fn moonbook_resolve_runtime(
       current == stamp else {
       continue
     }
-    return Ok({ executable, stamp, supports_import, })
+    let supports_exact_import = moonbook_compatible_exact_import_help(
+      output.status,
+      stdout + "\n" + stderr,
+    )
+    return Ok({ executable, stamp, supports_import, supports_exact_import, })
   }
   Err("A compatible native MoonBook package exporter is unavailable")
 }
@@ -418,7 +456,8 @@ async fn moonbook_validate_operation_paths(
         Err(message) => return Err(message)
         Ok(_) => ()
       }
-    Import(destination~, package_path~, source_path~) => {
+    Import(destination~, package_path~, source_path~)
+    | ImportExact(destination~, package_path~, source_path~) => {
       for path in [package_path, source_path] {
         match canonical_regular_file("MoonBook import proof", path) {
           Err(message) => return Err(message)
@@ -463,6 +502,11 @@ pub async fn MoonBookExportRuntime::run(
     !self.supports_import {
     return Err("MoonBook does not support reviewed local package import")
   }
+  if operation is ImportExact(..) && !self.supports_exact_import {
+    return Err(
+      "This MoonBook executable does not support exact Town package import. Update the configured MoonBook executable, then check this operation.",
+    )
+  }
   let args = match moonbook_operation_arguments(root, operation) {
     Ok(args) => args
     Err(message) => return Err(message)
@@ -487,7 +531,7 @@ pub async fn MoonBookExportRuntime::run(
       self.executable,
       args,
       root,
-      if is_pack || operation is Import(..) {
+      if is_pack || operation is Import(..) || operation is ImportExact(..) {
         moonbook_pack_timeout_ms
       } else {
         moonbook_read_timeout_ms

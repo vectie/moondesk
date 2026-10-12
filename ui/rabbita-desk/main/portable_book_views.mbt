@@ -73,6 +73,7 @@ fn render_portable_book(
               on_input=value => dispatch(PortableBook(SetVersion(value))),
             ),
           ]),
+          render_portable_book_groups(dispatch, state),
           render_portable_book_picker(dispatch, state),
           render_portable_book_human_result_picker(dispatch, state),
           p(
@@ -196,7 +197,7 @@ fn render_portable_book_picker(
   let busy = state.pending is Some(_)
   let locked = portable_book_inputs_locked(state)
   details(class="technical-details", [
-    summary("Additional regular files (\{state.paths.length()} selected)"),
+    summary("Choose files (\{portable_book_group_count(state)} selected)"),
     p(
       "No additional files are preselected. The standard package also includes accepted Book content; the full included-member list appears after preparation. Choose individual files, not folders. The host validates each selection as a regular file within this Book.",
     ),
@@ -285,6 +286,11 @@ fn render_portable_book_picker(
               }) +
               entry.display_name,
             )
+          },
+          if entry.kind != Directory {
+            render_portable_group_add_file(dispatch, state, entry)
+          } else {
+            @html.nothing
           },
           small(" " + entry.path),
         ])

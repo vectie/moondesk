@@ -1,0 +1,6 @@
+customer,region,amount,status
+Northwind 東京,East,1250.5,Open
+Bluebird,West,90,Paid
+"Acme, Inc.",East,300,open
+River,West,2500,Open
+Draft,East,,Open

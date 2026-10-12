@@ -204,6 +204,7 @@ test "composition projects exact catalog evidence without dropping graph fields"
     resolution,
   )
   assert_eq(json_string(response, "catalog_id", default=""), "catalog-r1")
+  assert_eq(json_object_field(response, "source_graph"), Some(graph))
   let item = match json_object_field(response, "items") {
     Some(Array([value])) => value
     _ => fail("expected one enriched item")

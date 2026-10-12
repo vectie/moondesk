@@ -217,6 +217,59 @@ test "MoonBook local import requires reviewed source capability and typed confin
 }
 
 ///|
+test "MoonBook exact import uses only the explicit exact command and original sibling binding" {
+  let help =
+    #|moonbook agent pack [root] [version] [output] [outputs.json]
+    #|moonbook agent source <bundle>
+    #|moonbook agent inspect <bundle>
+    #|moonbook agent verify <bundle>
+    #|moonbook agent import <bundle> <new-book> [source.json]
+    #|moonbook agent verify-import <bundle> <book>
+  assert_true(moonbook_compatible_import_help(2, help))
+  assert_false(moonbook_compatible_exact_import_help(2, help))
+  assert_true(
+    moonbook_compatible_exact_import_help(
+      2,
+      help +
+      "\nmoonbook agent import-exact <bundle> <new-book> <town-binding.json>",
+    ),
+  )
+  let root = "/suite"
+  let destination = root + "/books/new"
+  let package_path = root + "/staged/package.moonbook-agent"
+  let source_path = root + "/staged/town-binding.json"
+  assert_eq(
+    moonbook_operation_arguments(
+      root,
+      ImportExact(destination~, package_path~, source_path~),
+    ).unwrap(),
+    ["agent", "import-exact", package_path, destination, source_path],
+  )
+  assert_true(
+    moonbook_operation_arguments(
+      root,
+      ImportExact(
+        destination="/suite/books/../other",
+        package_path~,
+        source_path~,
+      ),
+    )
+    is Err(_),
+  )
+  assert_true(
+    moonbook_operation_arguments(
+      root,
+      ImportExact(
+        destination~,
+        package_path~,
+        source_path="/suite/other/town-binding.json",
+      ),
+    )
+    is Err(_),
+  )
+}
+
+///|
 async test "MoonBook import path checks reject aliases existing roots and dangling targets" {
   let root = @fs.realpath(@fs.tmpdir(prefix="desk-import-host-"))
   defer @fs.rmdir(root, recursive=true)

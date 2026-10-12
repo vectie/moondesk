@@ -221,6 +221,8 @@ pub fn workspace_import_route() -> String
 
 pub fn workspace_import_url() -> String
 
+pub fn workspace_json_table_url(String, String, format? : String) -> String
+
 pub fn workspace_metadata_route() -> String
 
 pub fn workspace_metadata_url() -> String

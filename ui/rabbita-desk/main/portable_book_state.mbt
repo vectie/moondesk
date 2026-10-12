@@ -112,6 +112,10 @@ struct PortableBookState {
   exports : Array[PortableBookExport]
   version : String
   paths : Array[String]
+  output_groups : Array[PortableBookGroup]
+  group_name : String
+  selected_group : String
+  next_group_id : Int
   directory : String
   entries : Array[@desk.DeskFileEntry]
   entries_loaded : Bool
@@ -132,6 +136,7 @@ enum PortableBookMsg {
   BrowseFiles(String)
   ToggleFile(String)
   RemoveFile(String)
+  OutputGroup(PortableGroupMsg)
   ChooseAcceptedHumanResult
   RemoveAcceptedHumanResult
   AcceptedHumanResultPicked(Int, Int, Result[PortableBookHumanResult?, String])
@@ -150,6 +155,15 @@ enum PortableBookEffect {
   ReadPortableCatalog(Int, Int)
   ReadPortableEntries(Int, Int, String)
   PreparePortablePackage(Int, Int, String, String, Array[String])
+  PreparePortableGroupedPackage(
+    Int,
+    Int,
+    String,
+    String,
+    Array[String],
+    Array[PortableBookGroup],
+    String?
+  )
   PreparePortablePackageWithHumanResult(
     Int,
     Int,
@@ -177,6 +191,10 @@ fn init_portable_book() -> PortableBookState {
     exports: [],
     version: "",
     paths: [],
+    output_groups: [],
+    group_name: "",
+    selected_group: "",
+    next_group_id: 1,
     directory: "",
     entries: [],
     entries_loaded: false,
@@ -222,7 +240,8 @@ fn portable_book_can_prepare(state : PortableBookState) -> Bool {
   state.prepared is None &&
   state.operation_id == "" &&
   !state.version.trim().is_empty() &&
-  state.version.length() <= 64
+  state.version.length() <= 64 &&
+  portable_book_groups_valid(state)
 }
 
 ///|

@@ -2284,6 +2284,10 @@ fn render_desk_inline_preview(
     match model.preview {
       Some(preview) =>
         [
+          render_json_table_link(
+            model.selected_workspace_id,
+            model.selected_path,
+          ),
           match model.preview_state {
             Some(state) => render_preview_state_panel(dispatch, model, state)
             None => @html.nothing

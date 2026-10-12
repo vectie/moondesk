@@ -131,7 +131,7 @@ async fn agent_export_prepare_with(
     )
   }
   // This remains Book-local; virtual suite-product paths are never accepted.
-  for path in request.paths {
+  for path in agent_export_all_paths(request) {
     guard agent_export_existing_path(workspace.root_path, path)
       is Some(absolute) &&
       @fs.kind(absolute, follow_symlink=false) == Regular else {

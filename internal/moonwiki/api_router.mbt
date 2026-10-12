@@ -6,6 +6,7 @@ async fn handle_api_request(
   body : &@io.Reader,
   conn : @http.ServerConnection,
   active_root? : Ref[String],
+  cookie? : String = "",
 ) -> Unit {
   let segments = path_segments(strip_query(request_path))
   if route_desktop_api(workspace_root, segments, method_, body, conn) {
@@ -35,7 +36,7 @@ async fn handle_api_request(
     ) {
     return
   }
-  if route_moonflow_api(workspace_root, segments, method_, body, conn) {
+  if route_moonflow_api(workspace_root, segments, method_, body, conn, cookie~) {
     return
   }
   if route_mooncode_api(

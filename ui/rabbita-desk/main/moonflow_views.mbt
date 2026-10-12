@@ -104,9 +104,35 @@ fn moonflow_selected_runs(model : Model) -> Array[MoonFlowRunProjection] {
   if selected_root == "" {
     return []
   }
-  model.moonflow_runs.filter(run => {
+  let matching = model.moonflow_runs.filter(run => {
     moonflow_book_root_matches(selected_root, run.book_id)
   })
+  let prepared_child = match model.moonflow_composition {
+    Some(composition) if composition.workspace_id ==
+      Some(model.selected_workspace_id) =>
+      match composition.plan_editor {
+        Some(editor) if editor.phase == "imported" =>
+          match editor.receipt {
+            Some(result) =>
+              handoff_text(
+                handoff_field(
+                  handoff_field(handoff_field(result, "receipt"), "prepared"),
+                  "graph",
+                ),
+                "graph_id",
+              )
+            None => ""
+          }
+        _ => ""
+      }
+    _ => ""
+  }
+  if prepared_child != "" && matching.any(run => run.run_id == prepared_child) {
+    matching.filter(run => run.run_id == prepared_child) +
+    matching.filter(run => run.run_id != prepared_child)
+  } else {
+    matching
+  }
 }
 
 ///|
@@ -223,6 +249,7 @@ fn render_moonflow_workspace(
       @html.nothing
     },
     render_moonflow_composition_canvas(dispatch, model),
+    render_moonflow_plan_authoring(dispatch, model),
     if selected_runs.is_empty() &&
       moonflow_runs_state_shows_empty_action(runs_state) {
       render_moonflow_composition_continuation(model.moonflow_composition)
@@ -283,7 +310,14 @@ fn render_moonflow_workspace(
 fn render_moonflow_history_row(run : MoonFlowRunProjection) -> @rabbita.Html {
   div(class="flow-history-row", [
     div([strong("Revision " + run.declaration_revision), small(run.run_id)]),
-    span(class="flow-state " + moonflow_run_state(run), moonflow_run_state(run)),
+    span(
+      class="flow-state " + moonflow_run_state(run),
+      if run.outcome == "accepted" {
+        "internally accepted"
+      } else {
+        moonflow_run_state(run)
+      },
+    ),
   ])
 }
 
@@ -295,6 +329,13 @@ fn render_moonflow_run(
 ) -> @rabbita.Html {
   let accepted = moonflow_count_status(run, "accepted")
   let blocked = moonflow_count_status(run, "blocked")
+  let owner_state = if moonflow_owner_unavailable(model, run) is Some(_) {
+    "observation unverified"
+  } else if run.outcome == "accepted" {
+    "internally accepted"
+  } else {
+    moonflow_run_state(run)
+  }
   section(class="flow-run-card", [
     header(class="flow-run-head", [
       div([
@@ -304,40 +345,26 @@ fn render_moonflow_run(
           "Executable revision " +
           run.declaration_revision +
           " · " +
-          moonflow_run_state(run),
+          owner_state,
         ),
       ]),
-      span(
-        class="flow-state " + moonflow_run_state(run),
-        moonflow_run_state(run),
-      ),
+      span(class="flow-state " + moonflow_run_state(run), owner_state),
     ]),
-    div(class="flow-metrics", [
-      div([strong("\{run.runnable_item_ids.length()}"), span("ready now")]),
-      div([strong("\{accepted}"), span("accepted")]),
-      div([strong("\{blocked}"), span("blocked")]),
-      div([strong("\{run.items.length()}"), span("total")]),
-    ]),
-    if run.outcome != "accepted" &&
-      run.outcome != "blocked" &&
-      run.outcome != "failed" {
-      p(class="flow-outcome pending", "Outcome pending")
-    } else {
-      p(class="flow-outcome", run.outcome)
-    },
-    render_moonflow_operator_surface(dispatch, model, run),
+    render_moonflow_owner_summary(dispatch, model, run),
+    render_moonflow_single_step(dispatch, model, run),
+    render_moonflow_retained(dispatch, model, run),
     details(class="flow-disclosure flow-work-declaration-disclosure", [
       summary("Executable document work · \{run.items.length()} item(s)"),
       div(class="flow-disclosure-body", [
-        render_moonflow_next_actions(run),
         render_moonflow_blockers(run),
         render_moonflow_claim_coverage(run),
+        render_moonflow_run_continuation(run),
       ]),
     ]),
-    render_moonflow_run_continuation(run),
     details(class="flow-disclosure flow-operator-disclosure", [
-      summary("Operator controls"),
+      summary("Continue with existing actions and controls"),
       div(class="flow-disclosure-body", [
+        render_moonflow_operator_surface(dispatch, model, run),
         render_moonflow_authority(run),
         render_moonflow_controls(dispatch, run),
       ]),
@@ -345,6 +372,15 @@ fn render_moonflow_run(
     details(class="flow-disclosure flow-developer-disclosure", [
       summary("Technical evidence"),
       div(class="flow-disclosure-body", [
+        div(class="flow-metrics", [
+          div([
+            strong("\{run.runnable_item_ids.length()}"),
+            span("recorded ready"),
+          ]),
+          div([strong("\{accepted}"), span("internally accepted")]),
+          div([strong("\{blocked}"), span("blocked")]),
+          div([strong("\{run.items.length()}"), span("total")]),
+        ]),
         section(class="flow-section flow-contract", [
           h3("Executable document contract"),
           div(class="flow-contract-grid", [
@@ -361,7 +397,12 @@ fn render_moonflow_run(
         render_moonflow_runtime_evidence(run),
         div(
           class="flow-item-list",
-          run.items.map(item => render_moonflow_item(item)),
+          run.items
+          .filter(item => {
+            moonflow_owner_unavailable(model, run) is Some(_) ||
+            item.status == "accepted"
+          })
+          .map(item => render_moonflow_item(item)),
         ),
       ]),
     ]),
@@ -467,7 +508,7 @@ fn render_moonflow_run_continuation(
         p(
           class="flow-quiet",
           if run.outcome == "accepted" {
-            "The projection is complete; it publishes no further runnable item."
+            "Internal work was accepted in this recorded projection; it publishes no further runnable item."
           } else {
             "The projection publishes no runnable item. Review blockers and acceptance state."
           },
@@ -850,38 +891,6 @@ fn render_moonflow_claim_coverage(run : MoonFlowRunProjection) -> @rabbita.Html 
       class="flow-quiet",
       "Claims come from the imported graph. A product name alone never establishes readiness.",
     ),
-  ])
-}
-
-///|
-fn render_moonflow_next_actions(run : MoonFlowRunProjection) -> @rabbita.Html {
-  section(class="flow-section", [
-    h3("Next actions"),
-    if run.outcome == "accepted" {
-      p(
-        class="flow-quiet",
-        "Run complete. Every work item reached accepted state.",
-      )
-    } else if run.runnable_item_ids.is_empty() {
-      p(
-        class="flow-quiet",
-        "No item is ready. Review blockers or wait for acceptance.",
-      )
-    } else {
-      div(
-        class="flow-action-list",
-        run.runnable_item_ids.map(item_id => {
-          match moonflow_item_by_id(run, item_id) {
-            Some(item) =>
-              div(class="flow-action", [
-                strong(item.work_item_id),
-                span("Run with " + item.product_id),
-              ])
-            None => @html.nothing
-          }
-        }),
-      )
-    },
   ])
 }
 

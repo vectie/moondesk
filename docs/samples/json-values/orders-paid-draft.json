@@ -1,0 +1,10 @@
+{
+  "batch": "October 東京",
+  "orders": [
+    { "id": 900719925474099312345, "amount": -0.00E+09, "details": { "paid": true, "note": "\u4e2D" } },
+    { "id": "002", "amount": 12.50, "details": null }
+  ],
+  "a/b": { "~label": "🚀" },
+  "": [true, null],
+  "review": { "tag": "first", "tag": "second" }
+}

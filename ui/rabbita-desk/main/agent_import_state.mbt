@@ -17,6 +17,8 @@ struct AgentImportReply {
   import_verification : AgentImportMembers?
   created : CreatedWorkspace?
   message : String
+  town_binding : Json
+  exact_import_receipt : Json
 }
 
 ///|
@@ -62,6 +64,8 @@ fn agent_import_parse_reply(json : Json) -> AgentImportReply? {
     import_verification,
     created,
     message: wire.message,
+    town_binding: handoff_field(json, "town_binding"),
+    exact_import_receipt: handoff_field(json, "exact_import_receipt"),
   })
 }
 
@@ -76,11 +80,14 @@ struct AgentImportSession {
   reviewed_sha : String
   reply : AgentImportReply?
   error : String
+  exact_required : Bool
+  binding_digest : String
 }
 
 ///|
 enum AgentImportOperation {
   PickingPackage
+  PickingBinding
   StagingPackage
   ImportingPackage
   CheckingImport
@@ -103,13 +110,17 @@ struct AgentImportState {
   session : AgentImportSession
   suspended : Array[AgentImportSession]
   pending : AgentImportPending?
+  package_file : LocalImportFile?
 }
 
 ///|
 enum AgentImportMsg {
   BindAgentImport(Bool, String, String)
   ChoosePackage(String)
+  ChooseExactPackage(String)
+  ChooseBinding
   PackagePicked(Int, Int, Result[Array[LocalImportFile], String])
+  BindingPicked(Int, Int, Result[Array[LocalImportFile], String])
   SetImportDestination(String)
   ImportInspectedPackage
   CheckImport
@@ -125,7 +136,9 @@ enum AgentImportMsg {
 enum AgentImportEffect {
   NoAgentImportEffect
   PickAgentPackage(Int, Int)
+  PickAgentBinding(Int, Int)
   StageAgentPackage(Int, Int, LocalImportFile)
+  StageExactAgentPackage(Int, Int, LocalImportFile, Json)
   WriteAgentImport(Int, Int)
   ReadAgentImport(Int, Int)
   OpenAgentImport(CreatedWorkspace)
@@ -143,6 +156,8 @@ fn init_agent_import_session(library : String) -> AgentImportSession {
     reviewed_sha: "",
     reply: None,
     error: "",
+    exact_required: false,
+    binding_digest: "",
   }
 }
 
@@ -157,6 +172,7 @@ fn init_agent_import() -> AgentImportState {
     session: init_agent_import_session(""),
     suspended: agent_import_restore_sessions(browser_agent_import_saved()),
     pending: None,
+    package_file: None,
   }
 }
 
@@ -226,8 +242,55 @@ fn agent_import_decode_reply(
   if session.reply is Some(previous) &&
     (
       ToJson::to_json(previous.source) != ToJson::to_json(reply.source) ||
-      ToJson::to_json(previous.inspection) != ToJson::to_json(reply.inspection)
+      ToJson::to_json(previous.inspection) != ToJson::to_json(reply.inspection) ||
+      previous.town_binding != reply.town_binding
     ) {
+    return None
+  }
+  if session.exact_required {
+    if handoff_text(reply.town_binding, "contract") !=
+      "moontown.portable-listing-binding.v1" ||
+      handoff_text(reply.town_binding, "binding_digest") !=
+      session.binding_digest ||
+      !portable_book_sha_valid(session.binding_digest) ||
+      handoff_text(
+        handoff_field(reply.town_binding, "source"),
+        "package_sha256",
+      ) !=
+      reply.source.package_sha256 {
+      return None
+    }
+    if reply.status == "imported" &&
+      (
+        handoff_text(reply.exact_import_receipt, "contract") !=
+        "moonbook.portable_import_receipt.v1" ||
+        handoff_text(reply.exact_import_receipt, "status") != "complete" ||
+        handoff_text(reply.exact_import_receipt, "binding_digest") !=
+        session.binding_digest ||
+        handoff_field(reply.exact_import_receipt, "member_bytes_verified") !=
+        true.to_json()
+      ) {
+      return None
+    }
+    if reply.status == "imported" {
+      for
+        key in [
+          "source", "listing_id", "publisher_principal_id", "tenant_id", "binding_digest",
+        ] {
+        if handoff_field(reply.exact_import_receipt, key) !=
+          handoff_field(reply.town_binding, key) {
+          return None
+        }
+      }
+      if handoff_text(reply.exact_import_receipt, "local_book_id") !=
+        reply.destination_folder ||
+        handoff_text(reply.exact_import_receipt, "local_target_root") !=
+        session.library + "/" + reply.destination_folder {
+        return None
+      }
+    }
+  } else if !(reply.town_binding is Null) ||
+    !(reply.exact_import_receipt is Null) {
     return None
   }
   if session.reviewed_sha != "" &&
@@ -265,7 +328,10 @@ fn agent_import_invalidate(state : AgentImportState) -> AgentImportState {
     ..state,
     generation: state.generation + 1,
     pending: None,
-    session: if state.pending is Some({ operation: PickingPackage, .. }) {
+    package_file: None,
+    session: if state.pending
+      is Some({ operation: PickingPackage | PickingBinding, .. }) ||
+      session.status == "awaiting-binding" {
       init_agent_import_session(session.library)
     } else if state.pending is Some(_) {
       {

@@ -276,6 +276,9 @@ struct Model {
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   moonflow_runs : Array[MoonFlowRunProjection]
+  moonflow_single_step : MoonFlowSingleStepState?
+  moonflow_retained : MoonFlowRetainedState?
+  moonflow_runs_generation : Int
   moonflow_status : String
   // Listing transport truth is owned separately from operation feedback.
   moonflow_runs_state : SurfaceState?
@@ -363,6 +366,12 @@ enum Msg {
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowCapability(Result[MoonFlowCapabilityEvidence, String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
+  RequestMoonFlowRuns
+  LoadedMoonFlowRunsAt(
+    Int,
+    String,
+    Result[Array[MoonFlowRunProjection], String]
+  )
   LoadedMoonFlowComposition(Result[MoonFlowComposition, String])
   SavedMoonFlowComposition(Result[MoonFlowComposition, String])
   LoadedMoonFlowOperatorActions(String, Result[MoonFlowOperatorActions, String])
@@ -461,6 +470,14 @@ enum Msg {
   PrepareMoonFlow
   ToggleMoonFlowCompositionItem(String)
   SaveMoonFlowComposition
+  EditMoonFlowPlanField(String, String, String)
+  DuplicateMoonFlowPlanItem(String)
+  RemoveMoonFlowPlanItem(String)
+  MoonFlowPlan(MoonFlowPlanMsg)
+  MoonFlowSingleStep(MoonFlowSingleStepMsg)
+  MoonFlowRetained(MoonFlowRetainedMsg)
+  SaveMoonFlowPlanDraft
+  ReopenMoonFlowPlanDraft
   FlowCanvasWheel(Double)
   FlowPanStart(Int, Int)
   FlowPanMove(Int, Int)

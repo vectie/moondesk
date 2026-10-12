@@ -97,6 +97,45 @@ fn portable_book_effect_cmd(
           )
         }),
       )
+    PreparePortableGroupedPackage(
+      generation,
+      request,
+      id,
+      version,
+      paths,
+      groups,
+      source
+    ) =>
+      (
+        generation,
+        request,
+        @http.post(
+          @desk.workspace_endpoint_url(state.workspace, "agent-export"),
+        )
+        .with_json(
+          portable_book_grouped_body(
+            state.library,
+            id,
+            version,
+            paths,
+            groups,
+            source,
+          ),
+        )
+        .expect_json(result => {
+          dispatch(
+            PortableBook(
+              Received(
+                generation,
+                request,
+                http_result(
+                  result, "The preparation response was not received.",
+                ),
+              ),
+            ),
+          )
+        }),
+      )
     PreparePortablePackageWithHumanResult(
       generation,
       request,

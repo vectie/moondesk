@@ -631,7 +631,46 @@ fn update_workspace_results(
       )
     LoadedMoonFlowCapability(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_capability_error: Some(error), })
+    RequestMoonFlowRuns => {
+      let generation = model.moonflow_runs_generation + 1
+      (
+        fetch_moonflow_runs_at_cmd(
+          dispatch,
+          generation,
+          model.selected_workspace_id,
+        ),
+        {
+          ..model,
+          moonflow_runs_generation: generation,
+          moonflow_runs_state: Some(Loading),
+          moonflow_runs_error: None,
+        },
+      )
+    }
+    LoadedMoonFlowRunsAt(generation, workspace_id, result) =>
+      if generation != model.moonflow_runs_generation ||
+        workspace_id != model.selected_workspace_id {
+        (@rabbita.none, model)
+      } else {
+        update_workspace_results(dispatch, LoadedMoonFlowRuns(result), model)
+      }
     LoadedMoonFlowRuns(Ok(runs)) => {
+      if runs.any(incoming => {
+          model.moonflow_runs.any(existing => {
+            existing.run_id == incoming.run_id &&
+            existing.last_sequence > incoming.last_sequence
+          })
+        }) {
+        return update_workspace_results(
+          dispatch,
+          LoadedMoonFlowRuns(
+            Err(
+              "An older event observation was returned; refresh to verify the current run",
+            ),
+          ),
+          model,
+        )
+      }
       let next = { ..model, moonflow_runs: runs, }
       let matching = moonflow_selected_runs(next)
       (
@@ -675,6 +714,9 @@ fn update_workspace_results(
         },
       )
     }
+    LoadedMoonFlowComposition(Ok(composition)) if composition.workspace_id
+      is Some(id) &&
+      id != model.selected_workspace_id => (@rabbita.none, model)
     LoadedMoonFlowComposition(Ok(composition)) =>
       match moonflow_unavailable_composition_message(composition) {
         Some(message) =>
@@ -682,7 +724,10 @@ fn update_workspace_results(
             @rabbita.none,
             {
               ..model,
-              moonflow_composition: None,
+              moonflow_composition: model.moonflow_composition.map(previous => {
+                ..previous,
+                plan_source_unconfirmed: Some(true),
+              }),
               moonflow_composition_status: message,
               moonflow_composition_saving: false,
             },
@@ -692,7 +737,9 @@ fn update_workspace_results(
             @rabbita.none,
             {
               ..model,
-              moonflow_composition: Some(composition),
+              moonflow_composition: Some(
+                moonflow_plan_receive(model, composition),
+              ),
               flow_canvas: flow_canvas_apply_composition_positions(
                 model.flow_canvas,
                 composition,
@@ -707,17 +754,23 @@ fn update_workspace_results(
         @rabbita.none,
         {
           ..model,
-          moonflow_composition: None,
+          moonflow_composition: model.moonflow_composition.map(previous => {
+            ..previous,
+            plan_source_unconfirmed: Some(true),
+          }),
           moonflow_composition_status: error,
           moonflow_composition_saving: false,
         },
       )
+    SavedMoonFlowComposition(Ok(composition)) if composition.workspace_id
+      is Some(id) &&
+      id != model.selected_workspace_id => (@rabbita.none, model)
     SavedMoonFlowComposition(Ok(composition)) =>
       (
         @rabbita.none,
         {
           ..model,
-          moonflow_composition: Some(composition),
+          moonflow_composition: Some(moonflow_plan_receive(model, composition)),
           flow_canvas: flow_canvas_apply_composition_positions(
             model.flow_canvas,
             composition,

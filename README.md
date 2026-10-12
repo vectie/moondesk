@@ -209,3 +209,11 @@ moon fmt
 (cd ui/rabbita-desk && moon check --target js)
 npm --prefix ui/rabbita-desk run build
 ```
+
+Local data exploration also supports [lookup enrichment](docs/TABLE_LOOKUP.md):
+match saved orders or records to a reference table, inspect unmatched keys,
+and download the combined CSV/XLSX without modifying either source.
+
+You can also [combine saved table rows](docs/TABLE_APPEND.md) across CSV, TSV,
+JSON, JSONL and XLSX inputs, aligning headers and retaining source row context
+in a downloadable CSV/XLSX.

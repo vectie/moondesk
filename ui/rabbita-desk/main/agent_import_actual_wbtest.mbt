@@ -35,6 +35,11 @@ test "actual native receive JSON passes frontend inspection verification and fen
       ..init_agent_import_session(library),
       operation_id: id,
       filename,
+      exact_required: !(handoff_field(staged, "town_binding") is Null),
+      binding_digest: handoff_text(
+        handoff_field(staged, "town_binding"),
+        "binding_digest",
+      ),
     },
     pending: Some({ request: 1, operation: StagingPackage, }),
   }

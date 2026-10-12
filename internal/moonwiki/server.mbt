@@ -160,6 +160,7 @@ async fn handle_desk_request(
       body,
       conn,
       active_root~,
+      cookie=request.headers.get("cookie").unwrap_or(""),
     )
   } else {
     handle_file_request(ui_root, request.meth, path, conn)

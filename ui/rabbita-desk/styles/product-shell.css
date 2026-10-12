@@ -4128,6 +4128,28 @@ details[open] > .desk-disclosure-summary::after {
   font-size: 0.75rem;
 }
 
+.flow-plan-field-errors:not(:empty),
+.flow-plan-capture-limits {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--yellow) 65%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 94%, var(--yellow) 6%);
+  overflow-wrap: anywhere;
+}
+
+.flow-plan-field-errors .flow-error,
+.flow-handoff-card .flow-error {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.flow-handoff-section textarea,
+.flow-handoff-section input {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .flow-composer,
 .flow-composer-empty {
   margin: 14px 0;

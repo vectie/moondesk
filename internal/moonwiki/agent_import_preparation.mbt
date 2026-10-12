@@ -58,6 +58,7 @@ async fn agent_import_inspect_with(
     agent_import_package_identity(package_path) == (before_hash, before_size) else {
     fail("Received package verification or source proof changed")
   }
+  let town_binding = agent_import_retained_binding(directory, manifest, source)
   let response : Map[String, Json] = {
     "operation_id": id.to_json(),
     "expected_library": expected_library.to_json(),
@@ -70,6 +71,8 @@ async fn agent_import_inspect_with(
     "import_verification": Json::null(),
     "created": Json::null(),
     "message": "Package verified. Review its contents before importing.".to_json(),
+    "town_binding": town_binding.unwrap_or(Json::null()),
+    "exact_import_receipt": Json::null(),
   }
   let request_path = directory + "/import-request.json"
   if !agent_import_path_present(request_path) {
@@ -84,6 +87,12 @@ async fn agent_import_inspect_with(
     request.expected_library == expected_library &&
     request.package_sha256 == before_hash else {
     fail("Import reservation does not match the received package")
+  }
+  guard request.binding_digest ==
+    town_binding.map(binding => {
+      json_string(binding, "binding_digest", default="")
+    }) else {
+    fail("Import reservation does not match the retained Town binding")
   }
   response["destination_folder"] = request.destination_folder.to_json()
   let destination = context.books_root + "/" + request.destination_folder
@@ -132,7 +141,8 @@ async fn agent_import_inspect_with(
     )
     guard json_string(receipt, "contract", default="") ==
       "moonbook.agent_installation_receipt.v1" &&
-      json_string(receipt, "action", default="") == "import" &&
+      json_string(receipt, "action", default="") ==
+      (if town_binding is Some(_) { "import-exact" } else { "import" }) &&
       json_string(receipt, "target_root", default="") == destination &&
       json_string(receipt, "bundle_digest", default="") ==
       json_string(source, "bundle_digest", default="") &&
@@ -148,6 +158,10 @@ async fn agent_import_inspect_with(
       fail("Imported receipt or package source does not match")
     }
     let metadata = agent_import_book_metadata(destination)
+    let exact_receipt = match town_binding {
+      Some(binding) => agent_import_exact_receipt(destination, binding, receipt)
+      None => Json::null()
+    }
     let declared_id = json_string(metadata, "id", default="")
     let book_id = if declared_id == "" {
       json_string(source, "agent_id", default="")
@@ -184,14 +198,15 @@ async fn agent_import_inspect_with(
       "root_path": destination,
       "path": import_initial_path(destination),
     }
-    Some((member_verification, created))
+    Some((member_verification, created, exact_receipt))
   } catch {
     _ => None
   }
-  if verified is Some((member_verification, created)) {
+  if verified is Some((member_verification, created, exact_receipt)) {
     response["status"] = "imported".to_json()
     response["import_verification"] = member_verification
     response["created"] = created
+    response["exact_import_receipt"] = exact_receipt
     response["message"] = "Imported Book verified and ready to open.".to_json()
   }
   Json::object(response)
@@ -263,6 +278,15 @@ async fn agent_import_stage_with(
     json_int(source, "package_size_bytes", default=-1) == request.bytes.length() else {
     fail("Received package source proof did not match the uploaded bytes")
   }
+  if request.town_binding is Some(binding) {
+    let checked = agent_import_checked_binding(binding, source)
+    @fs.write_file(
+      directory + "/town-binding.json",
+      checked.stringify(),
+      create_mode=CreateNew,
+      permission=0o600,
+    )
+  }
   @fs.write_file(
     directory + "/source.json",
     source.stringify(indent=2),
@@ -296,6 +320,16 @@ async fn agent_import_apply_with(
   guard before is { "source": source, .. } &&
     request.package_sha256 == json_string(source, "package_sha256", default="") else {
     fail("Explicit import does not match the reviewed package")
+  }
+  let town_binding = match before {
+    { "town_binding": Object(_) as binding, .. } => Some(binding)
+    _ => None
+  }
+  guard request.binding_digest ==
+    town_binding.map(binding => {
+      json_string(binding, "binding_digest", default="")
+    }) else {
+    fail("Explicit import must match the inspected Town binding")
   }
   let directory = agent_import_root(context) + "/" + request.operation_id
   let request_path = directory + "/import-request.json"
@@ -331,10 +365,15 @@ async fn agent_import_apply_with(
     permission=0o600,
   )
   ignore(
-    run("import", [
+    run(if town_binding is Some(_) { "import-exact" } else { "import" }, [
       destination,
       directory + "/package.moonbook-agent",
-      directory + "/source.json",
+      directory +
+      (if town_binding is Some(_) {
+        "/town-binding.json"
+      } else {
+        "/source.json"
+      }),
     ]) catch {
       _ => Err("Import outcome is uncertain")
     },

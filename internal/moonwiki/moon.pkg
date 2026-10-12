@@ -32,6 +32,10 @@ import {
   "vectie/moondesk/internal/town",
   "vectie/moondesk/internal/trusted_host_process" @trusted_host,
   "vectie/moonleaf",
+  "vectie/moonleaf/jsontable",
+  "vectie/moonleaf/xlsx" @leafxlsx,
+  "vectie/moonleaf/csv" @leafcsv,
+  "vectie/moonleaf/scene" @leafscene,
 }
 
 import {
@@ -42,6 +46,7 @@ import {
 supported_targets = "native"
 
 options(
+  "native-stub": [ "retained_read.c" ],
   targets: {
     "api_router.mbt": [ "native" ],
     "api_book_router.mbt": [ "native" ],

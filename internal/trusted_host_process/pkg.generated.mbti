@@ -94,7 +94,13 @@ pub fn managed_moonclaw_binding(String) -> Result[ManagedMoonClawBinding, String
 
 pub async fn moonbook_export_runtime() -> Result[MoonBookExportRuntime, String]
 
-pub async fn moonbook_import_runtime() -> Result[MoonBookExportRuntime, String]
+pub async fn moonbook_import_runtime(exact? : Bool) -> Result[MoonBookExportRuntime, String]
+
+pub async fn moonflow_planning_runtime() -> Result[MoonFlowPlanningRuntime, String]
+
+pub async fn moonflow_review_runtime() -> Result[MoonFlowReviewRuntime, String]
+
+pub async fn moonflow_single_step_runtime() -> Result[MoonFlowSingleStepRuntime, String]
 
 pub async fn notarize_archive(NotaryProfile, String) -> Int
 
@@ -107,6 +113,12 @@ pub async fn pid_is_alive(Int) -> Bool
 pub async fn reveal_path(String, String) -> Int
 
 pub async fn run_lepusa_operation(String, LepusaOperation) -> Int
+
+pub async fn run_moonflow_planning(MoonFlowPlanningRuntime, String, MoonFlowPlanningOperation) -> Result[String, String]
+
+pub async fn run_moonflow_review(MoonFlowReviewRuntime, String, MoonFlowReviewOperation) -> Result[String, String]
+
+pub async fn run_moonflow_single_step(MoonFlowSingleStepRuntime, String, MoonFlowSingleStepOperation) -> Result[String, String]
 
 pub async fn sha256_file(String) -> String
 
@@ -173,6 +185,7 @@ pub(all) enum MoonBookExportOperation {
   Verify(package_path~ : String)
   Source(package_path~ : String)
   Import(destination~ : String, package_path~ : String, source_path~ : String)
+  ImportExact(destination~ : String, package_path~ : String, source_path~ : String)
   VerifyImport(destination~ : String, package_path~ : String)
 }
 
@@ -180,6 +193,34 @@ pub struct MoonBookExportRuntime {
   // private fields
 }
 pub async fn MoonBookExportRuntime::run(Self, String, MoonBookExportOperation, may_run? : () -> Bool) -> Result[String, String]
+
+pub(all) enum MoonFlowPlanningOperation {
+  PrepareForm(form_ref~ : String, catalog_ref~ : String, draft_id~ : String, recorded_at~ : String)
+  ApplyPrepared(preparation_id~ : String, catalog_ref~ : String, evaluated_at~ : String)
+}
+
+pub struct MoonFlowPlanningRuntime {
+  // private fields
+}
+
+pub(all) enum MoonFlowReviewOperation {
+  InspectReviewWorkspace(workspace_id~ : String)
+  BeginExistingReview(workspace_id~ : String, mutation_ref~ : String)
+  DecideExistingReview(workspace_id~ : String, mutation_ref~ : String)
+}
+
+pub struct MoonFlowReviewRuntime {
+  // private fields
+}
+
+pub(all) enum MoonFlowSingleStepOperation {
+  ExecuteOne(run_id~ : String, item_id~ : String, request_id~ : String, recorded_at~ : String)
+  ReconcileOne(run_id~ : String, item_id~ : String, request_id~ : String, recorded_at~ : String)
+}
+
+pub struct MoonFlowSingleStepRuntime {
+  // private fields
+}
 
 pub struct NotaryProfile {
   value : String

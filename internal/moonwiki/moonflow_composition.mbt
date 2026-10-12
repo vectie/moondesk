@@ -211,6 +211,7 @@ fn moonflow_composition_response(
     "workspace_id": workspace_id,
     "source_graph_id": moonflow_graph_run_id(graph),
     "book_id": json_string(graph, "book_id", default=workspace_id),
+    "source_graph": graph,
     "declaration_revision": json_string(
       graph,
       "declaration_revision",

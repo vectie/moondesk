@@ -420,6 +420,7 @@ fn render_preview_center(
     div(class="preview-toolbar", [
       span(class="path-pill quiet-path", model.selected_path),
       div(class="toolbar-actions", [
+        render_json_table_link(model.selected_workspace_id, model.selected_path),
         if !markdown_editor_active(model) &&
           model.markdown_editor_status.to_lower().contains("saved") {
           span(class="editor-save-state saved", "Saved")

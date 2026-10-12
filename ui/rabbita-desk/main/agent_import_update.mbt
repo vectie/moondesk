@@ -45,7 +45,7 @@ fn reduce_agent_import(
       })
       ({ ..next, active, context, session, suspended, }, NoAgentImportEffect)
     }
-    ChoosePackage(id) => {
+    ChoosePackage(id) | ChooseExactPackage(id) => {
       if !agent_import_ready(state) ||
         (state.session.import_started && state.session.status != "imported") ||
         !portable_book_id_valid(id) {
@@ -58,7 +58,9 @@ fn reduce_agent_import(
           session: {
             ..init_agent_import_session(state.session.library),
             operation_id: id,
+            exact_required: message is ChooseExactPackage(_),
           },
+          package_file: None,
         },
         PickingPackage,
       )
@@ -115,11 +117,92 @@ fn reduce_agent_import(
           NoAgentImportEffect,
         )
       }
+      if state.session.exact_required {
+        return (
+          {
+            ..state,
+            pending: None,
+            package_file: Some(file),
+            session: {
+              ..state.session,
+              filename: file.name,
+              status: "awaiting-binding",
+            },
+          },
+          NoAgentImportEffect,
+        )
+      }
       let next = agent_import_begin(
         { ..state, session: { ..state.session, filename: file.name, }, },
         StagingPackage,
       )
       (next, StageAgentPackage(next.generation, next.request, file))
+    }
+    ChooseBinding => {
+      if !agent_import_ready(state) ||
+        state.session.status != "awaiting-binding" ||
+        !state.session.exact_required ||
+        state.package_file is None {
+        return (state, NoAgentImportEffect)
+      }
+      let next = agent_import_begin(state, PickingBinding)
+      (next, PickAgentBinding(next.generation, next.request))
+    }
+    BindingPicked(generation, request, result) => {
+      guard state.active &&
+        !state.library_changing &&
+        generation == state.generation &&
+        state.pending is Some({ request: current, operation: PickingBinding, }) &&
+        current == request &&
+        state.package_file is Some(package_file) else {
+        return (state, NoAgentImportEffect)
+      }
+      let binding = match result {
+        Ok([file]) if file.content.length() <= 131072 =>
+          @json.parse(file.content) catch {
+            _ => Json::null()
+          }
+        _ => Json::null()
+      }
+      let digest = handoff_text(binding, "binding_digest")
+      if handoff_text(binding, "contract") !=
+        "moontown.portable-listing-binding.v1" ||
+        !portable_book_sha_valid(digest) {
+        return (
+          {
+            ..state,
+            pending: None,
+            session: {
+              ..state.session,
+              error: match result {
+                Ok([]) =>
+                  "Binding selection cancelled. The package has not been imported."
+                Err(error) => error
+                _ =>
+                  "Choose the original Town .binding.json file received with this package. A transfer receipt is a different file."
+              },
+            },
+          },
+          NoAgentImportEffect,
+        )
+      }
+      let next = agent_import_begin(
+        {
+          ..state,
+          package_file: None,
+          session: { ..state.session, binding_digest: digest, status: "empty", },
+        },
+        StagingPackage,
+      )
+      (
+        next,
+        StageExactAgentPackage(
+          next.generation,
+          next.request,
+          package_file,
+          binding,
+        ),
+      )
     }
     SetImportDestination(destination) => {
       if !agent_import_ready(state) ||
@@ -165,6 +248,7 @@ fn reduce_agent_import(
           ..state,
           generation: state.generation + 1,
           pending: None,
+          package_file: None,
           session: init_agent_import_session(state.session.library),
         },
         NoAgentImportEffect,
@@ -181,6 +265,7 @@ fn reduce_agent_import(
           ..state,
           generation: state.generation + 1,
           suspended,
+          package_file: None,
           session: init_agent_import_session(state.session.library),
         },
         NoAgentImportEffect,
@@ -233,6 +318,7 @@ fn reduce_agent_import(
         generation == state.generation &&
         state.pending is Some({ request: current, operation, }) &&
         operation != PickingPackage &&
+        operation != PickingBinding &&
         current == request else {
         return (state, NoAgentImportEffect)
       }

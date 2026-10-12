@@ -12,9 +12,43 @@ fn source_pane_action(
   } else {
     msg
   }
-  let source_pane = update_source_pane(model.source_pane, resolved_msg)
+  let previous = match resolved_msg {
+    FindNext
+    | FindPrevious
+    | ReplaceNext
+    | ReplaceAll
+    | SetLineIndent(_)
+    | IndentLines(_)
+    | DuplicateLines
+    | EditChecklist(_)
+    | WrapMarkdown(_)
+    | CleanupLines(_)
+    | LayoutJson(_)
+    | ConvertDelimitedTable(_)
+    | MoveMarkdownSection(_, _) =>
+      source_literal_capture_selection(model.source_pane)
+    _ => model.source_pane
+  }
+  let source_pane = update_source_pane(previous, resolved_msg)
   let next = { ..model, source_pane, }
   match resolved_msg {
+    FindNext
+    | FindPrevious
+    | ReplaceNext
+    | ReplaceAll
+    | UndoEdit
+    | RedoEdit
+    | SetLineIndent(_)
+    | IndentLines(_)
+    | DuplicateLines
+    | EditChecklist(_)
+    | WrapMarkdown(_)
+    | CleanupLines(_)
+    | LayoutJson(_)
+    | ConvertDelimitedTable(_)
+    | SelectMarkdownSection(_)
+    | MoveMarkdownSection(_, _) =>
+      (source_literal_selection_cmd(source_pane), next)
     RequestSource(_) => {
       let identity = source_pane_identity(source_pane)
       if identity.workspace_id.trim() != "" &&

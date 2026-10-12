@@ -77,7 +77,7 @@ fn moonflow_runs_state_title(
       }
     Stale => "Showing earlier executable work"
     Disconnected => "Executable work is offline"
-    CapabilityLimited => "Executable work isn’t available"
+    CapabilityLimited => "Execution controls are unavailable"
     RecoverableError => "Executable work couldn’t be loaded"
     TerminalError => "Executable work can’t continue"
   }
@@ -102,7 +102,7 @@ fn moonflow_runs_state_detail(
       "The last successful run list remains visible. Retry to check for newer work."
     Disconnected => "Reconnect, then retry this book’s executable work."
     CapabilityLimited =>
-      "This setup cannot provide governed runs for the selected book."
+      "Existing run evidence stays visible. Declared-plan editing and one digital Mold step use separate host setup; generic execution remains unavailable."
     RecoverableError => "Retry without leaving the selected book."
     TerminalError => "Return Home and choose another book."
   }

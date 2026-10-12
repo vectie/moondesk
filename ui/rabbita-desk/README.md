@@ -48,3 +48,17 @@ The warning baseline is intentionally clean:
 npm run dev
 npm run build
 ```
+
+## Source location navigation
+
+The source runtime supports Go to line/column, return/forward navigation, and
+Ctrl+G / Cmd+G. Existing F12 and compiler-result jumps share the bounded history.
+See [Source navigation](../../docs/SOURCE_NAVIGATION.md) for workflow, limits,
+and Node-local verification; real-browser/native qualification remains open.
+
+## Markdown link maintenance
+
+The existing lazy source runtime includes an inspect/select/preview/apply workflow
+for supported inline link and image destinations in `.md`/`.markdown` drafts.
+See [Markdown link maintenance](../../docs/MARKDOWN_LINK_MAINTENANCE.md) for
+exact usage, syntax exclusions and focused qualification.

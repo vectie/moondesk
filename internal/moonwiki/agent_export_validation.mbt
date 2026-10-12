@@ -3,6 +3,7 @@ priv struct AgentExportRequest {
   operation_id : String
   version : String
   paths : Array[String]
+  output_groups : Array[AgentExportGroup]
   expected_library : String
   accepted_human_result : AgentAcceptedHumanResult?
 }
@@ -29,7 +30,14 @@ fn agent_export_id_valid(value : String) -> Bool {
 ///|
 fn agent_export_request(payload : Json) -> Result[AgentExportRequest, String] {
   guard payload is Object(fields) &&
-    (fields.length() == 4 || fields.length() == 5) &&
+    fields
+    .keys()
+    .all(key => {
+      [
+        "operation_id", "version", "expected_library", "paths", "accepted_human_result_base64",
+        "output_groups",
+      ].contains(key)
+    }) &&
     fields.get("operation_id") is Some(String(operation_id)) &&
     fields.get("version") is Some(String(version)) &&
     fields.get("expected_library") is Some(String(expected_library)) &&
@@ -39,8 +47,8 @@ fn agent_export_request(payload : Json) -> Result[AgentExportRequest, String] {
     )
   }
   let accepted_human_result = match fields.get("accepted_human_result_base64") {
-    None if fields.length() == 4 => None
-    Some(String(encoded)) if fields.length() == 5 =>
+    None => None
+    Some(String(encoded)) =>
       match agent_human_result_decode(encoded) {
         Ok(source) => Some(source)
         Err(message) => return Err(message)
@@ -89,7 +97,19 @@ fn agent_export_request(payload : Json) -> Result[AgentExportRequest, String] {
     paths.push(path)
   }
   paths.sort()
-  Ok({ operation_id, version, paths, expected_library, accepted_human_result, })
+  let output_groups = match
+    agent_export_groups(fields.get("output_groups"), paths.length()) {
+    Ok(groups) => groups
+    Err(message) => return Err(message)
+  }
+  Ok({
+    operation_id,
+    version,
+    paths,
+    output_groups,
+    expected_library,
+    accepted_human_result,
+  })
 }
 
 ///|
@@ -109,6 +129,9 @@ fn agent_export_selection(request : AgentExportRequest) -> Json {
         "files": [{ "source_path": path, "path": filename }],
       } : Json)
   })
+  for group in request.output_groups {
+    selections.push(agent_export_group_selection(group))
+  }
   if request.accepted_human_result is Some(source) {
     selections.push(agent_human_result_selection(request.operation_id, source))
   }

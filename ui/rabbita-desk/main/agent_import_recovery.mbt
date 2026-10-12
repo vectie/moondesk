@@ -8,6 +8,7 @@ struct AgentImportRecovery {
   destination : String
   import_started : Bool
   reviewed_sha : String
+  binding_digest : String?
 } derive(FromJson, ToJson)
 
 ///|
@@ -45,6 +46,7 @@ fn agent_import_restore_sessions(text : String) -> Array[AgentImportSession] {
       !portable_book_path_valid(item.filename) ||
       item.filename.contains("/") ||
       (item.reviewed_sha != "" && !portable_book_sha_valid(item.reviewed_sha)) ||
+      (item.binding_digest is Some(digest) && !portable_book_sha_valid(digest)) ||
       (
         item.import_started &&
         (
@@ -62,6 +64,8 @@ fn agent_import_restore_sessions(text : String) -> Array[AgentImportSession] {
       destination: item.destination,
       import_started: item.import_started,
       reviewed_sha: item.reviewed_sha,
+      binding_digest: item.binding_digest.unwrap_or(""),
+      exact_required: item.binding_digest is Some(_),
       status: "uncertain",
       error: "A saved package operation needs checking after reopening Desk.",
     })
@@ -75,7 +79,9 @@ fn agent_import_recovery_json(state : AgentImportState) -> Json {
   sessions.push(state.session)
   let saved : Array[AgentImportRecovery] = []
   for session in sessions {
-    if session.operation_id != "" && session.filename != "" {
+    if session.operation_id != "" &&
+      session.filename != "" &&
+      session.status != "awaiting-binding" {
       saved.push({
         library: session.library,
         operation_id: session.operation_id,
@@ -83,6 +89,11 @@ fn agent_import_recovery_json(state : AgentImportState) -> Json {
         destination: session.destination,
         import_started: session.import_started,
         reviewed_sha: session.reviewed_sha,
+        binding_digest: if session.binding_digest == "" {
+          None
+        } else {
+          Some(session.binding_digest)
+        },
       })
     }
   }

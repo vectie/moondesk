@@ -1,0 +1,6 @@
+{
+  "orders": [{"amount": -0.00E+09, "sku": "001"}, {"sku": "002", "amount": 12.5}, {"sku": "003", "amount": 3}],
+  "account": {"name": "中", "id": 900719925474099312345, "plan": "paid"},
+  "a/b": {"~flag": true},
+  "enabled": null
+}

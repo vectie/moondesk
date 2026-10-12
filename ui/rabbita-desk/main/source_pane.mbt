@@ -39,6 +39,7 @@ struct SourcePaneBuffer {
   draft : String
   server_content : String?
   status : String
+  search : SourceLiteralState
 } derive(Eq, Debug)
 
 ///|
@@ -59,6 +60,7 @@ struct SourcePaneState {
   pending_save : SourcePaneSaveRequest?
   status : String
   buffers : Array[SourcePaneBuffer]
+  search : SourceLiteralState
 } derive(Eq, Debug)
 
 ///|
@@ -80,6 +82,25 @@ enum SourcePaneMsg {
   ReplaceServer
   SwitchBuffer(String)
   CloseBuffer(String)
+  FindQuery(String)
+  FindReplacement(String)
+  FindCaseSensitive(Bool)
+  FindNext
+  FindPrevious
+  ReplaceNext
+  ReplaceAll
+  UndoEdit
+  RedoEdit
+  SelectMarkdownSection(Int)
+  MoveMarkdownSection(Int, Bool)
+  SetLineIndent(@edit.LineIndent)
+  IndentLines(Bool)
+  DuplicateLines
+  EditChecklist(@edit.MarkdownChecklistAction)
+  WrapMarkdown(@edit.MarkdownInlineStyle)
+  CleanupLines(@edit.LineCleanupAction)
+  LayoutJson(@edit.JsonLayout)
+  ConvertDelimitedTable(@edit.TableDelimiter)
 } derive(Eq, Debug)
 
 ///|
@@ -104,6 +125,7 @@ fn init_source_pane(
     pending_save: None,
     status: "",
     buffers: [],
+    search: init_source_literal(),
   }
 }
 
@@ -134,6 +156,7 @@ fn source_pane_active_buffer(state : SourcePaneState) -> SourcePaneBuffer? {
     draft: state.draft,
     server_content: state.server_content,
     status: state.status,
+    search: state.search,
   })
 }
 
@@ -176,6 +199,7 @@ fn source_pane_activate_buffer(
     draft: buffer.draft,
     server_content: buffer.server_content,
     status: buffer.status,
+    search: buffer.search,
   }
 }
 
@@ -296,6 +320,26 @@ fn update_source_pane(
   msg : SourcePaneMsg,
 ) -> SourcePaneState {
   match msg {
+    ConvertDelimitedTable(delimiter) =>
+      update_source_table_import(state, delimiter)
+    SetLineIndent(_)
+    | IndentLines(_)
+    | DuplicateLines
+    | EditChecklist(_)
+    | WrapMarkdown(_) => update_source_line_authoring(state, msg)
+    CleanupLines(action) => update_source_line_cleanup(state, action)
+    LayoutJson(layout) => update_source_json_layout(state, layout)
+    SelectMarkdownSection(_) | MoveMarkdownSection(_, _) =>
+      update_source_outline(state, msg)
+    FindQuery(_)
+    | FindReplacement(_)
+    | FindCaseSensitive(_)
+    | FindNext
+    | FindPrevious
+    | ReplaceNext
+    | ReplaceAll
+    | UndoEdit
+    | RedoEdit => update_source_literal(state, msg)
     SetOpen(open) => { ..state, open, }
     SetCollapsed(collapsed) => { ..state, collapsed, }
     SetPathInput(path_input) => { ..state, path_input, }
@@ -357,6 +401,7 @@ fn update_source_pane(
             status,
             server_content: None,
             buffers,
+            search: init_source_literal(),
           }
         }
       }
@@ -372,6 +417,7 @@ fn update_source_pane(
               draft: preview.body,
               server_content: None,
               status: "Ready",
+              search: init_source_literal(),
             })
           Err(problem) =>
             { ..state, content: Failed(problem), status: problem, }
@@ -387,7 +433,7 @@ fn update_source_pane(
       }
     EditDraft(draft) =>
       if source_pane_editable(state) {
-        source_pane_commit_active({ ..state, draft, status: "Unsaved changes", })
+        source_pane_commit_active(source_literal_record(state, draft, None))
       } else {
         state
       }
@@ -398,6 +444,7 @@ fn update_source_pane(
           draft: state.baseline,
           server_content: None,
           status: "Discarded unsaved source changes",
+          search: init_source_literal(),
         })
       } else {
         state
@@ -464,6 +511,7 @@ fn update_source_pane(
             draft: current,
             server_content: None,
             status: "Reloaded external version",
+            search: init_source_literal(),
           })
         None => state
       }
@@ -521,6 +569,7 @@ fn update_source_pane(
             draft: "",
             server_content: None,
             status: "Closed source tab",
+            search: init_source_literal(),
             buffers: [],
           }
         }

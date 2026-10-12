@@ -9,6 +9,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/string",
   "vectie/moondesk/core" @desk,
+  "vectie/moonedit/src/core" @edit,
   "vectie/moondesk/mooncode/core" @mooncode_core,
 }
 

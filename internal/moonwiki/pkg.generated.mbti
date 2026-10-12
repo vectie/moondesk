@@ -70,6 +70,8 @@ pub fn GitDiffProjection::to_json(Self) -> Json
 type GitRepositoryProjection derive(ToJson)
 pub fn GitRepositoryProjection::to_json(Self) -> Json
 
+type MoonFlowRetainedResult
+
 type OfficeDocumentKind derive(Eq, @debug.Debug)
 pub fn OfficeDocumentKind::equal(Self, Self) -> Bool
 pub fn OfficeDocumentKind::not_equal(Self, Self) -> Bool

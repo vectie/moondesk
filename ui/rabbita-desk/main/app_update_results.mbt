@@ -17,6 +17,8 @@ fn update_app_results(
     | LoadedRuns(_)
     | LoadedMoonFlowCapability(_)
     | LoadedMoonFlowRuns(_)
+    | RequestMoonFlowRuns
+    | LoadedMoonFlowRunsAt(_, _, _)
     | LoadedMoonFlowComposition(_)
     | SavedMoonFlowComposition(_)
     | LoadedMoonFlowOperatorActions(_, _)

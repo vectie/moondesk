@@ -239,6 +239,10 @@ type MoonFlowEnvelopeSummary derive(@json.FromJson)
 
 type MoonFlowEvaluationOperatorProjection derive(@json.FromJson)
 
+type MoonFlowExactReviewMsg
+
+type MoonFlowExactReviewState
+
 type MoonFlowFinalDeliverableOperatorProjection derive(@json.FromJson)
 
 type MoonFlowHandoverCatalog derive(@json.FromJson)
@@ -273,15 +277,37 @@ type MoonFlowOperatorSurface derive(@json.FromJson)
 
 type MoonFlowOutcomeOperatorProjection derive(@json.FromJson)
 
+type MoonFlowOwnerAction derive(ToJson, @json.FromJson)
+
+type MoonFlowOwnerEvidence derive(ToJson, @json.FromJson)
+
+type MoonFlowOwnerSummary derive(ToJson, @json.FromJson)
+
+type MoonFlowPlanEditor derive(@json.FromJson)
+
+type MoonFlowPlanFields derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type MoonFlowPlanMsg
+
 type MoonFlowProposalOperatorProjection derive(@json.FromJson)
 
 type MoonFlowQuarantineOperatorProjection derive(@json.FromJson)
 
 type MoonFlowRecoveryOperatorProjection derive(@json.FromJson)
 
+type MoonFlowRetainedMsg
+
+type MoonFlowRetainedState
+
 type MoonFlowRunControl derive(@json.FromJson)
 
 type MoonFlowRunProjection derive(@json.FromJson)
+
+type MoonFlowSingleStepAction derive(@json.FromJson)
+
+type MoonFlowSingleStepMsg
+
+type MoonFlowSingleStepState
 
 type MoonSuiteProduct derive(@json.FromJson)
 
@@ -351,6 +377,10 @@ type PortableBookExclusion derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type PortableBookExport derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
+type PortableBookGroup derive(Eq, @debug.Debug)
+
+type PortableBookGroupFile derive(Eq, ToJson, @debug.Debug)
+
 type PortableBookHumanRecord derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type PortableBookHumanResult derive(Eq, ToJson, @debug.Debug, @json.FromJson)
@@ -375,6 +405,8 @@ type PortableBookState
 
 type PortableBookVerification derive(ToJson, @json.FromJson)
 
+type PortableGroupMsg
+
 type PreviewTab
 
 type RequestRecord derive(@json.FromJson)
@@ -388,6 +420,10 @@ type ReviewItem derive(@json.FromJson)
 type SavedViewRecord derive(@json.FromJson)
 
 type SearchHit derive(@json.FromJson)
+
+type SourceLiteralSnapshot derive(Eq, @debug.Debug)
+
+type SourceLiteralState derive(Eq, @debug.Debug)
 
 type SourcePaneBuffer derive(Eq, @debug.Debug)
 
@@ -436,6 +472,10 @@ type WorkHandoffMsg
 type WorkHandoffState
 
 type WorkHandoffTarget derive(Eq, @debug.Debug)
+
+type WorkHumanComparison derive(Eq, @debug.Debug)
+
+type WorkHumanLineChange derive(Eq, @debug.Debug)
 
 type WorkHumanRevisionMsg
 

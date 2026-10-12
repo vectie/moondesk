@@ -306,6 +306,7 @@ function syncSourceEditorChrome(element) {
   const selected = Math.max(0, editor.selectionEnd - editor.selectionStart)
   setTextContent(cursor, `Ln ${line}, Col ${column}${selected > 0 ? ` · ${selected} selected` : ''}`)
 
+  if (parts.surface.dataset.searchEngine === 'moonedit') return
   const matches = sourceEditorMatches(parts)
   if (!(parts.find instanceof HTMLInputElement) || !parts.find.value) {
     setTextContent(result, 'No search')
@@ -320,6 +321,10 @@ function syncSourceEditorChrome(element) {
 function selectSourceEditorMatch(element, direction) {
   const parts = sourceEditorParts(element)
   if (!parts) return
+  if (parts.surface.dataset.searchEngine === 'moonedit') {
+    parts.surface.querySelector(`[data-testid="source-find-${direction < 0 ? 'previous' : 'next'}"]`)?.click()
+    return
+  }
   const matches = sourceEditorMatches(parts)
   if (matches.length === 0) {
     syncSourceEditorChrome(parts.editor)
@@ -500,6 +505,12 @@ function installWorkspaceEditorInteractions() {
         event.preventDefault()
         save.click()
       }
+    }
+    if (parts.surface.dataset.searchEngine === 'moonedit' && (event.metaKey || event.ctrlKey)
+        && ['z', 'y'].includes(event.key.toLowerCase())) {
+      event.preventDefault()
+      const redo = event.key.toLowerCase() === 'y' || event.shiftKey
+      parts.surface.querySelector(`[data-testid="source-${redo ? 'redo' : 'undo'}"]`)?.click()
     }
   }, true)
 }

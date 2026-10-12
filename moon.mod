@@ -14,7 +14,7 @@ import {
   "vectie/lepusa@0.1.6",
   "vectie/moonlib@0.1.22",
   "ivgtr/moonzip@0.2.4",
-  "vectie/moonleaf@0.1.15",
+  "vectie/moonleaf@0.1.16",
 }
 
 name = "vectie/moondesk"

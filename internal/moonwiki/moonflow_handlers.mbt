@@ -480,6 +480,14 @@ async fn moonflow_enriched_projection(
     run_root,
     json_string(projection, "run_id", default=""),
   )
+  fields["single_step_actions"] = moonflow_single_step_actions(
+    run_root, projection,
+  ).to_json()
+  fields["single_step_setup"] = moonflow_single_step_setup()
+  fields["owner_summary_observation"] = moonflow_owner_summary_observation(
+    projection,
+    moonflow_projection(@pathx.join(run_root, "events.json")),
+  ).to_json()
   Json::object(fields)
 }
 

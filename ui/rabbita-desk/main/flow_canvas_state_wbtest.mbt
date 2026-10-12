@@ -47,6 +47,10 @@ test "Flow node drag exclusively claims the canvas gesture" {
   let model = {
     ..init_model(),
     moonflow_composition: Some({
+      source_graph: None,
+      plan_editor: None,
+      workspace_id: None,
+      plan_source_unconfirmed: None,
       selected_item_ids: ["research"],
       items: [item],
       node_positions: None,
@@ -101,6 +105,10 @@ test "Flow node grips expose keyboard movement and Arrow keys persist geometry" 
   let model = {
     ..init_model(),
     moonflow_composition: Some({
+      source_graph: None,
+      plan_editor: None,
+      workspace_id: None,
+      plan_source_unconfirmed: None,
       selected_item_ids: ["stage-0"],
       items: [item],
       node_positions: None,
@@ -172,6 +180,10 @@ test "Flow restores persisted node geometry without resetting the viewport" {
     drag_node_id: "old",
   }
   let restored = flow_canvas_apply_composition_positions(canvas, {
+    source_graph: None,
+    plan_editor: None,
+    workspace_id: None,
+    plan_source_unconfirmed: None,
     selected_item_ids: [],
     items: [],
     node_positions: Some([{ work_item_id: "research", x: 512.5, y: 224.25, }]),
@@ -240,6 +252,10 @@ test "Flow computes virtual extent and fits a 63-stage graph" {
   let model = {
     ..init_model(),
     moonflow_composition: Some({
+      source_graph: None,
+      plan_editor: None,
+      workspace_id: None,
+      plan_source_unconfirmed: None,
       selected_item_ids: selected,
       items,
       node_positions: None,

@@ -1,0 +1,5 @@
+{
+  "account": {"id": 900719925474099312345, "name": "\u4e2D", "plan": "trial", "legacy": true},
+  "orders": [{"sku": "001", "amount": -0.00E+09}, {"sku": "002", "amount": 10}],
+  "a/b": {"~flag": false}
+}

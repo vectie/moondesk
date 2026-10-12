@@ -15,6 +15,16 @@ fn portable_book_begin(
     Entries(directory) =>
       ReadPortableEntries(state.generation, request, directory)
     ChooseHumanResult => PickAcceptedHumanResult(state.generation, request)
+    PreparePackage(id) if !state.output_groups.is_empty() =>
+      PreparePortableGroupedPackage(
+        state.generation,
+        request,
+        id,
+        state.version,
+        state.paths,
+        state.output_groups,
+        state.accepted_human_result.map(source => source.raw_base64),
+      )
     PreparePackage(id) =>
       match state.accepted_human_result {
         Some(source) =>
@@ -64,6 +74,8 @@ fn reduce_portable_book(
   message : PortableBookMsg,
 ) -> (PortableBookState, PortableBookEffect) {
   match message {
+    OutputGroup(message) =>
+      (reduce_portable_group(state, message), NoPortableEffect)
     BindPortable(active, library, workspace) => {
       if state.active == active &&
         state.library == library &&
@@ -236,6 +248,9 @@ fn reduce_portable_book(
           operation_id: id,
           prepared: None,
           paths: [],
+          output_groups: [],
+          selected_group: "",
+          group_name: "",
           accepted_human_result: None,
           recovery_checked: false,
           notice: "Inspecting a saved local package. No package is being prepared.",

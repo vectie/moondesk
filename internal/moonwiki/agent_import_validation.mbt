@@ -4,6 +4,7 @@ priv struct AgentImportStage {
   expected_library : String
   filename : String
   bytes : Bytes
+  town_binding : Json?
 }
 
 ///|
@@ -12,6 +13,7 @@ priv struct AgentImportRequest {
   expected_library : String
   destination_folder : String
   package_sha256 : String
+  binding_digest : String?
 } derive(Eq, ToJson)
 
 ///|
@@ -48,7 +50,10 @@ fn agent_import_stage_request(
   payload : Json,
 ) -> Result[AgentImportStage, String] {
   guard payload is Object(fields) &&
-    fields.length() == 4 &&
+    (
+      fields.length() == 4 ||
+      (fields.length() == 5 && fields.contains("town_binding"))
+    ) &&
     fields.get("operation_id") is Some(String(operation_id)) &&
     fields.get("expected_library") is Some(String(expected_library)) &&
     fields.get("filename") is Some(String(filename)) &&
@@ -83,13 +88,23 @@ fn agent_import_stage_request(
   guard @base64.encode(bytes, padding=true) == encoded.to_owned() else {
     return Err("Package upload contains noncanonical base64")
   }
-  Ok({ operation_id, expected_library, filename, bytes, })
+  let town_binding = match fields.get("town_binding") {
+    None | Some(Null) => None
+    Some(Object(_) as binding) if binding.stringify().length() <= 131072 =>
+      Some(binding)
+    _ =>
+      return Err("Choose the original Town binding JSON file, at most 128 KiB")
+  }
+  Ok({ operation_id, expected_library, filename, bytes, town_binding, })
 }
 
 ///|
 fn agent_import_request(payload : Json) -> Result[AgentImportRequest, String] {
   guard payload is Object(fields) &&
-    fields.length() == 4 &&
+    (
+      fields.length() == 4 ||
+      (fields.length() == 5 && fields.contains("binding_digest"))
+    ) &&
     fields.get("operation_id") is Some(String(operation_id)) &&
     fields.get("expected_library") is Some(String(expected_library)) &&
     fields.get("destination_folder") is Some(String(destination_folder)) &&
@@ -102,7 +117,18 @@ fn agent_import_request(payload : Json) -> Result[AgentImportRequest, String] {
       "Import requires the reviewed operation, library, package digest, and a new folder name",
     )
   }
-  Ok({ operation_id, expected_library, destination_folder, package_sha256, })
+  let binding_digest = match fields.get("binding_digest") {
+    None | Some(Null) => None
+    Some(String(digest)) if agent_export_sha_valid(digest) => Some(digest)
+    _ => return Err("Import must retain the inspected Town binding digest")
+  }
+  Ok({
+    operation_id,
+    expected_library,
+    destination_folder,
+    package_sha256,
+    binding_digest,
+  })
 }
 
 ///|
@@ -112,13 +138,20 @@ fn agent_import_hash(bytes : Bytes) -> String {
 
 ///|
 fn agent_import_manifest(request : AgentImportStage) -> Json {
-  {
+  let manifest : Json = {
     "operation_id": request.operation_id,
     "expected_library": request.expected_library,
     "filename": request.filename,
     "package_sha256": agent_import_hash(request.bytes),
     "package_size_bytes": request.bytes.length(),
   }
+  guard manifest is Object(fields) else { return manifest }
+  if request.town_binding is Some(binding) {
+    fields["town_binding_sha256"] = agent_import_hash(
+      @encoding/utf8.encode(binding.stringify()),
+    ).to_json()
+  }
+  Json::object(fields)
 }
 
 ///|

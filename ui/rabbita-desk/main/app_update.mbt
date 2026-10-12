@@ -2,6 +2,14 @@
 fn sync_workspace_editor_context(model : Model) -> Model {
   {
     ..model,
+    moonflow_retained: match model.moonflow_retained {
+      Some(state) if !moonflow_retained_current(model, state) => None
+      state => state
+    },
+    moonflow_single_step: match model.moonflow_single_step {
+      Some(state) if state.workspace_id != model.selected_workspace_id => None
+      state => state
+    },
     source_pane: update_source_pane(
       model.source_pane,
       Rebind(model.selected_workspace_id, model.selected_mooncode_session_id),
@@ -74,6 +82,8 @@ fn update(
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowCapability(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
+    RequestMoonFlowRuns | LoadedMoonFlowRunsAt(_, _, _) =>
+      update_app_results(dispatch, msg, model)
     LoadedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
     SavedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowOperatorActions(_, _) =>
@@ -167,6 +177,17 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     SaveMoonFlowComposition =>
       update_workspace_surface_actions(dispatch, msg, model)
+    MoonFlowPlan(action) =>
+      update_moonflow_plan_preparation(dispatch, action, model)
+    MoonFlowSingleStep(action) =>
+      update_moonflow_single_step(dispatch, action, model)
+    MoonFlowRetained(action) =>
+      update_moonflow_retained(dispatch, action, model)
+    EditMoonFlowPlanField(_, _, _)
+    | DuplicateMoonFlowPlanItem(_)
+    | RemoveMoonFlowPlanItem(_)
+    | SaveMoonFlowPlanDraft
+    | ReopenMoonFlowPlanDraft => update_moonflow_plan_authoring(msg, model)
     FlowCanvasWheel(_) => update_workspace_surface_actions(dispatch, msg, model)
     FlowPanStart(_, _) => update_workspace_surface_actions(dispatch, msg, model)
     FlowPanMove(_, _) => update_workspace_surface_actions(dispatch, msg, model)
