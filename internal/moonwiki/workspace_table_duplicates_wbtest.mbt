@@ -107,7 +107,7 @@ async test "HTTP duplicate review and exports retain query sheet and untouched s
     "/tmp",
   )
   let fixture_root = evidence_root + "/retained-fixtures"
-  @fs.mkdir(fixture_root, recursive=true)
+  @fsx.make_directory(fixture_root, recursive=true, exists_ok=true)
   let root = @moonlib/fsx.mkdtemp(fixture_root + "/desk-duplicates-XXXXXX")
   let book = moonsuite_books_root(root) + "/duplicates"
   @fs.mkdir(book, recursive=true)

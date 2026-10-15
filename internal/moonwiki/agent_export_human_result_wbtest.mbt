@@ -14,12 +14,13 @@ fn human_result_test_field(
 fn human_result_test_request(
   source : Bytes,
   id? : String = "0123456789abcdef0123456789abcdef",
+  workspace? : @desk.DeskWorkspace,
 ) -> AgentExportRequest {
   agent_export_request({
     "operation_id": id,
     "version": "1.0.0",
     "paths": [],
-    "expected_library": export_test_library(),
+    "expected_library": export_test_expected_library(workspace),
     "accepted_human_result_base64": @base64.encode(source, padding=true),
   }).unwrap()
 }
@@ -313,7 +314,7 @@ async test "human result retained retries match exact captured identity and neve
   }
   let workspace = export_test_workspace()
   defer @fs.rmdir(workspace.root_path, recursive=true)
-  let request = human_result_test_request(original)
+  let request = human_result_test_request(original, workspace~)
   let imported = request.accepted_human_result.unwrap()
   let calls : Array[String] = []
   let run = human_result_test_runner(calls, imported)
@@ -321,7 +322,11 @@ async test "human result retained retries match exact captured identity and neve
   let second = agent_export_prepare_with(workspace, request, run)
   assert_eq(first, second)
   assert_eq(calls.filter(call => call == "pack").length(), 1)
-  for mismatch in [human_result_test_request(newer), export_test_request()] {
+  for
+    mismatch in [
+      human_result_test_request(newer, workspace~),
+      export_test_request(workspace~),
+    ] {
     assert_true(
       try {
         ignore(agent_export_prepare_with(workspace, mismatch, run))
@@ -339,7 +344,7 @@ async test "human result retained retries match exact captured identity and neve
       ignore(
         agent_export_prepare_with(
           workspace,
-          human_result_test_request(changed_format),
+          human_result_test_request(changed_format, workspace~),
           run,
         ),
       )
@@ -370,7 +375,7 @@ async test "human result absent package members fail preparation truthfully with
   guard human_result_test_fixture("unicode") is Some(original) else { return }
   let workspace = export_test_workspace()
   defer @fs.rmdir(workspace.root_path, recursive=true)
-  let request = human_result_test_request(original)
+  let request = human_result_test_request(original, workspace~)
   let calls : Array[String] = []
   let run = export_test_runner(calls)
   assert_true(
@@ -411,6 +416,8 @@ async test "human result fixture emitter uses actual Desk request and staging fo
     let directory = output + "/" + name
     let root = directory + "/book"
     @fs.mkdir(root, recursive=true)
+    let root = @fs.realpath(root)
+    let directory = @pathx.dirname(root).to_owned()
     let workspace = @desk.workspace(
       id="human-result-fixture",
       name="Human result fixture",

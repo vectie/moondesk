@@ -3,12 +3,13 @@ fn export_test_request(
   id? : String = "0123456789abcdef0123456789abcdef",
   version? : String = "1.0.0",
   paths? : Array[String] = [],
+  workspace? : @desk.DeskWorkspace,
 ) -> AgentExportRequest {
   agent_export_request({
     "operation_id": id,
     "version": version,
     "paths": paths,
-    "expected_library": export_test_library(),
+    "expected_library": export_test_expected_library(workspace),
   }).unwrap()
 }
 
@@ -20,18 +21,30 @@ fn export_test_library() -> String {
 }
 
 ///|
-async fn export_test_workspace() -> @desk.DeskWorkspace {
+fn export_test_expected_library(workspace : @desk.DeskWorkspace?) -> String {
+  match workspace {
+    Some(workspace) => @pathx.dirname(workspace.root_path).to_owned()
+    None => export_test_library()
+  }
+}
+
+///|
+async fn export_test_workspace(
+  library? : String = export_test_library(),
+) -> @desk.DeskWorkspace {
   let temporary = @fs.realpath(@fs.tmpdir(prefix="moondesk-agent-export-"))
-  let library = export_test_library()
+  @fsx.make_directory(library, recursive=true, exists_ok=true)
+  let library = @fs.realpath(library)
   let root = if @pathx.dirname(temporary).to_owned() == library {
     temporary
   } else {
-    @fsx.make_directory(library, recursive=true, exists_ok=true)
     let destination = library +
       "/" +
       temporary.split("/").last().unwrap().to_owned()
     @fs.rename(temporary, destination, replace=false)
-    destination
+    // A library such as /tmp may itself be a symlink on the host.
+    // Preparation requires the canonical root, including after relocation.
+    @fs.realpath(destination)
   }
   @desk.workspace(
     id="book-export-fixture",
@@ -39,6 +52,52 @@ async fn export_test_workspace() -> @desk.DeskWorkspace {
     root_path=root,
     kind=MoonBook,
   )
+}
+
+///|
+async test "export fixture canonicalizes aliased libraries without relaxing preparation identity" {
+  let root = @fs.realpath(@fs.tmpdir(prefix="desk-export-library-alias-"))
+  defer @fs.rmdir(root, recursive=true)
+  let library = root + "/books"
+  let library_alias = root + "/library-alias"
+  @fs.mkdir(library)
+  @fs.symlink(target=library, library_alias)
+  let workspace = export_test_workspace(library=library_alias)
+  let request = export_test_request(workspace~)
+  assert_eq(workspace.root_path, @fs.realpath(workspace.root_path))
+  assert_eq(request.expected_library, library)
+  let calls : Array[String] = []
+  let run = export_test_runner(calls)
+  let aliased_request = { ..request, expected_library: library_alias, }
+  assert_true(
+    try {
+      ignore(agent_export_prepare_with(workspace, aliased_request, run))
+      false
+    } catch {
+      _ => true
+    },
+  )
+  let aliased_workspace = @desk.workspace(
+    id=workspace.id,
+    name=workspace.name,
+    kind=MoonBook,
+    root_path=library_alias +
+      "/" +
+      workspace.root_path.split("/").last().unwrap().to_owned(),
+  )
+  assert_true(
+    try {
+      ignore(agent_export_prepare_with(aliased_workspace, request, run))
+      false
+    } catch {
+      _ => true
+    },
+  )
+  assert_true(calls.is_empty())
+  assert_false(@fs.exists(workspace.root_path + "/book"))
+  let prepared = agent_export_prepare_with(workspace, request, run)
+  assert_eq(calls.filter(command => command == "pack").length(), 1)
+  assert_eq(json_string(prepared, "expected_library", default=""), library)
 }
 
 ///|
@@ -175,7 +234,7 @@ async test "local export read discovery and inspection never pack and retries re
   let run = export_test_runner(calls)
   assert_true(agent_export_retained(workspace).is_empty())
   assert_true(calls.is_empty())
-  let request = export_test_request()
+  let request = export_test_request(workspace~)
   let prepared = agent_export_prepare_with(workspace, request, run)
   assert_eq(calls.filter(v => v == "pack").length(), 1)
   assert_true(
@@ -213,7 +272,7 @@ async test "local export read discovery and inspection never pack and retries re
     ignore(
       agent_export_prepare_with(
         workspace,
-        export_test_request(version="2.0"),
+        export_test_request(version="2.0", workspace~),
         run,
       ),
     )
@@ -257,7 +316,7 @@ async test "local export rejects same Book identity in a changed library before 
   defer @fs.rmdir(workspace.root_path, recursive=true)
   let calls : Array[String] = []
   let request = {
-    ..export_test_request(),
+    ..export_test_request(workspace~),
     expected_library: "/different/books",
   }
   assert_true(
@@ -285,7 +344,7 @@ async test "local export refuses incomplete claims and in-Book symlink selection
     }
     Err("synthetic failure")
   }
-  let request = export_test_request()
+  let request = export_test_request(workspace~)
   assert_true(
     try {
       ignore(agent_export_prepare_with(workspace, request, run))
@@ -317,9 +376,11 @@ async test "local export refuses incomplete claims and in-Book symlink selection
       ignore(
         agent_export_prepare_with(
           workspace,
-          export_test_request(id="1123456789abcdef0123456789abcdef", paths=[
-            "alias.txt",
-          ]),
+          export_test_request(
+            id="1123456789abcdef0123456789abcdef",
+            paths=["alias.txt"],
+            workspace~,
+          ),
           run,
         ),
       )
@@ -423,7 +484,7 @@ async test "local export actual compatible Book CLI prepares selected half MiB w
   export_test_tree(root, "", before)
   let runtime = @trusted_host.moonbook_export_runtime().unwrap()
   let run = agent_export_runtime_runner(runtime, root)
-  let request = export_test_request(paths=["outputs/result.bin"])
+  let request = export_test_request(paths=["outputs/result.bin"], workspace~)
   let prepared = agent_export_prepare_with(workspace, request, run)
   let after : Map[String, String] = Map([])
   export_test_tree(root, "", after)

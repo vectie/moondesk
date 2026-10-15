@@ -12,6 +12,7 @@ test "projection binds app entrypoints without domain imports" {
     app_entrypoints: [
       { id: "fixture.console", path: "apps/console", audience: "operator", },
     ],
+    app_runtime_identity: None,
     provider_ports: [],
     policies: [],
   }

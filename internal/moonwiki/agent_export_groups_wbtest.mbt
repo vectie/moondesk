@@ -21,13 +21,14 @@ fn export_group_fixture(id? : String = "group-1") -> Json {
 fn export_group_request(
   groups : Array[Json],
   paths? : Array[String] = [],
+  workspace? : @desk.DeskWorkspace,
 ) -> Result[AgentExportRequest, String] {
   agent_export_request({
     "operation_id": "0123456789abcdef0123456789abcdef",
     "version": "1.0.0",
     "paths": paths,
     "output_groups": groups,
-    "expected_library": export_test_library(),
+    "expected_library": export_test_expected_library(workspace),
   })
 }
 
@@ -189,7 +190,7 @@ test "grouped export rejects unsafe or colliding member layout and bounds total 
 async test "grouped export validates every selected file before pack and retries only exact inputs" {
   let workspace = export_test_workspace()
   defer @fs.rmdir(workspace.root_path, recursive=true)
-  let request = export_group_request([export_group_fixture()]).unwrap()
+  let request = export_group_request([export_group_fixture()], workspace~).unwrap()
   let calls : Array[String] = []
   let run = export_test_runner(calls)
   assert_true(
@@ -216,9 +217,16 @@ async test "grouped export validates every selected file before pack and retries
   let again = agent_export_prepare_with(workspace, request, run)
   assert_eq(prepared, again)
   assert_eq(calls.filter(command => command == "pack").length(), 1)
-  let changed = export_group_request([
-    human_result_test_field(export_group_fixture(), "label", "Different report"),
-  ]).unwrap()
+  let changed = export_group_request(
+    [
+      human_result_test_field(
+        export_group_fixture(),
+        "label",
+        "Different report",
+      ),
+    ],
+    workspace~,
+  ).unwrap()
   assert_true(
     try {
       ignore(agent_export_prepare_with(workspace, changed, run))
@@ -288,7 +296,7 @@ async test "grouped export actual Book CLI retains named app and report layouts"
     "version": "1.0.0",
     "paths": ["plain.txt"],
     "output_groups": [export_group_fixture(), report],
-    "expected_library": export_test_library(),
+    "expected_library": export_test_expected_library(Some(workspace)),
     "accepted_human_result_base64": @base64.encode(human_bytes, padding=true),
   }).unwrap()
   let runtime = @trusted_host.moonbook_export_runtime().unwrap()
