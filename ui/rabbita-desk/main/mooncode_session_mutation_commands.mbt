@@ -45,6 +45,14 @@ fn create_mooncode_session_cmd(
       Ok(payload) => decode_mooncode_selected_session(payload)
       Err(error) => Err(error.to_string())
     }
+    if decoded is Ok(session) {
+      browser_code_context_submitted(
+        model.selected_workspace_id,
+        model.selected_mooncode_session_id,
+        session.id,
+        client_turn_id,
+      )
+    }
     dispatch(CreatedMoonCodeSession(decoded))
   })
 }
@@ -149,6 +157,14 @@ fn mooncode_session_command_cmd(
     let decoded = match result {
       Ok(payload) => decode_mooncode_selected_session(payload)
       Err(error) => Err(error.to_string())
+    }
+    if decoded is Ok(_) && (action == "prompt" || guidance) {
+      browser_code_context_submitted(
+        model.selected_workspace_id,
+        session.id,
+        session.id,
+        client_turn_id,
+      )
     }
     dispatch(
       if guidance {

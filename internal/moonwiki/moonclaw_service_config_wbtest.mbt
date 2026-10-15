@@ -169,6 +169,16 @@ test "MoonClaw capability evidence separates ownership and installation" {
   let not_installed = moonclaw_configuration_evidence_from_values(false, false)
   assert_true(json_bool(not_installed, "valid", default=false))
   assert_eq(json_string(not_installed, "reason", default=""), "not-installed")
+  let stale = moonclaw_configuration_evidence_from_values(
+    false,
+    false,
+    repair_available=true,
+  )
+  assert_false(json_bool(stale, "valid", default=true))
+  assert_eq(
+    json_string(stale, "reason", default=""),
+    "stale-managed-service-config",
+  )
 }
 
 ///|

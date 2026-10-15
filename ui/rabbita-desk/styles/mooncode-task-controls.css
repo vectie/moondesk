@@ -1,0 +1,18 @@
+[data-mooncode-task-controls] { font-size: 13px; min-width: 0; }
+[data-mooncode-task-controls] details { border-top: 1px solid var(--border, #d5d9df); padding: 10px 0; }
+[data-mooncode-task-controls] summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+[data-mooncode-task-controls] p { overflow-wrap: anywhere; line-height: 1.5; }
+.mooncode-task-field { display: grid; gap: 6px; margin: 12px 0; }
+.mooncode-task-field textarea { box-sizing: border-box; width: 100%; resize: vertical; padding: 9px; font: inherit; color: inherit; background: var(--bg, transparent); border: 1px solid var(--border, #d5d9df); border-radius: 8px; }
+.mooncode-task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+[data-mooncode-task-controls] button { min-height: 36px; padding: 6px 10px; font: inherit; color: inherit; background: var(--surface, transparent); border: 1px solid var(--border, #d5d9df); border-radius: 7px; cursor: pointer; }
+[data-mooncode-task-controls] button:disabled { opacity: .45; cursor: default; }
+[data-mooncode-task-controls][aria-busy=true] button { pointer-events: none; opacity: .6; }
+.mooncode-task-queue-item, .mooncode-task-recap { padding: 8px 0 12px; border-bottom: 1px solid var(--border, #d5d9df); }
+.mooncode-task-feedback { min-height: 1.5em; }
+.mooncode-task-feedback[role=alert] { color: var(--danger, #b42318); }
+.mooncode-task-objective { font-weight: 600; }
+.mooncode-task-image-job { padding: 12px 0; border-bottom: 1px solid var(--border, #d5d9df); }
+.mooncode-task-image-job img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+.mooncode-task-image-job a { display: inline-block; margin: 8px; }
+@media (pointer: coarse) { [data-mooncode-task-controls] button { min-height: 44px; } }

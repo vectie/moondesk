@@ -1,4 +1,4 @@
-// Navigation is presentation state: no edits, storage, or semantic authority.
+// Navigation is presentation state. Saved locations never include source text.
 export function sourceOffset(text, line, column = 1) {
   if (!Number.isSafeInteger(line) || !Number.isSafeInteger(column) || line < 1 || column < 1) throw new Error('Use a positive line and column')
   const lines = text.split('\n')
@@ -19,9 +19,20 @@ export function parseSourceLocation(value, text) {
 }
 
 export class SourceNavigation {
-  constructor(limit = 50) { this.limit = limit; this.workspace = ''; this.back = []; this.forward = []; this.pending = null }
+  constructor(limit = 50, storage = globalThis.localStorage) { this.limit = limit; this.workspace = ''; this.back = []; this.forward = []; this.pending = null; this.storage = storage }
+  save() {
+    if (!this.workspace) return
+    const location = ({ path, start, end, direction, scrollTop, scrollLeft, line, column }) => ({ path, start, end, direction, scrollTop, scrollLeft, line, column })
+    try { this.storage?.setItem(`moondesk.source.navigation:${this.workspace}`, JSON.stringify({ back: this.back.map(location), forward: this.forward.map(location) })) } catch { /* In-memory history remains available. */ }
+  }
   context(workspace) {
-    if (workspace !== this.workspace) { this.workspace = workspace; this.back = []; this.forward = []; this.pending = null }
+    if (workspace !== this.workspace) {
+      this.save(); this.workspace = workspace; this.back = []; this.forward = []; this.pending = null
+      try {
+        const value = JSON.parse(this.storage?.getItem(`moondesk.source.navigation:${workspace}`) || 'null')
+        if (value && Array.isArray(value.back) && Array.isArray(value.forward)) { this.back = value.back.filter(item => typeof item?.path === 'string').slice(-this.limit); this.forward = value.forward.filter(item => typeof item?.path === 'string').slice(-this.limit) }
+      } catch { /* Ignore obsolete navigation state. */ }
+    }
   }
   begin(origin, target, direction = 'jump') {
     this.pending = { origin, target, direction }
@@ -37,6 +48,7 @@ export class SourceNavigation {
     else if (direction === 'forward') { this.forward.pop(); this.back.push(origin) }
     else { this.back.push(origin); this.forward = [] }
     this.back = this.back.slice(-this.limit); this.forward = this.forward.slice(-this.limit)
+    this.save()
     return target
   }
 }

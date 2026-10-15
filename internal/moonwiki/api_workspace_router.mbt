@@ -9,6 +9,60 @@ async fn route_workspace_api(
   active_root? : Ref[String],
 ) -> Bool {
   match segments {
+    ["api", "document-calendar"] => {
+      if method_ == Post {
+        handle_save_document_calendar(workspace_root, body, method_, conn)
+      } else if method_ == Get || method_ == Head {
+        handle_document_calendar(workspace_root, request_path, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, [
+          "GET", "HEAD", "POST",
+        ])
+      }
+      true
+    }
+    ["api", "document-room"] => {
+      if method_ == Post {
+        handle_save_document_room(workspace_root, body, method_, conn)
+      } else if method_ == Get || method_ == Head {
+        handle_document_room(workspace_root, request_path, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, [
+          "GET", "HEAD", "POST",
+        ])
+      }
+      true
+    }
+    ["api", "workspaces", workspace_id, "terminals"] => {
+      handle_workspace_terminals(
+        workspace_root,
+        workspace_id,
+        None,
+        request_path,
+        body,
+        method_,
+        conn,
+      )
+      true
+    }
+    ["api", "workspaces", workspace_id, "terminals", terminal_id] => {
+      handle_workspace_terminals(
+        workspace_root,
+        workspace_id,
+        Some(terminal_id),
+        request_path,
+        body,
+        method_,
+        conn,
+      )
+      true
+    }
+    ["api", "workspaces", workspace_id, "git", "workflow"] => {
+      handle_workspace_git_workflow(
+        workspace_root, workspace_id, request_path, body, method_, conn,
+      )
+      true
+    }
     ["api", "agent-import"] => {
       handle_agent_import(
         workspace_root,

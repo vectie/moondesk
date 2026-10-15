@@ -1,0 +1,109 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn request(url : String, body? : Json) -> Json {
+  let args = match body {
+    Some(value) =>
+      [
+        "--fail-with-body",
+        "-sS",
+        "-H",
+        "Origin: " + url.split("/api/").next().unwrap().to_owned(),
+        "--json",
+        value.stringify(),
+        url,
+      ]
+    None => ["--fail-with-body", "-sS", url]
+  }
+  let result = @shell.Cmd("curl", args).output()
+  result.check() catch {
+    error => fail("\{error}: " + result.stdout() + result.stderr())
+  }
+  @json.parse(result.stdout())
+}
+
+///|
+async fn main {
+  guard @env.args() is [_, desk_url, town_url, evidence_path] else {
+    fail(
+      "Usage: verify-desktop-recurring-schedule.mbtx DESK_URL TOWN_URL EVIDENCE_JSON",
+    )
+  }
+  let now = (@env.now() / 1000UL).reinterpret_as_int64()
+  let id = "desktop-recurring-check-" + now.to_string()
+  let file = "inbox/" + id + ".txt"
+  let payload : Json = {
+    "action": "create",
+    "id": id,
+    "book_id": "book-coding",
+    "title": "Recurring schedule verification",
+    "prompt": "Use the dedicated read and write file tools only. Read " +
+    file +
+    " if it exists, then append exactly one line 'Schedule verification completed' by writing back the preserved content plus that line. If absent, create it with that one line. Do not use shell, run, or exec. Do not read or change any other file. Reply briefly when done.",
+    "model": "moongate/deepseek-v4.1-flash",
+    "interval_seconds": 60,
+    "repeat": true,
+    "next_due_at": (now + 5L).to_double(),
+  }
+  ignore(request(desk_url + "/api/mooncode/schedules", body=payload))
+  println("Created recurring schedule through packaged MoonDesk: " + id)
+  defer {
+    ignore(
+      request(town_url + "/api/code-schedules", body={
+        "action": "pause",
+        "id": id,
+      }),
+    )
+    println("Verification schedule paused")
+  }
+  let completions : Array[Json] = []
+  let mut previous_command = ""
+  let mut previous_status = ""
+  for _ in 0..<90 {
+    let state = request(town_url + "/api/code-schedules")
+    guard state is { "schedules": Array(schedules), .. } else {
+      fail("Invalid schedules response")
+    }
+    for schedule in schedules {
+      guard schedule
+        is {
+          "id": String(schedule_id),
+          "last_status": String(status),
+          "last_command_id": String(command),
+          ..
+        } &&
+        schedule_id == id else {
+        continue
+      }
+      if status != previous_status {
+        println("Schedule: " + status)
+        previous_status = status
+      }
+      if status == "done" && command != previous_command {
+        previous_command = command
+        completions.push(schedule)
+        let evidence : Json = {
+          "id": id,
+          "output_path": file,
+          "completed_runs": completions.to_json(),
+        }
+        @fs.write_file(evidence_path, evidence.stringify(indent=2))
+        println("Automatic completion \{completions.length()}: " + command)
+        if completions.length() == 2 {
+          return
+        }
+      }
+    }
+    @async.sleep(5000)
+  }
+  fail(
+    "Two automatic recurring runs did not finish within the verification window",
+  )
+}

@@ -367,6 +367,7 @@ fn work_handoff_leaves(msg : Msg) -> Bool {
     NewMoonCodeSession
     | SelectMoonCodeSession(_)
     | SelectWorkspace(_)
+    | OpenMoonBook(_, _)
     | SelectWorkspaceMode(_)
     | SelectActivity(_)
     | SelectSearchHit(_, _) => true

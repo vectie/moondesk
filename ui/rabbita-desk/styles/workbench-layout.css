@@ -1,0 +1,269 @@
+/* Column hierarchy: navigation, conversation, optional work. These dimensions
+   are MoonDesk choices; the Codex reference informs the arrangement only. */
+.desk-shell {
+  height: 100dvh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 52px minmax(0, 1fr);
+  overflow: hidden;
+  --mooncode-bg: #fff;
+  --mooncode-rail-bg: #f7f7f8;
+  --mooncode-field: #f6f7f8;
+}
+.desk-shell .title-bar {
+  --title-control-font-size: 12px;
+  grid-template-columns: 200px minmax(0, 1fr) auto auto;
+  min-height: 0;
+  padding: 6px 12px;
+  gap: 8px 12px;
+  border-bottom: 1px solid var(--mooncode-line);
+}
+.desk-shell .title-copy { display: flex; gap: 9px; }
+.desk-shell .title-copy .workspace-switcher { display: none; }
+.desk-shell .title-bar .workspace-mode-toggle {
+  background: transparent; border: 0; padding: 0; gap: 2px;
+}
+.desk-shell .title-bar .mode-button {
+  min-height: 32px; padding: 6px 10px;
+  background: transparent; box-shadow: none;
+}
+.desk-shell .title-bar .mode-button.active {
+  color: var(--mooncode-ink); background: var(--mooncode-field); box-shadow: none;
+}
+.desk-shell .title-bar > .command-button { min-height: 32px; border-color: transparent; }
+.code-main {
+  position: relative;
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0; height: 100%; overflow: hidden;
+}
+.code-main[data-navigation="closed"] { grid-template-columns: minmax(0, 1fr); }
+.code-main[data-navigation="closed"] > .mooncode-rail { display: none; }
+.code-main .mooncode-rail {
+  height: 100%; min-height: 0; max-height: none; overflow-y: auto;
+  border-bottom: 0; border-right: 1px solid var(--mooncode-line); box-shadow: none;
+}
+.code-main .mooncode-rail .pane-heading {
+  min-height: 48px; padding: 8px 16px; border-bottom: 0;
+}
+.code-main .mooncode-rail .pane-heading h2 { font-size: 13px; font-weight: 600; }
+.code-navigation-close { display: none; }
+.code-main .mooncode-new-session {
+  min-height: 32px; margin: 0 10px 4px; padding: 4px 8px;
+  border: 0; font-size: 13px; font-weight: 500;
+}
+.code-main .mooncode-session-search { margin: 0 10px 6px; }
+.code-main .mooncode-session-search-input {
+  height: 30px; min-height: 30px; padding: 5px 8px; font-size: 12px;
+  background: transparent; border-color: var(--mooncode-line);
+}
+.code-main .mooncode-session-list {
+  flex: 1 1 auto; min-height: 0; max-height: none; gap: 2px; padding: 4px 8px 10px;
+}
+.code-main .mooncode-session-group-heading {
+  min-height: 28px; margin-top: 6px; padding: 4px 8px; gap: 6px;
+  border: 0; background: transparent; box-shadow: none; font-size: 12px;
+}
+.code-main .mooncode-session-group-heading:first-child { margin-top: 0; }
+.code-main .mooncode-session-group-name { font-size: 12px; font-weight: 500; }
+.code-main .mooncode-session-group-count { font-size: 11px; font-weight: 400; }
+.code-main .mooncode-session-row { margin-left: 12px; width: calc(100% - 12px); }
+.code-main .mooncode-session-line { grid-template-columns: minmax(0, 1fr) 24px; gap: 0; }
+.code-main .mooncode-session {
+  display: flex; align-items: center; gap: 8px; min-height: 32px;
+  padding: 5px 8px; border-radius: 6px; box-shadow: none;
+}
+.code-main .mooncode-session:hover { transform: none; }
+.code-main .mooncode-session strong {
+  flex: 1 1 0; min-width: 0; font-size: 13px; font-weight: 400;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.code-main .mooncode-session.active strong { font-weight: 500; }
+.code-main .mooncode-session small {
+  flex: 0 1 auto; max-width: 72px; margin: 0; font-size: 11px;
+}
+.code-main .mooncode-session-menu-trigger { width: 24px; height: 28px; }
+.code-main .mooncode-other-books { margin-top: 6px; }
+.code-main .mooncode-other-books > summary { min-height: 32px; padding: 4px 8px; font-size: 12px; font-weight: 500; }
+.mooncode-center:has(.code-workbench) {
+  display: flex; flex-direction: column; height: 100%; min-height: 0;
+  overflow: hidden; background: var(--mooncode-panel);
+}
+.code-workbench-heading {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  flex: 0 0 auto; min-height: 48px;
+  border-bottom: 1px solid var(--mooncode-line); background: var(--mooncode-panel);
+}
+.code-workbench-heading .mooncode-context-bar {
+  display: flex; flex-wrap: nowrap;
+  min-width: 0; min-height: 48px; gap: 4px; padding: 4px 12px;
+  border: 0; background: transparent;
+}
+.code-workbench-heading .code-navigation-toggle { flex: 0 0 36px; width: 36px; }
+.code-workbench-heading .mooncode-context-bar > div {
+  flex: 1; width: auto; min-width: 0; margin: 0 8px;
+}
+.code-workbench-heading .mooncode-context-bar strong { font-size: 13px; font-weight: 600; }
+.code-workbench-heading .mooncode-context-bar > div > span { font-size: 11px; }
+.code-workbench-heading .moon-icon-button { border-color: transparent; background: transparent; }
+.code-workbench-heading .moon-icon-button:hover { background: var(--mooncode-field); }
+.code-workbench-heading .code-workbench-toolbar {
+  flex-wrap: nowrap; min-width: 0; min-height: 48px; padding: 3px 10px;
+  gap: 4px; border: 0; background: transparent;
+}
+.code-workbench-heading .code-workbench-tabs {
+  flex: 0 1 auto; min-width: 0; padding: 0; gap: 2px;
+}
+.code-workbench-heading .code-workbench-tab-label { display: none; }
+.code-workbench-heading .code-workbench-actions { flex-wrap: nowrap; }
+.code-workbench-heading [data-workbench-action="selection"] { display: none; }
+.mooncode-center[data-workbench-focus="split"] [data-workbench-action="selection"] { display: inline-flex; }
+.code-workbench-heading:has(.code-selection-actions) { position: relative; }
+.code-workbench-heading .code-selection-actions {
+  position: absolute; right: 12px; top: calc(100% + 6px); z-index: 15;
+  border: 1px solid var(--mooncode-line); border-radius: 8px; padding: 4px;
+  background: var(--mooncode-panel); box-shadow: var(--mooncode-shadow-tight);
+}
+.code-workbench-heading { position: relative; }
+.code-workbench-status:not(:empty) {
+  position: absolute; right: 12px; top: calc(100% + 8px); z-index: 16;
+  max-width: min(400px, calc(100vw - 32px)); padding: 8px 12px;
+  border: 1px solid var(--mooncode-line); border-radius: 8px;
+  background: var(--mooncode-panel); box-shadow: var(--mooncode-shadow-tight);
+  font-size: 12px; line-height: 1.5;
+}
+.code-workbench {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  flex: 1 1 0; min-height: 0; overflow: hidden;
+}
+.code-workbench > .mooncode-chat-surface {
+  min-height: 0; height: 100%; overflow: hidden;
+  background: var(--mooncode-panel);
+}
+.code-workbench .mooncode-chat-surface.empty {
+  justify-content: center; gap: 12px; padding: 24px 0 12vh;
+}
+.code-workbench .mooncode-composer {
+  width: min(640px, calc(100% - 48px)); max-width: 640px;
+  margin: 0 auto 16px; padding: 10px 12px; gap: 6px; border-radius: 12px;
+  background: var(--mooncode-panel); border-color: var(--mooncode-line);
+  box-shadow: 0 2px 8px #00000006;
+}
+.code-workbench .mooncode-chat-surface.empty .mooncode-composer { margin-block: 0; }
+.code-workbench .mooncode-composer:focus-within {
+  border-color: var(--mooncode-line-strong); box-shadow: 0 0 0 2px var(--mooncode-focus);
+}
+.code-workbench .mooncode-input { min-height: 40px; font-size: 14px; }
+.code-workbench .mooncode-input:focus-visible { outline: 0; }
+.code-workbench .mooncode-session-surface { flex: 1 1 0; min-height: 0; }
+.code-workbench .mooncode-transcript-list { padding-inline: max(24px, calc((100% - 680px) / 2)); }
+.code-workbench-work { border-right: 0; border-left: 1px solid var(--mooncode-line); }
+.code-workbench-work .mooncode-workspace-editors-body { padding: 0; gap: 0; }
+.workspace-office-disclosure { border-top: 1px solid var(--mooncode-line); }
+.workspace-office-disclosure > summary {
+  display: flex; align-items: center; gap: 8px; min-height: 44px;
+  padding: 8px 16px; color: var(--mooncode-muted); font-size: 12px;
+  list-style: none; cursor: pointer;
+}
+.workspace-office-disclosure > summary::-webkit-details-marker { display: none; }
+.workspace-office-disclosure > summary::after { content: "⌄"; margin-left: auto; }
+.workspace-office-disclosure[open] > summary::after { transform: rotate(180deg); }
+.workspace-office-disclosure > summary:focus-visible { outline: 2px solid var(--mooncode-accent); outline-offset: -2px; }
+.code-workbench-work .source-editor { padding: 12px 16px; gap: 10px; }
+.code-workbench-work .source-editor-toolbar { flex-wrap: nowrap; gap: 6px; }
+.code-workbench-work .source-editor-toolbar .editor-path-field { flex: 1 1 0; min-width: 0; }
+.code-workbench-work .source-editor-toolbar input {
+  flex: 1 1 0; min-width: 0; width: 100%; height: 32px;
+  padding: 6px 9px; border: 1px solid var(--mooncode-line); border-radius: 6px;
+  background: var(--mooncode-field); font-size: 12px;
+}
+.code-workbench-work .source-editor-toolbar > button { flex-shrink: 0; }
+.code-workbench-work [data-source-navigation] { flex-wrap: wrap; }
+.code-workbench-work [data-source-navigation] input { flex: 1 1 90px; width: 90px; }
+.code-workbench-work [data-source-navigation] button,
+.code-workbench-work [data-code-outline] button { font-size: 12px; padding: 6px 8px; }
+.code-workbench-work [data-code-outline] { margin-top: 12px; font-size: 12px; }
+.code-workbench-work [data-code-outline-filter] { max-width: 100%; padding: 6px 8px; font-size: 12px; }
+.code-workbench-work [data-code-outline-status] { color: var(--mooncode-muted); line-height: 1.5; }
+.code-workbench-work .source-editor textarea { min-height: 360px; }
+/* Setup stays beside the message it affects, without taking a workspace row. */
+.code-workbench .mooncode-runtime-setup {
+  order: 0; flex: 0 0 auto; width: min(640px, calc(100% - 48px));
+  max-width: 640px; margin: 12px auto; padding: 10px 12px;
+  gap: 6px 12px; border: 1px solid var(--mooncode-line); border-radius: 8px;
+  background: var(--mooncode-field); font-size: 12px;
+}
+.code-workbench .mooncode-chat-surface.empty > .mooncode-runtime-setup { order: 3; margin-block: 0; }
+.code-workbench .mooncode-runtime-setup .code-capability-summary { flex: 1 1 180px; }
+.code-workbench .mooncode-runtime-setup h3 { margin: 0; font-size: 12px; font-weight: 500; }
+.code-workbench .mooncode-runtime-install { min-width: 0; }
+.code-workbench .mooncode-runtime-setup .primary-button {
+  min-height: 30px; padding: 5px 9px; box-shadow: none; font-size: 12px;
+  background: var(--mooncode-panel); border: 1px solid var(--mooncode-line); color: var(--mooncode-ink);
+}
+.code-workbench .mooncode-runtime-setup .technical-details { flex-basis: 100%; margin: 0; font-size: 11px; }
+.code-workbench .mooncode-runtime-setup .code-capability-summary p { font-size: 12px; }
+
+/* Three columns only when both working panes have a useful reading width. */
+@media (min-width: 1280px) {
+  .mooncode-center[data-workbench-focus="split"] .code-workbench,
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-heading {
+    grid-template-columns: minmax(420px, 1fr) minmax(420px, 1.08fr);
+  }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-toolbar {
+    border-left: 1px solid var(--mooncode-line);
+  }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-tab[aria-selected="true"] .code-workbench-tab-label { display: inline; }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-actions { margin-left: auto; }
+}
+@media (max-width: 1279px) {
+  .code-workbench { display: flex; flex-direction: column; min-height: 0; }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench > .mooncode-chat-surface { display: none; }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-work { display: block; flex: 1 1 0; border-left: 0; }
+  .mooncode-center[data-workbench-focus="chat"] .code-workbench > .mooncode-chat-surface { display: flex; }
+}
+@media (max-width: 1099px) {
+  .code-navigation-close { display: inline-flex; }
+  .desk-shell .title-bar { grid-template-columns: 160px minmax(0, 1fr) auto auto; }
+  .code-main { grid-template-columns: minmax(0, 1fr); }
+  .code-main[data-navigation="open"] > .mooncode-rail {
+    position: absolute; inset: 0 auto 0 0; width: 260px; z-index: 30;
+    box-shadow: 12px 0 28px #00000012;
+  }
+}
+@media (max-width: 760px) {
+  .code-workbench-heading .code-navigation-toggle { flex-basis: 44px; width: 44px; }
+  .desk-shell { grid-template-rows: 52px minmax(0, 1fr); }
+  .desk-shell .title-bar { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+  .desk-shell .title-bar .title-copy { display: none; }
+  .desk-shell .title-bar .primary-nav-compact { grid-column: 1; grid-row: 1; width: fit-content; min-width: 104px; }
+  .desk-shell .title-bar .primary-nav-compact-summary { min-height: 40px; border: 0; background: transparent; }
+  .desk-shell .title-bar > .command-button { grid-column: 3; min-height: 40px; }
+  .code-workbench-heading { grid-template-columns: minmax(0, 1fr); }
+  .code-workbench-heading .mooncode-context-bar { min-height: 48px; padding: 2px 8px; }
+  .code-workbench-heading .code-workbench-toolbar { min-height: 46px; padding: 0 8px; border-top: 1px solid var(--mooncode-line); justify-content: space-between; }
+  .code-workbench-heading .code-workbench-tabs { flex: 1 1 0; }
+  .code-workbench-heading .code-workbench-tab-label { display: none; }
+  .code-workbench-heading .code-workbench-actions { margin-left: auto; }
+  .code-workbench .mooncode-chat-surface.empty { padding: 20px 0 8vh; gap: 16px; }
+  .code-workbench .mooncode-composer { width: calc(100% - 24px); margin-bottom: 12px; }
+  .code-workbench .mooncode-runtime-setup { width: calc(100% - 24px); max-width: none; margin-block: 8px; }
+  .code-workbench .mooncode-session-surface { height: auto; }
+  .code-workbench-work .source-editor { padding: 10px; }
+  .code-workbench-work .source-editor-toolbar { flex-wrap: wrap; }
+  .code-workbench-work .source-editor-toolbar input { min-width: 120px; }
+  .code-workbench .mooncode-chat-surface:not(.empty) .mooncode-runtime-setup { max-height: 24dvh; overflow-y: auto; }
+}
+@media (max-height: 650px) {
+  .code-workbench .mooncode-chat-surface.empty { padding-block: 16px; overflow-y: auto; justify-content: safe center; }
+}
+@media (pointer: coarse), (max-width: 760px) {
+  .code-main .mooncode-new-session,
+  .code-main .mooncode-session-search-input,
+  .code-main .mooncode-session-group-heading,
+  .code-main .mooncode-session,
+  .code-main .mooncode-other-books > summary { min-height: 44px; }
+  .code-main .mooncode-session-line { grid-template-columns: minmax(0, 1fr) 44px; }
+  .code-main .mooncode-session-menu-trigger { width: 44px; height: 44px; opacity: 1; }
+}

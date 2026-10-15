@@ -122,6 +122,45 @@ fn living_artifact_find(records : Array[Json], id : String) -> Json? {
 }
 
 ///|
+fn living_artifact_duplicate(
+  original : Json,
+  title : String,
+  now : String,
+) -> Result[Json, String] {
+  let created = match
+    living_artifact_create(
+      {
+        "workspace_id": json_string(original, "workspace_id", default=""),
+        "title": title,
+        "kind": json_string(original, "kind", default="checklist"),
+        "purpose": json_string(original, "purpose", default=""),
+        "items": [],
+      },
+      now,
+    ) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  let id = json_string(created, "id", default="")
+  let items : Array[Json] = []
+  for item in json_array_items(original, "items") {
+    match
+      living_artifact_item(
+        id,
+        json_string(item, "label", default=""),
+        json_string(item, "value", default=""),
+        json_string(item, "source", default=""),
+        now,
+        items.length(),
+      ) {
+      Ok(value) => items.push(value)
+      Err(error) => return Err(error)
+    }
+  }
+  Ok(@mooncore.session_with_field(created, "items", Json::array(items)))
+}
+
+///|
 fn living_artifact_apply_command(
   record : Json,
   payload : Json,
@@ -308,12 +347,25 @@ async fn apply_living_artifact(
   let action = json_string(payload, "action", default="create")
   let record = if action == "create" {
     living_artifact_create(payload, now)
-  } else if action == "command" {
+  } else if action == "command" || action == "duplicate" {
     let id = json_string(payload, "id", default="").trim().to_owned()
     match living_artifact_find(records, id) {
       Some(current) =>
         if json_string(current, "workspace_id", default="") == workspace_id {
-          living_artifact_apply_command(current, payload, now)
+          if action == "duplicate" {
+            living_artifact_duplicate(
+              current,
+              json_string(
+                payload,
+                "title",
+                default=json_string(current, "title", default="Artifact") +
+                  " copy",
+              ),
+              now,
+            )
+          } else {
+            living_artifact_apply_command(current, payload, now)
+          }
         } else {
           Err("living_artifact_not_found")
         }
@@ -330,7 +382,7 @@ async fn apply_living_artifact(
   while next.length() > LivingArtifactMaxRecords {
     next.pop() |> ignore
   }
-  if action == "create" {
+  if action == "create" || action == "duplicate" {
     write_living_artifact_shell(workspace_root, workspace_id, record) catch {
       _ => return Err("living_artifact_shell_write_failed")
     }

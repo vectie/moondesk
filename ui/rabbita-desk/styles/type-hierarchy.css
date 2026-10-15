@@ -1,0 +1,163 @@
+/* Shared desktop hierarchy. OpenSeek's restrained 12/13/14/17 scale informs
+   the sizing; MoonDesk keeps its book → task → output arrangement. */
+:root {
+  --font-ui: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-ui);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-meta: 12px;
+  --text-control: 13px;
+  --text-body: 14px;
+  --text-title: 17px;
+  --shell-header-height: 44px;
+  --ink: #24262b;
+  --muted: #686d76;
+  --line: #e4e5e8;
+  --line-soft: #ececef;
+}
+body { font-size: var(--text-body); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea, summary { font-family: var(--font-ui); }
+button, summary { font-weight: 400; }
+.desk-shell { grid-template-rows: var(--shell-header-height) minmax(0, 1fr); --workspace-rail: 240px; --workspace-heading: 40px; --workspace-row: 30px; }
+.desk-shell .title-bar { grid-template-columns: 216px minmax(0, 1fr) auto auto; padding: 4px 12px; gap: 8px 16px; }
+.desk-shell .title-bar :is(.mode-button, .command-button) { font-size: var(--text-control); font-weight: 500; line-height: 20px; }
+.desk-shell .title-bar .mode-button { min-height: 30px; padding: 4px 9px; gap: 6px; color: var(--muted); }
+.desk-shell .title-bar .mode-button.active { color: var(--ink); background: #f0f1f3; }
+.title-bar .moon-icon { width: 16px; height: 16px; }
+.work-book-switcher > summary { font-size: var(--text-control); font-weight: 500; }
+.work-shortcuts .moon-icon-button, .work-tools-menu > summary { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0; border-radius: 5px; color: var(--muted); background: transparent; }
+.work-shortcuts .moon-icon-button:hover, .work-tools-menu > summary:hover { background: #f0f1f3; color: var(--ink); }
+.work-detail-host { top: var(--shell-header-height); }
+.pack-app-workspace { inset-block-start: var(--shell-header-height); }
+.desk-shell :is(.pane-heading, .wiki-chat-heading, .wiki-viewer-heading, .flow-hero, .pack-home-heading) :is(h1,h2,h3) { font-size: var(--text-control); font-weight: 500; line-height: 20px; }
+.desk-shell :is(.secondary-button, .compact-button, .desk-disclosure-summary, .breadcrumb-chip) { font-size: var(--text-control); font-weight: 400; }
+.desk-shell :is(.secondary-button, .compact-button) { box-shadow: none; }
+
+/* Book rows have one baseline. Secondary actions appear without moving text. */
+.desk-sidebar { border-right-color: var(--line-soft); }
+.desk-sidebar > .pane-heading { min-height: 40px; padding: 4px 16px; }
+.desk-workspace-list { gap: 1px; }
+.desk-moonbook-card { position: relative; min-height: 30px; }
+.desk-moonbook-card .desk-workspace-row { min-height: 30px; padding: 4px 8px; }
+.desk-moonbook-card .desk-workspace-row strong { display: block; font-size: var(--text-control); line-height: 20px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desk-moonbook-card.active .desk-workspace-row strong { font-weight: 500; }
+.desk-moonbook-card .moonbook-card-actions { position: absolute; right: 2px; padding-left: 6px; background: inherit; border-radius: 5px; opacity: 0; pointer-events: none; }
+.desk-moonbook-card:is(:hover,:focus-within,.active) .moonbook-card-actions { opacity: 1; pointer-events: auto; background: #eceef0; }
+.desk-moonbook-card:is(:hover,:focus-within,.active) .desk-workspace-row { padding-right: 62px; }
+.moonbook-search { min-height: 30px; background: transparent; border-color: var(--line); }
+.moonbook-search input { font-size: var(--text-control); }
+.code-main { grid-template-columns: 240px minmax(0,1fr); }
+.code-main .mooncode-rail .pane-heading { min-height: 40px; padding-block: 4px; }
+.code-main .mooncode-session { min-height: 30px; padding-block: 4px; }
+.code-main .mooncode-session-group-name { font-weight: 500; color: var(--muted); }
+
+/* Two compact navigation rows; file count belongs below the file surface. */
+.desk-browser { grid-template-rows: auto auto minmax(0,1fr) auto; }
+.desk-browser-head { padding: 0 12px 6px; }
+.desk-browser-title { min-height: 38px; }
+.desk-browser-workspace { display: none; }
+.desk-browser-head h2 { font-size: var(--text-control); font-weight: 500; }
+.desk-browser-head .toolbar-actions { flex-wrap: nowrap; }
+.desk-browser-head .desk-toolbar-disclosure > summary { border-color: transparent; background: transparent; font-size: var(--text-control); font-weight: 400; }
+.desk-browser-head .desk-folder-search { background: #fafafa; border-color: var(--line); max-width: 320px; }
+.desk-breadcrumb { border-block: 0; min-height: 28px; padding-block: 0; }
+.desk-location-bar { grid-row: 4; min-height: 28px; padding: 0 12px; border-top: 1px solid var(--line-soft); border-bottom: 0; background: transparent; }
+.desk-location-meta { font-size: var(--text-meta); color: var(--muted); }
+.desk-location-disclosure > summary { min-height: 26px; padding: 2px 6px; border: 0; background: transparent; font-size: var(--text-meta); font-weight: 400; }
+.desk-location-disclosure > .desk-disclosure-body { top: auto; bottom: 100%; }
+.desk-file-table { grid-row: 3; min-height: 0; }
+.desk-file-row, .density-compact .desk-file-row { min-height: 30px; padding-block: 4px; font-size: var(--text-control); border-color: transparent; }
+.desk-file-name { gap: 8px; }
+.desk-file-name strong { font-weight: 400; }
+.desk-file-row > span:not(:first-child) { color: var(--muted); font-size: var(--text-meta); }
+.desk-file-header, .density-compact .desk-file-header { min-height: 28px; background: #fafafa; border-block: 1px solid var(--line-soft); }
+.desk-file-header button { font-size: var(--text-meta); font-weight: 500; color: var(--muted); background: transparent; }
+
+/* Content gets the reading size; chrome remains subordinate. */
+.wiki-chat-header, .wiki-viewer-header { min-height: 40px; padding-block: 4px; }
+.wiki-chat-header h2, .wiki-viewer-header h2 { font-weight: 500; }
+.quiet-work-center[data-empty="true"]:not([data-has-schedules="true"]) { display: none; }
+.quiet-work-summary :is(strong,span) { font-size: var(--text-meta); font-weight: 400; }
+.wiki-chat-message, .wiki-chat-input, .work-document-preview, .document-preview, .mooncode-message { font-size: var(--text-body); line-height: 1.6; }
+.wiki-chat-empty, .wiki-viewer-empty { color: var(--muted); }
+.wiki-chat-empty h3, .wiki-viewer-empty h3, .code-workbench .mooncode-empty h1 { font-size: var(--text-title); font-weight: 500; }
+.wiki-chat-empty p, .wiki-viewer-empty p { font-size: var(--text-control); }
+.wiki-chat-background-summary { font-size: var(--text-meta); }
+.wiki-chat-background-summary strong { font-weight: 400; }
+.wiki-chat-compose, .wiki-chat-composer { box-shadow: none; }
+.wiki-document-viewer .markdown-edit-surface { display: flex; flex-direction: column; min-height: 100%; gap: 0; }
+.markdown-edit-surface > .site-toolbar { min-height: 28px; font-size: var(--text-meta); padding: 4px 12px; }
+.markdown-editor-grid { flex: 1; min-height: 0; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; align-items: stretch; }
+.markdown-editor { min-height: 360px; padding: 14px 16px; border: 0; border-right: 1px solid var(--line); border-radius: 0; box-shadow: none; font-family: var(--font-mono); font-size: var(--text-control); line-height: 1.6; resize: vertical; }
+.markdown-editor:focus { box-shadow: inset 0 0 0 1px var(--accent); }
+.markdown-live-preview { padding: 14px 20px; font-size: var(--text-body); }
+.document-format-toolbar { flex: 0 0 auto; align-items: center; flex-wrap: nowrap; overflow-x: auto; gap: 2px; padding: 4px 10px; border-bottom: 1px solid var(--line-soft); }
+.document-format-toolbar button { flex: 0 0 28px; min-width: 28px; width: 28px; min-height: 28px; height: 28px; padding: 0; border: 0; background: transparent; font-size: 13px; }
+.document-format-toolbar button:hover { background: #eceef0; }
+.document-format-toolbar select { margin-left: auto; min-height: 28px; max-width: 155px; padding: 3px 6px; border: 0; background: transparent; font-size: var(--text-meta); }
+.document-format-toolbar [data-format="bold"] { font-weight: 700; }
+.document-format-toolbar [data-format="italic"] { font-style: italic; }
+.document-format-toolbar svg { width: 16px; height: 16px; vertical-align: middle; }
+.pack-home-main :is(h1,h2,h3), .flow-main :is(h1,h2,h3) { font-weight: 500; }
+.pack-home-main .pack-product-card h2, .pack-template-card :is(strong,h3) { font-size: var(--text-control); font-weight: 500; line-height: 18px; }
+.pack-home-main .pack-product-card .pack-area-label { font-size: var(--text-meta); line-height: 16px; }
+.pack-home-main .pack-home-hero, .flow-main .flow-hero { min-height: 40px; }
+.pack-home-main > .pack-inspector { inset-block-start: var(--shell-header-height); }
+.work-detail-drawer :is(h2,h3,h4,strong), .task-start-panel :is(h2,h3,strong) { font-weight: 500; }
+.work-detail-drawer, .task-start-panel { font-size: var(--text-control); }
+.task-schedule input, .task-schedule select, .task-schedule textarea { font: inherit; }
+.task-schedule-row > strong { font-weight: 500; }
+
+/* Scheduled work uses the same pane and list hierarchy as the workspace. */
+.mooncode-schedule-panel[data-popup] { top: calc(var(--shell-header-height) + 40px); right: 0; bottom: 0; width: min(480px,100vw); border-radius: 0; box-shadow: -8px 0 24px #0000000d; font-size: var(--text-control); }
+.mooncode-schedule-heading { min-height: 30px; }
+.mooncode-schedule-heading strong { font-weight: 500; }
+.calendar-ready > .mooncode-schedule-heading p,
+.calendar-ready > .mooncode-schedule-heading .quiet-panel-actions > button:not([data-popup-dismiss]) { display: none; }
+.mooncode-schedule-panel .moon-icon-button { width: 28px; min-width: 28px; height: 28px; min-height: 28px; border: 0; background: transparent; box-shadow: none; }
+.mooncode-schedule-panel .moon-icon-button:hover { background: #eceef0; }
+.mooncode-schedule-panel .moon-icon { width: 16px; height: 16px; }
+.mooncode-calendar { margin-block: 8px; }
+.mooncode-calendar-toolbar { display: flex; align-items: center; gap: 4px; margin-block: 6px; }
+.mooncode-calendar > .mooncode-calendar-toolbar:first-child { justify-content: space-between; }
+.mooncode-calendar-toolbar > .secondary-button:not(.moon-icon-button) { min-height: 28px; padding: 3px 8px; }
+.mooncode-calendar-month { margin-left: auto; color: var(--muted); font-size: var(--text-meta); }
+.mooncode-calendar-week { grid-template-columns: repeat(7,minmax(0,1fr)); gap: 2px; margin-top: 8px; }
+.mooncode-calendar-day { padding: 6px 3px; background: #f7f8fa; border-radius: 4px; }
+.mooncode-calendar-day h4 { margin: 2px 0; font-size: var(--text-control); font-weight: 500; }
+.mooncode-calendar-weekday { font-size: 11px; }
+.mooncode-calendar-day button { min-height: 28px; padding: 3px; font-size: 11px; }
+.mooncode-calendar-empty, .mooncode-calendar-timing { margin: 6px 0; color: var(--muted); font-size: var(--text-meta); }
+.mooncode-calendar-timing { margin-bottom: 12px; }
+.mooncode-calendar-timing > summary { cursor: pointer; }
+.mooncode-calendar-timing p { margin: 6px 0; line-height: 1.5; }
+.mooncode-calendar-task { margin: 0; padding: 10px 0; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; }
+.mooncode-calendar-prompt > summary { cursor: pointer; font-size: var(--text-control); font-weight: 500; }
+.mooncode-calendar-prompt p { margin: 6px 0; line-height: 1.5; color: var(--muted); }
+.mooncode-calendar-task > small { display: block; margin-top: 4px; color: var(--muted); font-size: var(--text-meta); }
+.mooncode-calendar-task .mooncode-calendar-toolbar { margin: 4px 0 0; }
+.mooncode-calendar-form { gap: 8px; padding: 10px; }
+.mooncode-calendar-form input, .mooncode-calendar-form select, .mooncode-calendar-form textarea { padding: 6px 8px; }
+
+@media (max-width: 1050px) and (min-width: 761px) {
+  .desk-shell .title-bar { grid-template-columns: 170px minmax(0,1fr) auto auto; gap: 8px; }
+  .desk-shell .title-bar .mode-button { padding-inline: 6px; }
+  .desk-shell .title-bar .mode-button > .moon-icon { display: none; }
+}
+@media (max-width: 760px), (pointer: coarse) {
+  .desk-shell { --shell-header-height: 52px; }
+  .desk-shell .title-bar { grid-template-columns: 44px minmax(0,1fr) auto 44px; gap: 4px; padding: 4px 8px; }
+  .desk-shell .title-bar :is(.mode-button,.command-button), .work-shortcuts .moon-icon-button { min-height: 44px; }
+  .work-shortcuts > .moon-icon-button { display: none; }
+  .work-shortcuts > .moon-icon-button[aria-label="Start a task"] { display: inline-flex; }
+  .desk-moonbook-card .desk-workspace-row { min-height: 44px; padding-right: 96px; }
+  .desk-moonbook-card .moonbook-card-actions { opacity: 1; pointer-events: auto; background: transparent; }
+  .moonbook-card-actions .moon-icon-button { width: 44px; min-width: 44px; height: 44px; }
+  .desk-browser-head .toolbar-actions { flex-wrap: wrap; }
+  .desk-file-row { min-height: 44px; }
+  .markdown-editor-grid { grid-template-columns: minmax(0,1fr); }
+  .document-format-toolbar button { flex-basis: 44px; min-width: 44px; min-height: 44px; }
+  .document-format-toolbar select { min-height: 44px; }
+  .mooncode-schedule-panel[data-popup] { top: var(--shell-header-height); left: 0; right: 0; bottom: 0; width: auto; }
+  .mooncode-schedule-panel .moon-icon-button, .mooncode-calendar-toolbar > .secondary-button:not(.moon-icon-button) { min-width: 44px; min-height: 44px; height: 44px; }
+  .mooncode-calendar-day button { min-height: 44px; }
+}

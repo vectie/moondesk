@@ -487,16 +487,18 @@ fn render_flow_canvas_chrome(
         "+",
       ),
       button(
-        class="secondary-button compact-button",
+        class="secondary-button compact-button moon-icon-button",
+        attrs=@html.Attrs::build().aria_label("Fit canvas"),
         title="Fit every graph node inside the canvas overview",
         on_click=dispatch(FlowCanvasFit),
-        "Fit",
+        [ui_icon("expand")],
       ),
       button(
-        class="secondary-button compact-button",
+        class="secondary-button compact-button moon-icon-button",
+        attrs=@html.Attrs::build().aria_label("Reset view"),
         title="Reset pan, zoom and node positions",
         on_click=dispatch(FlowCanvasReset),
-        "Reset view",
+        [ui_icon("undo")],
       ),
       match model.moonflow_composition {
         Some(composition) =>
@@ -646,7 +648,7 @@ fn render_moonflow_composition_canvas(
                 if model.moonflow_composition_status == "Loading composition…" {
                   "Restoring the selected MoonBook composition, runs, and authorized actions."
                 } else {
-                  "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas."
+                  "Start a task, or open a workflow file already in this MoonBook."
                 },
               ),
               if model.moonflow_composition_status == "Loading composition…" {
@@ -654,10 +656,17 @@ fn render_moonflow_composition_canvas(
               } else {
                 button(
                   class="secondary-button",
-                  on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-                  "Open executable document",
+                  on_click=dispatch(
+                    OpenMoonBook(model.selected_workspace_id, StartTask),
+                  ),
+                  "Start a task",
                 )
               },
+              button(
+                class="quiet-button",
+                on_click=dispatch(workspace_feature_msg("open-flow-files")),
+                "Choose workflow file",
+              ),
             ]),
           ]),
         ])
@@ -681,8 +690,8 @@ fn render_moonflow_composition_canvas(
               ),
               button(
                 class="quiet-button",
-                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-                "Edit node contracts in Wiki",
+                on_click=dispatch(workspace_feature_msg("open-flow-files")),
+                "Open workflow file",
               ),
             ]),
           ]),

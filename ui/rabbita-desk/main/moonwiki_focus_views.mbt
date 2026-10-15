@@ -20,19 +20,24 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     attrs=@html.Attrs::build().aria_label("Document chat"),
     [
       header(class="wiki-chat-header", [
-        div([p(class="eyebrow", "Workspace"), h2("Chat")]),
+        div(class="work-task-title", [
+          h2(title=current_work_title(model), current_work_title(model)),
+        ]),
         div(class="wiki-chat-header-actions", [
           button(
-            class="wiki-header-action",
-            attrs=@html.Attrs::build().data_set("testid", "wiki-find"),
+            class="wiki-header-action moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "wiki-find")
+              .aria_label("Find"),
             title="Search files, knowledge, code, and work",
             on_click=dispatch(
               workspace_feature_msg("open-search", first="open"),
             ),
-            "Find",
+            [ui_icon("search")],
           ),
           button(
-            class="wiki-header-action",
+            class="wiki-header-action moon-icon-button",
+            attrs=@html.Attrs::build().aria_label("Synthesize"),
             title="Combine material into a new deliverable",
             on_click=if wiki_document_path_supported(model.selected_path) {
               dispatch(
@@ -49,15 +54,28 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             } else {
               dispatch(workspace_feature_msg("open-synthesis"))
             },
-            "Synthesize",
+            [ui_icon("plus")],
           ),
           button(
-            class="wiki-header-action",
+            class="wiki-header-action moon-icon-button",
+            attrs=@html.Attrs::build().aria_label("Review"),
             title="Open document review, history, sources, checks, and Inbox",
             on_click=dispatch(
               workspace_feature_msg("open-toolbox", first="review"),
             ),
-            "Review",
+            [ui_icon("review")],
+          ),
+          work_icon_action(
+            dispatch,
+            "Results",
+            "files",
+            workspace_feature_msg("open-toolbox", first="results"),
+          ),
+          work_icon_action(
+            dispatch,
+            "Export work",
+            "download",
+            workspace_feature_msg("export"),
           ),
           if wiki_document_path_supported(model.selected_path) {
             span(
@@ -66,7 +84,7 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
               @desk.display_name(model.selected_path),
             )
           } else {
-            span(class="wiki-document-chip empty", "No document")
+            @html.nothing
           },
         ]),
       ]),
@@ -76,6 +94,7 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         class="wiki-chat-thread",
         attrs=@html.Attrs::build()
           .data_set("testid", "wiki-chat-thread")
+          .tabindex(0)
           .aria_live("polite"),
         wiki_chat_messages(dispatch, model),
       ),
@@ -147,7 +166,7 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           attrs=@html.Attrs::build()
             .data_set("testid", "wiki-chat-input")
             .aria_label("Ask about this document"),
-          rows=4,
+          rows=2,
           value=model.request_prompt,
           placeholder="Ask about this document, or type @ to attach a file…",
           on_input=fn(value) { dispatch(SetWikiChatPrompt(value)) },
@@ -157,18 +176,16 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           class="wiki-chat-dropzone",
           attrs=@html.Attrs::build()
             .data_set("testid", "wiki-chat-dropzone")
+            .title(
+              "Drag from the workspace list or search results. Nothing is imported.",
+            )
             .role("region")
             .aria_label("Drop a workspace file to attach it")
             .on_dragover(fn(event) { wiki_chat_drag_over_cmd(event) })
             .on_drop(fn(event) {
               dispatch(WikiChatDropPath(wiki_chat_drop_path(event)))
             }),
-          [
-            strong("Drop a workspace file here"),
-            small(
-              "Drag from the workspace list or search results. Nothing is imported.",
-            ),
-          ],
+          [ui_icon("attach"), span("Drop a file to attach")],
         ),
         if model.wiki_chat_file_picker_open {
           render_wiki_chat_file_picker(dispatch, model)
@@ -177,9 +194,10 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         },
         div(class="wiki-chat-actions", [
           button(
-            class="secondary-button",
+            class="secondary-button moon-icon-button",
             attrs=@html.Attrs::build()
               .data_set("testid", "wiki-chat-file-picker-toggle")
+              .aria_label("Add context")
               .aria_expanded(
                 if model.wiki_chat_file_picker_open {
                   "true"
@@ -191,14 +209,16 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             on_click=dispatch(
               workspace_feature_msg("open-search", first="attach"),
             ),
-            "Add context",
+            [ui_icon("attach")],
           ),
           button(
-            class="primary-button",
-            attrs=@html.Attrs::build().data_set("testid", "wiki-chat-send"),
+            class="primary-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "wiki-chat-send")
+              .aria_label("Send"),
             disabled=wiki_task_start_disabled(model),
             on_click=dispatch(SubmitWikiChat),
-            "Send",
+            [ui_icon("send")],
           ),
         ]),
         match wiki_chat_status(model.request_status) {
@@ -306,10 +326,8 @@ fn wiki_chat_messages(
   if messages.length() == 0 {
     messages.push(
       div(class="wiki-chat-empty", [
-        h3("Ask about your document"),
-        p(
-          "Questions and requested changes stay beside the file. MoonDesk checks the work quietly and only interrupts for a warning.",
-        ),
+        ui_icon("chat"),
+        p("Ask a question or describe a change."),
       ]),
     )
   }
@@ -426,7 +444,7 @@ fn render_wiki_document_viewer(
       header(class="wiki-viewer-header", [
         div(class="wiki-viewer-title", [
           h2(
-            if wiki_document_path_supported(model.selected_path) {
+            if model.selected_path != "" {
               @desk.display_name(model.selected_path)
             } else {
               "Document"
@@ -438,24 +456,54 @@ fn render_wiki_document_viewer(
           },
         ]),
         div(class="wiki-viewer-actions", [
+          if markdown_editor_active(model) {
+            div(class="wiki-document-edit-actions", [
+              button(
+                class="moon-icon-button",
+                title="Save document (⌘S)",
+                attrs=@html.Attrs::build()
+                  .aria_label("Save document")
+                  .data_set("markdown-action", "save"),
+                on_click=dispatch(SaveMarkdownEdit),
+                [ui_icon("save")],
+              ),
+              work_icon_action(
+                dispatch,
+                "Cancel editing",
+                "close",
+                CancelMarkdownEdit,
+              ),
+            ])
+          } else if model.selected_path.to_lower().has_suffix(".md") {
+            work_icon_action(
+              dispatch,
+              "Edit document",
+              "edit",
+              StartMarkdownEdit,
+            )
+          } else {
+            @html.nothing
+          },
           button(
-            class="secondary-button",
+            class="secondary-button moon-icon-button",
+            attrs=@html.Attrs::build().aria_label("Choose document"),
+            title="Choose document",
             on_click=dispatch(
               workspace_feature_msg("open-search", first="document"),
             ),
-            "Choose document",
+            [ui_icon("folder")],
           ),
           if wiki_document_path_supported(model.selected_path) &&
             !wiki_living_artifact_path_supported(model.selected_path) {
             a(
-              class="secondary-button link-button",
+              class="secondary-button link-button moon-icon-button",
               href=raw_url(model, model.selected_path),
               target=Blank,
               rel="noreferrer",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "wiki-open-original",
-              ),
-              "Open original",
+              attrs=@html.Attrs::build()
+                .aria_label("Open original")
+                .data_set("testid", "wiki-open-original"),
+              [ui_icon("external-link")],
             )
           } else {
             @html.nothing
@@ -472,6 +520,33 @@ fn render_wiki_office_document(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  if markdown_editor_active(model) {
+    return render_markdown_editor(dispatch, model)
+  }
+  if !wiki_document_path_supported(model.selected_path) &&
+    model.selected_path != "" {
+    return div(
+      class="work-document-preview",
+      match model.preview {
+        Some(preview) =>
+          match preview.renderer {
+            Markdown => render_markdown_document(preview)
+            Image =>
+              [img(src=desk_preview_image_source(preview), alt=preview.title)]
+            Html =>
+              [
+                iframe(
+                  src=html_preview_url(model, model.selected_path),
+                  title=preview.title,
+                  sandbox="allow-scripts",
+                ),
+              ]
+            _ => [pre(class="source-block", code(preview.body))]
+          }
+        None => [p("Opening file…")]
+      },
+    )
+  }
   if wiki_living_artifact_path_supported(model.selected_path) {
     return div(
       class="site-preview embedded-browser wiki-living-artifact-preview",
@@ -506,9 +581,7 @@ fn render_wiki_office_document(
   if !office_editor_path_supported(model.selected_path) {
     return div(class="wiki-viewer-empty", [
       h3("Open a document"),
-      p(
-        "Choose a DOCX, XLSX, PPTX, PDF, or living artifact to view it beside the chat.",
-      ),
+      p("Open a file or start a task. Its output will appear here."),
       button(
         class="primary-button",
         on_click=dispatch(

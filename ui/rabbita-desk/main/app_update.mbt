@@ -71,7 +71,6 @@ fn update(
     LibraryFolderPicked(_) => update_library_selection(dispatch, msg, model)
     SelectedLibrary(_) => update_library_selection(dispatch, msg, model)
     LoadedPackApps(_) => update_app_results(dispatch, msg, model)
-    LoadedAgentCatalog(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowCollaboration(_, _) =>
       update_app_results(dispatch, msg, model)
     LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
@@ -200,6 +199,9 @@ fn update(
     FlowCanvasReset => update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
+    OpenMoonBook(_, _) => update_navigation_actions(dispatch, msg, model)
+    OpenWorkFile(_) | ReturnToWork =>
+      update_navigation_actions(dispatch, msg, model)
     SelectPath(_) => update_navigation_actions(dispatch, msg, model)
     OpenDirectory(_) => update_navigation_actions(dispatch, msg, model)
     NavigateDeskBack => update_navigation_actions(dispatch, msg, model)
@@ -393,6 +395,10 @@ fn update(
     SaveMarkdownEdit => update_workspace_surface_actions(dispatch, msg, model)
     StageSelectedLink => update_inbox_actions(dispatch, msg, model)
     SetSearchQuery(_) => update_workspace_surface_actions(dispatch, msg, model)
+    SetMoonBookQuery(query) =>
+      (@rabbita.none, { ..model, moonbook_query: query, })
+    SetPackInspection(inspection) =>
+      (@rabbita.none, { ..model, pack_inspection: inspection, })
     SearchNow => update_workspace_surface_actions(dispatch, msg, model)
     SetDeskSort(_) => update_workspace_surface_actions(dispatch, msg, model)
     SetDeskFilterQuery(_) =>

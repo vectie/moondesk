@@ -49,6 +49,34 @@ export function comparisonSessionProjection(session) {
   }
 }
 
+export function comparisonAnswerProjection(task) {
+  const turns = task?.context?.conversation || []
+  const last = turns.at(-1) || {}
+  const answer = last.assistant?.content || last.assistant?.message || last.assistant?.text || ''
+  const measured = turns.map(turn => turn.usage).filter(usage => usage?.measured)
+  return {
+    answer: typeof answer === 'string' ? answer : '',
+    model: task?.context?.model || '',
+    turn_status: typeof last.status === 'string' ? last.status : '',
+    input_tokens: measured.reduce((sum, usage) => sum + (Number(usage.input_tokens) || 0), 0),
+    output_tokens: measured.reduce((sum, usage) => sum + (Number(usage.output_tokens) || 0), 0),
+    usage_measured: measured.length > 0,
+  }
+}
+
+export function configureComparisonBranches(branches, mode, models, goal) {
+  return branches.map((branch, index) => ({
+    ...branch,
+    model: models[index] || '',
+    mode,
+    ...(mode === 'models' ? {
+      title: `Answer ${branch.label}: ${goal}`.slice(0, 96),
+      prompt: `Answer this request using the current book as context. This is a read-only comparison: explain your proposed approach and tradeoffs without modifying files.\n\n${goal.trim()}`,
+      task_intent: 'read_only',
+    } : {}),
+  }))
+}
+
 function comparisonStorageKey(root) {
   return `moondesk.mooncode.comparisons.v1:${root.dataset.workspaceId || 'general'}`
 }
@@ -94,6 +122,7 @@ export async function saveComparison(root, comparison) {
 
 export async function loadComparison(root) {
   const workspaceId = root.dataset.workspaceId || ''
+  const recovery = loadRecoveryCopy(root)
   if (workspaceId) {
     try {
       const response = await fetch(`/api/mooncode/comparisons?workspace_id=${encodeURIComponent(workspaceId)}`)
@@ -101,10 +130,12 @@ export async function loadComparison(root) {
       const comparisons = Array.isArray(payload.comparisons) ? payload.comparisons : []
       if (response.ok && comparisons[0]?.id) {
         const durable = { ...comparisons[0], persistence: 'durable' }
+        if (recovery?.id && recovery.persistence === 'local-recovery' && (recovery.id !== durable.id || Number(recovery.revision || 0) >= Number(durable.revision || 0))) return recovery
+        if (recovery?.id && Date.parse(recovery.updated_at || recovery.created_at || '') > Date.parse(durable.updated_at || durable.created_at || '')) return recovery
         saveRecoveryCopy(root, durable)
         return durable
       }
     } catch {}
   }
-  return loadRecoveryCopy(root)
+  return recovery
 }

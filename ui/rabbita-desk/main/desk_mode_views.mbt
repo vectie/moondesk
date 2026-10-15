@@ -7,7 +7,6 @@ fn render_desk_mode(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       h1(class="visually-hidden", "Home"),
       render_desk_workspace_sidebar(dispatch, model),
       render_desk_file_browser(dispatch, model),
-      render_desk_details(dispatch, model),
     ],
   )
 }
@@ -27,17 +26,40 @@ fn render_desk_workspace_sidebar(
       div(class="pane-heading", [
         div([h2("MoonBooks")]),
         button(
-          class="secondary-button compact-button",
+          class="secondary-button compact-button moon-icon-button",
           title="Refresh",
-          attrs=@html.Attrs::build().data_set(
-            "testid", "desk-refresh-workspaces",
-          ),
+          attrs=@html.Attrs::build()
+            .aria_label("Refresh MoonBooks")
+            .data_set("testid", "desk-refresh-workspaces"),
           on_click=dispatch(RefreshAll),
-          "Refresh",
+          [ui_icon("refresh")],
         ),
       ]),
       if requested_workspace_unavailable(model) {
         render_requested_selection(dispatch, model)
+      } else {
+        @html.nothing
+      },
+      if !model.workspaces.is_empty() {
+        div(class="moonbook-search", [
+          ui_icon("search"),
+          input(
+            value=model.moonbook_query,
+            placeholder="Find a MoonBook…",
+            attrs=@html.Attrs::build().aria_label("Find a MoonBook"),
+            on_input=fn(value) { dispatch(SetMoonBookQuery(value)) },
+          ),
+          if model.moonbook_query != "" {
+            button(
+              class="moon-icon-button",
+              attrs=@html.Attrs::build().aria_label("Clear MoonBook search"),
+              on_click=dispatch(SetMoonBookQuery("")),
+              [ui_icon("close")],
+            )
+          } else {
+            @html.nothing
+          },
+        ])
       } else {
         @html.nothing
       },
@@ -51,15 +73,21 @@ fn render_desk_workspace_sidebar(
         OneBook | ManyBooks => render_new_moonbook_panel(dispatch, model)
         Connecting | LibraryUnavailable | CatalogUnavailable => @html.nothing
       },
-      render_desk_library_location(dispatch, model),
-      render_moongate_setup(dispatch, model),
+      details(class="workspace-disclosure desk-services", [
+        summary([ui_icon("settings"), span("Storage & services")]),
+        render_desk_library_location(dispatch, model),
+        render_moongate_setup(dispatch, model),
+      ]),
       if model.selected_workspace_id != "" {
         render_desk_quick_access(dispatch, model)
       } else {
         div(class="desk-quick-access-empty", [@html.nothing])
       },
       render_desk_folder_outline(dispatch, model),
-      render_work_resume(dispatch, model),
+      details(class="workspace-disclosure", [
+        summary([ui_icon("history"), span("Resume work")]),
+        render_work_resume(dispatch, model),
+      ]),
     ],
   )
 }
@@ -118,7 +146,17 @@ fn render_desk_workspace_rows(
       rows.push(render_workspace_catalog_state_panel(dispatch, model, Stale))
     _ => ()
   }
-  for workspace in model.workspaces {
+  let workspaces = matching_moonbooks(model)
+  if workspaces.is_empty() {
+    rows.push(
+      p(
+        class="moonbook-search-empty",
+        attrs=@html.Attrs::build().role("status"),
+        "No matching MoonBooks",
+      ),
+    )
+  }
+  for workspace in workspaces {
     rows.push(render_desk_workspace_row(dispatch, model, workspace))
   }
   rows
@@ -183,27 +221,52 @@ fn render_desk_workspace_row(
   } else {
     "desk-workspace-row " + workspace_status_class(workspace.status)
   }
-  let row_children : Array[@rabbita.Html] = [strong(workspace.name)]
-  if workspace.status != Ready {
-    row_children.push(
-      span(
-        class="desk-workspace-status",
-        workspace_status_label(workspace.status),
-      ),
-    )
-  }
-  button(
-    class=class_name,
-    title=workspace.name +
-      " / " +
-      workspace_display_book_location(model, workspace),
+  div(
+    class="desk-moonbook-card" + (if selected { " active" } else { "" }),
     attrs=@html.Attrs::build()
-      .data_set("testid", "desk-workspace-row")
-      .data_set("workspace-id", workspace.id)
-      .data_set("status", workspace_status_key(workspace.status))
-      .aria_pressed(if selected { "true" } else { "false" }),
-    on_click=dispatch(SelectWorkspace(workspace.id)),
-    row_children,
+      .data_set("testid", "moonbook-card")
+      .data_set("workspace-id", workspace.id),
+    [
+      button(
+        class=class_name,
+        title=workspace.name +
+          " / " +
+          workspace_display_book_location(model, workspace) +
+          " · " +
+          workspace_status_label(workspace.status),
+        attrs=@html.Attrs::build()
+          .data_set("testid", "desk-workspace-row")
+          .data_set("workspace-id", workspace.id)
+          .data_set("status", workspace_status_key(workspace.status))
+          .aria_label(
+            "Select " +
+            workspace.name +
+            " · " +
+            workspace_status_label(workspace.status),
+          )
+          .aria_pressed(if selected { "true" } else { "false" }),
+        on_click=dispatch(SelectWorkspace(workspace.id)),
+        [ui_icon("book"), strong(workspace.name)],
+      ),
+      div(class="moonbook-card-actions", [
+        button(
+          class="moon-icon-button",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "moonbook-chat")
+            .aria_label("Chat with " + workspace.name),
+          on_click=dispatch(OpenMoonBook(workspace.id, Chat)),
+          [ui_icon("chat")],
+        ),
+        button(
+          class="moon-icon-button",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "moonbook-start-task")
+            .aria_label("Start a task with " + workspace.name),
+          on_click=dispatch(OpenMoonBook(workspace.id, StartTask)),
+          [ui_icon("plus")],
+        ),
+      ]),
+    ],
   )
 }
 
@@ -855,7 +918,7 @@ fn render_desk_quick_access(
       p(
         class="status-line",
         attrs=@html.Attrs::build().data_set("testid", "desk-quick-access-empty"),
-        "No favorites or recent files in this MoonBook yet. Open a file or add a favorite from More actions.",
+        "No favorites or recent files yet.",
       ),
     )
   }
@@ -990,6 +1053,13 @@ fn desk_disclosure_with_open(
   open : Bool,
   children : Array[@rabbita.Html],
 ) -> @rabbita.Html {
+  let menu_icon = match testid {
+    "desk-new-menu" => "plus"
+    "desk-import-menu" => "upload"
+    "desk-view-options" => "eye"
+    "desk-go-to-folder" => "folder"
+    _ => ""
+  }
   @html.node(
     "details",
     @html.Attrs::build().class(class_name).data_set("testid", testid).open(open),
@@ -997,7 +1067,11 @@ fn desk_disclosure_with_open(
       @html.node(
         "summary",
         @html.Attrs::build().class("desk-disclosure-summary"),
-        [span(label)],
+        if menu_icon == "" {
+          [span(label)]
+        } else {
+          [ui_icon(menu_icon), span(label), ui_icon("chevron-down")]
+        },
       ),
       div(class="desk-disclosure-body", children),
     ],
@@ -1203,9 +1277,7 @@ fn render_desk_folder_outline(
   model : Model,
 ) -> @rabbita.Html {
   section(class="desk-folder-outline", [
-    div(class="pane-heading compact-heading", [
-      div([p(class="eyebrow", "folders"), h2("Directory")]),
-    ]),
+    div(class="pane-heading compact-heading", [div([h2("Directory")])]),
     div(
       class="desk-folder-list",
       attrs=@html.Attrs::build().data_set("testid", "desk-folder-list"),
@@ -1217,7 +1289,7 @@ fn render_desk_folder_outline(
           on_click=dispatch(OpenDirectory(path)),
           [
             span(class="folder-indent", ""),
-            span(class="tree-icon", "D"),
+            ui_icon("folder"),
             span(class="folder-label", label),
           ],
         )
@@ -1244,72 +1316,100 @@ fn render_desk_file_browser(
           h2(desk_directory_title(model.current_directory)),
         ]),
         button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-refresh"),
+          class="secondary-button compact-button moon-icon-button",
+          attrs=@html.Attrs::build()
+            .aria_label("Refresh this folder")
+            .data_set("testid", "desk-refresh"),
           title="Refresh this folder",
           on_click=dispatch(RefreshAll),
-          "Refresh",
+          [ui_icon("refresh")],
+        ),
+        details(
+          class="desk-inspector",
+          attrs=@html.Attrs::build().data_set("popup", "desk-inspector"),
+          [
+            summary(
+              class="moon-icon-button",
+              attrs=@html.Attrs::build().aria_label("Selection details"),
+              [ui_icon("panel-right")],
+            ),
+            render_desk_details(dispatch, model),
+          ],
         ),
       ]),
       div(class="toolbar-actions", [
         div(class="desk-navigation-actions", [
           button(
-            class="secondary-button compact-button",
-            attrs=@html.Attrs::build().data_set("testid", "desk-back"),
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .aria_label("Back")
+              .data_set("testid", "desk-back"),
             title="Back",
             disabled=desk_workspace_action_disabled(model) ||
               model.desk_back_stack.length() == 0,
             on_click=dispatch(NavigateDeskBack),
-            "Back",
+            [ui_icon("chevron-left")],
           ),
           button(
-            class="secondary-button compact-button",
-            attrs=@html.Attrs::build().data_set("testid", "desk-forward"),
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .aria_label("Forward")
+              .data_set("testid", "desk-forward"),
             title="Forward",
             disabled=desk_workspace_action_disabled(model) ||
               model.desk_forward_stack.length() == 0,
             on_click=dispatch(NavigateDeskForward),
-            "Forward",
+            [ui_icon("chevron-right")],
           ),
           button(
-            class="secondary-button compact-button",
-            attrs=@html.Attrs::build().data_set("testid", "desk-up"),
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .aria_label("Open parent folder")
+              .data_set("testid", "desk-up"),
             title="Open parent folder",
             disabled=desk_workspace_action_disabled(model) ||
               model.current_directory == "",
             on_click=dispatch(
               OpenDirectory(parent_path(model.current_directory)),
             ),
-            "Up",
+            [ui_icon("chevron-up")],
           ),
           button(
-            class="secondary-button compact-button",
-            attrs=@html.Attrs::build().data_set("testid", "desk-root"),
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .aria_label("Open MoonBook home")
+              .data_set("testid", "desk-root"),
             title="Open MoonBook home",
             disabled=desk_workspace_action_disabled(model) ||
               model.current_directory == "",
             on_click=dispatch(OpenDirectory("")),
-            "Home",
+            [ui_icon("home")],
           ),
         ]),
-        input(
-          class="line-input compact-input desk-filter-input",
-          attrs=@html.Attrs::build()
-            .data_set("testid", "desk-filter-query")
-            .disabled(desk_workspace_action_disabled(model)),
-          value=model.desk_filter_query,
-          placeholder="Search this folder",
-          on_input=fn(value) { dispatch(SetDeskFilterQuery(value)) },
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-clear-filter"),
-          title="Clear folder search",
-          disabled=desk_workspace_action_disabled(model) ||
-            model.desk_filter_query.trim().to_owned() == "",
-          on_click=dispatch(SetDeskFilterQuery("")),
-          "Clear",
-        ),
+        div(class="desk-folder-search", [
+          ui_icon("search"),
+          input(
+            class="line-input compact-input desk-filter-input",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "desk-filter-query")
+              .aria_label("Search this folder")
+              .disabled(desk_workspace_action_disabled(model)),
+            value=model.desk_filter_query,
+            placeholder="Search this folder",
+            on_input=fn(value) { dispatch(SetDeskFilterQuery(value)) },
+          ),
+          button(
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .aria_label("Clear folder search")
+              .data_set("testid", "desk-clear-filter"),
+            title="Clear folder search",
+            disabled=desk_workspace_action_disabled(model) ||
+              model.desk_filter_query.trim().to_owned() == "",
+            on_click=dispatch(SetDeskFilterQuery("")),
+            [ui_icon("close")],
+          ),
+        ]),
         render_desk_new_item_disclosure(dispatch, model),
         render_desk_import_disclosure(dispatch, model),
         desk_disclosure(
@@ -1410,6 +1510,8 @@ fn render_desk_entries_state_panel(
           desk_entries_state_title(state, model),
           desk_entries_state_detail(state, model),
         ),
+        strong("This folder is empty"),
+        p("Create a note or import files to get started."),
       ]),
     ]
   } else {
@@ -1463,6 +1565,7 @@ fn render_desk_new_item_disclosure(
       class="line-input compact-input",
       attrs=@html.Attrs::build()
         .data_set("testid", "desk-new-item-name")
+        .aria_label("New item name")
         .disabled(desk_workspace_action_disabled(model)),
       value=model.desk_new_item_name,
       placeholder="Name",
@@ -1475,7 +1578,7 @@ fn render_desk_new_item_disclosure(
         title="Create folder here",
         disabled=desk_workspace_action_disabled(model),
         on_click=dispatch(CreateDeskFolder),
-        "Folder",
+        [ui_icon("folder"), span("Folder")],
       ),
       button(
         class="secondary-button compact-button",
@@ -1483,7 +1586,7 @@ fn render_desk_new_item_disclosure(
         title="Create Markdown note here",
         disabled=desk_workspace_action_disabled(model),
         on_click=dispatch(CreateDeskMarkdown),
-        "Note",
+        [ui_icon("files"), span("Note")],
       ),
     ]),
   ])
@@ -1501,7 +1604,7 @@ fn render_desk_import_disclosure(
       title="Import files here",
       disabled=desk_workspace_action_disabled(model),
       on_click=dispatch(ImportLocalFilesToDesk),
-      "Files",
+      [ui_icon("files"), span("Files")],
     ),
     button(
       class="secondary-button compact-button",
@@ -1509,7 +1612,7 @@ fn render_desk_import_disclosure(
       title="Import a folder here",
       disabled=desk_workspace_action_disabled(model),
       on_click=dispatch(ImportLocalFolderToDesk),
-      "Folder",
+      [ui_icon("folder"), span("Folder")],
     ),
   ])
 }
@@ -1777,8 +1880,11 @@ fn render_desk_location_bar(
           visible_entries.length(),
         ),
       ),
-      span(desk_selection_label(model)),
-      span(desk_access_label(selected_desk_entry(model))),
+      if model.desk_selected_paths.length() > 0 {
+        span(desk_selection_label(model))
+      } else {
+        @html.nothing
+      },
     ]),
     desk_disclosure(
       "desk-location-disclosure",
@@ -1824,7 +1930,7 @@ fn render_desk_file_row(
   let open_msg = if entry.kind is Directory {
     OpenDirectory(entry.path)
   } else {
-    SelectPath(entry.path)
+    OpenWorkFile(entry.path)
   }
   let row_attrs = @html.Attrs::build()
     .data_set("testid", "desk-file-row")
@@ -1844,7 +1950,7 @@ fn render_desk_file_row(
   }
   div(class=class_name, title=entry.path, attrs=row_attrs, [
     span(class="desk-file-name", [
-      span(class="tree-icon", icon_for_kind(entry.kind)),
+      ui_icon(if entry.kind is Directory { "folder" } else { "files" }),
       if model.desk_rename_editing_path == entry.path {
         desk_inline_rename_input(dispatch, model, entry)
       } else {
@@ -1852,7 +1958,7 @@ fn render_desk_file_row(
       },
     ]),
     span(kind_label(entry.kind)),
-    span(optional_text(entry.modified_at, "unknown")),
+    span(optional_text(entry.modified_at, "—")),
     span(size_label(entry.size_bytes)),
   ])
 }

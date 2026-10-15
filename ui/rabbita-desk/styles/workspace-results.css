@@ -1,0 +1,73 @@
+.result-inbox-controls,
+.result-bundle-actions,
+.mooncode-calendar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-inbox-controls input { flex: 1 1 180px; min-width: 0; }
+.result-inbox-controls [aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.result-bundle,
+.mooncode-calendar-task {
+  padding: 14px;
+  margin-block: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+.result-bundle.needs-attention { border-inline-start: 3px solid var(--yellow); }
+.result-bundle-heading { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.result-bundle h4 { margin: 0; font-size: 15px; }
+.result-bundle > button { display: block; max-width: 100%; margin-block: 8px; text-align: start; overflow-wrap: anywhere; }
+.result-bundle-actions,
+.mooncode-calendar-task .mooncode-calendar-toolbar { margin-top: 12px; }
+.mooncode-calendar { margin-block: 16px; }
+.mooncode-calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.mooncode-calendar-day { padding: 10px 6px; background: var(--bg-panel-strong); border-radius: var(--radius-md); min-width: 0; }
+.mooncode-calendar-day h4 { margin: 0 0 10px; font-size: 12px; font-weight: 600; }
+.mooncode-calendar-day button { width: 100%; text-align: start; overflow-wrap: anywhere; margin-bottom: 6px; min-height: 44px; font-size: 12px; }
+.mooncode-calendar-day > span { color: var(--muted); font-size: 12px; }
+.mooncode-calendar-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); }
+.mooncode-calendar-form h4 { grid-column: 1 / -1; margin: 0; }
+.mooncode-calendar-form label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+.mooncode-calendar-form input,
+.mooncode-calendar-form select,
+.mooncode-calendar-form textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; color: var(--ink); background: var(--bg-raised); border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.mooncode-calendar-form textarea { min-height: 96px; resize: vertical; }
+.calendar-ready > .mooncode-schedule-create-shell,
+.calendar-ready > .mooncode-schedule-list { display: none; }
+.workspace-room-profile { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.workspace-room-channels,
+.workspace-room-new-channel,
+.workspace-room-message-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.workspace-room-channels [aria-pressed="true"],
+.workspace-room-message-actions [aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.workspace-room-message { padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.workspace-room-message p { white-space: pre-wrap; }
+.workspace-room-message.reply { margin-inline-start: 20px; padding-inline-start: 12px; border-inline-start: 2px solid var(--line); }
+.workspace-room-message small { color: var(--muted); }
+.workspace-room-composer { display: grid; gap: 10px; margin-top: 18px; }
+.workspace-room-composer textarea { min-height: 90px; resize: vertical; }
+.workspace-room input:not([type="checkbox"]),
+.workspace-room textarea { box-sizing: border-box; min-width: 0; padding: 10px; color: var(--ink); background: var(--bg-raised); border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.document-format-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0; }
+.document-format-toolbar select { min-height: 36px; color: var(--ink); background: var(--bg-raised); border: 1px solid var(--line); border-radius: 6px; padding-inline: 10px; }
+.document-sheet-scroll { max-height: 60vh; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+.document-sheet-scroll table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+.document-sheet-scroll caption { text-align: start; padding: 10px; font-size: 12px; color: var(--muted); }
+.document-sheet-scroll th { position: sticky; background: var(--bg-panel-strong); padding: 8px; font: 12px var(--font-mono); }
+.document-sheet-scroll thead th { top: 0; z-index: 1; }
+.document-sheet-scroll tbody th { left: 0; }
+.document-sheet-scroll td { border-top: 1px solid var(--line); border-left: 1px solid var(--line); padding: 0; max-width: 260px; }
+.document-sheet-scroll td button { display: block; width: 100%; min-width: 90px; min-height: 36px; padding: 8px; border: 0; color: var(--ink); background: var(--bg-raised); text-align: start; overflow-wrap: anywhere; font: 13px var(--font-mono); }
+.document-sheet-scroll td button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (max-width: 900px) {
+  .mooncode-calendar-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .mooncode-calendar-form { grid-template-columns: 1fr; }
+  .result-bundle-actions button { flex: 1 1 auto; min-height: 44px; }
+}

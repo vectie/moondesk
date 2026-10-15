@@ -15,42 +15,45 @@ fn render_mooncode_pane(
     [
       div(class="pane-heading", [
         div([
-          p(class="eyebrow", "MoonCode"),
           h2(
-            attrs=@html.Attrs::build().data_set(
-              "i18n",
-              if model.selected_workspace_id == "" {
-                "code.general"
-              } else {
-                ""
-              },
-            ),
-            mooncode_workspace_label(model),
-          ),
-          p(
-            class="rail-count",
-            attrs=@html.Attrs::build()
-              .data_set(
-                "i18n",
-                if model.mooncode_sessions.length() == 1 {
-                  "code.session_one"
-                } else {
-                  "code.sessions"
-                },
-              )
-              .data_set(
-                "i18n-params",
-                ({ "count": model.mooncode_sessions.length() } : Json).stringify(),
-              ),
-            mooncode_session_count_label(model),
+            if model.selected_workspace_id == "" {
+              Map([
+                (
+                  "general",
+                  span(
+                    attrs=@html.Attrs::build().data_set("i18n", "code.general"),
+                    "General chat",
+                  ),
+                ),
+              ])
+            } else {
+              Map([
+                (
+                  "book",
+                  span(
+                    attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+                    mooncode_workspace_label(model),
+                  ),
+                ),
+              ])
+            },
           ),
         ]),
+        button(
+          class="moon-icon-button code-navigation-close",
+          attrs=@html.Attrs::build()
+            .data_set("close-code-navigation", "true")
+            .data_set("i18n-aria-label", "code.close_chats")
+            .aria_label("Close chats sidebar")
+            .title("Close chats sidebar"),
+          ui_icon("panel-left"),
+        ),
       ]),
       button(
         class="mooncode-new-session",
         attrs=@html.Attrs::build().data_set("testid", "mooncode-new-session"),
         on_click=dispatch(NewMoonCodeSession),
-        "New chat",
+        [ui_icon("chat"), span("New chat")],
       ),
       div(class="mooncode-session-search", [
         input(
@@ -476,17 +479,21 @@ fn render_mooncode_session_row(
               on_click=dispatch(SelectMoonCodeSession(session.id)),
               [
                 strong(session.title),
-                small(
-                  attrs=if mooncode_session_status_i18n_key(session) == "" {
-                    @html.Attrs::build()
-                  } else {
-                    @html.Attrs::build().data_set(
-                      "i18n",
-                      mooncode_session_status_i18n_key(session),
-                    )
-                  },
-                  mooncode_session_status_line(session),
-                ),
+                if mooncode_session_status_line(session) == "Ready" {
+                  @html.nothing
+                } else {
+                  small(
+                    attrs=if mooncode_session_status_i18n_key(session) == "" {
+                      @html.Attrs::build()
+                    } else {
+                      @html.Attrs::build().data_set(
+                        "i18n",
+                        mooncode_session_status_i18n_key(session),
+                      )
+                    },
+                    mooncode_session_status_line(session),
+                  )
+                },
               ],
             )
           },
@@ -654,16 +661,6 @@ fn mooncode_workspace_label(model : Model) -> String {
 }
 
 ///|
-fn mooncode_session_count_label(model : Model) -> String {
-  let count = model.mooncode_sessions.length()
-  if count == 1 {
-    "1 session"
-  } else {
-    "\{count} sessions"
-  }
-}
-
-///|
 fn mooncode_session_project_line(session : MoonCodeSession) -> String {
   if session.workspace_name == "" {
     "General MoonCode"
@@ -736,376 +733,413 @@ fn render_mooncode_center(
   }
   let session = selected_mooncode_session(model)
   let empty = session is None
+  let setup_open = model.mooncode_skills_visible &&
+    model.mooncode_skills_workspace_id == model.selected_workspace_id
+  let setup_label = if setup_open { "Close setup" } else { "Coding setup" }
+  let setup_key = if setup_open {
+    "code.hide_skills"
+  } else {
+    "code.view_skills"
+  }
+  let schedules_open = model.mooncode_schedules_visible &&
+    model.mooncode_schedules_workspace_id == model.selected_workspace_id
+  let schedules_label = if schedules_open {
+    "Hide schedules"
+  } else {
+    "Scheduled work"
+  }
+  let schedules_key = if schedules_open {
+    "code.hide_schedules"
+  } else {
+    "code.schedules_title"
+  }
+  let send_key = if session is Some(active) &&
+    mooncode_can_guide_running_work(active) {
+    "code.queue_next_turn"
+  } else if session is Some(_) {
+    "code.prompt"
+  } else {
+    "common.start"
+  }
   section(
     class=mooncode_center_class(model),
-    attrs=@html.Attrs::build().data_set("testid", "mooncode-center"),
+    attrs=@html.Attrs::build()
+      .data_set("testid", "mooncode-center")
+      .data_set("workspace-id", model.selected_workspace_id)
+      .data_set("session-id", model.selected_mooncode_session_id),
     [
-      div(class="mooncode-context-bar", [
-        div([
-          strong(mooncode_context_title(model, session)),
-          span(
-            attrs=@html.Attrs::build().data_set(
-              "i18n",
-              if session is None && model.selected_path == "" {
-                "code.no_path_selected"
-              } else {
-                ""
-              },
-            ),
-            mooncode_context_path_label(model, session),
+      div(class="code-workbench-heading", [
+        div(class="mooncode-context-bar", [
+          button(
+            class="moon-icon-button code-navigation-toggle",
+            attrs=@html.Attrs::build()
+              .data_set("workbench-action", "navigation")
+              .data_set("i18n-title", "code.toggle_chats")
+              .data_set("i18n-aria-label", "code.toggle_chats")
+              .aria_label("Toggle chats sidebar")
+              .title("Toggle chats sidebar")
+              .aria_expanded("true")
+              .aria_controls("code-chat-navigation"),
+            ui_icon("panel-left"),
           ),
-        ]),
-        if model.selected_workspace_id == "" {
-          @html.nothing
-        } else {
-          button(
-            class="mooncode-skill-toggle",
-            attrs=@html.Attrs::build()
-              .data_set(
-                "i18n",
-                if model.mooncode_skills_visible &&
-                  model.mooncode_skills_workspace_id ==
-                  model.selected_workspace_id {
-                  "code.hide_skills"
-                } else {
-                  "code.view_skills"
-                },
-              )
-              .aria_expanded(
-                if model.mooncode_skills_visible &&
-                  model.mooncode_skills_workspace_id ==
-                  model.selected_workspace_id {
-                  "true"
-                } else {
-                  "false"
-                },
-              ),
-            on_click=dispatch(ToggleMoonCodeSkills),
-            if model.mooncode_skills_visible &&
-              model.mooncode_skills_workspace_id == model.selected_workspace_id {
-              "Hide skills"
+          div([
+            strong(mooncode_context_title(model, session)),
+            if session is None && model.selected_path == "" {
+              @html.nothing
             } else {
-              "View skills"
+              span(mooncode_context_path_label(model, session))
             },
-          )
-        },
-        if model.selected_workspace_id == "" {
-          @html.nothing
-        } else {
-          button(
-            class="mooncode-skill-toggle mooncode-schedules-toggle",
-            attrs=@html.Attrs::build()
-              .data_set(
-                "i18n",
-                if model.mooncode_schedules_visible &&
-                  model.mooncode_schedules_workspace_id ==
-                  model.selected_workspace_id {
-                  "code.hide_schedules"
-                } else {
-                  "code.schedules_title"
-                },
-              )
-              .aria_expanded(
-                if model.mooncode_schedules_visible &&
-                  model.mooncode_schedules_workspace_id ==
-                  model.selected_workspace_id {
-                  "true"
-                } else {
-                  "false"
-                },
-              ),
-            on_click=dispatch(ToggleMoonCodeSchedules),
-            if model.mooncode_schedules_visible &&
-              model.mooncode_schedules_workspace_id ==
-              model.selected_workspace_id {
-              "Hide schedules"
-            } else {
-              "Scheduled work"
-            },
-          )
-        },
-        if model.selected_mooncode_session_id == "" {
-          @html.nothing
-        } else {
-          button(
-            class="mooncode-skill-toggle mooncode-jobs-toggle",
-            attrs=@html.Attrs::build()
-              .data_set(
-                "i18n",
-                if model.mooncode_jobs_visible &&
-                  model.mooncode_jobs_session_id ==
-                  model.selected_mooncode_session_id {
-                  "code.hide_jobs"
-                } else {
-                  "code.job_history"
-                },
-              )
-              .aria_expanded(
-                if model.mooncode_jobs_visible &&
-                  model.mooncode_jobs_session_id ==
-                  model.selected_mooncode_session_id {
-                  "true"
-                } else {
-                  "false"
-                },
-              ),
-            on_click=dispatch(ToggleMoonCodeJobs),
-            if model.mooncode_jobs_visible &&
-              model.mooncode_jobs_session_id ==
-              model.selected_mooncode_session_id {
-              "Hide jobs"
-            } else {
-              "Job history"
-            },
-          )
-        },
-        match session {
-          Some(active) if active.mooncode_conversation is Some(_) =>
-            a(
-              class="mooncode-skill-toggle",
+          ]),
+          if model.selected_workspace_id == "" {
+            @html.nothing
+          } else {
+            button(
+              class="mooncode-skill-toggle mooncode-composer-icon-button moon-icon-button",
               attrs=@html.Attrs::build()
-                .data_set("testid", "mooncode-export-conversation")
-                .data_set("i18n", "code.export_conversation")
-                .download("mooncode-\{active.id}.json"),
-              href=@desk.mooncode_session_url(active.id) + "/export",
-              "Export conversation",
+                .data_set("i18n-title", setup_key)
+                .data_set("i18n-aria-label", setup_key)
+                .title(setup_label)
+                .aria_label(setup_label)
+                .aria_expanded(
+                  if model.mooncode_skills_visible &&
+                    model.mooncode_skills_workspace_id ==
+                    model.selected_workspace_id {
+                    "true"
+                  } else {
+                    "false"
+                  },
+                ),
+              on_click=dispatch(ToggleMoonCodeSkills),
+              ui_icon("settings"),
             )
-          _ => @html.nothing
-        },
+          },
+          if model.selected_workspace_id == "" {
+            @html.nothing
+          } else {
+            button(
+              class="mooncode-skill-toggle mooncode-schedules-toggle mooncode-composer-icon-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .data_set("i18n-title", schedules_key)
+                .data_set("i18n-aria-label", schedules_key)
+                .title(schedules_label)
+                .aria_label(schedules_label)
+                .aria_expanded(
+                  if model.mooncode_schedules_visible &&
+                    model.mooncode_schedules_workspace_id ==
+                    model.selected_workspace_id {
+                    "true"
+                  } else {
+                    "false"
+                  },
+                ),
+              on_click=dispatch(ToggleMoonCodeSchedules),
+              ui_icon("calendar"),
+            )
+          },
+          if model.selected_mooncode_session_id == "" {
+            @html.nothing
+          } else {
+            button(
+              class="mooncode-skill-toggle mooncode-jobs-toggle moon-icon-button",
+              attrs=@html.Attrs::build()
+                .data_set(
+                  "i18n-aria-label",
+                  if model.mooncode_jobs_visible &&
+                    model.mooncode_jobs_session_id ==
+                    model.selected_mooncode_session_id {
+                    "code.hide_jobs"
+                  } else {
+                    "code.job_history"
+                  },
+                )
+                .aria_label(
+                  if model.mooncode_jobs_visible {
+                    "Hide jobs"
+                  } else {
+                    "Job history"
+                  },
+                )
+                .aria_expanded(
+                  if model.mooncode_jobs_visible &&
+                    model.mooncode_jobs_session_id ==
+                    model.selected_mooncode_session_id {
+                    "true"
+                  } else {
+                    "false"
+                  },
+                ),
+              on_click=dispatch(ToggleMoonCodeJobs),
+              ui_icon("history"),
+            )
+          },
+          match session {
+            Some(active) if active.mooncode_conversation is Some(_) =>
+              a(
+                class="mooncode-skill-toggle moon-icon-button",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "mooncode-export-conversation")
+                  .data_set("i18n-aria-label", "code.export_conversation")
+                  .aria_label("Export conversation")
+                  .download("mooncode-\{active.id}.json"),
+                href=@desk.mooncode_session_url(active.id) + "/export",
+                ui_icon("download"),
+              )
+            _ => @html.nothing
+          },
+        ]),
+        render_code_workbench_toolbar(),
       ]),
-      render_mooncode_runtime_setup(dispatch, model),
       render_mooncode_skill_catalog(dispatch, model),
       render_mooncode_job_history(dispatch, model),
       render_mooncode_schedules(dispatch, model),
-      render_git_repository_context(dispatch, model),
-      render_mooncode_workspace_editors(dispatch, model),
-      render_mooncode_developer_tools(model),
-      render_requested_selection(dispatch, model),
-      section(
-        class=if empty {
-          "mooncode-chat-surface empty"
-        } else {
-          "mooncode-chat-surface"
-        },
-        attrs=@html.Attrs::build().data_set("testid", "mooncode-chat-surface"),
-        [
-          match session {
-            Some(session) =>
-              div(class="mooncode-session-surface", [
-                render_mooncode_transcript(dispatch, model, session),
-              ])
-            None if mooncode_selection_unavailable(model) => @html.nothing
-            None =>
-              div(class="mooncode-empty", [
-                h1(
-                  attrs=@html.Attrs::build().data_set("i18n", "code.ask"),
-                  "Ask MoonCode",
-                ),
-                p(
-                  class="lead",
-                  attrs=@html.Attrs::build().data_set(
-                    "i18n",
-                    if model.selected_workspace_id == "" {
-                      "code.ask_general_lead"
-                    } else {
-                      "code.ask_lead"
-                    },
-                  ),
-                  if model.selected_workspace_id == "" {
-                    "Ask a coding question, or select a MoonBook when you want changes attached to a book."
-                  } else {
-                    "Describe the code change you want in this MoonBook."
-                  },
-                ),
-              ])
+      input(
+        class="code-session-navigation-sync",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "code-session-navigation")
+          .aria_hidden("true")
+          .tabindex(-1),
+        on_input=fn(value) { dispatch(SelectMoonCodeSession(value)) },
+      ),
+      input(
+        class="code-session-navigation-sync",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "code-workspace-navigation")
+          .aria_hidden("true")
+          .tabindex(-1),
+        on_input=fn(value) { dispatch(SelectWorkspace(value)) },
+      ),
+      div(class="code-workbench", [
+        section(
+          class=if empty {
+            "mooncode-chat-surface empty"
+          } else {
+            "mooncode-chat-surface"
           },
-          div(class="mooncode-composer", [
-            div(class="composer-field", [
-              textarea(
-                class="mooncode-input",
-                attrs=@html.Attrs::build()
-                  .data_set("testid", "mooncode-input")
-                  .data_set("i18n-aria-label", "code.ask")
-                  .data_set("i18n-placeholder", "code.ask_placeholder")
-                  .aria_label("Message MoonCode"),
-                rows=1,
-                value=model.mooncode_prompt,
-                placeholder="Ask MoonCode...",
-                on_input=fn(value) { dispatch(SetMoonCodePrompt(value)) },
-                "",
-              ),
-            ]),
-            render_mooncode_image_tray(dispatch, model),
+          attrs=@html.Attrs::build().data_set("testid", "mooncode-chat-surface"),
+          [
+            render_mooncode_runtime_setup(dispatch, model),
+            render_requested_selection(dispatch, model),
             match session {
-              Some(active) if mooncode_can_guide_running_work(active) =>
-                p(
-                  class="mooncode-composer-intent",
-                  attrs=@html.Attrs::build().data_set(
-                    "i18n", "code.running_intent",
-                  ),
-                  "Guide current work now, or queue a separate turn after it.",
-                )
-              _ => @html.nothing
-            },
-            match session {
-              Some(active) if model.mooncode_guidance_feedback_session_id ==
-                active.id &&
-                model.mooncode_guidance_feedback != "" =>
-                p(
-                  class="mooncode-guidance-feedback",
-                  attrs=@html.Attrs::build().role("status").aria_live("polite"),
-                  model.mooncode_guidance_feedback,
-                )
-              _ => @html.nothing
-            },
-            div(class="composer-footer", [
-              render_mooncode_composer_controls(dispatch, model),
-              @html.label(
-                class="mooncode-attach-image",
-                attrs=@html.Attrs::build().data_set(
-                  "testid", "mooncode-attach-image",
-                ),
-                [
-                  span(
-                    attrs=@html.Attrs::build().data_set(
-                      "i18n", "code.attach_image",
-                    ),
-                    "Attach image",
-                  ),
-                  input(
-                    input_type=File,
-                    accept="image/png,image/jpeg,image/webp",
-                    multiple=true,
+              Some(active) =>
+                details(class="code-task-inspector", [
+                  summary("Task, queue and agents"),
+                  div(
                     attrs=@html.Attrs::build()
-                      .data_set("testid", "mooncode-image-file-input")
-                      .data_set("i18n-aria-label", "code.attach_image_aria")
-                      .aria_label("Attach images to Code request")
-                      .disabled(
-                        model.mooncode_image_submit_pending ||
-                        model.mooncode_images.length() >= 4,
-                      ),
+                      .data_set("mooncode-task-controls", "true")
+                      .data_set("session-id", active.id),
+                    @html.nothing,
                   ),
-                ],
+                ])
+              None => @html.nothing
+            },
+            match session {
+              Some(session) =>
+                div(class="mooncode-session-surface", [
+                  render_mooncode_transcript(dispatch, model, session),
+                ])
+              None => @html.nothing
+            },
+            div(class="mooncode-composer", [
+              div(
+                class="code-context-tray",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "code-context-tray")
+                  .aria_label("Context for the next message"),
+                @html.nothing,
               ),
+              div(class="composer-field", [
+                textarea(
+                  class="mooncode-input",
+                  attrs=@html.Attrs::build()
+                    .data_set("testid", "mooncode-input")
+                    .data_set("i18n-aria-label", "code.ask")
+                    .data_set("i18n-placeholder", "code.ask_placeholder")
+                    .aria_label("Message MoonCode"),
+                  rows=1,
+                  value=model.mooncode_prompt,
+                  placeholder="Ask MoonCode...",
+                  on_input=fn(value) { dispatch(SetMoonCodePrompt(value)) },
+                  "",
+                ),
+              ]),
+              render_mooncode_image_tray(dispatch, model),
               match session {
                 Some(active) if mooncode_can_guide_running_work(active) =>
-                  button(
-                    class="mooncode-guide-button",
-                    attrs=@html.Attrs::build()
-                      .data_set("testid", "mooncode-guide-current")
-                      .data_set(
-                        "i18n",
-                        if model.mooncode_guidance_pending_session_id ==
-                          active.id {
-                          "code.guidance_sending"
-                        } else {
-                          "code.guide_current"
-                        },
-                      )
-                      .data_set("i18n-aria-label", "code.guide_current_aria")
-                      .aria_label("Guide current MoonCode work")
-                      .on_click(_ => {
-                        dispatch(
-                          SendMoonCodeGuidance(browser_mooncode_prompt_value()),
-                        )
-                      })
-                      .disabled(
-                        model.mooncode_prompt.trim().to_owned() == "" ||
-                        model.mooncode_guidance_pending_session_id != "" ||
-                        mooncode_capability_submission_blocker(
-                          model.mooncode_capability,
-                        )
-                        is Some(_),
-                      ),
-                    if model.mooncode_guidance_pending_session_id == active.id {
-                      "Sending…"
-                    } else {
-                      "Guide current"
-                    },
+                  p(
+                    class="mooncode-composer-intent",
+                    attrs=@html.Attrs::build().data_set(
+                      "i18n", "code.running_intent",
+                    ),
+                    "Guide current work now, or queue a separate turn after it.",
                   )
                 _ => @html.nothing
               },
-              button(
-                class="primary-button",
-                attrs=@html.Attrs::build()
-                  .data_set("testid", "mooncode-send")
-                  .data_set(
-                    "i18n",
+              match session {
+                Some(active) if model.mooncode_guidance_feedback_session_id ==
+                  active.id &&
+                  model.mooncode_guidance_feedback != "" =>
+                  p(
+                    class="mooncode-guidance-feedback",
+                    attrs=@html.Attrs::build()
+                      .role("status")
+                      .aria_live("polite"),
+                    model.mooncode_guidance_feedback,
+                  )
+                _ => @html.nothing
+              },
+              div(class="composer-footer", [
+                render_mooncode_composer_controls(dispatch, model),
+                @html.label(
+                  class="mooncode-attach-image mooncode-composer-icon-button",
+                  attrs=@html.Attrs::build()
+                    .data_set("testid", "mooncode-attach-image")
+                    .data_set("i18n-title", "code.attach_image")
+                    .title("Attach image"),
+                  [
+                    ui_icon("attach"),
+                    input(
+                      input_type=File,
+                      accept="image/png,image/jpeg,image/webp",
+                      multiple=true,
+                      attrs=@html.Attrs::build()
+                        .data_set("testid", "mooncode-image-file-input")
+                        .data_set("i18n-aria-label", "code.attach_image_aria")
+                        .aria_label("Attach images to Code request")
+                        .disabled(
+                          model.mooncode_image_submit_pending ||
+                          model.mooncode_images.length() >= 4,
+                        ),
+                    ),
+                  ],
+                ),
+                match session {
+                  Some(active) if mooncode_can_guide_running_work(active) =>
+                    button(
+                      class="mooncode-guide-button",
+                      attrs=@html.Attrs::build()
+                        .data_set("testid", "mooncode-guide-current")
+                        .data_set(
+                          "i18n",
+                          if model.mooncode_guidance_pending_session_id ==
+                            active.id {
+                            "code.guidance_sending"
+                          } else {
+                            "code.guide_current"
+                          },
+                        )
+                        .data_set("i18n-aria-label", "code.guide_current_aria")
+                        .aria_label("Guide current MoonCode work")
+                        .on_click(_ => {
+                          dispatch(
+                            SendMoonCodeGuidance(
+                              browser_mooncode_prompt_value(),
+                            ),
+                          )
+                        })
+                        .disabled(
+                          model.mooncode_prompt.trim().to_owned() == "" ||
+                          model.mooncode_guidance_pending_session_id != "" ||
+                          mooncode_capability_submission_blocker(
+                            model.mooncode_capability,
+                          )
+                          is Some(_),
+                        ),
+                      if model.mooncode_guidance_pending_session_id == active.id {
+                        "Sending…"
+                      } else {
+                        "Guide current"
+                      },
+                    )
+                  _ => @html.nothing
+                },
+                button(
+                  class="primary-button mooncode-composer-icon-button",
+                  attrs=@html.Attrs::build()
+                    .data_set("testid", "mooncode-send")
+                    .data_set("i18n-title", send_key)
+                    .data_set("i18n-aria-label", send_key)
+                    .title(mooncode_composer_button_label(model, session))
+                    .aria_label(mooncode_composer_button_label(model, session))
+                    .on_click(_ => {
+                      dispatch(
+                        SendMoonCodeMessage(browser_mooncode_prompt_value()),
+                      )
+                    })
+                    .disabled(
+                      (
+                        model.mooncode_prompt.trim().to_owned() == "" &&
+                        model.mooncode_images.is_empty()
+                      ) ||
+                      model.mooncode_image_submit_pending ||
+                      mooncode_selection_unavailable(model) ||
+                      (
+                        !model.mooncode_images.is_empty() &&
+                        !mooncode_selected_model_accepts_images(model)
+                      ) ||
+                      model.mooncode_guidance_pending_session_id != "" ||
+                      mooncode_capability_submission_blocker(
+                        model.mooncode_capability,
+                      )
+                      is Some(_),
+                    ),
+                  ui_icon(
                     if session is Some(active) &&
                       mooncode_can_guide_running_work(active) {
-                      "code.queue_next_turn"
-                    } else if session is Some(_) {
-                      "code.prompt"
+                      "queued"
                     } else {
-                      "common.start"
+                      "send"
                     },
-                  )
-                  .on_click(_ => {
-                    dispatch(
-                      SendMoonCodeMessage(browser_mooncode_prompt_value()),
-                    )
-                  })
-                  .disabled(
-                    (
-                      model.mooncode_prompt.trim().to_owned() == "" &&
-                      model.mooncode_images.is_empty()
-                    ) ||
-                    model.mooncode_image_submit_pending ||
-                    mooncode_selection_unavailable(model) ||
-                    (
-                      !model.mooncode_images.is_empty() &&
-                      !mooncode_selected_model_accepts_images(model)
-                    ) ||
-                    model.mooncode_guidance_pending_session_id != "" ||
-                    mooncode_capability_submission_blocker(
-                      model.mooncode_capability,
-                    )
-                    is Some(_),
                   ),
-                mooncode_composer_button_label(model, session),
-              ),
+                ),
+              ]),
+              if model.mooncode_composer_status == "" ||
+                model.mooncode_composer_status == "draft" ||
+                model.mooncode_composer_status == "mooncode idle" ||
+                model.mooncode_composer_status.has_suffix(
+                  " MoonCode session(s)",
+                ) ||
+                model.mooncode_composer_status == "MoonClaw is not installed" {
+                @html.nothing
+              } else {
+                let status_key = match model.mooncode_composer_status {
+                  "MoonClaw is not installed" => "code.moonclaw_not_installed"
+                  "MoonClaw is running but no default model is available" =>
+                    "code.moonclaw_no_model"
+                  "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it" =>
+                    "code.moonclaw_copied_runtime_unavailable"
+                  "MoonCode workspace ready" => "code.workspace_ready"
+                  _ => ""
+                }
+                p(
+                  class="mooncode-composer-status",
+                  attrs=@html.Attrs::build()
+                    .role("status")
+                    .aria_live("polite")
+                    .data_set("i18n", status_key)
+                    .data_set(
+                      "i18n-params",
+                      ({ "count": model.mooncode_sessions.length() } : Json).stringify(),
+                    )
+                    .data_set(
+                      "i18n-scope",
+                      if status_key == "" {
+                        "technical"
+                      } else {
+                        ""
+                      },
+                    ),
+                  model.mooncode_composer_status,
+                )
+              },
             ]),
-            if model.mooncode_composer_status == "" ||
-              model.mooncode_composer_status == "draft" ||
-              model.mooncode_composer_status == "mooncode idle" {
-              @html.nothing
-            } else {
-              let status_key = match model.mooncode_composer_status {
-                "MoonClaw is not installed" => "code.moonclaw_not_installed"
-                "MoonClaw is running but no default model is available" =>
-                  "code.moonclaw_no_model"
-                "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it" =>
-                  "code.moonclaw_copied_runtime_unavailable"
-                "MoonCode workspace ready" => "code.workspace_ready"
-                status if status ==
-                  "\{model.mooncode_sessions.length()} MoonCode session(s)" =>
-                  "code.session_status"
-                _ => ""
-              }
-              p(
-                class="mooncode-composer-status",
-                attrs=@html.Attrs::build()
-                  .role("status")
-                  .aria_live("polite")
-                  .data_set("i18n", status_key)
-                  .data_set(
-                    "i18n-params",
-                    ({ "count": model.mooncode_sessions.length() } : Json).stringify(),
-                  )
-                  .data_set(
-                    "i18n-scope",
-                    if status_key == "" {
-                      "technical"
-                    } else {
-                      ""
-                    },
-                  ),
-                model.mooncode_composer_status,
-              )
-            },
-          ]),
-        ],
-      ),
+          ],
+        ),
+        div(class="code-workbench-work", [
+          render_git_repository_context(dispatch, model),
+          render_mooncode_workspace_editors(dispatch, model),
+          render_mooncode_developer_tools(model),
+        ]),
+      ]),
     ],
   )
 }
@@ -1153,7 +1187,20 @@ fn render_mooncode_workspace_editors(
             .data_set("i18n-aria-label", "code.resize_editors"),
             [span(class="workspace-editor-splitter-grip", "")],
           ),
-          render_office_editor(dispatch, model.office_editor),
+          details(
+            class="workspace-office-disclosure",
+            attrs=@html.Attrs::build().open(model.office_editor.path != ""),
+            [
+              summary([
+                ui_icon("book"),
+                span(
+                  attrs=@html.Attrs::build().data_set("i18n", "code.documents"),
+                  "Documents",
+                ),
+              ]),
+              render_office_editor(dispatch, model.office_editor),
+            ],
+          ),
         ],
       ),
     ],
@@ -1168,6 +1215,7 @@ fn render_source_editor(
   section(
     class="source-editor",
     attrs=@html.Attrs::build()
+      .aria_label("Source editor")
       .data_set("testid", "source-editor")
       .data_set("search-engine", "moonedit")
       .data_set("workspace-id", source.workspace_id)
@@ -1181,10 +1229,6 @@ fn render_source_editor(
         },
       ),
     [
-      h3("Source editor"),
-      p(
-        "Multi-file editing with local syntax assistance plus MoonBit compiler diagnostics and workspace navigation.",
-      ),
       if source.buffers.is_empty() {
         @html.nothing
       } else {
@@ -1193,6 +1237,7 @@ fn render_source_editor(
           attrs=@html.Attrs::build()
             .role("tablist")
             .aria_label("Open source files")
+            .aria_orientation("horizontal")
             .data_set("testid", "source-tabs"),
           source.buffers.map(buffer => {
             let active = buffer.path == source.requested_path
@@ -1202,30 +1247,45 @@ fn render_source_editor(
               } else {
                 "source-editor-tab"
               },
+              attrs=@html.Attrs::build().role("presentation"),
               [
                 button(
                   class="source-editor-tab-select",
                   attrs=@html.Attrs::build()
                     .role("tab")
                     .aria_selected(if active { "true" } else { "false" })
+                    .aria_controls("source-buffer-panel")
+                    .tabindex(if active { 0 } else { -1 })
+                    .title(buffer.path)
+                    .aria_label(
+                      buffer.path +
+                      (if source_pane_buffer_dirty(buffer) {
+                        " · modified"
+                      } else {
+                        ""
+                      }),
+                    )
                     .data_set("testid", "source-tab-" + buffer.path),
                   on_click=dispatch(SourcePane(SwitchBuffer(buffer.path))),
                   disabled=source.saving,
-                  buffer.path +
-                  (if source_pane_buffer_dirty(buffer) {
-                    " · modified"
-                  } else {
-                    ""
-                  }),
+                  [
+                    span(class="source-editor-tab-path", buffer.path),
+                    if source_pane_buffer_dirty(buffer) {
+                      span(class="source-editor-tab-modified", "modified")
+                    } else {
+                      @html.nothing
+                    },
+                  ],
                 ),
                 button(
                   class="source-editor-tab-close",
                   attrs=@html.Attrs::build()
                     .aria_label("Close " + buffer.path)
+                    .title("Close " + buffer.path)
                     .data_set("testid", "source-tab-close-" + buffer.path),
                   on_click=dispatch(SourcePane(CloseBuffer(buffer.path))),
                   disabled=source.saving,
-                  "×",
+                  ui_icon("close"),
                 ),
               ],
             )
@@ -1256,36 +1316,72 @@ fn render_source_editor(
           "Open",
         ),
         button(
-          class="primary-button",
+          class="primary-button source-save-button",
           attrs=@html.Attrs::build().data_set("testid", "source-save"),
           disabled=!source_pane_dirty(source) || source.saving,
           on_click=dispatch(SourcePane(Save)),
-          if source.saving {
-            "Saving..."
-          } else {
-            "Save"
-          },
+          [
+            ui_icon(if source.saving { "running" } else { "save" }),
+            span(if source.saving { "Saving..." } else { "Save" }),
+          ],
         ),
-        button(
-          class="secondary-button",
-          attrs=@html.Attrs::build().data_set("testid", "source-discard"),
-          disabled=!source_pane_dirty(source) || source.saving,
-          on_click=dispatch(SourcePane(DiscardDraft)),
-          "Discard",
-        ),
-        button(
-          class="secondary-button",
-          attrs=@html.Attrs::build().data_set("testid", "source-reload"),
-          disabled=source.server_content is None || source.saving,
-          on_click=dispatch(SourcePane(ReloadServer)),
-          "Reload external version",
+        details(
+          class="source-file-actions",
+          attrs=@html.Attrs::build().data_set("popup", "source-actions"),
+          [
+            summary(
+              class="moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("File actions")
+                .data_set("i18n-aria-label", "code.file_actions")
+                .title("File actions"),
+              ui_icon("more"),
+            ),
+            div(class="source-file-action-menu", [
+              button(
+                class="secondary-button",
+                attrs=@html.Attrs::build().data_set("testid", "source-discard"),
+                disabled=!source_pane_dirty(source) || source.saving,
+                on_click=dispatch(SourcePane(DiscardDraft)),
+                "Discard",
+              ),
+              button(
+                class="secondary-button",
+                attrs=@html.Attrs::build().data_set("testid", "source-reload"),
+                disabled=source.server_content is None || source.saving,
+                on_click=dispatch(SourcePane(ReloadServer)),
+                "Reload external version",
+              ),
+            ]),
+          ],
         ),
       ]),
-      render_source_literal_search(dispatch, source),
-      render_source_line_authoring(dispatch, source),
-      render_source_json_layout(dispatch, source),
-      render_source_table_import(dispatch, source),
-      render_source_outline(dispatch, source),
+      div(class="source-quiet-tools", [
+        details(
+          class="source-quiet-disclosure source-find-disclosure",
+          attrs=@html.Attrs::build().data_set(
+            "testid", "source-find-disclosure",
+          ),
+          [
+            summary(
+              attrs=@html.Attrs::build().title("Find and replace · Ctrl/Cmd+F"),
+              [ui_icon("search"), span("Find and replace")],
+            ),
+            div(class="source-quiet-disclosure-body", [
+              render_source_literal_search(dispatch, source),
+            ]),
+          ],
+        ),
+        details(class="source-quiet-disclosure source-edit-tools", [
+          summary([ui_icon("edit"), span("Edit tools")]),
+          div(class="source-quiet-disclosure-body", [
+            render_source_line_authoring(dispatch, source),
+            render_source_json_layout(dispatch, source),
+            render_source_table_import(dispatch, source),
+            render_source_outline(dispatch, source),
+          ]),
+        ]),
+      ]),
       div(class="source-editor-workbench", [
         pre(
           class="source-editor-line-numbers",

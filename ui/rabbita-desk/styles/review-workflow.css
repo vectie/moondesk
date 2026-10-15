@@ -1,0 +1,43 @@
+.review-workflow { border-top: 1px solid var(--mooncode-line); margin-top: 12px; padding-top: 8px; color: var(--mooncode-ink); }
+.review-workflow summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+.review-workflow-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.review-workflow button, .review-workflow input, .review-workflow textarea { font: inherit; color: inherit; background: var(--mooncode-panel); border: 1px solid var(--mooncode-line); border-radius: 6px; padding: 7px 9px; }
+.review-workflow button { cursor: pointer; min-height: 36px; }
+.review-workflow button:disabled { opacity: .6; cursor: wait; }
+.review-workflow :focus-visible { outline: 2px solid var(--mooncode-accent); outline-offset: 2px; }
+.review-workflow-panes { display: grid; grid-template-columns: minmax(150px, 28%) minmax(0, 1fr); gap: 12px; }
+.review-workflow-panes > nav { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; overflow: auto; }
+.review-workflow-commits { display: flex; flex-direction: column; gap: 6px; }
+.review-workflow-commits button { text-align: left; display: flex; flex-direction: column; gap: 4px; }
+.review-workflow-commits span { color: var(--mooncode-muted); font-size: 12px; }
+.review-workflow-detail { min-width: 0; max-height: 62vh; overflow: auto; }
+.review-workflow-detail h4, .review-workflow-detail h5 { overflow-wrap: anywhere; margin: 10px 0; }
+.review-workflow-hunk { border: 1px solid var(--mooncode-line); border-radius: 6px; margin-bottom: 14px; padding: 8px; }
+.review-workflow-hunk.viewed { border-left: 3px solid var(--mooncode-accent); }
+.review-workflow-line { display: grid; grid-template-columns: 4ch 4ch minmax(0, 1fr); font-size: 12px; line-height: 1.6; }
+.review-workflow-line code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-workflow-line > span { text-align: right; padding-right: 6px; color: var(--mooncode-muted); user-select: none; }
+.review-workflow-line.added { background: color-mix(in srgb, #239e62 12%, transparent); }
+.review-workflow-line.removed { background: color-mix(in srgb, #d95050 12%, transparent); }
+.review-workflow-split { display: none; }
+.review-workflow-diff.split .review-workflow-unified { display: none; }
+.review-workflow-diff.split .review-workflow-split { display: block; }
+.review-workflow-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.review-workflow-half { display: grid; grid-template-columns: 4ch minmax(0, 1fr); font-size: 12px; line-height: 1.6; }
+.review-workflow-half > span { color: var(--mooncode-muted); text-align: right; padding-right: 6px; }
+.review-workflow-half code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-workflow-half.added { background: color-mix(in srgb, #239e62 12%, transparent); }
+.review-workflow-half.removed { background: color-mix(in srgb, #d95050 12%, transparent); }
+.review-workflow-half mark { background: transparent; color: inherit; }
+.review-workflow-diff.tokens .review-workflow-half mark { background: color-mix(in srgb, var(--mooncode-accent) 24%, transparent); border-radius: 2px; }
+.review-workflow select { font: inherit; color: inherit; background: var(--mooncode-panel); border: 1px solid var(--mooncode-line); border-radius: 6px; padding: 8px; max-width: 100%; }
+.review-workflow-structure { border-left: 2px solid var(--mooncode-accent); padding: 10px; }
+.review-workflow-structure pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-workflow-worktree { border-top: 1px solid var(--mooncode-line); padding: 10px 0; overflow-wrap: anywhere; }
+.review-workflow textarea { display: block; box-sizing: border-box; width: 100%; margin: 10px 0; resize: vertical; }
+.review-workflow-thread { border: 1px solid var(--mooncode-line); border-radius: 8px; padding: 12px; margin: 10px 0; }
+.review-workflow-thread article { padding: 10px 0; border-bottom: 1px solid var(--mooncode-line); }
+.review-workflow-thread p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-workflow-thread a { color: var(--mooncode-accent); margin-right: 12px; }
+.review-workflow-thread > button { margin-right: 8px; }
+@media (max-width: 760px) { .review-workflow-panes { grid-template-columns: 1fr; } .review-workflow-panes > nav { max-height: 220px; } .review-workflow button { min-height: 44px; } }

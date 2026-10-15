@@ -1,4 +1,13 @@
 ///|
+fn http_transport_headers(values : Map[String, String]) -> @http.Headers {
+  let headers : @http.Headers = Map([])
+  for name, value in values {
+    headers[@http.CaseInsensitiveString(name)] = value
+  }
+  headers
+}
+
+///|
 async fn send_file(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
@@ -28,7 +37,9 @@ async fn send_isolated_preview_file(
   conn.send_response(
     code,
     reason,
-    extra_headers=@preview.isolated_preview_headers(path),
+    extra_headers=http_transport_headers(
+      @preview.isolated_preview_headers(path),
+    ),
   )
   if method_ is Head {
     conn.end_response()
@@ -50,6 +61,40 @@ fn isolated_preview_observer_bridge() -> String {
     #|  'use strict';
     #|  const protocol = 'moondesk-preview-v1';
     #|  const send = (type, detail = {}) => parent.postMessage({ protocol, type, ...detail }, '*');
+    #|  let picking = false;
+    #|  let highlighted = null;
+    #|  let previousOutline = '';
+    #|  const clearHighlight = () => {
+    #|    if (highlighted) highlighted.style.outline = previousOutline;
+    #|    highlighted = null;
+    #|  };
+    #|  addEventListener('pointerover', event => {
+    #|    if (!picking || !(event.target instanceof Element)) return;
+    #|    clearHighlight();
+    #|    highlighted = event.target;
+    #|    previousOutline = highlighted.style.outline;
+    #|    highlighted.style.outline = '2px solid #2563eb';
+    #|  }, true);
+    #|  addEventListener('keydown', event => {
+    #|    if (picking && event.key === 'Escape') {
+    #|      picking = false; clearHighlight(); send('element-pick-cancelled');
+    #|    }
+    #|  }, true);
+    #|  addEventListener('click', event => {
+    #|    if (!picking || !(event.target instanceof Element)) return;
+    #|    event.preventDefault(); event.stopImmediatePropagation();
+    #|    const node = event.target;
+    #|    picking = false; clearHighlight();
+    #|    const selector = node.id ? '#' + CSS.escape(node.id) : node.tagName.toLowerCase() + Array.from(node.classList).slice(0, 3).map(name => '.' + CSS.escape(name)).join('');
+    #|    send('element-picked', {
+    #|      selector,
+    #|      text: String(node.innerText || node.textContent || '').trim().slice(0, 8000),
+    #|      html: node.outerHTML.slice(0, 12000),
+    #|      role: node.getAttribute('role') || node.tagName.toLowerCase(),
+    #|      label: node.getAttribute('aria-label') || '',
+    #|      url: location.href,
+    #|    });
+    #|  }, true);
     #|  for (const level of ['log', 'info', 'warn', 'error']) {
     #|    const original = console[level]?.bind(console);
     #|    if (!original) continue;
@@ -124,6 +169,10 @@ fn isolated_preview_observer_bridge() -> String {
     #|  };
     #|  addEventListener('message', (event) => {
     #|    if (event.source !== parent || event.data?.protocol !== protocol) return;
+    #|    if (event.data?.type === 'pick-element' || event.data?.type === 'cancel-pick') {
+    #|      picking = event.data.type === 'pick-element'; clearHighlight();
+    #|      return;
+    #|    }
     #|    if (event.data?.type === 'ready-request') {
     #|      send('ready', { title: document.title || '' });
     #|      return;
@@ -262,7 +311,11 @@ async fn send_api_json_error_with_headers(
   for key, value in extra_headers {
     headers[key] = value
   }
-  conn.send_response(code, reason, extra_headers=headers)
+  conn.send_response(
+    code,
+    reason,
+    extra_headers=http_transport_headers(headers),
+  )
   if method_ is Head {
     conn.end_response()
     return

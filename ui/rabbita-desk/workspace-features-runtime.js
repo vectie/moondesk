@@ -1,10 +1,29 @@
+import { workPanelItems, renderTaskDraft, installPackWorkspace, mergeTaskThreads, taskPosition, taskResultPackage, taskArtifacts, taskSources, downloadTaskFile } from './work-journey-runtime.js'
 const rootSelector = '[data-testid="workspace-feature-overlays"]'
+const taskDrafts = new Map()
+const recipeDrafts = new Map()
+const bookPanels = new Map()
+const bookWorkOrigins = new Map()
+const seenTaskOutputs = new Map()
+let resultInboxRuntime = null
+let resultInboxPromise = null
+let taskScheduleRuntime = null
+let taskSchedulePromise = null
+let workspaceRoomRuntime = null
+let workspaceRoomPromise = null
+let bookCalendarRuntime = null
+let bookCalendarPromise = null
+let documentTableRuntime = null
+let documentTablePromise = null
 let serverState = {}
 let learningRequestGeneration = 0
 // Captured work owns an ephemeral, explicitly bound Learning Review. It never
 // borrows the ordinary document toolbox's draft or ambient workspace.
 let capturedLearning = null
 let lastThreadPersistenceFingerprint = ''
+let draftTaskId = ''
+let pendingTaskScroll = null
+let pendingTaskTransition = null
 let lastHistoryPersistenceFingerprint = ''
 const restoredDocumentKeys = new Set()
 const serverThreadsByWorkspace = new Map()
@@ -67,6 +86,8 @@ const featureState = {
   review_participants: [],
   review_threads_loaded_for: '',
   review_thread_status: '',
+  review_drafts: new Map(),
+  review_filter: 'all',
   dismissed_fragments: new Set(),
   pending_source_location: null,
   history_status: '',
@@ -646,11 +667,12 @@ function documentKey(state = serverState) {
 
 function currentThreads() {
   const workspaceId = serverState.workspace_id || 'workspace'
-  if (serverThreadsByWorkspace.has(workspaceId)) {
-    return serverThreadsByWorkspace.get(workspaceId)
-  }
   const all = readStored(storageKeys.threads, {})
-  return Array.isArray(all[workspaceId]) ? all[workspaceId] : []
+  const local = Array.isArray(all[workspaceId]) ? all[workspaceId] : []
+  if (serverThreadsByWorkspace.has(workspaceId)) {
+    return mergeTaskThreads(serverThreadsByWorkspace.get(workspaceId), local)
+  }
+  return local
 }
 
 function normalizeServerThread(record) {
@@ -788,15 +810,27 @@ function loadQueuedFollowups() {
 
 function loadDocumentAutomationResults() {
   const workspaceId = String(serverState.workspace_id || '').trim()
-  const conversationId = String(serverState.task_id || '').trim()
+  const conversationId = String(serverState.task_id || draftTaskId || '').trim()
   const identity = `${workspaceId}::${conversationId}`
   globalThis.clearTimeout(featureState.background_results_timer)
   if (!workspaceId || !conversationId || featureState.background_results_identity !== identity) return
-  fetch(`/api/document-automation-results?workspace_id=${encodeURIComponent(workspaceId)}&conversation_id=${encodeURIComponent(conversationId)}`)
-    .then(response => response.ok ? response.json() : Promise.reject(new Error('background result load failed')))
-    .then(payload => {
-      if (`${serverState.workspace_id || ''}::${serverState.task_id || ''}` !== identity) return
-      const unseen = (Array.isArray(payload.results) ? payload.results : []).filter(result => {
+  Promise.allSettled([
+    fetch(`/api/document-automation-results?workspace_id=${encodeURIComponent(workspaceId)}&conversation_id=${encodeURIComponent(conversationId)}`).then(response => response.ok ? response.json() : {}),
+    import('./task-schedule-runtime.js').then(async runtime => {
+      const bindings = runtime.taskScheduleBindings()
+      if (!Object.values(bindings).some(binding => binding.workspaceId === workspaceId && binding.conversationId === conversationId)) return []
+      const response = await fetch('/api/mooncode/schedules')
+      if (!response.ok) return []
+      const schedules = (await response.json()).schedules || []
+      taskScheduleRuntime = runtime
+      runtime.rememberTaskSchedules(workspaceId, schedules)
+      queueMicrotask(renderTaskScheduleSummary)
+      return runtime.linkedScheduleResults(schedules, bindings, workspaceId, conversationId)
+    }),
+  ]).then(([documents, scheduled]) => {
+      if (`${serverState.workspace_id || ''}::${serverState.task_id || draftTaskId || ''}` !== identity) return
+      const results = [...(documents.status === 'fulfilled' ? documents.value?.results || [] : []), ...(scheduled.status === 'fulfilled' ? scheduled.value : [])]
+      const unseen = results.filter(result => {
         const id = String(result.id || '')
         if (!id || featureState.background_result_ids.has(id)) return false
         featureState.background_result_ids.add(id)
@@ -1023,6 +1057,7 @@ function loadTaskRecipes() {
 }
 
 function startTaskRecipe(recipeId, inputs) {
+  const workspaceId = serverState.workspace_id || ''
   const recipe = featureState.task_recipes.find(item => item.recipe_id === recipeId)
   const missing = taskRecipeMissingFields(recipe, inputs)
   if (missing.length) {
@@ -1042,10 +1077,12 @@ function startTaskRecipe(recipeId, inputs) {
   })
     .then(response => response.ok ? response.json() : Promise.reject(new Error('start failed')))
     .then(instance => {
+      if (workspaceId !== serverState.workspace_id) return
       featureState.task_recipe_status = 'Starting in chat…'
       featureState.toolbox_open = false
       featureState.task_recipe_selected = ''
-      forward('start-recipe', instance.prompt || '')
+      persistCurrentThread()
+      forward('start-recipe', instance.prompt || '', '', recipe.title || '')
       render()
     })
     .catch(() => {
@@ -1216,6 +1253,7 @@ function loadDocumentReviewThreads() {
   fetch(`/api/document-review-threads?workspace_id=${encodeURIComponent(workspaceId)}&document_path=${encodeURIComponent(documentPath)}&baseline=${encodeURIComponent(baseline)}&viewer_id=${encodeURIComponent(reviewViewerId())}`)
     .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
     .then(payload => {
+      if (key !== `${serverState.workspace_id}:${serverState.selected_document}:${serverState.office?.baseline || ''}`) return
       featureState.review_threads = Array.isArray(payload.threads) ? payload.threads : []
       featureState.review_counts = {
         open: Number(payload.open_count) || 0,
@@ -1230,13 +1268,14 @@ function loadDocumentReviewThreads() {
       render()
     })
     .catch(() => {
-      featureState.review_threads_loaded_for = ''
+      if (key !== `${serverState.workspace_id}:${serverState.selected_document}:${serverState.office?.baseline || ''}`) return
       featureState.review_thread_status = 'Review discussions could not be loaded'
       render()
     })
 }
 
 function saveDocumentReviewThread(record) {
+  const context = documentKey()
   featureState.review_thread_status = 'Saving…'
   const parent = featureState.review_threads.find(item => item.kind === 'thread' && item.id === record.thread_id)
   fetch('/api/document-review-threads', {
@@ -1247,6 +1286,7 @@ function saveDocumentReviewThread(record) {
       document_path: serverState.selected_document || '',
       document_baseline: serverState.office?.baseline || '',
       author_id: reviewViewerId(),
+      author: readStored('moondesk.room-profile.v1', {}).name || 'You',
       expected_revision: Number(parent?.revision) || 0,
       ...record,
     }),
@@ -1264,11 +1304,15 @@ function saveDocumentReviewThread(record) {
     })
     .then(saved => {
       if (!saved) return
+      const draftKey = `${context}:${record.action === 'reply' ? record.thread_id : 'new'}`
+      if (['create', 'reply'].includes(record.action) && featureState.review_drafts.get(draftKey)?.detail.trim() === record.detail) featureState.review_drafts.delete(draftKey)
+      if (context !== documentKey()) return
       featureState.review_threads_loaded_for = ''
       featureState.review_thread_status = 'Saved'
       loadDocumentReviewThreads()
     })
     .catch(() => {
+      if (context !== documentKey()) return
       featureState.review_thread_status = 'Review discussion could not be saved'
       render()
     })
@@ -1320,10 +1364,18 @@ function persistEnabledPackIds(enabled) {
 }
 
 function persistCurrentThread() {
-  const taskId = String(serverState.task_id || '').trim()
+  if (pendingTaskTransition) return
+  if (serverState.workspace_mode !== 'Wiki') return
+  const activeTaskId = String(serverState.task_id || '').trim()
   const chat = Array.isArray(serverState.chat) ? serverState.chat : []
-  if (!taskId || !chat.length) return
-  const persistenceFingerprint = conversationPersistenceFingerprint(
+  if (!activeTaskId && !chat.length && !serverState.request_prompt) return
+  const workspaceId = serverState.workspace_id || 'workspace'
+  const taskId = activeTaskId || (draftTaskId ||= `draft-${globalThis.crypto.randomUUID()}`)
+  const previousPosition = currentThreads().find(thread => thread.id === taskId)?.position || {}
+  const localPanel = !['threads', 'tasks'].includes(featureState.toolbox_tab)
+    ? { open: featureState.toolbox_open, tab: featureState.toolbox_tab } : previousPosition.panel
+  const position = taskPosition(serverState, { chat_scroll: previousPosition.chat_scroll || 0, panel: localPanel })
+  const persistenceFingerprint = workspaceId + JSON.stringify(position) + conversationPersistenceFingerprint(
     taskId,
     serverState.selected_document || '',
     serverState.request_status || '',
@@ -1331,9 +1383,8 @@ function persistCurrentThread() {
   )
   if (persistenceFingerprint === lastThreadPersistenceFingerprint) return
   const all = readStored(storageKeys.threads, {})
-  const workspaceId = serverState.workspace_id || 'workspace'
   const threads = Array.isArray(all[workspaceId]) ? all[workspaceId] : []
-  const firstUser = chat.find(entry => entry.role === 'user')?.content || 'Document conversation'
+  const firstUser = serverState.work_title || chat.find(entry => entry.role === 'user')?.content || serverState.request_prompt || 'Task'
   const record = {
     id: taskId,
     title: boundedText(firstUser, 72),
@@ -1343,6 +1394,8 @@ function persistCurrentThread() {
     status: serverState.request_status || 'ready',
     archived: false,
     revision: 0,
+    draft: !activeTaskId,
+    position: { ...position, updated_at: Date.now() },
     chat: chat.slice(-240).map(entry => ({
       role: String(entry.role || ''),
       content: String(entry.content || '').slice(0, 240000),
@@ -1351,13 +1404,24 @@ function persistCurrentThread() {
   const previous = threads.find(item => item.id === taskId)
   if (previous?.title && previous.title !== 'Document conversation') record.title = previous.title
   if (previous) record.revision = Number(previous.revision) || 0
-  all[workspaceId] = [record, ...threads.filter(item => item.id !== taskId)]
+  all[workspaceId] = [record, ...threads.filter(item => item.id !== taskId && (!activeTaskId || item.id !== draftTaskId))]
     .sort((left, right) => right.updated_at - left.updated_at)
     .slice(0, 24)
   writeStored(storageKeys.threads, all)
-  const serverThreads = currentThreads().filter(item => item.id !== taskId)
+  const serverThreads = currentThreads().filter(item => item.id !== taskId && (!activeTaskId || item.id !== draftTaskId))
   serverThreadsByWorkspace.set(workspaceId, [record, ...serverThreads].slice(0, 256))
-  queueServerConversationWrite(serverConversationRecord(record))
+  if (activeTaskId) {
+    if (draftTaskId) {
+      const bindings = readStored('moondesk.task-schedules.v1', {})
+      let changed = false
+      for (const binding of Object.values(bindings)) {
+        if (binding.workspaceId === workspaceId && binding.conversationId === draftTaskId) { binding.conversationId = activeTaskId; changed = true }
+      }
+      if (changed) writeStored('moondesk.task-schedules.v1', bindings)
+    }
+    queueServerConversationWrite(serverConversationRecord(record))
+    draftTaskId = ''
+  }
   lastThreadPersistenceFingerprint = persistenceFingerprint
 }
 
@@ -1374,10 +1438,11 @@ function updateThread(threadId, update) {
     : thread)
   serverThreadsByWorkspace.set(workspaceId, next)
   const changed = next.find(thread => thread.id === threadId)
-  if (changed) queueServerConversationWrite(serverConversationRecord(changed))
+  if (changed && !changed.draft) queueServerConversationWrite(serverConversationRecord(changed))
 }
 
 function maybeRestoreCurrentThread() {
+  if (serverState.workspace_mode !== 'Wiki' || serverState.request_prompt) return
   const key = documentKey()
   if (!shouldRestoreDocumentThread(
     serverState.task_id,
@@ -1389,11 +1454,22 @@ function maybeRestoreCurrentThread() {
   const thread = currentThreads().find(item =>
     !item.archived && (item.document || '') === (serverState.selected_document || ''))
   if (thread) {
-    forward('restore-thread', thread.id, thread.document || '', JSON.stringify(thread.chat || []))
+    restoreTask(thread)
   }
 }
 
+function restoreTask(thread, documentPath = thread.position?.document ?? thread.document ?? '') {
+  if (!thread.position) thread = { ...thread, position: { files: taskSources(thread).filter(source => source.kind === 'workspace').map(source => source.path) } }
+  pendingTaskTransition = { taskId: thread.draft ? '' : thread.id, draftId: thread.draft ? thread.id : '', prompt: thread.position?.prompt || '', document: documentPath }
+  featureState.toolbox_open = thread.position?.panel?.open === true
+  if (thread.position?.panel?.tab) featureState.toolbox_tab = thread.position.panel.tab
+  pendingTaskScroll = { workspaceId: serverState.workspace_id, taskId: thread.draft ? '' : thread.id, top: Number(thread.position?.chat_scroll) || 0 }
+  forward('restore-thread', thread.draft ? '' : thread.id, documentPath, JSON.stringify(thread.chat || []), JSON.stringify({ ...thread.position, title: thread.title }))
+}
+
 function forward(action, first = '', second = '', third = '', fourth = '') {
+  if (action === 'draft-task' && second !== 'code') pendingTaskTransition = { taskId: '', draftId: '', prompt: first }
+  if (action === 'new-thread') pendingTaskTransition = { taskId: '', draftId: '', prompt: '' }
   globalThis.__moondeskWorkspaceFeaturesDispatch?.(
     String(action),
     String(first),
@@ -1472,6 +1548,8 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       render()
       return
     case 'new-thread':
+      persistCurrentThread()
+      draftTaskId = ''
       restoredDocumentKeys.add(documentKey())
       featureState.thread_status = 'Started a new document conversation'
       forward('new-thread')
@@ -1484,7 +1562,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       } else {
         featureState.thread_status = `Restored ${thread.title}`
         featureState.toolbox_open = false
-        forward('restore-thread', thread.id, thread.document || '', JSON.stringify(thread.chat || []))
+        restoreTask(thread)
       }
       render()
       return
@@ -1663,8 +1741,30 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       forward('open-path', first)
       render()
       return
+    case 'living-artifact-duplicate': {
+      const artifact = featureState.living_artifacts.find(item => item.id === first)
+      if (artifact) createLivingArtifact({ action: 'duplicate', id: artifact.id, title: `${artifact.title || 'Artifact'} copy` })
+      return
+    }
+    case 'living-artifact-export': {
+      const artifact = featureState.living_artifacts.find(item => item.id === first)
+      if (!artifact) return
+      import('./workspace-artifact-export.js').then(runtime => runtime.downloadArtifact(artifact))
+      return
+    }
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
+      return
+    case 'review-thread-reopen':
+      saveDocumentReviewThread({ action: 'reopen', thread_id: first })
+      return
+    case 'review-filter':
+      featureState.review_filter = first
+      render()
+      return
+    case 'review-refresh':
+      featureState.review_threads_loaded_for = ''
+      loadDocumentReviewThreads()
       return
     case 'review-thread-pin':
       saveDocumentReviewThread({
@@ -2013,6 +2113,7 @@ function heading(eyebrow, title) {
 }
 
 function purposeTitle(purpose) {
+  if (purpose === 'workflow') return 'Choose a workflow file'
   if (purpose === 'document') return 'Choose a document'
   if (purpose === 'attach') return 'Add context'
   if (purpose === 'pin') return 'Add to synthesis'
@@ -2561,6 +2662,7 @@ function renderReviewTab(state) {
     introActions.append(button('secondary-button', 'Mark read', 'review-mark-read'))
   }
   introActions.append(button('secondary-button', 'Prepare review package', 'review-package'))
+  introActions.append(button('secondary-button', 'Refresh discussions', 'review-refresh'))
   intro.append(introCopy, introActions)
   content.append(intro)
   const room = reviewRoomProjection(
@@ -2583,9 +2685,18 @@ function renderReviewTab(state) {
       : 'Whole document'
     form.append(element('small', '', `Comment on ${anchorLabel}`))
     const detail = element('textarea')
+    const draftKey = `${documentKey()}:new`
+    const draft = featureState.review_drafts.get(draftKey) || {}
+    detail.value = draft.detail || ''
+    detail.setAttribute('aria-label', 'Discussion')
     detail.required = true
     detail.placeholder = 'Add a question, decision, or requested change'
     const assignee = element('input')
+    assignee.value = draft.assigned_to || ''
+    assignee.setAttribute('aria-label', 'Assign discussion')
+    const preserveDraft = () => featureState.review_drafts.set(draftKey, { detail: detail.value, assigned_to: assignee.value })
+    detail.addEventListener('input', preserveDraft)
+    assignee.addEventListener('input', preserveDraft)
     assignee.placeholder = 'Assign to a person or agent (optional)'
     const submit = element('button', 'primary-button', 'Start discussion')
     submit.type = 'submit'
@@ -2601,7 +2712,6 @@ function renderReviewTab(state) {
         anchor_kind: anchor?.kind || 'document',
         anchor_label: anchorLabel,
       })
-      detail.value = ''
     })
     content.append(form)
   }
@@ -2627,7 +2737,15 @@ function renderReviewTab(state) {
     }
     content.append(list)
   }
-  const threadRecords = room.threads
+  const filters = element('div', 'review-room-thread-actions')
+  for (const [id, label] of [['all', 'All'], ['open', 'Open'], ['resolved', 'Resolved'], ['assigned', 'Assigned']]) {
+    filters.append(button('secondary-button', label, 'review-filter', [id], { pressed: featureState.review_filter === id }))
+  }
+  content.append(filters)
+  const threadRecords = room.threads.filter(thread =>
+    featureState.review_filter === 'all' ||
+    (featureState.review_filter === 'assigned' ? Boolean(thread.assigned_to) && thread.status !== 'resolved' :
+      featureState.review_filter === 'open' ? thread.status !== 'resolved' : thread.status === 'resolved'))
   if (threadRecords.length) {
     const discussions = element('div', 'document-review-thread-list')
     for (const thread of threadRecords) {
@@ -2649,6 +2767,10 @@ function renderReviewTab(state) {
       const replyForm = element('form', 'document-review-reply-form')
       const reply = element('input')
       reply.placeholder = 'Reply…'
+      reply.setAttribute('aria-label', `Reply to ${thread.anchor_label || 'discussion'}`)
+      const replyKey = `${documentKey()}:${thread.id}`
+      reply.value = featureState.review_drafts.get(replyKey)?.detail || ''
+      reply.addEventListener('input', () => featureState.review_drafts.set(replyKey, { detail: reply.value }))
       const send = element('button', 'secondary-button', 'Reply')
       send.type = 'submit'
       replyForm.append(reply, send)
@@ -2665,7 +2787,22 @@ function renderReviewTab(state) {
       )
       if (thread.status !== 'resolved') {
         actions.append(button('secondary-button', 'Resolve', 'review-thread-resolve', [thread.id]))
+      } else {
+        actions.append(button('secondary-button', 'Reopen', 'review-thread-reopen', [thread.id]))
       }
+      const assignment = element('form', 'document-review-reply-form')
+      const assignee = element('input')
+      assignee.value = thread.assigned_to || ''
+      assignee.placeholder = 'Person or agent'
+      assignee.setAttribute('aria-label', 'Change discussion assignee')
+      const assign = element('button', 'secondary-button', 'Assign')
+      assign.type = 'submit'
+      assignment.append(assignee, assign)
+      assignment.addEventListener('submit', event => {
+        event.preventDefault()
+        saveDocumentReviewThread({ action: 'assign', thread_id: thread.id, assigned_to: assignee.value.trim() })
+      })
+      row.append(assignment)
       row.append(actions)
       discussions.append(row)
     }
@@ -2678,26 +2815,28 @@ function renderReviewTab(state) {
 function renderThreadsTab() {
   const content = element('div', 'document-tool-content')
   const header = element('div', 'document-tool-intro with-action')
-  const copy = element('div')
-  copy.append(
-    element('h3', '', 'Document conversations'),
-    element('p', '', 'Resume visible answers and the general MoonClaw task for this workspace.'),
-  )
-  header.append(copy, button('secondary-button', 'New conversation', 'new-thread'))
+  header.append(button('secondary-button', 'New task', 'new-thread'))
   content.append(header)
   const threads = currentThreads()
-  if (!threads.length) {
+  if (!threads.length && !(serverState.code_tasks || []).length) {
     content.append(element('div', 'document-tool-empty', 'Your first conversation will be saved with this workspace.'))
     return content
   }
   const list = element('div', 'document-thread-list')
+  for (const task of serverState.code_tasks || []) {
+    const row = element('article', 'document-thread-row')
+    row.append(element('strong', '', task.title || 'Coding task'), element('small', '', 'Code'))
+    const resume = element('button', 'primary-button', 'Resume')
+    resume.addEventListener('click', () => { featureState.toolbox_open = false; forward('resume-code-task', task.id); render() })
+    row.append(resume); list.append(row)
+  }
   for (const thread of threads) {
     const row = element('article', `document-thread-row${thread.archived ? ' archived' : ''}`)
     const title = element('input', 'document-thread-title')
     title.value = thread.title || 'Document conversation'
     title.setAttribute('aria-label', 'Conversation title')
     title.addEventListener('change', () => emit('rename-thread', thread.id, title.value))
-    const meta = element('small', '', `${thread.document || 'Workspace'} · ${new Date(thread.updated_at).toLocaleString()}`)
+    const meta = element('small', '', `${thread.draft ? 'Draft · ' : ''}${thread.position?.document || thread.document || 'Book'} · ${new Date(thread.position?.updated_at || thread.updated_at).toLocaleString()}`)
     const actions = element('div', 'document-thread-actions')
     actions.append(
       button('primary-button', 'Resume', 'restore-thread', [thread.id]),
@@ -3223,21 +3362,25 @@ function renderTaskRecipesTab() {
   const selected = featureState.task_recipes.find(item =>
     item.recipe_id === featureState.task_recipe_selected)
   if (!selected) {
-    const intro = element('div', 'document-tool-intro')
-    intro.append(
-      element('h3', '', 'Start a task'),
-      element('p', '', 'Choose a repeatable task and answer only the decisions it needs.'),
-    )
-    content.append(intro)
-    const list = element('div', 'task-recipe-list')
+    const workspace = serverState.workspace_id || ''
+    if (!taskDrafts.has(workspace)) taskDrafts.set(workspace, { kind: serverState.workspace_mode === 'Code' ? 'code' : 'document', prompt: '', title: '' })
+    const draft = taskDrafts.get(workspace)
+    content.append(renderTaskDraft({
+      draft, workspace, el: element,
+      onContinue: value => {
+        persistCurrentThread(); draftTaskId = ''; featureState.toolbox_open = false
+        forward('draft-task', value.prompt, value.kind, value.title)
+        taskDrafts.delete(workspace); render()
+      },
+      onPreset: preset => {
+        Object.assign(draft, { kind: 'code', prompt: preset.prompt, title: preset.title }); render()
+        requestAnimationFrame(() => document.querySelector('.task-start-form textarea')?.focus())
+      },
+    }))
+    const list = element('div', 'task-recipe-list task-start-recipes')
     for (const recipe of featureState.task_recipes) {
-      const card = element('article', 'task-recipe-card')
-      card.append(
-        element('strong', '', recipe.title),
-        element('p', '', recipe.summary),
-        element('small', '', recipe.deliverable),
-        button('primary-button', 'Use this task', 'recipe-select', [recipe.recipe_id]),
-      )
+      const card = button('task-start-preset', recipe.title, 'recipe-select', [recipe.recipe_id])
+      card.title = recipe.deliverable || recipe.summary || recipe.title
       list.append(card)
     }
     if (!featureState.task_recipes.length && !featureState.task_recipe_status) {
@@ -3251,6 +3394,9 @@ function renderTaskRecipesTab() {
   copy.append(element('h3', '', selected.title), element('p', '', selected.summary))
   intro.append(copy, button('secondary-button', 'Back', 'recipe-back'))
   const form = element('form', 'task-recipe-form')
+  const draftKey = `${serverState.workspace_id}:${selected.recipe_id}`
+  if (!recipeDrafts.has(draftKey)) recipeDrafts.set(draftKey, {})
+  const values = recipeDrafts.get(draftKey)
   for (const field of selected.fields || []) {
     const label = element('label', 'task-recipe-field')
     const caption = element('span', '', field.label)
@@ -3259,6 +3405,8 @@ function renderTaskRecipesTab() {
     input.name = field.key
     input.placeholder = field.placeholder || ''
     input.required = field.required === true
+    input.value = values[field.key] || ''
+    input.addEventListener('input', () => { values[field.key] = input.value })
     label.append(caption, input)
     form.append(label)
   }
@@ -3347,6 +3495,8 @@ function renderLivingArtifactsTab() {
         element('p', '', artifact.purpose || 'An editable artifact for this book.'),
         element('small', '', `${Array.isArray(artifact.items) ? artifact.items.length : 0} items · revision ${Number(artifact.revision) || 1}`),
         button('secondary-button', 'Open beside chat', 'living-artifact-open', [artifact.path || '']),
+        button('secondary-button', 'Reuse as template', 'living-artifact-duplicate', [artifact.id]),
+        button('secondary-button', 'Export standalone copy', 'living-artifact-export', [artifact.id]),
       )
       list.append(card)
     }
@@ -3359,26 +3509,25 @@ function renderLivingArtifactsTab() {
 }
 
 function renderToolbox(state) {
-  const backdrop = element('div', 'document-toolbox-backdrop')
-  backdrop.addEventListener('click', () => emit('close-toolbox'))
-  const panel = element('aside', 'document-toolbox')
+  const starting = featureState.toolbox_tab === 'tasks'
+  const items = workPanelItems(featureState.toolbox_tab)
+  const title = items.find(([id]) => id === featureState.toolbox_tab)?.[1] || 'Review'
+  const backdrop = element('div', starting ? 'document-toolbox-backdrop task-start-backdrop' : 'work-detail-host')
+  if (starting) backdrop.addEventListener('click', () => emit('close-toolbox'))
+  const panel = element('aside', starting ? 'document-toolbox task-start-panel' : 'document-toolbox work-detail-drawer')
   panel.dataset.testid = 'document-toolbox'
-  panel.setAttribute('role', 'dialog')
-  panel.setAttribute('aria-modal', 'true')
-  panel.setAttribute('aria-label', 'Document tools')
+  panel.setAttribute('role', starting ? 'dialog' : 'complementary')
+  if (starting) panel.setAttribute('aria-modal', 'true')
+  panel.setAttribute('aria-label', title)
   panel.addEventListener('click', event => event.stopPropagation())
   const header = element('header', 'document-toolbox-header')
   header.append(
-    heading('Current work', 'Document tools'),
+    heading(serverState.workspace || 'Current work', title),
     button('icon-button', '×', 'close-toolbox', [], { label: 'Close document tools' }),
   )
   const tabs = element('div', 'document-toolbox-tabs')
   tabs.setAttribute('role', 'tablist')
-  for (const [id, label] of [
-    ['review', 'Review'], ['tasks', 'Tasks'], ['artifacts', 'Artifacts'], ['threads', 'Conversations'], ['sources', 'Sources'],
-    ['history', 'History'], ['packs', 'Check packs'], ['learning', 'Learning'],
-    ['preferences', 'Preferences'], ['inbox', 'Inbox'],
-  ]) {
+  for (const [id, label] of items.length > 1 ? items : []) {
     const tab = button(
       `document-toolbox-tab${featureState.toolbox_tab === id ? ' active' : ''}`,
       label, 'toolbox-tab', [id], { pressed: featureState.toolbox_tab === id },
@@ -3389,6 +3538,10 @@ function renderToolbox(state) {
   }
   const body = ({
     review: () => renderReviewTab(state),
+    results: () => renderResultsTab(state),
+    schedules: () => renderTaskSchedulesTab(state),
+    room: () => renderRoomTab(state),
+    calendar: () => renderBookCalendarTab(state),
     tasks: renderTaskRecipesTab,
     artifacts: renderLivingArtifactsTab,
     threads: renderThreadsTab,
@@ -3399,9 +3552,131 @@ function renderToolbox(state) {
     preferences: renderPreferencesTab,
     inbox: () => renderInboxTab(state),
   })[featureState.toolbox_tab]?.() || renderReviewTab(state)
-  panel.append(header, tabs, body)
+  panel.append(header)
+  if (items.length > 1) panel.append(tabs)
+  panel.append(body)
   backdrop.append(panel)
   return backdrop
+}
+
+function renderResultsTab(state) {
+  if (featureState.schedule_origin) {
+    const origin = featureState.schedule_origin
+    const host = element('div')
+    import('./task-schedule-runtime.js').then(runtime => {
+      if (!host.isConnected) return
+      taskScheduleRuntime = runtime
+      host.replaceChildren(runtime.renderTaskSchedule(origin, { el: element, onClose: () => { featureState.schedule_origin = null; render() }, onSaved: render }))
+    })
+    return host
+  }
+  if (featureState.result_run) {
+    const bundle = featureState.result_run
+    const panel = element('div', 'document-tool-content result-work-detail')
+    const back = element('button', 'secondary-button', '← Results')
+    back.addEventListener('click', () => { featureState.result_run = null; render() })
+    panel.append(back, element('h3', '', bundle.title), element('p', 'status-line', bundle.status), element('p', '', bundle.summary))
+    for (const file of bundle.artifacts) {
+      const open = element('button', 'secondary-button', file.title || file.path)
+      open.addEventListener('click', () => openTaskResult(file.path, bundle))
+      panel.append(open)
+    }
+    if (!bundle.artifacts.length) panel.append(element('p', 'document-tool-empty', 'This work has no output files.'))
+    return panel
+  }
+  if (!resultInboxRuntime) {
+    if (!resultInboxPromise) resultInboxPromise = import('./workspace-results-runtime.js').then(runtime => {
+      resultInboxRuntime = runtime
+      render()
+    }).catch(() => { resultInboxPromise = null })
+    return element('p', 'status-line', 'Loading results…')
+  }
+  return resultInboxRuntime.renderResultInbox(state, {
+      threads: currentThreads(),
+      openFile: openTaskResult,
+      openConversation: id => emit('restore-thread', id),
+      openCodeSession: id => { featureState.toolbox_open = false; forward('resume-code-task', id) },
+      openWork: bundle => { featureState.result_run = bundle; render() },
+      revise: bundle => {
+        featureState.toolbox_open = false
+        const thread = currentThreads().find(thread => thread.id === bundle.conversation_id)
+        if (thread) restoreTask({ ...thread, position: { ...thread.position, prompt: `Revise ${bundle.title}.\n\nChanges I want: ` } }, bundle.artifacts[0]?.path || thread.document || '')
+        else forward('revise-result', bundle.artifacts[0]?.path || '', bundle.title)
+        render()
+      },
+      schedule: bundle => {
+        featureState.schedule_origin = { workspaceId: serverState.workspace_id, bundle, thread: currentThreads().find(thread => thread.id === bundle.conversation_id) || { id: bundle.conversation_id }, model: serverState.schedule_model, models: serverState.schedule_models }
+        render()
+      },
+      exportBundle: bundle => globalThis.__moondeskDownloadWorkPackage?.(JSON.stringify(taskResultPackage(serverState, bundle, currentThreads().find(thread => thread.id === bundle.conversation_id)))),
+      downloadFile: file => downloadTaskFile(serverState.workspace_id, file).catch(error => { featureState.export_status = error.message; render() }),
+    })
+}
+
+function openTaskResult(path, bundle) {
+  const thread = currentThreads().find(thread => thread.id === bundle?.conversation_id)
+  featureState.toolbox_open = false
+  if (thread) restoreTask({ ...thread, position: { ...thread.position, panel: { open: false, tab: 'results' } } }, path)
+  else forward('open-work-file', path)
+  render()
+}
+
+function renderTaskSchedulesTab(state) {
+  if (featureState.schedule_origin) return renderResultsTab(state)
+  if (!taskScheduleRuntime) {
+    if (!taskSchedulePromise) taskSchedulePromise = import('./task-schedule-runtime.js').then(runtime => { taskScheduleRuntime = runtime; render() })
+    return element('p', 'status-line', 'Loading schedules…')
+  }
+  return taskScheduleRuntime.renderTaskSchedules({ workspaceId: state.workspace_id, conversationId: state.task_id || draftTaskId || '' }, {
+    el: element,
+    onChanged: render,
+    onOpenRun: id => { featureState.toolbox_open = false; forward('resume-code-task', id) },
+    onEdit: (schedule, binding) => {
+      featureState.schedule_origin = {
+        workspaceId: state.workspace_id, returnTab: 'schedules',
+        bundle: { title: binding.title, artifacts: (binding.outputPaths || []).map(path => ({ path })), conversation_kind: binding.kind || '' },
+        thread: currentThreads().find(thread => thread.id === binding.conversationId) || { id: binding.conversationId },
+        models: state.schedule_models,
+        draft: taskScheduleRuntime.taskScheduleEditDraft(schedule, binding),
+      }
+      render()
+    },
+  })
+}
+
+function renderTaskScheduleSummary() {
+  const count = taskScheduleRuntime?.taskScheduleSummary(serverState.workspace_id, serverState.task_id || draftTaskId || '')
+  if (count == null) return
+  const summary = document.querySelector('.quiet-work-center .quiet-work-summary > span')
+  if (summary) summary.closest('.quiet-work-center').dataset.hasSchedules = String(count > 0)
+  if (summary && count > 0) summary.textContent = `${count} schedule${count === 1 ? '' : 's'}`
+  else if (summary && /schedule/.test(summary.textContent)) summary.textContent = 'No scheduled work'
+}
+
+function renderRoomTab(state) {
+  if (!workspaceRoomRuntime) {
+    if (!workspaceRoomPromise) workspaceRoomPromise = import('./workspace-room-runtime.js').then(runtime => {
+      workspaceRoomRuntime = runtime
+      render()
+    }).catch(() => { workspaceRoomPromise = null })
+    return element('p', 'status-line', 'Loading book room…')
+  }
+  return workspaceRoomRuntime.renderWorkspaceRoom(state, {
+    openFile: path => forward('open-path', path),
+  })
+}
+
+function renderBookCalendarTab(state) {
+  if (!bookCalendarRuntime) {
+    if (!bookCalendarPromise) bookCalendarPromise = import('./book-calendar-runtime.js').then(runtime => {
+      bookCalendarRuntime = runtime
+      render()
+    }).catch(() => { bookCalendarPromise = null })
+    return element('p', 'status-line', 'Loading calendar…')
+  }
+  return bookCalendarRuntime.renderBookCalendar(state, {
+    openFile: path => forward('open-path', path),
+  })
 }
 
 function officeReviewValue(kind, item) {
@@ -3810,15 +4085,41 @@ function render() {
   } catch {
     return
   }
-  const previousChat = Array.isArray(serverState.chat) ? serverState.chat : []
-  const previousChatFingerprint = serverState.chat_projection_fingerprint || ''
+  const sameTask = serverState.workspace_id === nextServerState.workspace_id && serverState.task_id === nextServerState.task_id
+  const previousChat = sameTask && Array.isArray(serverState.chat) ? serverState.chat : []
+  const previousChatFingerprint = sameTask ? serverState.chat_projection_fingerprint || '' : ''
   nextServerState.chat = projectChatFromDom(
     nextServerState,
     previousChat,
     previousChatFingerprint,
   )
   nextServerState.chat_projection_fingerprint = chatProjectionFingerprint(nextServerState)
+  if (serverState.workspace_id !== nextServerState.workspace_id) {
+    const origin = bookWorkOrigins.get(nextServerState.workspace_id) || readStored('moondesk.work-origins.v1', {})[nextServerState.workspace_id]
+    draftTaskId = !nextServerState.task_id && nextServerState.request_prompt && origin?.taskId?.startsWith('draft-') ? origin.taskId : ''
+    pendingTaskTransition = null
+    if (serverState.workspace_id) bookPanels.set(serverState.workspace_id, { toolbox_open: featureState.toolbox_open, toolbox_tab: featureState.toolbox_tab })
+    Object.assign(featureState, bookPanels.get(nextServerState.workspace_id) || { toolbox_open: false, toolbox_tab: 'review' })
+    featureState.search_open = false
+    featureState.synthesis_open = false
+    featureState.result_run = null
+    featureState.schedule_origin = null
+  }
   serverState = nextServerState
+  if (pendingTaskTransition && serverState.navigation_pending) pendingTaskTransition.sawPending = true
+  if (pendingTaskTransition && serverState.task_id === pendingTaskTransition.taskId && serverState.request_prompt === pendingTaskTransition.prompt && (pendingTaskTransition.document === undefined || serverState.selected_document === pendingTaskTransition.document)) {
+    draftTaskId = pendingTaskTransition.draftId
+    pendingTaskTransition = null
+    lastThreadPersistenceFingerprint = ''
+  }
+  if (pendingTaskTransition?.sawPending && !serverState.navigation_pending) pendingTaskTransition = null
+  if (serverState.office?.kind === 'xlsx') {
+    if (documentTableRuntime) documentTableRuntime.enhanceSpreadsheetPreview(serverState)
+    else if (!documentTablePromise) documentTablePromise = import('./document-table-runtime.js').then(runtime => {
+      documentTableRuntime = runtime
+      runtime.enhanceSpreadsheetPreview(serverState)
+    }).catch(() => { documentTablePromise = null })
+  }
   if (capturedLearning && !capturedLearningIsCurrent(capturedLearning)) capturedLearning = null
   const followupIdentity = `${serverState.workspace_id || ''}:${serverState.task_id || ''}`
   if (featureState.followup_identity !== followupIdentity) {
@@ -3826,7 +4127,7 @@ function render() {
     featureState.last_task_busy = null
     loadQueuedFollowups()
   }
-  const backgroundIdentity = `${serverState.workspace_id || ''}::${serverState.task_id || ''}`
+  const backgroundIdentity = `${serverState.workspace_id || ''}::${serverState.task_id || draftTaskId || ''}`
   if (featureState.background_results_identity !== backgroundIdentity) {
     featureState.background_results_identity = backgroundIdentity
     featureState.background_result_ids = new Set(
@@ -3839,6 +4140,15 @@ function render() {
   loadServerThreads()
   maybeRestoreCurrentThread()
   persistCurrentThread()
+  if (['Wiki', 'Code'].includes(serverState.workspace_mode)) {
+    const origin = { workspaceId: serverState.workspace_id, title: serverState.work_title, mode: serverState.workspace_mode, sessionId: serverState.code_session_id, taskId: serverState.task_id || draftTaskId }
+    if (JSON.stringify(bookWorkOrigins.get(serverState.workspace_id)) !== JSON.stringify(origin)) {
+      bookWorkOrigins.set(serverState.workspace_id, origin)
+      const stored = readStored('moondesk.work-origins.v1', {})
+      stored[serverState.workspace_id] = origin
+      writeStored('moondesk.work-origins.v1', stored)
+    }
+  }
   persistOfficeHistory()
   const state = { ...serverState, ...featureState }
   if (isLivingArtifactPath(state.selected_document)) {
@@ -3849,7 +4159,10 @@ function render() {
       /\.(mbt|js|mjs|ts|tsx)$/i.test(hit.path))
   }
   if (state.purpose === 'document') {
-    state.hits = (state.hits || []).filter(hit => /\.(docx|xlsx|pptx|pdf)$/i.test(hit.path))
+    state.hits = (state.hits || []).filter(hit => /\.(docx|xlsx|pptx|pdf|md|txt|png|jpg|jpeg|webp)$/i.test(hit.path) || isLivingArtifactPath(hit.path))
+  }
+  if (state.purpose === 'workflow') {
+    state.hits = (state.hits || []).filter(hit => /\.(json|yaml|yml|mbt|mbtx)$/i.test(hit.path))
   }
   root.replaceChildren()
   if (state.search_open) root.append(renderSearch(state))
@@ -3878,6 +4191,61 @@ function render() {
   if (shouldSendFollowup) maybeSendNextFollowup()
   renderDocumentMap(state)
   enhanceChatMessages(state)
+  renderTaskOutputs()
+  renderTaskScheduleSummary()
+  if (!pendingTaskTransition && pendingTaskScroll && pendingTaskScroll.workspaceId === serverState.workspace_id && pendingTaskScroll.taskId === serverState.task_id && serverState.workspace_mode === 'Wiki') {
+    const position = pendingTaskScroll
+    pendingTaskScroll = null
+    requestAnimationFrame(() => {
+      const thread = document.querySelector('[data-testid="wiki-chat-thread"]')
+      if (thread) thread.scrollTop = position.top
+    })
+  }
+}
+
+function renderTaskOutputs() {
+  const chat = document.querySelector('.wiki-chat')
+  if (!chat) return
+  const files = taskArtifacts({ chat: serverState.chat })
+  const activeFile = files.find(file => file.path === serverState.selected_document) || files.at(-1)
+  const taskKey = `${serverState.workspace_id}:${serverState.task_id || draftTaskId}`
+  const previousFiles = seenTaskOutputs.get(taskKey)
+  seenTaskOutputs.set(taskKey, files.map(file => file.path))
+  if (previousFiles && files.length && !previousFiles.includes(files.at(-1).path) && (!previousFiles.length || !serverState.selected_document || previousFiles.includes(serverState.selected_document))) {
+    forward('open-task-output', files.at(-1).path)
+  }
+  const existing = chat.querySelector('.task-output-strip')
+  const signature = JSON.stringify([serverState.task_id, files])
+  if (existing?.dataset.signature === signature) return
+  existing?.remove()
+  if (!files.length) return
+  const strip = element('div', 'task-output-strip'); strip.dataset.signature = signature
+  strip.setAttribute('aria-label', 'Task outputs')
+  for (const file of files.slice(-2)) {
+    const open = element('button', 'task-output-file', file.title)
+    open.title = `Open ${file.path} beside this conversation`
+    open.addEventListener('click', () => openTaskResult(file.path, { conversation_id: serverState.task_id || draftTaskId }))
+    strip.append(open)
+  }
+  for (const [icon, label, callback] of [
+    ['edit', 'Revise output', () => forward('revise-result', activeFile.path, activeFile.title)],
+    ['download', 'Download output', () => { void downloadTaskFile(serverState.workspace_id, activeFile).catch(error => { featureState.export_status = error.message; render() }) }],
+    ['calendar', 'Schedule this task', () => {
+      const thread = currentThreads().find(thread => thread.id === (serverState.task_id || draftTaskId))
+      if (!thread) return
+      const bindings = readStored('moondesk.task-schedules.v1', {})
+      if (Object.values(bindings).some(binding => binding.workspaceId === serverState.workspace_id && binding.conversationId === thread.id)) {
+        featureState.schedule_origin = null; featureState.toolbox_open = true; featureState.toolbox_tab = 'schedules'; render(); return
+      }
+      featureState.schedule_origin = { workspaceId: serverState.workspace_id, bundle: { title: thread.title, conversation_id: thread.id, artifacts: files }, thread, model: serverState.schedule_model, models: serverState.schedule_models }
+      featureState.toolbox_open = true; featureState.toolbox_tab = 'results'; render()
+    }],
+  ]) {
+    const action = element('button', 'moon-icon-button'); action.title = label; action.setAttribute('aria-label', label)
+    const glyph = element('span', 'moon-icon'); glyph.dataset.icon = icon; glyph.setAttribute('aria-hidden', 'true'); action.append(glyph)
+    action.addEventListener('click', callback); strip.append(action)
+  }
+  chat.querySelector('.wiki-chat-header')?.after(strip)
 }
 
 function workPackageFromState() {
@@ -3938,6 +4306,9 @@ function workPackageFromState() {
 }
 
 globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
+  // Typed actions may select a book and open a panel in the same render.
+  // Apply that book transition before opening its requested surface.
+  if (typeof document !== 'undefined') render()
   if (action === 'teach-captured-work' || action === 'review-captured-learning') {
     openCapturedLearning(action, value)
     return
@@ -3946,7 +4317,7 @@ globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
     featureState.search_open = true
     featureState.synthesis_open = false
     featureState.purpose = value || 'open'
-    featureState.mode = value === 'document' ? 'files' : value === 'attach' ? 'work' : featureState.mode
+    featureState.mode = ['document', 'workflow', 'attach'].includes(value) ? 'files' : featureState.mode
     featureState.query = serverState.query || ''
   } else if (action === 'open-synthesis') {
     featureState.search_open = false
@@ -3955,7 +4326,8 @@ globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
     featureState.search_open = false
     featureState.synthesis_open = false
     featureState.toolbox_open = true
-    featureState.toolbox_tab = value || 'review'
+    emit('toolbox-tab', value || 'review')
+    return
   } else if (action === 'open-recipe') {
     featureState.search_open = false
     featureState.synthesis_open = false
@@ -3964,6 +4336,10 @@ globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
     featureState.task_recipe_selected = ''
     featureState.task_recipe_status = ''
     loadTaskRecipes()
+  } else if (action === 'code-task-draft') {
+    globalThis.dispatchEvent(new CustomEvent('moondesk:task-draft', { detail: { prompt: value, workspaceId: serverState.workspace_id } }))
+  } else if (action === 'code-add-context') {
+    try { globalThis.dispatchEvent(new CustomEvent('moondesk:add-context', { detail: JSON.parse(value) })) } catch {}
   } else if (action === 'synthesis-error') {
     featureState.synthesis_open = true
     featureState.synthesis_status = value
@@ -4009,6 +4385,60 @@ const observer = typeof MutationObserver === 'function' ? new MutationObserver(r
 }) : null
 
 function install() {
+  let scrollSaveTimer = 0
+  document.addEventListener('scroll', event => {
+    if (!event.target.matches?.('[data-testid="wiki-chat-thread"]')) return
+    clearTimeout(scrollSaveTimer)
+    const workspaceId = serverState.workspace_id
+    const taskId = serverState.task_id || draftTaskId
+    const top = event.target.scrollTop
+    scrollSaveTimer = setTimeout(() => {
+      const all = readStored(storageKeys.threads, {})
+      const thread = (all[workspaceId] || []).find(thread => thread.id === taskId)
+      if (thread) { thread.position = { ...thread.position, chat_scroll: top }; writeStored(storageKeys.threads, all) }
+    }, 200)
+  }, true)
+  installPackWorkspace({
+    getOrigin: () => {
+      persistCurrentThread()
+      const origin = bookWorkOrigins.get(serverState.workspace_id) || readStored('moondesk.work-origins.v1', {})[serverState.workspace_id] || { workspaceId: serverState.workspace_id, title: serverState.work_title }
+      const thread = currentThreads().find(thread => thread.id === origin.taskId)
+      return { ...origin, thread }
+    },
+    onReturn: origin => {
+      if (origin?.mode === 'Code' && origin.sessionId) forward('resume-code-task', origin.sessionId)
+      else if (origin?.thread) restoreTask(origin.thread)
+      else forward('open-book-work')
+    },
+    onImport: async (origin, file) => {
+      if (!origin?.workspaceId) throw new Error('Choose a MoonBook before adding an output.')
+      const response = await fetch(`/api/workspaces/${encodeURIComponent(origin.workspaceId)}/entries/import`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ directory: 'inbox', files: [{ filename: file.name, data_url: file.content }] }),
+      })
+      if (!response.ok) throw new Error('The output could not be saved in this book. Try again.')
+      const imported = await response.json()
+      const path = imported.items?.[0]?.path || imported.path
+      if (serverState.workspace_id !== origin.workspaceId) return
+      if (origin.mode === 'Code' && origin.sessionId) {
+        forward('resume-code-task', origin.sessionId, JSON.stringify({ kind: 'file', path, label: file.name, text: path, workspaceId: origin.workspaceId }))
+        return
+      }
+      const thread = origin.thread || { id: `draft-${globalThis.crypto.randomUUID()}`, draft: true, title: origin.title || file.name, chat: [], position: {} }
+      restoreTask({ ...thread, chat: [...thread.chat, { role: 'artifact_ref', content: JSON.stringify({ path, label: file.name }) }], position: { ...thread.position, files: [...new Set([...(thread.position?.files || []), path])] } }, path)
+    },
+    onResults: () => globalThis.__moondeskWorkspaceFeatureSignal('open-toolbox', 'results'),
+    onAttach: () => {
+      forward('open-book-work')
+      globalThis.__moondeskWorkspaceFeatureSignal('open-search', 'attach')
+    },
+  })
+  const reviewRefreshTimer = globalThis.setInterval(() => {
+    if (document.visibilityState === 'hidden' || !featureState.toolbox_open || featureState.toolbox_tab !== 'review') return
+    featureState.review_threads_loaded_for = ''
+    loadDocumentReviewThreads()
+  }, 15000)
+  reviewRefreshTimer?.unref?.()
   observer?.observe(document.documentElement, {
     subtree: true,
     childList: true,

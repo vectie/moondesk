@@ -8,6 +8,40 @@ async fn route_mooncode_api(
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "mooncode", "workspaces", workspace_id, "realtime-session"] => {
+      if method_ is Post {
+        handle_mooncode_realtime_session(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
+    ["api", "mooncode", "presets", workspace_id] => {
+      handle_mooncode_presets(workspace_root, workspace_id, method_, conn)
+      true
+    }
+    ["api", "mooncode", "knowledge", workspace_id] => {
+      handle_mooncode_knowledge(
+        workspace_root, workspace_id, body, method_, conn,
+      )
+      true
+    }
+    ["api", "mooncode", "setup", workspace_id] => {
+      handle_mooncode_setup(workspace_root, workspace_id, body, method_, conn)
+      true
+    }
+    ["api", "mooncode", "sessions", session_id, "task-controls"] => {
+      if method_ is Post {
+        handle_mooncode_task_controls(
+          workspace_root, session_id, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     ["api", "mooncode", "work-handoff", "human-revisions"] => {
       if method_ is Post {
         handle_mooncode_work_human_revision(workspace_root, body, method_, conn)

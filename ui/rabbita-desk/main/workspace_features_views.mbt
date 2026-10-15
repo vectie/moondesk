@@ -80,12 +80,31 @@ fn workspace_features_state_payload(model : Model) -> Json {
     ),
     "workspace": workspace_name(model),
     "workspace_id": model.selected_workspace_id,
+    "workspace_mode": workspace_mode_label(model.workspace_mode),
+    "work_title": current_work_title(model),
+    "navigation_pending": !(model.pending_markdown_navigation
+    is NoPendingMarkdownNavigation),
     "captured_work": work_learning_binding(model),
     "workspace_path": workspace_root(model),
     "selected_document": model.selected_path,
     "task_id": model.wiki_agent_task_id,
     "request_status": model.request_status,
     "request_prompt": model.request_prompt,
+    "task_files": model.wiki_chat_file_paths,
+    "task_context": model.wiki_chat_context_items.map(item => item.to_json()),
+    "task_materials": model.request_material_paths,
+    "current_directory": model.current_directory,
+    "directory_filter": model.desk_filter_query,
+    "schedule_model": model.mooncode_model,
+    "schedule_models": model.mooncode_models,
+    "code_session_id": model.selected_mooncode_session_id,
+    "code_tasks": model.mooncode_sessions
+    .filter(session => session.workspace_id == model.selected_workspace_id)
+    .map(session => {
+      "id": session.id,
+      "title": session.title,
+      "updated_at": session.updated_at.unwrap_or(""),
+    }),
     "office": workspace_office_state_payload(model.office_editor),
     // The transcript is already present in the visible chat DOM. Keep only a
     // tiny change projection here so a long streamed answer is not copied into
@@ -259,7 +278,12 @@ fn render_quiet_work_center(
 ) -> @rabbita.Html {
   details(
     class="quiet-work-center",
-    attrs=@html.Attrs::build().data_set("testid", "quiet-work-center"),
+    attrs=@html.Attrs::build()
+      .data_set("testid", "quiet-work-center")
+      .data_set(
+        "empty",
+        (work_center_summary(model) == "No background work").to_string(),
+      ),
     [
       summary(class="quiet-work-summary", [
         strong("Background work"),
@@ -279,8 +303,10 @@ fn render_quiet_work_center(
           ),
           button(
             class="secondary-button",
-            on_click=dispatch(SelectWorkspaceMode(RunsWorkspace)),
-            "Open tasks",
+            on_click=dispatch(
+              workspace_feature_msg("open-toolbox", first="schedules"),
+            ),
+            "Schedules",
           ),
           button(
             class="secondary-button",

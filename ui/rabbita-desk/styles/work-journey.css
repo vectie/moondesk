@@ -1,0 +1,102 @@
+/* Keep the book, current work, and its output in one navigable shell. */
+.desk-shell .title-bar { grid-template-columns: 200px minmax(0, 1fr) auto auto; }
+.desk-shell .title-copy.work-book-context { overflow: visible; min-width: 0; }
+.work-book-switcher { position: relative; width: 100%; min-width: 0; }
+.work-book-switcher > summary { display: flex; align-items: center; gap: 8px; height: 32px; font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; }
+.work-book-switcher summary::-webkit-details-marker, .work-tools-menu summary::-webkit-details-marker { display: none; }
+.work-book-switcher > summary > span:not(.moon-icon) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-book-menu, .work-tools-options { position: absolute; z-index: 1500; top: calc(100% + 8px); padding: 6px; border: 1px solid var(--mooncode-line, #ddd); border-radius: 8px; background: var(--mooncode-bg, #fff); box-shadow: 0 10px 32px #0002; }
+.work-book-menu { left: 0; width: 280px; }
+.work-book-menu input { width: 100%; min-height: 32px; font-size: 12px; margin-bottom: 4px; }
+.work-book-options { max-height: min(420px, 70dvh); overflow: auto; }
+.work-book-option, .work-tools-options button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 5px 8px; border: 0; border-radius: 4px; background: transparent; color: inherit; font-size: 12px; text-align: left; }
+.work-book-option span:not(.moon-icon), .work-tools-options button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-book-option:hover, .work-book-option[aria-pressed="true"], .work-tools-options button:hover { background: var(--mooncode-field, #f4f4f5); }
+.work-shortcuts { display: flex; align-items: center; gap: 2px; grid-column: 3; grid-row: 1; }
+.work-shortcuts .moon-icon-button { width: 30px; height: 30px; min-height: 30px; }
+.work-tools-menu { position: relative; }
+.work-tools-menu summary { list-style: none; cursor: pointer; }
+.work-tools-options { right: 0; width: 190px; }
+.work-book-switcher summary:focus-visible, .work-tools-menu summary:focus-visible { outline: 2px solid var(--mooncode-accent, #6264a7); outline-offset: 2px; border-radius: 4px; }
+.work-task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-document-preview { min-height: 0; flex: 1; overflow: auto; padding: 20px; line-height: 1.65; }
+.work-document-preview img { max-width: 100%; height: auto; }
+.work-document-preview iframe { width: 100%; height: 65dvh; border: 0; }
+.work-detail-host { position: fixed; z-index: 1200; top: 52px; right: 0; bottom: 0; width: min(560px, 56vw); pointer-events: none; }
+.work-detail-drawer { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; background: var(--mooncode-bg, #fff); border-left: 1px solid var(--mooncode-line, #ddd); box-shadow: -8px 0 28px #0001; pointer-events: auto; }
+.work-detail-drawer > .document-tool-content { flex: 1; min-height: 0; overflow: auto; padding: 14px; }
+.work-detail-drawer .document-toolbox-header, .task-start-panel .document-toolbox-header { min-height: 48px; padding: 10px 14px; }
+.work-detail-drawer h2, .task-start-panel h2 { font-size: 14px; }
+.work-detail-drawer .eyebrow, .task-start-panel .eyebrow { font-size: 11px; }
+.work-detail-drawer .document-toolbox-tabs { flex-shrink: 0; padding: 0 10px; }
+.work-detail-drawer .document-toolbox-tabs button { font-size: 12px; min-height: 32px; padding: 6px 10px; }
+.work-detail-drawer .secondary-button, .work-detail-drawer .result-inbox-controls input { font: inherit; font-size: 12px; min-height: 30px; padding: 5px 8px; border: 1px solid var(--mooncode-line, #ddd); border-radius: 5px; background: var(--mooncode-bg, #fff); color: inherit; }
+.work-detail-drawer .result-bundle { padding: 10px; margin-block: 8px; border-radius: 6px; }
+.work-detail-drawer .result-bundle h4 { font-size: 13px; }
+.work-detail-drawer .result-bundle-actions { gap: 4px; margin-top: 8px; }
+.task-start-backdrop { justify-content: center; align-items: center; padding: 16px; }
+.task-start-panel { display: flex; flex-direction: column; width: min(560px, 100%); max-height: calc(100dvh - 32px); height: auto; background: var(--mooncode-bg, #fff); border: 1px solid var(--mooncode-line, #ddd); border-radius: 10px; box-shadow: 0 16px 56px #0003; overflow: hidden; }
+.task-start-panel > .document-tool-content { min-height: 0; overflow: auto; padding: 14px; }
+.task-start-panel .document-tool-intro { margin-bottom: 10px; }
+.task-start-panel .document-tool-intro h3 { font-size: 13px; margin: 0; }
+.task-start-form { display: grid; gap: 10px; font-size: 12px; }
+.task-start-form label { display: grid; gap: 6px; }
+.task-start-form textarea { width: 100%; min-height: 88px; resize: vertical; padding: 10px; border: 1px solid var(--mooncode-line, #ddd); border-radius: 6px; background: var(--mooncode-bg, #fff); color: inherit; font: inherit; line-height: 1.5; }
+.task-start-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task-start-controls select { min-width: 0; font-size: 12px; border: 0; background: transparent; color: inherit; }
+.task-start-presets, .task-start-panel .task-start-recipes { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin-top: 10px; }
+.task-start-preset { min-height: 36px; padding: 8px 10px; font-size: 12px; text-align: left; border: 1px solid var(--mooncode-line, #ddd); border-radius: 6px; background: transparent; color: inherit; }
+.task-start-preset:hover { background: var(--mooncode-field, #f4f4f5); }
+.pack-app-workspace { position: fixed; z-index: 1000; inset: 52px 0 0; display: flex; flex-direction: column; background: var(--mooncode-bg, #fff); }
+.pack-app-workspace > header { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-bottom: 1px solid var(--mooncode-line, #ddd); font-size: 12px; }
+.pack-app-workspace > header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pack-app-workspace > header span { flex: 1; color: var(--mooncode-muted, #777); }
+.pack-app-workspace > header button { min-height: 30px; border: 0; border-radius: 4px; background: var(--mooncode-field, #f4f4f5); color: inherit; font-size: 12px; padding: 5px 9px; }
+.pack-app-workspace > iframe { flex: 1; width: 100%; height: 0; min-height: 0; border: 0; }
+.pack-output-picker { position: absolute; right: 12px; top: 50px; width: min(360px, calc(100% - 24px)); max-height: 70%; overflow: auto; padding: 12px; border: 1px solid var(--mooncode-line, #ddd); border-radius: 8px; background: var(--mooncode-bg, #fff); box-shadow: 0 8px 24px #0002; }
+.pack-output-picker button { display: block; width: 100%; min-height: 34px; text-align: left; padding: 6px; border: 0; background: transparent; color: inherit; overflow-wrap: anywhere; }
+.pack-output-picker p { font-size: 12px; }
+.task-output-strip { display: flex; align-items: center; flex-shrink: 0; gap: 4px; padding: 4px 10px; border-bottom: 1px solid var(--mooncode-line, #ddd); }
+.task-output-file { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; min-height: 30px; border: 0; background: transparent; color: inherit; }
+.task-output-strip .moon-icon-button { width: 30px; height: 30px; }
+.task-schedule input, .task-schedule select { min-height: 32px; width: 100%; box-sizing: border-box; color: inherit; background: var(--mooncode-field, #f4f4f5); border: 1px solid var(--mooncode-line, #ddd); border-radius: 5px; padding: 6px; }
+.task-schedule label { display: grid; gap: 5px; font-size: 12px; }
+.task-schedule small { color: var(--mooncode-muted, #777); }
+.wiki-document-edit-actions { display: flex; align-items: center; gap: 4px; }
+.task-schedule-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; padding: 10px 0; border-bottom: 1px solid var(--mooncode-line, #ddd); }
+.task-schedule-row > strong { font-size: 13px; overflow-wrap: anywhere; }
+.task-schedule-row > small { grid-column: 1; color: var(--mooncode-muted, #777); font-size: 12px; }
+.task-schedule-actions { grid-column: 2; grid-row: 1 / 3; display: flex; align-items: center; gap: 3px; }
+.task-schedule-actions .moon-icon-button { width: 30px; height: 30px; }
+@media (max-width: 760px) {
+  .task-output-strip .moon-icon-button, .task-output-file, .pack-output-picker button { min-width: 44px; min-height: 44px; }
+  .pack-app-workspace > header { flex-wrap: wrap; }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+  .desk-shell .title-bar { grid-template-columns: 150px minmax(0, 1fr) auto auto; }
+  .desk-shell .title-bar > .command-button > span:not(.moon-icon) { display: none; }
+}
+@media (max-width: 760px) {
+  .desk-shell .title-bar { grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 4px; }
+  .desk-shell .title-bar .primary-nav-compact { grid-column: 1; min-width: 44px; }
+  .desk-shell .title-bar .primary-nav-compact-summary { width: 44px; min-height: 44px; padding: 10px; }
+  .primary-nav-compact-summary > span:not(.moon-icon), .primary-nav-compact-summary > .moon-icon:last-child { display: none; }
+  .desk-shell .title-bar .title-copy.work-book-context { display: flex; grid-column: 2; grid-row: 1; }
+  .work-book-switcher > summary { min-height: 44px; }
+  .work-book-switcher > summary > .moon-icon:first-child { display: none; }
+  .work-shortcuts > .moon-icon-button { display: none; }
+  .work-shortcuts > .moon-icon-button[aria-label="Start a task"] { display: inline-flex; }
+  .work-shortcuts .moon-icon-button { width: 44px; height: 44px; min-height: 44px; }
+  .desk-shell .title-bar > .command-button { grid-column: 4; min-height: 44px; width: 44px; padding: 10px; }
+  .desk-shell .title-bar > .command-button > span:not(.moon-icon) { display: none; }
+  .work-book-menu { left: -44px; width: min(300px, calc(100vw - 16px)); }
+  .work-book-option, .work-tools-options button { min-height: 44px; }
+  .task-start-preset { min-height: 44px; }
+  .work-detail-host { width: 100%; }
+  .work-detail-drawer .secondary-button, .work-detail-drawer .result-inbox-controls input { min-height: 44px; }
+  .task-schedule-actions .moon-icon-button, .wiki-document-edit-actions .moon-icon-button { min-width: 44px; min-height: 44px; }
+  .pack-app-workspace > header { gap: 6px; }
+  .pack-app-workspace > header span { display: none; }
+  .pack-app-workspace > header strong { flex: 1; }
+  .pack-app-workspace > header button { min-height: 44px; }
+}

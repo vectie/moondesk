@@ -135,7 +135,10 @@ async fn document_automation_results_for_conversation(
     document_automation_bindings_path(workspace_root),
   ).filter(binding => {
     json_string(binding, "workspace_id", default="") == workspace_id &&
-    json_string(binding, "conversation_id", default="") == conversation_id
+    (
+      conversation_id == "" ||
+      json_string(binding, "conversation_id", default="") == conversation_id
+    )
   })
   if bindings.is_empty() {
     return []
@@ -176,7 +179,8 @@ async fn handle_document_automation_results(
     )
     .trim()
     .to_owned()
-  if workspace_id == "" || !document_conversation_id_valid(conversation_id) {
+  if workspace_id == "" ||
+    (conversation_id != "" && !document_conversation_id_valid(conversation_id)) {
     send_api_error(
       conn, method_, 400, "Bad Request", "workspace_id and a valid conversation_id are required",
     )

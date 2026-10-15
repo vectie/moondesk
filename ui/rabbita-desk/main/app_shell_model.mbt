@@ -22,11 +22,22 @@ enum WorkspaceMode {
 } derive(Eq)
 
 ///|
+enum MoonBookAction {
+  Chat
+  StartTask
+} derive(Eq)
+
+///|
 enum PendingMarkdownNavigation {
   NoPendingMarkdownNavigation
   PendingWorkspaceMode(WorkspaceMode)
   PendingActivity(Activity)
   PendingWorkspace(String)
+  PendingMoonBookAction(String, MoonBookAction)
+  PendingWorkFile(String)
+  PendingWorkSearch(String, String)
+  PendingWorkReturn
+  PendingWorkThread(String, String, String, String)
   PendingPath(String)
   PendingDirectory(String)
   PendingQuickPath(String)

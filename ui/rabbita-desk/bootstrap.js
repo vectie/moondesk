@@ -7,6 +7,21 @@ import '/styles/mooncode-controls.css'
 import '/styles/mooncode-git.css'
 import '/styles/mooncode-developer-tools.css'
 import '/styles/moondesk-ux.css'
+import '/styles/code-workbench.css'
+import '/styles/review-workflow.css'
+import '/styles/mooncode-setup.css'
+import '/styles/mooncode-task-controls.css'
+import '/styles/workspace-results.css'
+import '/styles/ui-icons.css'
+import '/styles/mooncode-composer-clean.css'
+import '/styles/mooncode-media-clean.css'
+import '/styles/workspace-chrome.css'
+import '/styles/quiet-controls.css'
+import '/styles/source-quiet.css'
+import '/styles/workbench-layout.css'
+import '/styles/destination-layout.css'
+import '/styles/work-journey.css'
+import '/styles/type-hierarchy.css'
 import {
   connectedWorkspaceUrl,
   parseProviderHandoff,
@@ -30,12 +45,21 @@ if (app) {
 }
 
 const startWorkspace = () => {
+  void import('./quiet-controls-runtime.js')
   // Keep the shell and the generated Rabbita application as independent async
   // chunks. The shell can parse and paint the loading surface without waiting
   // for either the interaction handlers or the multi-megabyte application.
   void import('./shell-runtime.js')
   void import('./workspace-features-runtime.js')
+  void import('./document-editing-runtime.js')
   void import('./mooncode-developer-tools-runtime.js')
+  void import('./code-workbench-runtime.js')
+  void import('./review-workflow-runtime.js').then(module => module.installReviewWorkflow())
+  void import('./mooncode-setup-runtime.js')
+  void import('./mooncode-task-controls-runtime.js').then(module => module.installMoonCodeTaskControls())
+  void import('./mooncode-calendar-runtime.js')
+  void import('./mooncode-media-tools-runtime.js')
+  void import('./mooncode-suggestions-runtime.js')
   requestAnimationFrame(() => {
     void import('/main.js')
   })

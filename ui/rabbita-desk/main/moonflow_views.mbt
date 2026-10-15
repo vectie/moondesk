@@ -156,7 +156,10 @@ fn render_moonflow_runs_state(
             moonflow_runs_state_detail(state, !selected_runs.is_empty()),
           ),
           strong(moonflow_runs_state_title(state, !selected_runs.is_empty())),
-          p(moonflow_runs_state_detail(state, !selected_runs.is_empty())),
+          details(class="flow-state-explanation", [
+            summary("Details"),
+            p(moonflow_runs_state_detail(state, !selected_runs.is_empty())),
+          ]),
           match moonflow_runs_state_action(state) {
             Some(label) =>
               button(
@@ -196,15 +199,13 @@ fn render_moonflow_workspace(
     section(class="flow-hero flow-hero-compact", [
       div([
         h1("MoonFlow"),
-        p(
-          class="lead",
-          "Executable work for the selected MoonBook: compose, run, review.",
-        ),
+        span(class="workspace-context", workspace_name(model)),
       ]),
       button(
-        class="secondary-button compact-button",
+        class="secondary-button compact-button moon-icon-button",
+        attrs=@html.Attrs::build().aria_label("Refresh Flow"),
         on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
-        "Refresh",
+        [ui_icon("refresh")],
       ),
     ]),
     render_moonflow_runs_state(
@@ -237,8 +238,8 @@ fn render_moonflow_workspace(
           if model.moonflow_status.contains("no executable Work graph") {
             button(
               class="secondary-button",
-              on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-              "Create executable document in Wiki",
+              on_click=dispatch(workspace_feature_msg("open-flow-files")),
+              "Choose workflow file",
             )
           } else {
             @html.nothing

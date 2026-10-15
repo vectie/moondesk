@@ -1,0 +1,110 @@
+/* Stable working surfaces; chat and source keep independent scroll positions. */
+.mooncode-center:has(.code-workbench) { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.mooncode-center > .mooncode-context-bar { flex: 0 0 auto; min-height: 42px; }
+.code-workbench-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--mooncode-line); background: var(--mooncode-panel); flex: 0 0 auto; }
+.code-workbench-tabs, .code-workbench-actions, .code-selection-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.code-workbench-actions { margin-left: auto; }
+.code-workbench-toolbar button, .code-context-chip button { color: var(--mooncode-muted); background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 9px; font: inherit; font-size: 12px; min-height: 32px; cursor: pointer; }
+.code-workbench-toolbar button:hover { background: var(--mooncode-field); color: var(--mooncode-ink); }
+.code-workbench-toolbar button[aria-pressed="true"], .code-workbench-toolbar button[aria-selected="true"] { color: var(--mooncode-accent); background: var(--mooncode-field); border-color: var(--mooncode-line-strong); }
+.code-workbench-toolbar button:focus-visible, .code-context-chip button:focus-visible { outline: 2px solid var(--mooncode-accent); outline-offset: 2px; }
+.code-workbench-status { flex-basis: 100%; font-size: 12px; color: var(--mooncode-muted); }
+.code-workbench { display: grid; grid-template-columns: minmax(260px, 1.2fr) minmax(320px, 1fr); flex: 1 1 0; min-height: 0; min-width: 0; overflow: hidden; }
+.code-workbench-work { overflow: auto; min-width: 0; min-height: 0; border-right: 1px solid var(--mooncode-line); background: var(--mooncode-panel); }
+.code-workbench > .mooncode-chat-surface { min-width: 0; min-height: 0; width: 100%; padding: 0; }
+.code-workbench .mooncode-composer { width: calc(100% - 20px); margin: 10px; max-width: none; flex: 0 0 auto; }
+.code-workbench .mooncode-transcript-list { height: 100%; overflow: auto; }
+.code-workbench .mooncode-chat-surface.empty .mooncode-empty { padding: 24px; box-sizing: border-box; }
+.code-workbench .mooncode-chat-surface.empty { justify-content: flex-end; }
+.code-workbench-work > .mooncode-workspace-editors, .code-workbench-work > .mooncode-developer-tools { width: 100%; margin: 0; border: 0; border-radius: 0; box-shadow: none; max-height: none; }
+.code-workbench-work .mooncode-workspace-editors-body { display: flex; flex-direction: column; max-height: none; }
+.code-workbench-work .workspace-editor-splitter { display: none; }
+.code-workbench-work .source-editor { width: 100%; min-width: 0; }
+.code-workbench-work .source-editor textarea { min-height: 280px; }
+[data-workbench-view="source"] .code-workbench-work > :not(.mooncode-workspace-editors),
+[data-workbench-view="review"] .code-workbench-work > .mooncode-workspace-editors,
+[data-workbench-view="review"] .code-workbench-work > .mooncode-developer-tools,
+[data-workbench-view="browser"] .code-workbench-work > :not(.mooncode-developer-tools),
+[data-workbench-view="terminal"] .code-workbench-work > :not(.mooncode-developer-tools),
+[data-workbench-view="compare"] .code-workbench-work > :not(.mooncode-developer-tools) { display: none; }
+[data-workbench-focus="chat"] .code-workbench { grid-template-columns: minmax(0, 1fr); }
+[data-workbench-focus="chat"] .code-workbench-work { display: none; }
+.code-context-tray { display: flex; flex-wrap: wrap; gap: 5px; }
+.code-context-tray:empty { display: none; }
+.code-context-chip { display: inline-flex; max-width: 100%; align-items: center; border: 1px solid var(--mooncode-line-strong); border-radius: 6px; background: var(--mooncode-field); }
+.code-context-chip button:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-context-preview { flex-basis: 100%; max-height: 180px; overflow: auto; white-space: pre-wrap; font-size: 12px; }
+.code-selection-actions { border-left: 1px solid var(--mooncode-line); padding-left: 8px; }
+.code-session-navigation-sync { display: none; }
+.mooncode-comparison-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.mooncode-comparison-options label { display: flex; flex-direction: column; gap: 5px; flex: 1 1 140px; }
+.mooncode-comparison-options select { max-width: 100%; padding: 8px; background: var(--mooncode-field); color: var(--mooncode-ink); border: 1px solid var(--mooncode-line); border-radius: 6px; }
+.mooncode-comparison-answer { max-height: 400px; overflow: auto; white-space: pre-wrap; font: inherit; font-size: 13px; line-height: 1.5; }
+.code-task-inspector { flex: 0 0 auto; max-height: 40%; overflow: auto; border-bottom: 1px solid var(--mooncode-line); background: var(--mooncode-panel); padding: 8px 12px; }
+.code-task-inspector > summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+/* The active pane keeps its name. Familiar secondary controls use glyphs. */
+.code-workbench-toolbar { padding: 5px 10px; gap: 6px; }
+.code-workbench-toolbar .moon-icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 36px; height: 36px; padding: 7px; border-color: transparent; }
+.code-workbench-tabs { gap: 2px; flex: 1 1 0; min-width: 0; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding: 3px; }
+.code-workbench-toolbar .code-workbench-tab { flex: 0 0 auto; white-space: nowrap; }
+.code-workbench-tab-label { display: inline; }
+.code-workbench-toolbar button[aria-pressed="true"], .code-workbench-toolbar button[aria-selected="true"] { color: var(--mooncode-ink); border-color: transparent; }
+.code-workbench-toolbar .code-workbench-tab[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--mooncode-accent); }
+.code-workbench-work:focus-visible { outline: 2px solid var(--mooncode-focus); outline-offset: -2px; }
+.code-workbench-actions { flex: 0 0 auto; }
+.code-workbench-actions { gap: 2px; padding-left: 6px; border-left: 1px solid var(--mooncode-line); }
+.code-workbench-actions > .moon-icon-button::after { left: auto; right: 0; transform: none; }
+[data-workbench-focus="chat"] [data-workbench-action="focus"],
+[data-workbench-focus="split"] [data-workbench-action="restore"] { display: none; }
+.code-workbench-status:empty { display: none; }
+.code-workbench-work > .mooncode-developer-tools > summary,
+.code-workbench-work .mooncode-developer-tool-tabs { display: none; }
+/* Panel identity is carried by the outer tabs. Keep inner headings quieter. */
+.code-workbench-work .mooncode-developer-tool-heading h3,
+.code-workbench-work .source-editor > h3 { font-size: 13px; font-weight: 600; margin-block: 0 4px; }
+.code-workbench-work .source-editor > p,
+.code-workbench-work .mooncode-developer-tool-heading p { font-size: 12px; line-height: 1.45; color: var(--mooncode-muted); margin-block: 0 8px; }
+.code-workbench .mooncode-empty h1 { font-size: 24px; font-weight: 600; }
+.code-workbench .source-editor-tabs { gap: 3px; padding: 3px 2px 6px; scrollbar-width: thin; overscroll-behavior-x: contain; }
+.code-workbench .source-editor-tab { border-color: transparent; background: transparent; border-radius: 6px; }
+.code-workbench .source-editor-tab.is-active { border-color: var(--mooncode-line); background: var(--mooncode-field); }
+.code-workbench .source-editor-tab:hover { background: var(--mooncode-field); }
+.code-workbench .source-editor-tab-select { display: inline-flex; align-items: center; gap: 7px; max-width: 320px; min-width: 0; }
+.code-workbench .source-editor-tab-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-workbench .source-editor-tab-modified { flex: 0 0 auto; font-size: 10px; color: var(--mooncode-ink); }
+.code-workbench .source-editor-tab.is-active .source-editor-tab-select { color: var(--mooncode-ink); }
+.code-workbench .source-editor-tab-close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; }
+.code-workbench .source-editor-tab-close .moon-icon { width: 14px; height: 14px; }
+.code-workbench .source-editor-tab-close:hover:not(:disabled) { color: var(--mooncode-ink); background: var(--mooncode-panel); }
+.code-context-chip > button:last-child { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; }
+@media (max-width: 1100px) {
+  .code-workbench { grid-template-columns: minmax(220px, 1fr) minmax(290px, 1fr); }
+  .code-workbench-toolbar { gap: 4px; padding: 6px; }
+}
+@media (max-width: 780px) {
+  .code-main { display: flex; flex-direction: column; overflow-y: auto; }
+  .code-main .mooncode-rail { flex: 0 0 130px; height: 130px; max-height: 130px; }
+  .mooncode-center:has(.code-workbench) { flex: 1 0 auto; height: auto; overflow: visible; }
+  .code-workbench { display: block; min-height: 380px; overflow: visible; }
+  .code-workbench > .mooncode-chat-surface { height: auto; min-height: 380px; overflow: visible; }
+  .code-workbench .mooncode-chat-surface.empty .mooncode-empty { flex: 0 0 auto; padding: 14px; }
+  .code-workbench .mooncode-empty h1 { font-size: 22px; }
+  .code-workbench .mooncode-session-surface { flex: 0 0 auto; height: 50dvh; overflow: auto; }
+  .code-task-inspector { max-height: 40dvh; }
+  .code-workbench-toolbar { position: sticky; top: 0; z-index: 5; }
+  [data-workbench-mobile="chat"] .code-workbench-work { display: none; }
+  [data-workbench-mobile="work"] .code-workbench > .mooncode-chat-surface { display: none; }
+  .code-workbench-toolbar button { min-height: 40px; }
+  .code-workbench-actions { margin-left: 0; }
+  .code-workbench-toolbar { flex-wrap: nowrap; gap: 2px; padding: 4px; }
+  .code-workbench-toolbar .moon-icon-button { min-width: 44px; min-height: 44px; height: 44px; }
+  .code-workbench-tabs { flex-wrap: nowrap; gap: 0; }
+  .code-workbench-tab-label { display: inline; }
+  .code-workbench-actions { margin-left: auto; padding-left: 2px; flex-wrap: nowrap; }
+  .code-workbench-toolbar:has(.code-workbench-status:not(:empty), .code-selection-actions) { flex-wrap: wrap; }
+  .code-workbench .mooncode-composer { width: calc(100% - 12px); margin: 6px; }
+}
+@media (pointer: coarse) {
+  .code-workbench .source-editor-tab button { min-height: 44px; }
+  .code-workbench .source-editor-tab-close { min-width: 44px; }
+}

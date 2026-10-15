@@ -171,7 +171,8 @@ fn desk_open_keyboard_selection(
   match find_entry(model, model.selected_path) {
     Some(entry) if entry.kind is Directory =>
       update_navigation_actions(dispatch, OpenDirectory(entry.path), model)
-    Some(entry) => desk_select_keyboard_entry(dispatch, model, entry, false)
+    Some(entry) =>
+      update_navigation_actions(dispatch, OpenWorkFile(entry.path), model)
     None => (@rabbita.none, model)
   }
 }

@@ -1,6 +1,19 @@
 import { defineConfig } from 'vite'
 import rabbita from '@rabbita/vite'
 
+function moondeskRabbita() {
+  const plugin = rabbita({ mainPkgDir: 'main' })
+  const resolveEntry = plugin.resolveId
+  // This app has one generated entry. The plugin otherwise recompiles MoonBit
+  // while resolving every ordinary .js dependency in the coding tools.
+  plugin.resolveId = function (source, ...args) {
+    const clean = source.split('?', 1)[0]
+    if (clean !== '/main.js' && clean !== 'main.js') return null
+    return resolveEntry.call(this, source, ...args)
+  }
+  return plugin
+}
+
 function moondeskMoonbitBrowserShim() {
   return {
     name: 'moondesk-moonbit-browser-shim',
@@ -55,5 +68,5 @@ export default defineConfig({
       '/api': 'http://127.0.0.1:4321',
     },
   },
-  plugins: [rabbita(), moondeskMoonbitBrowserShim()],
+  plugins: [moondeskRabbita(), moondeskMoonbitBrowserShim()],
 })

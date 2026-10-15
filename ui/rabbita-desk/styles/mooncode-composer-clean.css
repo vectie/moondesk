@@ -1,0 +1,100 @@
+/* Compact composer controls retain their native accessible names and values. */
+.mooncode-rail .pane-heading { min-height: 46px; padding: 16px 14px 8px; }
+.mooncode-rail .mooncode-new-session {
+  display: flex; align-items: center; justify-content: flex-start; gap: 9px;
+  padding: 8px 10px; margin-top: 4px; background: transparent;
+  border-color: var(--mooncode-line); color: var(--mooncode-ink); box-shadow: none;
+}
+.mooncode-rail .mooncode-new-session:hover {
+  background: var(--mooncode-field); box-shadow: none; transform: none;
+}
+.mooncode-center .mooncode-empty h1 { font-size: 24px; font-weight: 600; }
+.mooncode-center .mooncode-composer-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  gap: 0;
+}
+
+.mooncode-center .mooncode-composer-icon-button:focus-visible {
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 2px;
+}
+
+.mooncode-center .mooncode-composer-icon-button[aria-expanded="true"] {
+  border-color: var(--mooncode-primary);
+  color: var(--mooncode-primary);
+  background: var(--mooncode-panel);
+}
+
+.mooncode-center .mooncode-context-bar .moon-icon {
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.mooncode-center .mooncode-context-bar > div {
+  min-width: 0;
+}
+
+.mooncode-center .mooncode-context-bar strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-composer .mooncode-model-control .mooncode-composer-control-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mooncode-composer .composer-footer { position: relative; flex-wrap: wrap; gap: 4px; }
+.mooncode-composer .mooncode-composer-controls {
+  flex: 1 1 120px; width: auto; min-width: 110px; flex-wrap: nowrap; gap: 2px;
+}
+.mooncode-composer .mooncode-model-control { flex: 0 1 200px; min-width: 64px; }
+.mooncode-composer .mooncode-model-control .mooncode-composer-select { width: 100%; max-width: 200px; text-overflow: ellipsis; border-color: transparent; background-color: transparent; }
+.mooncode-composer-settings { position: static; flex: 0 0 auto; }
+.mooncode-composer-settings > summary { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--mooncode-muted); list-style: none; cursor: pointer; box-sizing: border-box; }
+.mooncode-composer-settings > summary::-webkit-details-marker { display: none; }
+.mooncode-composer-settings > summary:hover, .mooncode-composer-settings[open] > summary { background: var(--mooncode-field); color: var(--mooncode-ink); }
+.mooncode-composer-settings > summary[data-custom="true"]::after { content: ""; position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--mooncode-accent); }
+.mooncode-composer-settings > summary:focus-visible { outline: 3px solid var(--mooncode-focus); outline-offset: 2px; }
+.mooncode-composer-settings-body { position: absolute; inset-inline-start: 0; bottom: calc(100% + 8px); z-index: 45; display: grid; gap: 10px; width: 270px; max-width: calc(100vw - 32px); padding: 12px; box-sizing: border-box; border: 1px solid var(--mooncode-line); border-radius: 10px; background: var(--mooncode-panel); box-shadow: var(--mooncode-shadow); }
+.mooncode-composer .mooncode-composer-settings-body .mooncode-composer-control { display: flex; flex: none; justify-content: space-between; gap: 12px; }
+.mooncode-composer .mooncode-composer-settings-body .mooncode-composer-control-label { white-space: normal; }
+.mooncode-composer .mooncode-composer-settings-body .mooncode-composer-select { width: 128px; max-width: 128px; flex: 0 0 128px; }
+
+.mooncode-composer .mooncode-composer-select {
+  height: 34px;
+}
+
+.mooncode-chat-surface .mooncode-empty h1 {
+  margin-bottom: 0;
+}
+
+@media (pointer: coarse), (max-width: 780px) {
+  .mooncode-center .mooncode-composer-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .mooncode-composer .mooncode-composer-select {
+    min-height: 44px;
+  }
+  .mooncode-composer-settings > summary { width: 44px; height: 44px; }
+}

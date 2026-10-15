@@ -62,6 +62,7 @@ fn render_mooncode_schedule_row(
     class="mooncode-schedule-row",
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-schedule-row")
+      .data_set("schedule-id", schedule.id)
       .data_set("status", schedule.last_status),
     [
       div(class="mooncode-schedule-row-title", [
@@ -227,6 +228,8 @@ fn render_mooncode_schedules(
     class="mooncode-schedule-panel",
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-schedules")
+      .data_set("popup", "code-schedules")
+      .data_set("popup-trigger", ".mooncode-schedules-toggle")
       .aria_label("Scheduled Code work")
       .data_set("i18n-aria-label", "code.schedules_title"),
     [
@@ -241,14 +244,27 @@ fn render_mooncode_schedules(
             "MoonTown schedules a turn in one durable MoonClaw conversation.",
           ),
         ]),
-        button(
-          class="mooncode-skill-toggle",
-          attrs=@html.Attrs::build().data_set("i18n", "common.refresh"),
-          on_click=dispatch(RefreshMoonCodeSchedules),
-          disabled=model.mooncode_schedules_loading ||
-            model.mooncode_schedules_saving,
-          "Refresh",
-        ),
+        div(class="quiet-panel-actions", [
+          button(
+            class="moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("i18n-aria-label", "common.refresh")
+              .aria_label("Refresh"),
+            on_click=dispatch(RefreshMoonCodeSchedules),
+            disabled=model.mooncode_schedules_loading ||
+              model.mooncode_schedules_saving,
+            ui_icon("refresh"),
+          ),
+          button(
+            class="moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("popup-dismiss", "true")
+              .data_set("i18n-aria-label", "code.close_panel")
+              .aria_label("Close panel"),
+            on_click=dispatch(ToggleMoonCodeSchedules),
+            ui_icon("close"),
+          ),
+        ]),
       ]),
       div(attrs=@html.Attrs::build().role("status").aria_live("polite"), [
         if model.mooncode_schedules_loading {
@@ -283,6 +299,13 @@ fn render_mooncode_schedules(
       } else {
         @html.nothing
       },
+      div(
+        attrs=@html.Attrs::build()
+          .data_set("testid", "mooncode-calendar-host")
+          .data_set("workspace-id", model.selected_workspace_id)
+          .data_set("model", schedule_model),
+        @html.nothing,
+      ),
       details(class="mooncode-schedule-create-shell", [
         summary(
           attrs=@html.Attrs::build().data_set(

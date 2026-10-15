@@ -99,16 +99,17 @@ fn render_mooncode_activity_row(
             ),
             if row.status == "running" {
               button(
-                class="mooncode-inline-action stop",
+                class="mooncode-inline-action stop moon-icon-button",
                 attrs=@html.Attrs::build()
                   .aria_label("Stop this MoonCode request")
                   .data_set("i18n-aria-label", "code.stop_request")
-                  .data_set("i18n", "common.stop")
+                  .title("Stop this request")
+                  .data_set("tooltip", "Stop this request")
                   .data_set("testid", "mooncode-stop"),
                 on_click=dispatch(
                   CancelMoonCodeWork(row.session_id, row.command_id),
                 ),
-                "Stop",
+                [ui_icon("stop")],
               )
             } else if (row.status == "failed" || row.status == "cancelled") &&
               row.retry_prompt != "" {

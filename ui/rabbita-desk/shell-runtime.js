@@ -474,6 +474,8 @@ function installWorkspaceEditorInteractions() {
         selectSourceEditorMatch(target, event.shiftKey ? -1 : 1)
       } else if (event.key === 'Escape') {
         event.preventDefault()
+        const disclosure = parts.find.closest('.source-find-disclosure')
+        if (disclosure instanceof HTMLDetailsElement) disclosure.open = false
         parts.editor.focus()
       }
       return
@@ -489,6 +491,8 @@ function installWorkspaceEditorInteractions() {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
       if (parts.find instanceof HTMLInputElement && !parts.find.disabled) {
         event.preventDefault()
+        const disclosure = parts.find.closest('.source-find-disclosure')
+        if (disclosure instanceof HTMLDetailsElement) disclosure.open = true
         parts.find.focus()
         parts.find.select()
       }
@@ -560,6 +564,7 @@ loadMoonCodeMarkdownRuntime()
 
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''
+let mooncodeTranscriptScope = ''
 let mooncodeStickToBottom = true
 let mooncodeScrollFrame = 0
 
@@ -572,6 +577,9 @@ function mooncodeScrollTranscriptToBottom() {
   mooncodeScrollFrame = requestAnimationFrame(() => {
     const list = document.querySelector('.mooncode-transcript-list')
     if (!list) return
+    const surface = document.querySelector('[data-testid="mooncode-center"]')
+    const scope = JSON.stringify([surface?.dataset.workspaceId || '', surface?.dataset.sessionId || ''])
+    if (scope !== mooncodeTranscriptScope) { mooncodeTranscriptScope = scope; mooncodeTranscriptKey = '' }
 
     if (list !== mooncodeTranscript) {
       mooncodeTranscript = list
@@ -579,6 +587,7 @@ function mooncodeScrollTranscriptToBottom() {
       mooncodeStickToBottom = true
       list.addEventListener('scroll', () => {
         mooncodeStickToBottom = mooncodeScrollDistance(list) < 96
+        try { localStorage.setItem(`moondesk.transcript.${mooncodeTranscriptScope}`, JSON.stringify({ top: list.scrollTop, follow: mooncodeStickToBottom })) } catch {}
       }, { passive: true })
     }
 
@@ -589,7 +598,12 @@ function mooncodeScrollTranscriptToBottom() {
 
     const firstRender = mooncodeTranscriptKey === ''
     mooncodeTranscriptKey = key
-    if (firstRender || mooncodeStickToBottom) {
+    let stored = null
+    if (firstRender) { try { stored = JSON.parse(localStorage.getItem(`moondesk.transcript.${scope}`)) } catch {} }
+    if (firstRender && stored && !stored.follow) {
+      list.scrollTop = Number(stored.top) || 0
+      mooncodeStickToBottom = false
+    } else if (firstRender || mooncodeStickToBottom) {
       list.scrollTop = list.scrollHeight
       mooncodeStickToBottom = true
     }

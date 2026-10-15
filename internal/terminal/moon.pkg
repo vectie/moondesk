@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "moonbitlang/async",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "pty.c" ],
+  link: { "native": { "cc-link-flags": "-lutil -lpthread" } },
+)

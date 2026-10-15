@@ -390,7 +390,19 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
               ) +
               ". Choose a destination",
             ),
-          workspace_mode_label(primary_navigation_mode(model.workspace_mode)),
+          [
+            ui_icon(
+              primary_navigation_icon(
+                primary_navigation_mode(model.workspace_mode),
+              ),
+            ),
+            span(
+              workspace_mode_label(
+                primary_navigation_mode(model.workspace_mode),
+              ),
+            ),
+            ui_icon("chevron-down"),
+          ],
         ),
         div(
           class="primary-nav-compact-menu",
@@ -408,12 +420,8 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ],
     ),
     render_wiki_workspace_tabs(dispatch, model),
-    div(class="title-copy", [
-      span(class="app-dot", ""),
-      h1("MoonDesk"),
-      span(class="workspace-switcher", workspace_name(model)),
-      span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
-    ]),
+    render_work_book_switcher(dispatch, model),
+    render_work_shortcuts(dispatch, model),
     span(
       class="language-preference-host",
       attrs=@html.Attrs::build().data_set("testid", "language-preference-host"),
@@ -428,7 +436,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         .data_set("testid", "command-palette-toggle"),
       title=if model.loading { "Workspace is loading" } else { "Open commands" },
       on_click=dispatch(ToggleCommand),
-      "Commands",
+      [ui_icon("search"), span("Commands")],
     ),
     render_destination_announcement(model),
   ])
@@ -460,6 +468,21 @@ fn primary_navigation_i18n_key(mode : WorkspaceMode) -> String {
     MoonFlow => "nav.flow"
     PackHome => "nav.packs"
     _ => ""
+  }
+}
+
+///|
+fn primary_navigation_icon(mode : WorkspaceMode) -> String {
+  match mode {
+    Desk => "home"
+    MoonWiki => "book"
+    MoonCode => "code"
+    MoonFlow => "workflow"
+    PackHome => "package"
+    RequestsWorkspace => "chat"
+    RunsWorkspace => "history"
+    ReviewWorkspace => "review"
+    PublishWorkspace => "upload"
   }
 }
 
@@ -506,7 +529,7 @@ fn render_wiki_workspace_tabs(
           .data_set("testid", test_id),
         title="Open " + label,
         on_click=dispatch(SelectWorkspaceMode(mode)),
-        label,
+        [ui_icon(primary_navigation_icon(mode)), span(label)],
       )
     }),
   )
@@ -530,13 +553,16 @@ fn render_primary_navigation_button(
       .data_set("testid", test_id),
     title="Open " + workspace_mode_label(mode),
     on_click=dispatch(SelectWorkspaceMode(mode)),
-    span(
-      class="primary-nav-label",
-      attrs=@html.Attrs::build().data_set(
-        "i18n",
-        primary_navigation_i18n_key(mode),
+    [
+      ui_icon(primary_navigation_icon(mode)),
+      span(
+        class="primary-nav-label",
+        attrs=@html.Attrs::build().data_set(
+          "i18n",
+          primary_navigation_i18n_key(mode),
+        ),
+        workspace_mode_label(mode),
       ),
-      workspace_mode_label(mode),
-    ),
+    ],
   )
 }

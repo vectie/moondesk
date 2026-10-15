@@ -3,6 +3,7 @@ import { syncJsonExplorer, actJsonExplorer, changeJsonReplacement } from './sour
 import { syncJsonComparison, changeJsonComparison, actJsonComparison } from './source-json-comparison-ui.js'
 import { codeOutline } from './source-code-outline.js'
 import { parseSourceLocation, SourceNavigation } from './source-navigation.js'
+import { SourcePositionMemory } from './source-position-memory.js'
 
 const KEYWORDS = {
   MoonBit: [
@@ -46,6 +47,50 @@ let completionState = null
 let completionListSequence = 0
 const navigation = new SourceNavigation()
 const renderedHighlights = new WeakMap()
+const positionMemory = new SourcePositionMemory()
+const editorIdentities = new WeakMap()
+const openBuffers = new Map()
+const typeScriptServices = new Map()
+let typeScriptModule
+
+function rememberPosition(parts) {
+  if (!parts || parts.editor.disabled) return
+  const context = semanticContext(parts)
+  positionMemory.save(context.workspaceId, context.path, navigationSnapshot(parts))
+}
+
+function restorePosition(parts) {
+  if (parts.editor.disabled) return
+  const context = semanticContext(parts)
+  const identity = `${context.workspaceId}\0${context.path}`
+  if (editorIdentities.get(parts.editor) === identity) return
+  editorIdentities.set(parts.editor, identity)
+  if (navigation.pending) return
+  const position = positionMemory.read(context.workspaceId, context.path, parts.editor.value)
+  if (!position) return
+  parts.editor.setSelectionRange(position.start, position.end, position.direction)
+  parts.editor.scrollTop = position.scrollTop; parts.editor.scrollLeft = position.scrollLeft
+}
+
+function isTypeScriptBuffer(parts) { return ['JavaScript', 'TypeScript'].includes(parts.language) && /\.[cm]?[jt]sx?$/.test(semanticContext(parts).path) }
+
+async function typeScriptRequest(parts, action) {
+  const context = semanticContext(parts)
+  setSemanticBusy(parts, true); setSemanticMessage(parts, 'Loading JavaScript / TypeScript language tools…')
+  try {
+    typeScriptModule ||= import('./source-typescript-service.js')
+    const module = await typeScriptModule
+    let service = typeScriptServices.get(context.workspaceId)
+    if (!service) { service = module.createOpenBufferTypeScriptService(); typeScriptServices.set(context.workspaceId, service) }
+    for (const [key, text] of openBuffers) { const [workspace, path] = JSON.parse(key); if (workspace === context.workspaceId) service.update(path, text) }
+    service.update(context.path, parts.editor.value)
+    if (!parts.surface.isConnected || semanticContext(parts).path !== context.path || semanticContext(parts).workspaceId !== context.workspaceId) return null
+    if (action === 'diagnostics') return { diagnostics: service.diagnostics(context.path), scope: 'TypeScript syntax · current file', ok: true }
+    const locations = action === 'definition' ? service.definitions(context.path, parts.editor.selectionStart) : service.references(context.path, parts.editor.selectionStart)
+    return { locations, scope: 'TypeScript · open files', ok: true }
+  } catch (error) { setSemanticMessage(parts, `Language tools unavailable: ${error.message}`, true); return null }
+  finally { setSemanticBusy(parts, false) }
+}
 
 function editorParts(element) {
   const surface = element instanceof Element ? element.closest('.source-editor') : null
@@ -152,6 +197,9 @@ function structuralDiagnostic(value, language) {
 function syncEditor(element) {
   const parts = editorParts(element)
   if (!parts) return
+  restorePosition(parts)
+  if (isTypeScriptBuffer(parts)) openBuffers.set(JSON.stringify([semanticContext(parts).workspaceId, semanticContext(parts).path]), parts.editor.value)
+  if (!parts.surface.classList.contains?.('is-semantic-loading')) setSemanticBusy(parts, false)
   const large = parts.editor.value.length > MAX_HIGHLIGHT_CHARACTERS
   const signature = large
     ? `${parts.language}\u0000large`
@@ -194,7 +242,9 @@ function syncCodeOutline(parts) {
     filter.placeholder = 'Filter declarations'; filter.setAttribute('aria-label', 'Filter local code declarations')
     const status = document.createElement('p'); status.setAttribute('data-code-outline-status', ''); status.setAttribute('role', 'status')
     const list = document.createElement('div'); list.setAttribute('data-code-outline-list', '')
-    panel.append(filter, status, list); parts.surface.append(panel)
+    panel.append(filter, status, list)
+    const tools = parts.surface.querySelector('.source-edit-tools .source-quiet-disclosure-body') || parts.surface
+    tools.append(panel)
   }
   const filter = panel.querySelector('[data-code-outline-filter]')
   const context = semanticContext(parts)
@@ -350,7 +400,7 @@ function semanticContext(parts) {
     workspaceId,
     path,
     dirty,
-    available: parts.language === 'MoonBit' && workspaceId !== '' && path.endsWith('.mbt') && !dirty,
+    available: workspaceId !== '' && ((parts.language === 'MoonBit' && path.endsWith('.mbt') && !dirty) || (['JavaScript', 'TypeScript'].includes(parts.language) && /\.[cm]?[jt]sx?$/.test(path))),
   }
 }
 
@@ -379,12 +429,14 @@ function setSemanticBusy(parts, busy) {
   const available = semanticContext(parts).available
   for (const button of parts.surface.querySelectorAll('[data-action="source-compiler-check"], [data-action="source-go-definition"], [data-action="source-find-references"]')) {
     if (button instanceof HTMLButtonElement) {
-      button.disabled = busy || !available
+      button.disabled = busy || !available || parts.editor.disabled
+      if (button.dataset.action === 'source-compiler-check') button.textContent = isTypeScriptBuffer(parts) ? 'Check file syntax' : 'Check workspace'
     }
   }
 }
 
 async function semanticRequest(parts, action) {
+  if (isTypeScriptBuffer(parts)) return typeScriptRequest(parts, action)
   const context = semanticContext(parts)
   if (!context.available) {
     setSemanticMessage(parts, 'Save the MoonBit file before running compiler semantics.', true)
@@ -432,8 +484,8 @@ function diagnosticLocation(diagnostic) {
   const match = String(diagnostic.loc || '').match(/^(\d+):(\d+)/)
   return {
     path: String(diagnostic.relative_path || diagnostic.path || ''),
-    line: Number(match?.[1] || 1),
-    column: Number(match?.[2] || 1),
+    line: Number(diagnostic.line || match?.[1] || 1),
+    column: Number(diagnostic.column || match?.[2] || 1),
   }
 }
 
@@ -457,9 +509,10 @@ function renderCompilerDiagnostics(parts, payload) {
   const errors = diagnostics.filter(item => item.level === 'error').length
   const warnings = diagnostics.filter(item => item.level === 'warning').length
   summary.className = errors > 0 ? 'source-semantic-message has-problem' : 'source-semantic-message'
+  const scope = payload.scope || 'MoonBit compiler'
   summary.textContent = diagnostics.length === 0
-    ? 'MoonBit compiler: workspace check passed'
-    : `MoonBit compiler: ${errors} errors · ${warnings} warnings`
+    ? `${scope}: no reported issues`
+    : `${scope}: ${errors} errors · ${warnings} warnings`
   results.append(summary)
   for (const diagnostic of diagnostics.slice(0, 50)) {
     const location = diagnosticLocation(diagnostic)
@@ -468,6 +521,20 @@ function renderCompilerDiagnostics(parts, payload) {
       `${diagnostic.level || 'diagnostic'} · ${location.path}:${diagnostic.loc || location.line} · ${diagnostic.message || ''}`,
     ))
   }
+  installResultNavigation(parts, diagnostics.map(diagnosticLocation))
+}
+
+function installResultNavigation(parts, locations) {
+  const results = semanticResults(parts)
+  if (!results || !locations.length) return
+  const nav = document.createElement('div'); nav.className = 'source-editor-toolbar'
+  let index = -1
+  for (const [delta, label] of [[-1, 'Previous result'], [1, 'Next result']]) {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'secondary-button'; button.textContent = label
+    button.addEventListener('click', () => { index = (index + delta + locations.length) % locations.length; revealSourceLocation(parts, locations[index]) })
+    nav.append(button)
+  }
+  results.append(nav)
 }
 
 export function semanticLocations(payload) {
@@ -526,7 +593,8 @@ function syncNavigation(parts) {
     const status = document.createElement('span')
     status.setAttribute('data-source-navigation-status', '')
     status.setAttribute('role', 'status'); toolbar.append(status)
-    parts.surface.append(toolbar)
+    const tools = parts.surface.querySelector('.source-edit-tools .source-quiet-disclosure-body') || parts.surface
+    tools.append(toolbar)
   }
   for (const direction of ['back', 'forward']) {
     toolbar.querySelector(`[data-action="source-navigation-${direction}"]`).disabled =
@@ -594,6 +662,7 @@ function applyPendingReveal(parts) {
   const lineHeight = Number.parseFloat(getComputedStyle(parts.editor).lineHeight) || 20
   parts.editor.scrollTop = location.scrollTop ?? Math.max(0, lineIndex * lineHeight - lineHeight * 3)
   parts.editor.scrollLeft = location.scrollLeft ?? 0
+  rememberPosition(parts)
   navigationMessage(parts, location.text !== undefined && location.text !== parts.editor.value
     ? 'Returned to location; text changed, selection is bounded to current content'
     : `Location: ${context.path}`)
@@ -614,10 +683,10 @@ async function runDefinitionLookup(element) {
   if (!payload) return
   const location = semanticLocations(payload)[0]
   if (!location) {
-    setSemanticMessage(parts, 'MoonBit definition is unavailable inside this MoonBook.', true)
+    setSemanticMessage(parts, payload.scope ? 'No definition found in the open files. Open the imported source file to include it.' : 'MoonBit definition is unavailable inside this MoonBook.', true)
     return
   }
-  setSemanticMessage(parts, `MoonBit definition: ${location.path}:${location.line}`)
+  setSemanticMessage(parts, `${payload.scope || 'MoonBit'} definition: ${location.path}:${location.line}`)
   revealSourceLocation(parts, location)
 }
 
@@ -632,11 +701,12 @@ async function runReferencesLookup(element) {
   results.replaceChildren()
   const summary = document.createElement('p')
   summary.className = 'source-semantic-message'
-  summary.textContent = `MoonBit references: ${locations.length}`
+  summary.textContent = `${payload.scope || 'MoonBit'} references: ${locations.length}`
   results.append(summary)
   for (const location of locations.slice(0, 50)) {
     results.append(locationButton(location, `${location.path}:${location.line}:${location.column}`))
   }
+  installResultNavigation(parts, locations)
 }
 
 export function installSourceEditorRuntime() {
@@ -664,8 +734,9 @@ export function installSourceEditorRuntime() {
     }
   }, true)
   document.addEventListener('scroll', event => {
-    if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-testid="source-editor-input"]')) syncEditor(event.target)
+    if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-testid="source-editor-input"]')) { syncEditor(event.target); rememberPosition(editorParts(event.target)) }
   }, true)
+  document.addEventListener('select', event => { if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-testid="source-editor-input"]')) rememberPosition(editorParts(event.target)) }, true)
   document.addEventListener('click', event => {
     const completion = event.target instanceof Element ? event.target.closest('[data-completion-index]') : null
     if (completion instanceof HTMLElement) {
@@ -711,6 +782,8 @@ export function installSourceEditorRuntime() {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'g' && !event.altKey && !event.shiftKey) {
       event.preventDefault()
       editorParts(editor)?.surface.querySelector('[data-source-location]')?.focus()
+    } else if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      event.preventDefault(); navigateAction(editorParts(editor), event.key === 'ArrowLeft' ? 'back' : 'forward')
     } else if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
       event.preventDefault()
       showCompletions(editor)

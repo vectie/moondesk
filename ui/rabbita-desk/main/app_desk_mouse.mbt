@@ -94,7 +94,11 @@ fn desk_focus_selection(
     return clear_desk_selection_action(model)
   }
   (
-    fetch_preview_cmd(dispatch, model.selected_workspace_id, focus_path),
+    sync_workspace_context_batch(
+      model.selected_workspace_id,
+      focus_path,
+      fetch_preview_cmd(dispatch, model.selected_workspace_id, focus_path),
+    ),
     {
       ..clear_if_path_leaves_markdown_editor(model, focus_path),
       selected_path: focus_path,

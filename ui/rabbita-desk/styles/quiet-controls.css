@@ -1,0 +1,56 @@
+/* A shared interaction layer; color continues to come from the product theme. */
+:root {
+  --control-hover: color-mix(in srgb, currentColor 6%, transparent);
+  --control-pressed: color-mix(in srgb, currentColor 11%, transparent);
+  --control-focus: var(--mooncode-accent, #2860d8);
+}
+[data-quiet-controls="ready"] .moon-icon-button[aria-label]::after { display: none; }
+.moon-control-tooltip {
+  position: fixed; z-index: 10000; pointer-events: none;
+  max-width: min(260px, calc(100vw - 16px)); padding: 7px 10px; border-radius: 7px;
+  color: var(--mooncode-panel, #fff); background: var(--mooncode-ink, #20262e);
+  box-shadow: 0 3px 12px #0002; font: 12px/1.4 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.moon-control-tooltip[hidden] { display: none; }
+.moon-icon-button:not(:disabled):hover { background-color: var(--control-hover); }
+.moon-icon-button:not(:disabled):active { background-color: var(--control-pressed); }
+.moon-icon-button[aria-expanded="true"] { background-color: var(--control-pressed); }
+.moon-icon-button:focus-visible, [data-popup] :is(button, summary, input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--control-focus); outline-offset: 2px;
+}
+.mooncode-context-bar > div:first-child { min-width: 0; margin-right: auto; }
+.mooncode-context-bar > div:first-child :is(strong, span) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mooncode-context-bar > .moon-icon-button { flex: 0 0 auto; }
+.source-editor-toolbar > .editor-path-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.source-editor-toolbar .source-file-actions { position: relative; }
+.source-file-actions > summary { list-style: none; }
+.source-file-actions > summary::-webkit-details-marker { display: none; }
+.source-file-action-menu {
+  position: absolute; right: 0; top: calc(100% + 5px); z-index: 20; width: 220px;
+  display: grid; gap: 4px; padding: 6px; border-radius: 10px;
+  border: 1px solid var(--mooncode-line); background: var(--mooncode-panel);
+  box-shadow: 0 10px 30px #0002;
+}
+.source-file-action-menu button { text-align: left; justify-content: flex-start; min-height: 40px; }
+.source-editor-toolbar > .moon-icon-button { min-width: 36px; flex: 0 0 auto; }
+.source-editor-toolbar > .source-save-button { display: inline-flex; align-items: center; gap: 6px; }
+.mooncode-job-history[data-popup], .mooncode-schedule-panel[data-popup] {
+  position: fixed; top: 112px; right: 14px; bottom: 14px; z-index: 60;
+  width: min(520px, calc(100vw - 28px)); max-height: none; margin: 0;
+  overflow: auto; overscroll-behavior: contain; box-sizing: border-box;
+  border: 1px solid var(--mooncode-line); border-radius: 14px;
+  background: var(--mooncode-panel); box-shadow: 0 18px 64px #0003;
+}
+.quiet-panel-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  .moon-icon-button { transition: color 120ms ease, background-color 120ms ease; }
+  [data-popup] { scroll-behavior: smooth; }
+}
+@media (pointer: coarse), (max-width: 780px) {
+  .source-editor-toolbar > .moon-icon-button, .source-file-action-menu button { min-width: 44px; min-height: 44px; }
+  .mooncode-job-history[data-popup], .mooncode-schedule-panel[data-popup] { inset: 8px; width: auto; border-radius: 12px; }
+}
+@media (forced-colors: active) {
+  .moon-control-tooltip { color: CanvasText; background: Canvas; border: 1px solid CanvasText; }
+}

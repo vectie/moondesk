@@ -151,42 +151,50 @@ fn render_git_review_controls(
           }
         } else if record.kind == "comment" {
           comments.push(
-            div(class="mooncode-git-review-comment", [
-              strong(
-                attrs=@html.Attrs::build()
-                  .data_set(
-                    "i18n",
-                    if record.line.unwrap_or(0) > 0 {
-                      if record.side.unwrap_or("") == "left" {
-                        "code.review_old_line"
+            div(
+              class="mooncode-git-review-comment",
+              attrs=@html.Attrs::build()
+                .data_set("review-finding", record.note)
+                .data_set("path", diff.path)
+                .data_set("revision", diff.head)
+                .data_set("line", record.line.unwrap_or(0).to_string()),
+              [
+                strong(
+                  attrs=@html.Attrs::build()
+                    .data_set(
+                      "i18n",
+                      if record.line.unwrap_or(0) > 0 {
+                        if record.side.unwrap_or("") == "left" {
+                          "code.review_old_line"
+                        } else {
+                          "code.review_new_line"
+                        }
+                      } else if record.hunk == "" {
+                        "code.review_file_note"
                       } else {
-                        "code.review_new_line"
-                      }
-                    } else if record.hunk == "" {
-                      "code.review_file_note"
+                        ""
+                      },
+                    )
+                    .data_set(
+                      "i18n-params",
+                      ({ "line": record.line.unwrap_or(0) } : Json).stringify(),
+                    ),
+                  if record.line.unwrap_or(0) > 0 {
+                    (if record.side.unwrap_or("") == "left" {
+                      "Old line "
                     } else {
-                      ""
-                    },
-                  )
-                  .data_set(
-                    "i18n-params",
-                    ({ "line": record.line.unwrap_or(0) } : Json).stringify(),
-                  ),
-                if record.line.unwrap_or(0) > 0 {
-                  (if record.side.unwrap_or("") == "left" {
-                    "Old line "
+                      "New line "
+                    }) +
+                    record.line.unwrap_or(0).to_string()
+                  } else if record.hunk == "" {
+                    "File note"
                   } else {
-                    "New line "
-                  }) +
-                  record.line.unwrap_or(0).to_string()
-                } else if record.hunk == "" {
-                  "File note"
-                } else {
-                  record.hunk
-                },
-              ),
-              p(record.note),
-            ]),
+                    record.hunk
+                  },
+                ),
+                p(record.note),
+              ],
+            ),
           )
         }
       }
@@ -2459,6 +2467,12 @@ fn render_git_repository_context(
           ])
         _ => @html.nothing
       },
+      div(
+        attrs=@html.Attrs::build()
+          .data_set("runtime", "review-workflow-v1")
+          .data_set("workspace-id", workspace_id),
+        @html.nothing,
+      ),
       render_github_context(dispatch, model, projection.branch),
       render_github_inline_review(
         dispatch,

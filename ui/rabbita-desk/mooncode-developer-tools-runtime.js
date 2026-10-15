@@ -1,3 +1,5 @@
+import { iconMarkup } from './ui-icons.js'
+
 const HTTP_PROTOCOLS = new Set(['http:', 'https:'])
 const OPEN_TOOL_STATES = new Set(['running', 'queued', 'pending', 'failed', 'cancelled', 'rejected', 'reverted', 'stale'])
 const REASONING_OPTIONS = [
@@ -144,6 +146,31 @@ function dispatchControlValue(root, kind, value) {
   }))
 }
 
+export function composerSettingsSummary(reasoning = 'none', taskIntent = 'auto', i18n = globalThis.window?.MoonSuiteI18n) {
+  const reasoningOption = REASONING_OPTIONS.find(([value]) => value === reasoning) || REASONING_OPTIONS[0]
+  const taskOption = TASK_INTENT_OPTIONS.find(([value]) => value === taskIntent) || TASK_INTENT_OPTIONS[0]
+  const reasoningLabel = i18n?.message(reasoningOption[2]) || reasoningOption[1]
+  const taskLabel = i18n?.message(taskOption[2]) || taskOption[1]
+  const params = { reasoning: reasoningLabel, task: taskLabel }
+  return {
+    label: i18n?.message('code.response_settings_summary', params) || `Response settings. Reasoning: ${reasoningLabel}. Task purpose: ${taskLabel}`,
+    params,
+    custom: reasoning !== 'none' || taskIntent !== 'auto',
+  }
+}
+
+function updateComposerSettings(root) {
+  const summary = root.querySelector('.mooncode-composer-settings > summary')
+  if (!summary) return
+  const settings = composerSettingsSummary(root.dataset.reasoning || 'none', root.dataset.taskIntent || 'auto')
+  summary.setAttribute('aria-label', settings.label)
+  summary.title = settings.label
+  summary.dataset.i18nAriaLabel = 'code.response_settings_summary'
+  summary.dataset.i18nTitle = 'code.response_settings_summary'
+  summary.dataset.i18nParams = JSON.stringify(settings.params)
+  summary.dataset.custom = String(settings.custom)
+}
+
 function composerControl(title, kind, options, selected, disabled = false) {
   const label = document.createElement('label')
   label.className = `mooncode-composer-control mooncode-${kind}-control`
@@ -156,6 +183,8 @@ function composerControl(title, kind, options, selected, disabled = false) {
   select.dataset.testid = `mooncode-${kind}-select`
   select.setAttribute('aria-label', `MoonCode ${kind === 'model' ? 'model' : kind === 'task-intent' ? 'task purpose' : 'reasoning effort'}`)
   select.dataset.i18nAriaLabel = kind === 'model' ? 'code.model_aria' : kind === 'task-intent' ? 'code.task_aria' : 'code.reasoning_aria'
+  select.title = select.getAttribute('aria-label')
+  select.dataset.i18nTitle = select.dataset.i18nAriaLabel
   select.disabled = disabled
   for (const [value, text, key] of options) {
     const option = document.createElement('option')
@@ -165,16 +194,19 @@ function composerControl(title, kind, options, selected, disabled = false) {
     option.selected = value === selected
     select.append(option)
   }
-  select.addEventListener('change', () => dispatchControlValue(label.parentElement, kind, select.value))
+  select.addEventListener('change', () => {
+    const root = label.closest('[data-runtime="mooncode-composer-controls-v1"]')
+    if (root) dispatchControlValue(root, kind, select.value)
+  })
   label.append(caption, select)
   return label
 }
 
-function installComposerControls(root) {
+export function installComposerControls(root) {
   if (!(root instanceof HTMLElement)) return
   const models = String(root.dataset.models || '').split('\n').filter(Boolean)
   const modelOptions = models.length
-    ? models.map(value => [value, value, ''])
+    ? models.map(value => [value, value.replace(/^moongate\//, ''), ''])
     : [['', 'No models available', 'code.no_models']]
   if (root.dataset.controlsInstalled === 'true') {
     const modelSelect = root.querySelector('[data-testid="mooncode-model-select"]')
@@ -194,14 +226,30 @@ function installComposerControls(root) {
     }
     const taskSelect = root.querySelector('[data-testid="mooncode-task-intent-select"]')
     if (taskSelect instanceof HTMLSelectElement) taskSelect.value = root.dataset.taskIntent || 'auto'
+    const reasoningSelect = root.querySelector('[data-testid="mooncode-reasoning-select"]')
+    if (reasoningSelect instanceof HTMLSelectElement) reasoningSelect.value = root.dataset.reasoning || 'none'
+    updateComposerSettings(root)
     return
   }
   root.dataset.controlsInstalled = 'true'
+  const settings = document.createElement('details')
+  settings.className = 'mooncode-composer-settings'
+  settings.dataset.popup = 'composer-settings'
+  const summary = document.createElement('summary')
+  summary.className = 'mooncode-composer-settings-toggle moon-icon-button'
+  summary.innerHTML = iconMarkup('settings')
+  const body = document.createElement('div')
+  body.className = 'mooncode-composer-settings-body'
+  body.append(
+    composerControl('Reasoning', 'reasoning', REASONING_OPTIONS, root.dataset.reasoning || 'none'),
+    composerControl('Task purpose', 'task-intent', TASK_INTENT_OPTIONS, root.dataset.taskIntent || 'auto'),
+  )
+  settings.append(summary, body)
   root.prepend(
     composerControl('Model', 'model', modelOptions, root.dataset.selectedModel || '', models.length === 0),
-    composerControl('Reasoning', 'reasoning', REASONING_OPTIONS, root.dataset.reasoning || 'none'),
-    composerControl('Task', 'task-intent', TASK_INTENT_OPTIONS, root.dataset.taskIntent || 'auto'),
+    settings,
   )
+  updateComposerSettings(root)
 }
 
 function ensureDeveloperToolsShell(root) {
@@ -412,6 +460,9 @@ function installRoot(root) {
   })
   installTabs(root)
   installTerminal(root)
+  import('./mooncode-terminal-runtime.js').then(({ installMoonCodeTerminal }) => {
+    installMoonCodeTerminal(root)
+  })
   installBrowser(root)
   import('./mooncode-browser-evidence-runtime.js').then(({ installMoonCodeBrowserEvidence }) => {
     installMoonCodeBrowserEvidence(root)
@@ -444,6 +495,6 @@ if (typeof document !== 'undefined') {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['data-models', 'data-selected-model', 'data-task-intent'],
+    attributeFilter: ['data-models', 'data-selected-model', 'data-task-intent', 'data-reasoning'],
   })
 }

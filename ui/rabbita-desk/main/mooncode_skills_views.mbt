@@ -15,6 +15,12 @@ fn render_mooncode_skill_catalog(
       .aria_label("Available MoonCode skills")
       .data_set("i18n-aria-label", "code.skills_aria"),
     [
+      div(
+        attrs=@html.Attrs::build()
+          .data_set("runtime", "mooncode-setup-v1")
+          .data_set("workspace-id", model.selected_workspace_id),
+        @html.nothing,
+      ),
       div(class="mooncode-skill-catalog-heading", [
         div([
           strong(

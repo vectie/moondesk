@@ -107,6 +107,8 @@ pub fn moonclaw_supervisor_endpoint_url(String, String) -> String
 
 pub fn moonclaw_supervisor_route(String) -> String
 
+pub fn moonclaw_task_cancel_route() -> String
+
 pub fn moonclaw_task_events_route() -> String
 
 pub fn moonclaw_task_events_url(String, cursor? : String) -> String

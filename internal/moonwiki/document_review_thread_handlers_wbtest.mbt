@@ -74,4 +74,9 @@ test "review room decisions pin unpin and resolve immutably" {
     unpinned, "resolve", "2026-09-04T13:10:00Z", 5,
   )
   assert_eq(json_string(resolved, "status", default=""), "resolved")
+  let reopened = document_review_thread_decision(
+    resolved, "reopen", "2026-10-13T13:00:00Z", 6,
+  )
+  assert_eq(json_string(reopened, "status", default=""), "open")
+  assert_eq(json_int(reopened, "revision", default=0), 7)
 }

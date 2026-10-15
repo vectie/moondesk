@@ -38,6 +38,8 @@ fn render_mooncode_job_history(
     class="mooncode-job-history",
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-job-history")
+      .data_set("popup", "code-jobs")
+      .data_set("popup-trigger", ".mooncode-jobs-toggle")
       .aria_label("Code job history")
       .data_set("i18n-aria-label", "code.job_history_aria"),
     [
@@ -52,13 +54,26 @@ fn render_mooncode_job_history(
             "Durable MoonClaw runs for this Code session.",
           ),
         ]),
-        button(
-          class="mooncode-skill-toggle",
-          attrs=@html.Attrs::build().data_set("i18n", "common.refresh"),
-          on_click=dispatch(RefreshMoonCodeJobs),
-          disabled=model.mooncode_jobs_loading,
-          "Refresh",
-        ),
+        div(class="quiet-panel-actions", [
+          button(
+            class="moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("i18n-aria-label", "common.refresh")
+              .aria_label("Refresh"),
+            on_click=dispatch(RefreshMoonCodeJobs),
+            disabled=model.mooncode_jobs_loading,
+            ui_icon("refresh"),
+          ),
+          button(
+            class="moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("popup-dismiss", "true")
+              .data_set("i18n-aria-label", "code.close_panel")
+              .aria_label("Close panel"),
+            on_click=dispatch(ToggleMoonCodeJobs),
+            ui_icon("close"),
+          ),
+        ]),
       ]),
       div(attrs=@html.Attrs::build().role("status").aria_live("polite"), [
         if model.mooncode_jobs_loading {

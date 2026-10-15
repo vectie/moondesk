@@ -4,7 +4,7 @@ fn update_workspace_features(
   msg : Msg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
-  guard msg is WorkspaceFeature(action, first, second, third, _fourth) else {
+  guard msg is WorkspaceFeature(action, first, second, third, fourth) else {
     return (@rabbita.none, model)
   }
   match action {
@@ -15,7 +15,133 @@ fn update_workspace_features(
       )
     "open-toolbox" =>
       (
-        workspace_feature_signal_cmd("open-toolbox", first),
+        @rabbita.batch([
+          workspace_feature_signal_cmd("open-toolbox", first),
+          if first == "threads" {
+            fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id)
+          } else {
+            @rabbita.none
+          },
+        ]),
+        { ..model, command_open: false, },
+      )
+    "draft-task" => {
+      if second == "code" &&
+        (model.git_review_saving || model.git_review_note.trim() != "") {
+        return update_mooncode_actions(dispatch, NewMoonCodeSession, model)
+      }
+      let (cmd, opened) = select_workspace_mode_action(
+        dispatch,
+        if second == "code" {
+          MoonCode
+        } else {
+          MoonWiki
+        },
+        model,
+      )
+      if second == "code" {
+        let (fresh_cmd, fresh) = update_mooncode_actions(
+          dispatch,
+          NewMoonCodeSession,
+          opened,
+        )
+        (
+          @rabbita.batch([
+            cmd,
+            fresh_cmd,
+            workspace_feature_signal_cmd("code-task-draft", first),
+          ]),
+          { ..fresh, mooncode_prompt: first, command_open: false, },
+        )
+      } else {
+        (
+          cmd,
+          {
+            ..opened,
+            request_prompt: first,
+            request_status: "draft",
+            work_title: third,
+            wiki_agent_task_id: "",
+            wiki_chat_entries: [],
+            command_open: false,
+          },
+        )
+      }
+    }
+    "return-work" => update_navigation_actions(dispatch, ReturnToWork, model)
+    "resume-code-task" => {
+      let (mode_cmd, opened) = select_workspace_mode_action(
+        dispatch,
+        MoonCode,
+        model,
+      )
+      let (session_cmd, ready) = update_mooncode_actions(
+        dispatch,
+        SelectMoonCodeSession(first),
+        opened,
+      )
+      (
+        @rabbita.batch([
+          mode_cmd,
+          session_cmd,
+          if second == "" {
+            @rabbita.none
+          } else {
+            workspace_feature_signal_cmd("code-add-context", second)
+          },
+        ]),
+        ready,
+      )
+    }
+    "open-book-work" => select_workspace_mode_action(dispatch, MoonWiki, model)
+    "open-work-file" =>
+      update_navigation_actions(dispatch, OpenWorkFile(first), model)
+    "open-task-output" => {
+      if markdown_navigation_needs_confirmation(model, true) {
+        return (@rabbita.none, model)
+      }
+      let (mode_cmd, opened) = select_workspace_mode_action(
+        dispatch,
+        MoonWiki,
+        model,
+      )
+      let (path_cmd, ready) = open_quick_path_action(dispatch, first, opened)
+      (
+        @rabbita.batch([mode_cmd, path_cmd]),
+        { ..ready, work_return: Some(work_location(model)), },
+      )
+    }
+    "revise-result" | "schedule-result" => {
+      let (cmd, opened) = select_workspace_mode_action(
+        dispatch,
+        MoonWiki,
+        model,
+      )
+      let prompt = if action == "revise-result" {
+        "Revise " + second + ".\n\nChanges I want: "
+      } else {
+        "Make this work recurring: " +
+        second +
+        ".\n\nSchedule: \nKeep future outputs with this task and show me the proposed schedule before enabling it."
+      }
+      (
+        cmd,
+        {
+          ..opened,
+          request_prompt: prompt,
+          request_status: "draft",
+          work_title: second,
+          wiki_chat_file_paths: if first == "" {
+            opened.wiki_chat_file_paths
+          } else {
+            add_request_material(opened.wiki_chat_file_paths, first)
+          },
+        },
+      )
+    }
+    "open-flow-files" =>
+      (
+        workspace_feature_signal_cmd("open-search", "workflow"),
         { ..model, command_open: false, },
       )
     "open-recipe" => {
@@ -95,7 +221,14 @@ fn update_workspace_features(
       update_wiki_chat(dispatch, SubmitWikiChat, staged)
     }
     "start-recipe" => {
-      let staged = { ..model, request_prompt: first, request_status: "draft", }
+      let staged = {
+        ..model,
+        request_prompt: first,
+        request_status: "draft",
+        work_title: third,
+        wiki_agent_task_id: "",
+        wiki_chat_entries: [],
+      }
       let (mode_cmd, in_wiki) = select_workspace_mode_action(
         dispatch,
         MoonWiki,
@@ -135,13 +268,21 @@ fn update_workspace_features(
     "append-background-results" =>
       append_wiki_chat_background_results(model, first)
     "restore-thread" =>
-      restore_wiki_chat_thread(dispatch, model, first, second, third)
+      restore_wiki_chat_thread(
+        dispatch,
+        model,
+        first,
+        second,
+        third,
+        position_text=fourth,
+      )
     "new-thread" =>
       (
         @rabbita.none,
         {
           ..model,
           wiki_agent_task_id: "",
+          work_title: "",
           wiki_chat_entries: [],
           wiki_chat_file_paths: [],
           wiki_chat_context_items: [],
@@ -209,7 +350,14 @@ fn restore_wiki_chat_thread(
   task_id : String,
   document_path : String,
   entries_text : String,
+  position_text? : String = "",
 ) -> (@rabbita.Cmd, Model) {
+  if markdown_navigation_needs_confirmation(model, true) {
+    return queue_markdown_navigation(
+      model,
+      PendingWorkThread(task_id, document_path, entries_text, position_text),
+    )
+  }
   let entries : Array[WikiChatEntry] = @json.from_json(
     @json.parse(entries_text),
   ) catch {
@@ -222,27 +370,68 @@ fn restore_wiki_chat_thread(
         },
       )
   }
+  let position = @json.parse(position_text) catch { _ => Json::object({}) }
+  let files = json_field_string_array_items(position, "files")
+  let context : Array[WikiChatContextItem] = @json.from_json(
+    Json::array(json_field_json_array_items(position, "context")),
+  ) catch {
+    _ => []
+  }
+  let materials = json_field_string_array_items(position, "materials")
+  let status = json_field_string(position, "status", default="ready")
+  let resume_stream = task_id != "" &&
+    ["sending", "working", "generating", "queued"].any(word => {
+      status.to_lower().contains(word)
+    })
+  let cursor = json_field_string(position, "cursor", default="start")
   let restored = {
     ..model,
-    selected_path: if document_path == "" {
-      model.selected_path
-    } else {
-      document_path
-    },
+    work_title: json_field_string(position, "title", default=""),
+    selected_path: document_path,
     wiki_agent_task_id: task_id,
     wiki_chat_entries: entries,
-    wiki_chat_file_paths: [],
-    wiki_chat_context_items: [],
-    wiki_chat_stream_task_id: "",
-    wiki_chat_stream_cursor: "start",
-    request_prompt: "",
-    request_status: "ready",
+    wiki_chat_file_paths: files,
+    wiki_chat_context_items: context,
+    request_material_paths: materials,
+    wiki_chat_stream_task_id: if resume_stream {
+      task_id
+    } else {
+      ""
+    },
+    wiki_chat_stream_cursor: cursor,
+    request_prompt: json_field_string(position, "prompt", default=""),
+    request_status: status,
   }
-  if document_path != "" && office_editor_path_supported(document_path) {
-    open_quick_path_action(dispatch, document_path, restored)
+  let (mode_cmd, opened) = select_workspace_mode_action(
+    dispatch,
+    MoonWiki,
+    restored,
+  )
+  let (file_cmd, ready) = if document_path != "" {
+    open_quick_path_action(dispatch, document_path, opened)
   } else {
-    (@rabbita.none, restored)
+    (@rabbita.none, { ..opened, primary_preview_path: "", })
   }
+  (
+    @rabbita.batch([
+      mode_cmd,
+      file_cmd,
+      if resume_stream {
+        start_wiki_chat_stream_cmd(dispatch, task_id, cursor)
+      } else {
+        @rabbita.none
+      },
+    ]),
+    {
+      ..ready,
+      current_directory: json_field_string(
+        position,
+        "directory",
+        default=ready.current_directory,
+      ),
+      desk_filter_query: json_field_string(position, "filter", default=""),
+    },
+  )
 }
 
 ///|
@@ -312,6 +501,17 @@ fn choose_universal_search_result(
   path : String,
   purpose : String,
 ) -> (@rabbita.Cmd, Model) {
+  if purpose != "attach" &&
+    markdown_navigation_needs_confirmation(
+      model,
+      workspace_id != model.selected_workspace_id ||
+      path != model.markdown_editor_path,
+    ) {
+    return queue_markdown_navigation(
+      model,
+      PendingWorkSearch(workspace_id, path),
+    )
+  }
   if purpose == "attach" {
     if workspace_id != model.selected_workspace_id {
       (
@@ -328,7 +528,19 @@ fn choose_universal_search_result(
       update_wiki_chat(dispatch, AttachWikiChatFile(path), model)
     }
   } else {
-    select_search_hit_action(dispatch, workspace_id, path, model)
+    let (book_cmd, selected) = select_workspace_action(
+      dispatch, workspace_id, model,
+    )
+    if selected.selected_workspace_id != workspace_id {
+      (book_cmd, selected)
+    } else {
+      let (open_cmd, opened) = update_navigation_actions(
+        dispatch,
+        OpenWorkFile(path),
+        selected,
+      )
+      (@rabbita.batch([book_cmd, open_cmd]), opened)
+    }
   }
 }
 
@@ -353,21 +565,10 @@ fn open_universal_path(
         },
       },
     )
-  } else if purpose == "document" && !wiki_document_path_supported(path) {
-    (
-      @rabbita.none,
-      {
-        ..model,
-        pages_search: {
-          ..model.pages_search,
-          status: "Choose a DOCX, XLSX, PPTX, or PDF document",
-        },
-      },
-    )
   } else if purpose == "attach" {
     update_wiki_chat(dispatch, AttachWikiChatFile(path), model)
   } else {
-    open_quick_path_action(dispatch, path, model)
+    update_navigation_actions(dispatch, OpenWorkFile(path), model)
   }
 }
 
@@ -467,6 +668,6 @@ fn workspace_feature_signal_cmd(
 ) -> @rabbita.Cmd {
   @cmd.custom_cmd(
     _ => browser_workspace_feature_signal(action, value),
-    kind=Immediately,
+    kind=AfterRender,
   )
 }

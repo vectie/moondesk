@@ -115,7 +115,7 @@ fn update_source_literal(
       guard source_pane_editable(state) else { return state }
       let document = source_literal_document(state)
       let result = if msg is ReplaceAll {
-        document.replace_literal_all(
+        document.replace_literal_all_count(
           state.search.query,
           state.search.replacement,
           expected_revision=document.revision(),

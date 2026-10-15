@@ -1,0 +1,179 @@
+:root {
+  --moon-icon-files: url('../assets/ui-icons/files.svg');
+  --moon-icon-changes: url('../assets/ui-icons/changes.svg');
+  --moon-icon-browser: url('../assets/ui-icons/browser.svg');
+  --moon-icon-terminal: url('../assets/ui-icons/terminal.svg');
+  --moon-icon-compare: url('../assets/ui-icons/compare.svg');
+  --moon-icon-search: url('../assets/ui-icons/search.svg');
+  --moon-icon-selection: url('../assets/ui-icons/selection.svg');
+  --moon-icon-chat: url('../assets/ui-icons/chat.svg');
+  --moon-icon-split: url('../assets/ui-icons/split.svg');
+  --moon-icon-settings: url('../assets/ui-icons/settings.svg');
+  --moon-icon-calendar: url('../assets/ui-icons/calendar.svg');
+  --moon-icon-attach: url('../assets/ui-icons/attach.svg');
+  --moon-icon-mic: url('../assets/ui-icons/mic.svg');
+  --moon-icon-mic-off: url('../assets/ui-icons/mic-off.svg');
+  --moon-icon-send: url('../assets/ui-icons/send.svg');
+  --moon-icon-stop: url('../assets/ui-icons/stop.svg');
+  --moon-icon-more: url('../assets/ui-icons/more.svg');
+  --moon-icon-fork: url('../assets/ui-icons/fork.svg');
+  --moon-icon-queued: url('../assets/ui-icons/queued.svg');
+  --moon-icon-running: url('../assets/ui-icons/running.svg');
+  --moon-icon-waiting: url('../assets/ui-icons/waiting.svg');
+  --moon-icon-complete: url('../assets/ui-icons/complete.svg');
+  --moon-icon-failed: url('../assets/ui-icons/failed.svg');
+  --moon-icon-paused: url('../assets/ui-icons/paused.svg');
+  --moon-icon-home: url('../assets/ui-icons/home.svg');
+  --moon-icon-folder: url('../assets/ui-icons/folder.svg');
+  --moon-icon-book: url('../assets/ui-icons/book.svg');
+  --moon-icon-code: url('../assets/ui-icons/code.svg');
+  --moon-icon-workflow: url('../assets/ui-icons/workflow.svg');
+  --moon-icon-package: url('../assets/ui-icons/package.svg');
+  --moon-icon-plus: url('../assets/ui-icons/plus.svg');
+  --moon-icon-close: url('../assets/ui-icons/close.svg');
+  --moon-icon-check: url('../assets/ui-icons/check.svg');
+  --moon-icon-edit: url('../assets/ui-icons/edit.svg');
+  --moon-icon-copy: url('../assets/ui-icons/copy.svg');
+  --moon-icon-trash: url('../assets/ui-icons/trash.svg');
+  --moon-icon-refresh: url('../assets/ui-icons/refresh.svg');
+  --moon-icon-undo: url('../assets/ui-icons/undo.svg');
+  --moon-icon-redo: url('../assets/ui-icons/redo.svg');
+  --moon-icon-save: url('../assets/ui-icons/save.svg');
+  --moon-icon-upload: url('../assets/ui-icons/upload.svg');
+  --moon-icon-download: url('../assets/ui-icons/download.svg');
+  --moon-icon-external-link: url('../assets/ui-icons/external-link.svg');
+  --moon-icon-link: url('../assets/ui-icons/link.svg');
+  --moon-icon-pin: url('../assets/ui-icons/pin.svg');
+  --moon-icon-unpin: url('../assets/ui-icons/unpin.svg');
+  --moon-icon-filter: url('../assets/ui-icons/filter.svg');
+  --moon-icon-history: url('../assets/ui-icons/history.svg');
+  --moon-icon-panel-left: url('../assets/ui-icons/panel-left.svg');
+  --moon-icon-panel-right: url('../assets/ui-icons/panel-right.svg');
+  --moon-icon-panel-bottom: url('../assets/ui-icons/panel-bottom.svg');
+  --moon-icon-expand: url('../assets/ui-icons/expand.svg');
+  --moon-icon-collapse: url('../assets/ui-icons/collapse.svg');
+  --moon-icon-chevron-left: url('../assets/ui-icons/chevron-left.svg');
+  --moon-icon-chevron-right: url('../assets/ui-icons/chevron-right.svg');
+  --moon-icon-chevron-up: url('../assets/ui-icons/chevron-up.svg');
+  --moon-icon-chevron-down: url('../assets/ui-icons/chevron-down.svg');
+  --moon-icon-eye: url('../assets/ui-icons/eye.svg');
+  --moon-icon-eye-off: url('../assets/ui-icons/eye-off.svg');
+  --moon-icon-review: url('../assets/ui-icons/review.svg');
+  --moon-icon-play: url('../assets/ui-icons/play.svg');
+  --moon-icon-volume: url('../assets/ui-icons/volume.svg');
+  --moon-icon-volume-off: url('../assets/ui-icons/volume-off.svg');
+  --moon-icon-image: url('../assets/ui-icons/image.svg');
+  --moon-icon-camera: url('../assets/ui-icons/camera.svg');
+  --moon-icon-plug: url('../assets/ui-icons/plug.svg');
+  --moon-icon-unplug: url('../assets/ui-icons/unplug.svg');
+  --moon-icon-help: url('../assets/ui-icons/help.svg');
+  --moon-icon-info: url('../assets/ui-icons/info.svg');
+  --moon-icon-branch: url('../assets/ui-icons/branch.svg');
+  --moon-icon-commit: url('../assets/ui-icons/commit.svg');
+  --moon-icon-offline: url('../assets/ui-icons/offline.svg');
+}
+.moon-icon {
+  display: inline-block; flex: 0 0 auto; width: 18px; height: 18px;
+  background-color: currentColor; vertical-align: middle; pointer-events: none;
+  -webkit-mask: var(--moon-icon) center / contain no-repeat;
+  mask: var(--moon-icon) center / contain no-repeat;
+}
+.moon-icon[data-icon="files"] { --moon-icon: var(--moon-icon-files); }
+.moon-icon[data-icon="changes"] { --moon-icon: var(--moon-icon-changes); }
+.moon-icon[data-icon="browser"] { --moon-icon: var(--moon-icon-browser); }
+.moon-icon[data-icon="terminal"] { --moon-icon: var(--moon-icon-terminal); }
+.moon-icon[data-icon="compare"] { --moon-icon: var(--moon-icon-compare); }
+.moon-icon[data-icon="search"] { --moon-icon: var(--moon-icon-search); }
+.moon-icon[data-icon="selection"] { --moon-icon: var(--moon-icon-selection); }
+.moon-icon[data-icon="chat"] { --moon-icon: var(--moon-icon-chat); }
+.moon-icon[data-icon="split"] { --moon-icon: var(--moon-icon-split); }
+.moon-icon[data-icon="settings"] { --moon-icon: var(--moon-icon-settings); }
+.moon-icon[data-icon="calendar"] { --moon-icon: var(--moon-icon-calendar); }
+.moon-icon[data-icon="attach"] { --moon-icon: var(--moon-icon-attach); }
+.moon-icon[data-icon="mic"] { --moon-icon: var(--moon-icon-mic); }
+.moon-icon[data-icon="mic-off"] { --moon-icon: var(--moon-icon-mic-off); }
+.moon-icon[data-icon="send"] { --moon-icon: var(--moon-icon-send); }
+.moon-icon[data-icon="stop"] { --moon-icon: var(--moon-icon-stop); }
+.moon-icon[data-icon="more"] { --moon-icon: var(--moon-icon-more); }
+.moon-icon[data-icon="fork"] { --moon-icon: var(--moon-icon-fork); }
+.moon-icon[data-icon="queued"] { --moon-icon: var(--moon-icon-queued); }
+.moon-icon[data-icon="running"] { --moon-icon: var(--moon-icon-running); }
+.moon-icon[data-icon="waiting"] { --moon-icon: var(--moon-icon-waiting); }
+.moon-icon[data-icon="complete"] { --moon-icon: var(--moon-icon-complete); }
+.moon-icon[data-icon="failed"] { --moon-icon: var(--moon-icon-failed); }
+.moon-icon[data-icon="paused"] { --moon-icon: var(--moon-icon-paused); }
+.moon-icon[data-icon="home"] { --moon-icon: var(--moon-icon-home); }
+.moon-icon[data-icon="folder"] { --moon-icon: var(--moon-icon-folder); }
+.moon-icon[data-icon="book"] { --moon-icon: var(--moon-icon-book); }
+.moon-icon[data-icon="code"] { --moon-icon: var(--moon-icon-code); }
+.moon-icon[data-icon="workflow"] { --moon-icon: var(--moon-icon-workflow); }
+.moon-icon[data-icon="package"] { --moon-icon: var(--moon-icon-package); }
+.moon-icon[data-icon="plus"] { --moon-icon: var(--moon-icon-plus); }
+.moon-icon[data-icon="close"] { --moon-icon: var(--moon-icon-close); }
+.moon-icon[data-icon="check"] { --moon-icon: var(--moon-icon-check); }
+.moon-icon[data-icon="edit"] { --moon-icon: var(--moon-icon-edit); }
+.moon-icon[data-icon="copy"] { --moon-icon: var(--moon-icon-copy); }
+.moon-icon[data-icon="trash"] { --moon-icon: var(--moon-icon-trash); }
+.moon-icon[data-icon="refresh"] { --moon-icon: var(--moon-icon-refresh); }
+.moon-icon[data-icon="undo"] { --moon-icon: var(--moon-icon-undo); }
+.moon-icon[data-icon="redo"] { --moon-icon: var(--moon-icon-redo); }
+.moon-icon[data-icon="save"] { --moon-icon: var(--moon-icon-save); }
+.moon-icon[data-icon="upload"] { --moon-icon: var(--moon-icon-upload); }
+.moon-icon[data-icon="download"] { --moon-icon: var(--moon-icon-download); }
+.moon-icon[data-icon="external-link"] { --moon-icon: var(--moon-icon-external-link); }
+.moon-icon[data-icon="link"] { --moon-icon: var(--moon-icon-link); }
+.moon-icon[data-icon="pin"] { --moon-icon: var(--moon-icon-pin); }
+.moon-icon[data-icon="unpin"] { --moon-icon: var(--moon-icon-unpin); }
+.moon-icon[data-icon="filter"] { --moon-icon: var(--moon-icon-filter); }
+.moon-icon[data-icon="history"] { --moon-icon: var(--moon-icon-history); }
+.moon-icon[data-icon="panel-left"] { --moon-icon: var(--moon-icon-panel-left); }
+.moon-icon[data-icon="panel-right"] { --moon-icon: var(--moon-icon-panel-right); }
+.moon-icon[data-icon="panel-bottom"] { --moon-icon: var(--moon-icon-panel-bottom); }
+.moon-icon[data-icon="expand"] { --moon-icon: var(--moon-icon-expand); }
+.moon-icon[data-icon="collapse"] { --moon-icon: var(--moon-icon-collapse); }
+.moon-icon[data-icon="chevron-left"] { --moon-icon: var(--moon-icon-chevron-left); }
+.moon-icon[data-icon="chevron-right"] { --moon-icon: var(--moon-icon-chevron-right); }
+.moon-icon[data-icon="chevron-up"] { --moon-icon: var(--moon-icon-chevron-up); }
+.moon-icon[data-icon="chevron-down"] { --moon-icon: var(--moon-icon-chevron-down); }
+.moon-icon[data-icon="eye"] { --moon-icon: var(--moon-icon-eye); }
+.moon-icon[data-icon="eye-off"] { --moon-icon: var(--moon-icon-eye-off); }
+.moon-icon[data-icon="review"] { --moon-icon: var(--moon-icon-review); }
+.moon-icon[data-icon="play"] { --moon-icon: var(--moon-icon-play); }
+.moon-icon[data-icon="volume"] { --moon-icon: var(--moon-icon-volume); }
+.moon-icon[data-icon="volume-off"] { --moon-icon: var(--moon-icon-volume-off); }
+.moon-icon[data-icon="image"] { --moon-icon: var(--moon-icon-image); }
+.moon-icon[data-icon="camera"] { --moon-icon: var(--moon-icon-camera); }
+.moon-icon[data-icon="plug"] { --moon-icon: var(--moon-icon-plug); }
+.moon-icon[data-icon="unplug"] { --moon-icon: var(--moon-icon-unplug); }
+.moon-icon[data-icon="help"] { --moon-icon: var(--moon-icon-help); }
+.moon-icon[data-icon="info"] { --moon-icon: var(--moon-icon-info); }
+.moon-icon[data-icon="branch"] { --moon-icon: var(--moon-icon-branch); }
+.moon-icon[data-icon="commit"] { --moon-icon: var(--moon-icon-commit); }
+.moon-icon[data-icon="offline"] { --moon-icon: var(--moon-icon-offline); }
+.moon-icon-button {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; min-width: 36px; min-height: 36px; padding: 8px; border-radius: 8px;
+  color: var(--mooncode-ink, #20262e); cursor: pointer;
+}
+.moon-icon-button:focus-visible { outline: 2px solid var(--mooncode-accent, #2860d8); outline-offset: 2px; }
+.moon-icon-button:disabled { cursor: default; opacity: .45; }
+.moon-icon-button[aria-label]::after {
+  content: attr(aria-label); position: absolute; z-index: 30; top: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%); padding: 6px 9px; border-radius: 6px;
+  background: var(--mooncode-ink, #20262e); color: var(--mooncode-panel, #fff);
+  font: 12px/1.4 system-ui, sans-serif; width: max-content; max-width: 240px; white-space: normal; pointer-events: none;
+  opacity: 0; visibility: hidden;
+}
+.moon-icon-button[aria-label]:is(:hover, :focus-visible)::after { opacity: 1; visibility: visible; transition: opacity .12s ease .25s; }
+details[open] > .moon-icon-button::after { display: none; }
+.mooncode-terminal-actions > .moon-icon-button::after { left: auto; right: 0; transform: none; }
+.mooncode-composer .moon-icon-button::after { top: auto; bottom: calc(100% + 6px); }
+.moon-status-icon { display: inline-flex; align-items: center; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .moon-status-icon .moon-icon[data-icon="running"] { animation: moon-status-turn 1.8s linear infinite; }
+}
+@keyframes moon-status-turn { to { transform: rotate(360deg); } }
+@media (pointer: coarse), (max-width: 780px) {
+  .moon-icon-button { min-width: 44px; min-height: 44px; }
+}
+@media (forced-colors: active) { .moon-icon { background-color: ButtonText; } }

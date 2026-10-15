@@ -2302,7 +2302,7 @@ test "mode switches preserve selected desk context without starting code" {
   assert_eq(code.selected_workspace_id, "book-demo")
   assert_eq(code.selected_path, "tools/demo/main.mbt")
   assert_eq(code.current_directory, "tools/demo")
-  assert_eq(code.mooncode_prompt, "")
+  assert_eq(code.mooncode_prompt, "stale prompt")
   assert_false(code.mooncode_new_chat_active)
   assert_eq(code.mooncode_composer_status, "")
 
@@ -2315,6 +2315,72 @@ test "mode switches preserve selected desk context without starting code" {
   assert_eq(back_to_desk.selected_path, "tools/demo/main.mbt")
   assert_eq(back_to_desk.current_directory, "tools/demo")
   assert_eq(back_to_desk.preview_status, "loading desk context")
+}
+
+///|
+#warnings("-alert_unstable")
+test "desk selection offers a destination that can display each file type" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let entries = [
+    @desk.file_entry(workspace_id="book-demo", path="wiki", is_directory=true),
+    @desk.file_entry(workspace_id="book-demo", path="wiki/index.md"),
+    @desk.file_entry(workspace_id="book-demo", path="wiki/brief.docx"),
+  ]
+  let base = {
+    ..init_model(),
+    workspace_mode: Desk,
+    selected_workspace_id: "book-demo",
+    current_directory: "wiki",
+    entries,
+  }
+  let markdown = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_desk_details(dispatch, { ..base, selected_path: "wiki/index.md", }),
+    ),
+  )
+  assert_true(markdown.contains("Preview in Desk"))
+  assert_false(markdown.contains("Open in Wiki"))
+  let document = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_desk_details(dispatch, {
+        ..base,
+        selected_path: "wiki/brief.docx",
+      }),
+    ),
+  )
+  assert_true(document.contains("Open in Wiki"))
+  let directory = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_desk_details(dispatch, { ..base, selected_path: "wiki", }),
+    ),
+  )
+  assert_true(directory.contains("Browse folder"))
+  assert_false(directory.contains("Open in Wiki"))
+  let none = @rabbita.render_to_string(
+    @rabbita.static_cell(render_desk_details(dispatch, base)),
+  )
+  assert_false(none.contains("Open in Wiki"))
+}
+
+///|
+test "desk mouse selection retains supported document through Wiki handoff" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let base = {
+    ..init_model(),
+    workspace_mode: Desk,
+    selected_workspace_id: "book-demo",
+    current_directory: "wiki",
+    entries: [
+      @desk.file_entry(workspace_id="book-demo", path="wiki/brief.docx"),
+    ],
+  }
+  let (_, selected) = desk_mouse_action(
+    dispatch, "wiki/brief.docx", false, false, base,
+  )
+  let (_, opened) = select_workspace_mode_action(dispatch, MoonWiki, selected)
+  assert_eq(opened.selected_workspace_id, "book-demo")
+  assert_eq(opened.selected_path, "wiki/brief.docx")
+  assert_true(opened.workspace_mode is MoonWiki)
 }
 
 ///|

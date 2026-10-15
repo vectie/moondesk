@@ -1,0 +1,133 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn command(program : String, args : Array[String]) -> String {
+  let result = @shell.Cmd(program, args).output()
+  result.check()
+  result.stdout().trim().to_owned()
+}
+
+///|
+fn xml(value : String) -> String {
+  value
+  .replace(old="&", new="&amp;")
+  .replace(old="<", new="&lt;")
+  .replace(old=">", new="&gt;")
+}
+
+///|
+async fn write_preserving(path : String, body : String) -> Unit {
+  if @fs.exists(path) {
+    ignore(command("cp", [path, path + ".before-" + @env.now().to_string()]))
+  }
+  @fs.write_file(path, body)
+}
+
+///|
+async fn main {
+  guard @env.args() is [_, app_data, town_repo, installed_pack] else {
+    fail(
+      "Usage: connect-moontown-desktop.mbtx APP_DATA TOWN_REPOSITORY INSTALLED_TOWN_PACK",
+    )
+  }
+  let workspace = app_data + "/workspace"
+  let control = app_data + "/control/services/moontown"
+  let state = workspace + "/.moonsuite/products/moontown"
+  let pack = workspace + "/.moonsuite/packs/versions/moontown/0.1.0"
+  let launch_dir = @env.get_env_var("HOME").unwrap() + "/Library/LaunchAgents"
+  let label = "com.vectie.moontown.moondesk.desktop"
+  let plist = launch_dir + "/" + label + ".plist"
+  let binary = town_repo +
+    "/_build/native/debug/build/vectie/moontown/cmd/desktop_server/desktop_server.exe"
+  guard @fs.exists(binary) &&
+    @fs.exists(installed_pack + "/pack.json") &&
+    @fs.exists(app_data + "/control/execution-sandbox/moonclaw.json") else {
+    fail(
+      "Build MoonTown and provide an installed pack and the app's existing MoonClaw control first",
+    )
+  }
+  ignore(
+    command("mkdir", [
+      "-p",
+      control,
+      state,
+      launch_dir,
+      workspace + "/.moonsuite/packs/active",
+      workspace + "/.moonsuite/pack-apps",
+    ]),
+  )
+  ignore(command("ditto", [installed_pack, pack]))
+  let receipt = @json.parse(@fs.read_file(pack + "/receipt.json").text())
+  guard receipt is Object(receipt_fields) else {
+    fail("Invalid installed pack receipt")
+  }
+  receipt_fields["installed_root"] = Json::string(pack)
+  @fs.write_file(pack + "/receipt.json", receipt.stringify(indent=2))
+  ignore(
+    command("ditto", [town_repo + "/src/ui/rabbita-town/dist", control + "/ui"]),
+  )
+  ignore(command("cp", [binary, control + "/desktop_server"]))
+  ignore(
+    command("cp", [
+      town_repo + "/assets/templates/operator-request-policy.json",
+      control + "/operator-policy.json",
+    ]),
+  )
+  let active : Json = {
+    "contract": "moonsuite.active-pack.v1",
+    "pack_id": "moontown",
+    "version": "0.1.0",
+    "installed_root": pack,
+    "manifest_sha256": receipt_fields
+    .get("manifest_sha256")
+    .unwrap_or(Json::null()),
+  }
+  let runtime : Json = {
+    "contract": "moonsuite.pack-app-runtime.v1",
+    "pack_id": "moontown",
+    "app_url": "http://127.0.0.1:17842/index.html",
+    "service_url": "http://127.0.0.1:17842",
+  }
+  write_preserving(
+    workspace + "/.moonsuite/packs/active/moontown.json",
+    active.stringify(indent=2),
+  )
+  write_preserving(
+    workspace + "/.moonsuite/pack-apps/moontown.json",
+    runtime.stringify(indent=2),
+  )
+  let contents =
+    $|<?xml version="1.0" encoding="UTF-8"?>
+    $|<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    $|<plist version="1.0"><dict>
+    $|<key>Label</key><string>\{label}</string>
+    $|<key>ProgramArguments</key><array><string>\{xml(control)}/desktop_server</string></array>
+    $|<key>WorkingDirectory</key><string>\{xml(control)}</string>
+    $|<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+    $|<key>ThrottleInterval</key><integer>10</integer>
+    $|<key>EnvironmentVariables</key><dict>
+    $|<key>MOONSUITE_ROOT</key><string>\{xml(workspace)}</string>
+    $|<key>MOONTOWN_DESKTOP_BIND</key><string>127.0.0.1:17842</string>
+    $|<key>MOONTOWN_DESKTOP_SCHEDULES</key><string>1</string>
+    $|<key>MOONTOWN_DESKTOP_STATIC_ROOT</key><string>\{xml(control)}/ui</string>
+    $|<key>MOONTOWN_OPERATOR_POLICY_PATH</key><string>\{xml(control)}/operator-policy.json</string>
+    $|<key>MOONTOWN_MOONCODE_CONTROL_CONFIG</key><string>\{xml(app_data)}/control/execution-sandbox/moonclaw.json</string>
+    $|</dict>
+    $|<key>StandardOutPath</key><string>\{xml(state)}/desktop-service.out.log</string>
+    $|<key>StandardErrorPath</key><string>\{xml(state)}/desktop-service.err.log</string>
+    $|</dict></plist>
+  write_preserving(plist, contents)
+  ignore(command("plutil", ["-lint", plist]))
+  let domain = "gui/" + command("id", ["-u"])
+  ignore(@shell.Cmd("launchctl", ["bootout", domain + "/" + label]).output())
+  ignore(command("launchctl", ["bootstrap", domain, plist]))
+  println("MoonTown installed for " + workspace)
+  println("Service: http://127.0.0.1:17842; launch agent: " + label)
+}

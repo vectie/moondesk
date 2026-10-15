@@ -201,6 +201,7 @@ pub async fn create_domain_pack_scaffold(
     ],
     schedules: [],
     app_entrypoints: [],
+    app_runtime_identity: None,
     migrations: [],
     evaluations: [],
     uninstall_contract: Some(

@@ -175,7 +175,7 @@ test "Flow composition exposes exact catalog-bound contract metadata" {
   assert_true(markup.contains("Named review required"))
   assert_true(markup.contains("Catalog validated"))
   assert_true(markup.contains("validation accepted"))
-  assert_true(markup.contains(">Fit</button>"))
+  assert_true(markup.contains("aria-label=\"Fit canvas\""))
   let continuation = @rabbita.render_to_string(
     @rabbita.static_cell(
       render_moonflow_composition_continuation(Some(composition)),

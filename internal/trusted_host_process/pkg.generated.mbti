@@ -26,7 +26,13 @@ pub async fn git_add_pr_worktree(String, String, String, String) -> Bool
 
 pub fn git_branch() -> GitReadOperation
 
+pub fn git_commit_diff(String) -> GitReadOperation
+
 pub fn git_common_dir() -> GitReadOperation
+
+pub fn git_compare_base(String) -> GitReadOperation
+
+pub async fn git_create_worktree(String, String, String) -> Result[String, String]
 
 pub fn git_diff_tracked(String, String) -> GitReadOperation
 
@@ -34,7 +40,11 @@ pub fn git_diff_untracked(String) -> GitReadOperation
 
 pub async fn git_fetch_pr(String, String, Int, String) -> Bool
 
+pub fn git_finding_diff(String, String) -> GitReadOperation
+
 pub fn git_head() -> GitReadOperation
+
+pub fn git_history(Int) -> GitReadOperation
 
 pub fn git_pr_ref(Int, String) -> GitReadOperation
 
@@ -44,9 +54,17 @@ pub fn git_remote_url(String) -> GitReadOperation
 
 pub fn git_remotes() -> GitReadOperation
 
+pub fn git_review_branches() -> GitReadOperation
+
+pub fn git_review_worktrees() -> GitReadOperation
+
+pub fn git_revision_file(String, String, Bool) -> GitReadOperation
+
 pub fn git_status() -> GitReadOperation
 
 pub fn git_top_level() -> GitReadOperation
+
+pub async fn git_workflow_change(String, String, String) -> Result[String, String]
 
 pub fn github_get_pull(String, Int) -> GitHubOperation
 
@@ -58,7 +76,13 @@ pub fn github_post_pr_comment(String, Int, String) -> GitHubOperation
 
 pub fn github_post_pr_line(String, Int, String, String, String, Int, String) -> GitHubOperation
 
+pub fn github_reply_thread(String, String) -> GitHubOperation
+
 pub async fn github_request(String, GitHubOperation) -> Result[String, String]
+
+pub fn github_resolve_thread(String, Bool) -> GitHubOperation
+
+pub fn github_review_threads(String, Int, String) -> GitHubOperation
 
 pub async fn launch_agent_is_loaded(ManagedLaunchAgent) -> Bool
 

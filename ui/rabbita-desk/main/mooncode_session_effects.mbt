@@ -70,6 +70,17 @@ fn mooncode_after_user_submit_cmd(
 }
 
 ///|
+extern "js" fn browser_code_context_submitted(
+  workspace : String,
+  source_session : String,
+  session : String,
+  turn : String,
+) =
+  #| (workspace, sourceSession, session, turn) => {
+  #|   if (typeof window !== 'undefined') window.__moonDeskContextSubmitted?.(workspace, sourceSession, session, turn);
+  #| }
+
+///|
 fn mooncode_session_mutation_effects(
   start_watch : Bool,
 ) -> Array[MoonCodeSessionEffect] {

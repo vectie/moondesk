@@ -5,7 +5,9 @@ async fn review_test_http(
   account : String,
   payload : Json?,
 ) -> Json {
-  let headers : Map[String, String] = { "Cookie": account, "Origin": base }
+  let headers : Map[@http.CaseInsensitiveString, String] = {}
+  headers[@http.CaseInsensitiveString("Cookie")] = account
+  headers[@http.CaseInsensitiveString("Origin")] = base
   let (response, body) = match payload {
     Some(value) => @http.post(base + path, value, headers~)
     None => @http.get(base + path, headers~)

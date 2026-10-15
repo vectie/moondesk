@@ -88,8 +88,15 @@ field end to end.
 The launcher opens the same-origin `/pack-apps/<pack-id>/` route. MoonDesk
 proxies only to an explicitly configured loopback `service_url`; this prevents
 the desktop browser from navigating to a different origin and avoids exposing a
-general-purpose server-side request proxy. Pack UIs use relative API/media URLs
-so their subresources remain under the mounted route.
+general-purpose server-side request proxy. Requests must also stay within the
+manifest's first app entrypoint path. An HTML entrypoint may load sibling assets
+from its containing directory. Pack UIs use relative API/media URLs so their
+subresources remain under the mounted route.
+
+The proxy forwards JSON requests and explicit `application/octet-stream`
+requests, including PaiWork Skill ZIP imports. Request bodies are capped at
+20 MiB and exceedance returns HTTP 413. The byte stream and content type are
+preserved for binary requests; other write requests must contain valid JSON.
 
 Runtime discovery is fail-closed. MoonDesk accepts only the exact
 `moonsuite.pack-app-runtime.v1` contract, normalized lowercase pack ids, an
@@ -105,6 +112,34 @@ active pointer, manifest, and runtime file for every launch request. After a
 MoonDesk restart it therefore recovers the same configuration, while an edited,
 removed, stale, or newly unsafe record fails closed instead of being retained in
 an in-memory cache.
+
+## Bind a service to the active workspace and pack version
+
+Packs that expose an identity endpoint may declare it in the installed
+`pack.json`:
+
+```json
+{
+  "app_runtime_identity": {
+    "contract": "example-pack.runtime-identity.v1",
+    "path": "/apps/example-pack/studio/api/v1/runtime-identity"
+  }
+}
+```
+
+The path must be beneath the first declared app entrypoint. The endpoint
+returns JSON containing `contract`, `pack_id`, `version`, and `workspace_ref`.
+`workspace_ref` is `sha256:` followed by the lowercase SHA-256 hex digest of
+the UTF-8 bytes of the canonical absolute workspace path, with no trailing
+newline. This avoids returning the operator's local path to the browser.
+
+When the declaration is present, MoonDesk checks the endpoint over the
+configured loopback service before marking the pack `configured` or proxying a
+request. The response must match the declared contract, active pack ID and
+version, installed manifest version, and current workspace digest. A missing,
+unavailable, malformed, or mismatched identity makes the catalog entry
+`configuration_invalid` and prevents the proxy from opening it. Packs without
+this optional declaration retain the earlier structural runtime check.
 
 ## Visible operator flow
 

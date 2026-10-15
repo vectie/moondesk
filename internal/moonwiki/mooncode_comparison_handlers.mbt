@@ -35,8 +35,8 @@ fn normalized_mooncode_comparison_sessions(
   payload : Json,
 ) -> Result[Array[Json], String] {
   let sessions = json_array_items(payload, "sessions")
-  if sessions.length() != 2 {
-    return Err("A comparison requires exactly two branch sessions")
+  if sessions.is_empty() || sessions.length() > 2 {
+    return Err("A comparison needs one or two accepted branch sessions")
   }
   let normalized : Array[Json] = []
   let mut saw_a = false
@@ -64,6 +64,11 @@ fn normalized_mooncode_comparison_sessions(
       "label": label,
       "id": id,
       "status": json_string(session, "status", default="queued"),
+      "model": json_string(session, "model", default=""),
+      "answer": json_string(session, "answer", default=""),
+      "input_tokens": json_int(session, "input_tokens", default=0).max(0),
+      "output_tokens": json_int(session, "output_tokens", default=0).max(0),
+      "usage_measured": json_bool(session, "usage_measured", default=false),
       "event_count": json_int(session, "event_count", default=0).max(0),
       "verified_test_count": json_int(session, "verified_test_count", default=0).max(
         0,
@@ -73,7 +78,7 @@ fn normalized_mooncode_comparison_sessions(
       ),
     })
   }
-  if !saw_a || !saw_b {
+  if sessions.length() == 2 && (!saw_a || !saw_b) {
     return Err("Comparison must contain one A branch and one B branch")
   }
   Ok(normalized)
@@ -185,7 +190,13 @@ async fn persist_mooncode_comparison(
     "context_path": context_path,
     "baseline_request_digest": digest,
     "goal": goal,
+    "mode": if json_string(payload, "mode", default="") == "models" {
+      "models"
+    } else {
+      "approaches"
+    },
     "sessions": Json::array(sessions),
+    "failed_branches": Json::array(json_array_items(payload, "failed_branches")),
     "selected_branch": selected_branch,
     "selected_at": json_string(payload, "selected_at", default=""),
     "revision": previous_revision + 1,

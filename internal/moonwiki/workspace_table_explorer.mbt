@@ -14,12 +14,14 @@ fn table_from_sheet(
     height.to_int64() * width.to_int64() > 1000000L {
     return Err("Table exceeds the explorer's one-million-cell limit")
   }
-  let rows = Array::makei(height, _ => Array::make(width, @leafscene.Empty))
+  let rows : Array[Array[@leafscene.CellValue]] = Array::makei(height, _ => {
+    Array::make(width, @leafscene.CellValue::Empty)
+  })
   for cell in sheet.cells {
     if cell.row > 0 && cell.column > 0 {
       rows[cell.row - 1][cell.column - 1] = match cell.value {
-        Formula(cached=Some(value), ..) => Text(value)
-        Formula(cached=None, ..) => Empty
+        Formula(cached=Some(value), ..) => @leafscene.CellValue::Text(value)
+        Formula(cached=None, ..) => @leafscene.CellValue::Empty
         value => value
       }
     }

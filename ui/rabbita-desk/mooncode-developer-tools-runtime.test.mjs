@@ -5,6 +5,8 @@ import {
   moonCodeCommandRequest,
   moonCodeToolStateOpens,
   normalizeDeveloperBrowserUrl,
+  composerSettingsSummary,
+  installComposerControls,
 } from './mooncode-developer-tools-runtime.js'
 import {
   comparisonRequestIdentity,
@@ -18,6 +20,73 @@ import {
   moonCodeBrowserEvidencePayload,
   moonCodeBrowserEvidenceRequestId,
 } from './mooncode-browser-evidence-runtime.js'
+
+test('composer settings retain nested select controls and update the typed sync inputs', () => {
+  class Node {
+    constructor(tag) { this.tag = tag; this.children = []; this.dataset = {}; this.listeners = {}; this.attributes = {}; this.value = ''; this.open = false }
+    append(...nodes) { for (const node of nodes) { node.parentElement = this; this.children.push(node) } }
+    prepend(...nodes) { for (const node of nodes) node.parentElement = this; this.children.unshift(...nodes) }
+    replaceChildren(...nodes) { this.children = []; this.append(...nodes) }
+    setAttribute(name, value) { this.attributes[name] = value }
+    getAttribute(name) { return this.attributes[name] }
+    addEventListener(name, callback) { this.listeners[name] = callback }
+    dispatchEvent(event) { this.listeners[event.type]?.(event) }
+    get options() { return this.children }
+    closest() { return this.dataset.runtime ? this : this.parentElement?.closest() }
+    querySelector(selector) {
+      const testid = selector.match(/data-testid="([^"]+)"/)?.[1]
+      const sync = selector.match(/data-mooncode-control-sync="([^"]+)"/)?.[1]
+      for (const node of this.children) {
+        if (testid && node.dataset.testid === testid || sync && node.dataset.mooncodeControlSync === sync || selector.includes('> summary') && node.tag === 'summary') return node
+        const child = node.querySelector(selector)
+        if (child) return child
+      }
+      return null
+    }
+  }
+  class Select extends Node {}
+  class Input extends Node {}
+  const previous = Object.fromEntries(['document', 'HTMLElement', 'HTMLSelectElement', 'HTMLInputElement', 'InputEvent'].map(key => [key, globalThis[key]]))
+  try {
+    Object.assign(globalThis, { HTMLElement: Node, HTMLSelectElement: Select, HTMLInputElement: Input, InputEvent: class { constructor(type, options) { this.type = type; Object.assign(this, options) } }, document: { createElement: tag => tag === 'select' ? new Select(tag) : new Node(tag) } })
+    const root = new Node('div')
+    root.dataset = { runtime: 'mooncode-composer-controls-v1', models: 'moongate/test-model', selectedModel: 'moongate/test-model', reasoning: 'high', taskIntent: 'read_only' }
+    const updates = []
+    for (const kind of ['model', 'reasoning', 'task-intent']) {
+      const input = new Input('input')
+      input.dataset.mooncodeControlSync = kind
+      input.addEventListener('input', () => { updates.push([kind, input.value]); root.dataset[kind === 'task-intent' ? 'taskIntent' : kind === 'model' ? 'selectedModel' : kind] = input.value })
+      root.append(input)
+    }
+    installComposerControls(root)
+    const settings = root.children.find(node => node.tag === 'details')
+    const reasoning = root.querySelector('[data-testid="mooncode-reasoning-select"]')
+    reasoning.value = 'medium'; reasoning.dispatchEvent({ type: 'change' })
+    assert.deepEqual(updates, [['reasoning', 'medium']])
+    settings.open = true; settings.open = false
+    installComposerControls(root)
+    assert.equal(root.querySelector('[data-testid="mooncode-reasoning-select"]'), reasoning)
+    assert.equal(reasoning.value, 'medium')
+    assert.equal(root.querySelector('[data-testid="mooncode-task-intent-select"]').value, 'read_only')
+    assert.equal(settings.children[0].dataset.custom, 'true')
+    root.dataset.reasoning = 'none'; root.dataset.taskIntent = 'auto'
+    installComposerControls(root)
+    assert.equal(settings.children[0].dataset.custom, 'false')
+    assert.equal(composerSettingsSummary('high', 'read_only').label, 'Response settings. Reasoning: High. Task purpose: Review only')
+  } finally {
+    for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value }
+  }
+})
+
+test('composer settings translates both the summary and its current option values', () => {
+  const i18n = { message(key, params) {
+    if (key === 'code.response_settings_summary') return `回复设置。推理强度：${params.reasoning}。任务目的：${params.task}`
+    return { 'code.reasoning_high': '高', 'code.task_read_only': '提问 / 审阅' }[key]
+  } }
+  const summary = composerSettingsSummary('high', 'read_only', i18n)
+  assert.equal(summary.label, '回复设置。推理强度：高。任务目的：提问 / 审阅')
+  assert.deepEqual(summary.params, { reasoning: '高', task: '提问 / 审阅' })
+})
 
 test('developer browser accepts isolated HTTP previews and rejects active schemes', () => {
   assert.equal(

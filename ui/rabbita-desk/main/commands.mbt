@@ -425,6 +425,7 @@ extern "js" fn browser_install_desk_location_enter(on_code_images : () -> Unit) 
   #|     // Dispatch after the DOM event to avoid re-entering an active render.
   #|     queueMicrotask(() => on_code_images());
   #|   };
+  #|   window.addEventListener('moondesk:code-images', event => capture(Array.from(event.detail?.files || []), event.detail?.source || 'capture'));
   #|   document.addEventListener("click", (event) => {
   #|     const input = event.target;
   #|     if (!(input instanceof HTMLInputElement) || input.dataset.testid !== 'mooncode-image-file-input') return;
@@ -492,7 +493,10 @@ extern "js" fn browser_install_mooncode_enter_send() =
 
 ///|
 extern "js" fn browser_mooncode_prompt_value() -> String =
-  #| () => document.querySelector('[data-testid="mooncode-input"]')?.value ?? ""
+  #| () => {
+  #|   const value = document.querySelector('[data-testid="mooncode-input"]')?.value ?? "";
+  #|   return window.__moonDeskComposeContext ? window.__moonDeskComposeContext(value) : value;
+  #| }
 
 ///|
 #cfg(target="js")

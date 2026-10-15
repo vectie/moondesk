@@ -418,3 +418,20 @@ test "browser local import parser preserves files and errors" {
     Err(error) => assert_eq(error, "picker unavailable")
   }
 }
+
+///|
+#warnings("-alert_unstable")
+test "Book document preview preserves report Markdown for the shared renderer" {
+  let body = "# Revenue\n\n| Period | Revenue |\n| --- | --- |\n| Current | 120 |\n\nA **20% increase**.\n\n```text\n  indentation\n```\n"
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      div(
+        render_markdown_document(markdown_edit_preview("wiki/report.md", body)),
+      ),
+    ),
+  )
+  assert_true(markup.contains("class=\"book-markdown-source\""))
+  assert_true(markup.contains("data-testid=\"mooncode-markdown-source\""))
+  assert_true(markup.contains(body))
+  assert_false(markup.contains("<p>| Period"))
+}

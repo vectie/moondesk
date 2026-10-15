@@ -271,7 +271,6 @@ test "requested session late responses cannot undo New Chat or workspace navigat
     action in [
       NewMoonCodeSession,
       SelectWorkspace("book-next"),
-      SelectWorkspace("book-requested"),
       SelectWorkspace(""),
     ] {
     let (_, navigation) = update(
@@ -307,6 +306,28 @@ test "requested session late responses cannot undo New Chat or workspace navigat
     assert_eq(late_catalog.mooncode_sessions_error, "")
     assert_false(late_catalog.mooncode_auto_select_session)
   }
+}
+
+///|
+test "selecting the current workspace preserves its requested conversation" {
+  let model = requested_selection_test_model()
+  let (_, selected) = update(
+    code_mode_test_dispatch,
+    SelectWorkspace(model.selected_workspace_id),
+    model,
+  )
+  let session = code_mode_test_session(
+    "session-requested",
+    workspace_id="book-requested",
+  )
+  let (_, loaded) = update(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSelectedSession(session.id, Ok(session)),
+    selected,
+  )
+  assert_eq(loaded.selected_mooncode_session_id, session.id)
+  assert_eq(loaded.selected_workspace_id, model.selected_workspace_id)
+  assert_eq(loaded.mooncode_sessions_error, "")
 }
 
 ///|

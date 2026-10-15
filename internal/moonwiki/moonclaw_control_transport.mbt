@@ -41,8 +41,8 @@ async fn moonclaw_load_control_config(
 fn moonclaw_control_headers(
   config : SourceSemanticsSandboxClientConfig,
   content_type? : Bool = false,
-) -> Map[String, String] {
-  let headers = {
+) -> @http.Headers {
+  let headers : @http.Headers = {
     "X-MoonClaw-Execution-Token": config.auth_token,
     "X-MoonClaw-Instance-ID": config.instance_id,
   }

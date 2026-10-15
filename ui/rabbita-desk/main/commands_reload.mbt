@@ -3,11 +3,14 @@ fn reload_workspace_cmds(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   selected_path : String,
+  directory? : String,
 ) -> @rabbita.Cmd {
   if workspace_id == "" {
     @rabbita.none
   } else {
-    let entries_path = if selected_path == "" {
+    let entries_path = if directory is Some(value) {
+      value
+    } else if selected_path == "" {
       ""
     } else {
       parent_path(selected_path)

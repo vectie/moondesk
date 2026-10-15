@@ -30,139 +30,33 @@ fn pack_default_description(pack : PackAppRecord) -> String {
 }
 
 ///|
-fn agent_status_label(status : String) -> String {
-  if status == "ready" {
-    "Ready"
-  } else {
-    "Needs attention"
-  }
-}
+enum PackInspection {
+  Application(String)
+  Studio
+  Runtime
+} derive(Eq)
 
 ///|
-fn render_agent_passport(
+fn pack_inspect_button(
   dispatch : Dispatch[Msg],
   model : Model,
-  agent : AgentPassportRecord,
+  inspection : PackInspection,
+  label : String,
+  icon : String,
+  state_class? : String = "",
 ) -> @rabbita.Html {
-  let selected = model.selected_workspace_id == agent.workspace_id
-  article(
-    class="agent-passport-card " + (if selected { "selected" } else { "" }),
+  let active = model.pack_inspection == Some(inspection)
+  button(
+    class="moon-icon-button pack-inspect-button " + state_class,
     attrs=@html.Attrs::build()
-      .data_set("testid", "agent-passport")
-      .data_set("contract-id", agent.contract_id)
-      .data_set("agent-id", agent.agent_id)
-      .data_set("agent-status", agent.status),
-    [
-      header(class="agent-passport-header", [
-        div(class="agent-passport-identity", [
-          span(class="agent-passport-mark", "A"),
-          div([
-            h3(agent.name),
-            small(agent.source_kind + " agent · " + agent.version),
-          ]),
-        ]),
-        span(
-          class="agent-passport-state " + agent.status,
-          agent_status_label(agent.status),
-        ),
-      ]),
-      p(class="agent-passport-summary", agent.summary),
-      div(
-        class="agent-capability-list",
-        agent.capabilities.map(capability => span(capability)),
-      ),
-      ul(class="agent-passport-counts", [
-        li([strong(agent.knowledge_count.to_string()), span("knowledge")]),
-        li([strong(agent.skill_count.to_string()), span("skills")]),
-        li([strong(agent.schema_count.to_string()), span("schemas")]),
-        li([strong(agent.tool_count.to_string()), span("tools")]),
-        li([strong(agent.app_count.to_string()), span("apps")]),
-        li([strong(agent.recurring_work_count.to_string()), span("ongoing")]),
-      ]),
-      details(class="agent-passport-details", [
-        summary("View passport"),
-        div(class="agent-passport-detail-body", [
-          div([small("Identity"), strong(agent.book_id)]),
-          div([
-            small("Can help with"),
-            ul(agent.example_tasks.map(task => li(task))),
-          ]),
-          p(
-            "This agent is derived from the installed MoonBook. Its knowledge and behavior remain inspectable in the book.",
-          ),
-        ]),
-      ]),
-      div(class="agent-passport-actions", [
-        button(
-          class="secondary-button",
-          attrs=@html.Attrs::build().data_set("testid", "agent-start-task"),
-          on_click=dispatch(
-            workspace_feature_msg("open-recipe", first=agent.workspace_id),
-          ),
-          "Start a task",
-        ),
-        if selected {
-          button(
-            class="primary-button",
-            attrs=@html.Attrs::build().data_set("testid", "agent-open-chat"),
-            on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-            "Open chat",
-          )
-        } else {
-          button(
-            class="primary-button",
-            attrs=@html.Attrs::build().data_set("testid", "agent-select"),
-            on_click=dispatch(SelectWorkspace(agent.workspace_id)),
-            "Select agent",
-          )
-        },
-        small(
-          if selected {
-            "Selected for this workspace"
-          } else {
-            "Select, then open its chat"
-          },
-        ),
-      ]),
-    ],
-  )
-}
-
-///|
-fn render_agent_library(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Html {
-  section(
-    class="agent-library-section",
-    attrs=@html.Attrs::build().data_set("testid", "agent-library"),
-    [
-      header(class="pack-section-heading", [
-        div([
-          p(class="eyebrow", "Your reusable helpers"),
-          h2("Agents"),
-          p(
-            "Each agent carries one MoonBook's knowledge, skills, and ongoing work.",
-          ),
-        ]),
-        span(model.agent_catalog_status),
-      ]),
-      if model.agent_passports.is_empty() {
-        div(class="agent-library-empty", [
-          strong("No agents yet"),
-          p(
-            "Create or import a MoonBook. MoonDesk will turn it into a reusable, inspectable agent.",
-          ),
-        ])
-      } else {
-        div(
-          class="agent-passport-grid",
-          model.agent_passports.map(agent => {
-            render_agent_passport(dispatch, model, agent)
-          }),
-        )
-      },
-    ],
+      .data_set("pack-inspector-trigger", active.to_string())
+      .aria_label(label)
+      .aria_controls("pack-inspector")
+      .aria_expanded(active.to_string()),
+    on_click=dispatch(
+      SetPackInspection(if active { None } else { Some(inspection) }),
+    ),
+    [ui_icon(icon)],
   )
 }
 
@@ -559,29 +453,29 @@ fn render_pack_studio() -> @rabbita.Html {
 fn render_pack_primary_action(pack : PackAppRecord) -> @rabbita.Html {
   if pack.status == "configured" && pack.launch_url != "" {
     a(
-      class="primary-button link-button pack-open-action",
+      class="moon-icon-button pack-open-action",
       href=pack.launch_url,
       attrs=@html.Attrs::build()
         .data_set("testid", "pack-open")
         .data_set("pack-id", pack.pack_id)
         .aria_label("Open " + pack.display_name),
-      match pack.primary_action_label {
-        Some(label) if label.trim() != "" => label
-        _ => "Open pack"
-      },
+      [ui_icon("chevron-right")],
     )
   } else {
     button(
-      class="primary-button pack-open-action",
+      class="moon-icon-button pack-open-action",
       attrs=@html.Attrs::build()
         .data_set("testid", "pack-open-disabled")
-        .data_set("pack-id", pack.pack_id),
+        .data_set("pack-id", pack.pack_id)
+        .aria_label(
+          if pack.status == "workflow_only" {
+            "No standalone app"
+          } else {
+            "Open unavailable"
+          },
+        ),
       disabled=true,
-      if pack.status == "workflow_only" {
-        "No standalone app"
-      } else {
-        "Open unavailable"
-      },
+      [ui_icon("chevron-right")],
     )
   }
 }
@@ -611,59 +505,133 @@ fn render_pack_card(
               pack_presentation_value(pack.presentation_icon)
             },
           ),
-          div([
-            h2(pack.display_name),
-            render_pack_area(pack),
-            small("v" + pack.version + " · " + pack.kind),
-          ]),
+          div([h2(pack.display_name), render_pack_area(pack)]),
         ]),
-        span(
-          class="pack-state-label " + pack_status_class(pack.status),
-          pack_status_label(pack.status),
-        ),
       ]),
-      p(class="pack-description", pack_default_description(pack)),
-      div(class="pack-bridge-line", [
-        render_pack_bridge_status(pack),
-        small(
-          if pack_bridge_ready(pack) {
-            "Intake: " + pack_intake_operation_ids(pack).join(", ")
+      if pack.configuration_message != "" &&
+        pack.configuration_message != "Ready to open" {
+        p(
+          class="pack-configuration-message",
+          attrs=@html.Attrs::build().role("status"),
+          pack.configuration_message,
+        )
+      } else {
+        @html.nothing
+      },
+      div(class="pack-card-actions", [
+        pack_inspect_button(
+          dispatch,
+          model,
+          Application(pack.pack_id),
+          "Details for " +
+          pack.display_name +
+          ": " +
+          pack_status_label(pack.status),
+          if pack.status == "configured" {
+            "info"
           } else {
-            "Use Pack Studio to add the common projection and candidate lifecycle."
+            "waiting"
+          },
+          state_class=if pack.status == "configured" {
+            ""
+          } else {
+            "needs-attention"
           },
         ),
-      ]),
-      ul(class="pack-capability-counts", [
-        li([strong(pack.workflow_count.to_string()), span("workflows")]),
-        li([strong(pack.tool_count.to_string()), span("tools")]),
-        li([strong(pack.entrypoint_count.to_string()), span("app surfaces")]),
-      ]),
-      p(
-        class="pack-configuration-message",
-        attrs=@html.Attrs::build().role("status"),
-        pack.configuration_message,
-      ),
-      div(class="pack-card-actions", [
         render_pack_primary_action(pack),
-        details(class="pack-advanced-actions", [
-          summary("Advanced controls"),
-          div(class="pack-advanced-body", [
-            button(
-              class="secondary-button",
-              disabled=model.selected_workspace_id == "",
-              on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
-              "Inspect current composition",
-            ),
-            small(
-              if model.selected_workspace_id == "" {
-                "Select a MoonBook before inspecting an executable composition."
-              } else {
-                "Composition belongs to the selected MoonBook; this pack keeps its domain contracts."
-              },
-            ),
-          ]),
-        ]),
       ]),
+    ],
+  )
+}
+
+///|
+fn render_pack_inspector(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  let (title, content) = match model.pack_inspection {
+    None => return @html.nothing
+    Some(Application(id)) =>
+      match model.pack_apps.iter().find_first(pack => pack.pack_id == id) {
+        None => return @html.nothing
+        Some(pack) =>
+          (
+            pack.display_name,
+            div(class="pack-advanced-body", [
+              span(
+                class="pack-state-label " + pack_status_class(pack.status),
+                pack_status_label(pack.status),
+              ),
+              small("v" + pack.version + " · " + pack.kind),
+              p(class="pack-description", pack_default_description(pack)),
+              div(class="pack-bridge-line", [
+                render_pack_bridge_status(pack),
+                small(
+                  if pack_bridge_ready(pack) {
+                    "Intake: " + pack_intake_operation_ids(pack).join(", ")
+                  } else {
+                    "Use Pack Studio to add the common projection and candidate lifecycle."
+                  },
+                ),
+              ]),
+              ul(class="pack-capability-counts", [
+                li([strong(pack.workflow_count.to_string()), span("workflows")]),
+                li([strong(pack.tool_count.to_string()), span("tools")]),
+                li([
+                  strong(pack.entrypoint_count.to_string()),
+                  span("app surfaces"),
+                ]),
+              ]),
+              button(
+                class="secondary-button",
+                disabled=model.selected_workspace_id == "",
+                on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
+                "Inspect current composition",
+              ),
+              small(
+                if model.selected_workspace_id == "" {
+                  "Select a MoonBook before inspecting an executable composition."
+                } else {
+                  "Composition belongs to the selected MoonBook; this pack keeps its domain contracts."
+                },
+              ),
+            ]),
+          )
+      }
+    Some(Studio) => ("Pack Studio", render_pack_studio())
+    Some(Runtime) =>
+      (
+        "How packs run",
+        div(class="pack-runtime-details", [
+          p(
+            "Packs provide domain applications and reusable workflows. MoonDesk connects them to your MoonBooks.",
+          ),
+          p(
+            "MoonFlow coordinates execution. MoonClaw runs the agents. Each pack owns its screens, schemas, and workflows.",
+          ),
+        ]),
+      )
+  }
+  aside(
+    class="pack-inspector",
+    attrs=@html.Attrs::build()
+      .id("pack-inspector")
+      .aria_label(title)
+      .data_set("popup", "pack-inspector")
+      .data_set("popup-trigger", "[data-pack-inspector-trigger=\"true\"]"),
+    [
+      header(class="pack-inspector-heading", [
+        h2(title),
+        button(
+          class="moon-icon-button",
+          attrs=@html.Attrs::build()
+            .aria_label("Close details")
+            .data_set("popup-dismiss", "true"),
+          on_click=dispatch(SetPackInspection(None)),
+          [ui_icon("close")],
+        ),
+      ]),
+      div(class="pack-inspector-body", [content]),
     ],
   )
 }
@@ -675,48 +643,39 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     attrs=main_content_attrs(PackHome).data_set("testid", "pack-home"),
     [
       section(class="pack-home-hero", [
-        div([
-          p(class="eyebrow", "MoonSuite applications"),
-          h1("What do you want to create?"),
-          p(
-            class="lead",
-            "Start from a reviewed template or open an application directly. Domain decisions stay with the product that owns them.",
-          ),
-        ]),
+        div([h1("Packs")]),
         div(class="pack-home-summary", [
-          strong("\{model.pack_apps.length()} installed"),
           span(model.pack_apps_status),
+          pack_inspect_button(dispatch, model, Studio, "Pack Studio", "package"),
+          pack_inspect_button(dispatch, model, Runtime, "How packs run", "help"),
           button(
-            class="secondary-button compact-button",
-            attrs=@html.Attrs::build().data_set("testid", "pack-home-refresh"),
+            class="secondary-button compact-button moon-icon-button",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "pack-home-refresh")
+              .aria_label("Refresh Packs"),
             on_click=dispatch(RefreshAll),
-            "Refresh",
+            [ui_icon("refresh")],
           ),
         ]),
       ]),
-      render_agent_library(dispatch, model),
       render_template_catalog(model),
-      render_pack_studio(),
       if model.pack_apps.is_empty() {
         section(class="pack-home-empty", [
           strong("No domain packs are installed"),
-          p(
-            "Install a pack into this MoonSuite workspace. MoonDesk will discover its manifest without importing domain code.",
-          ),
+          p("Install a pack to add applications and reusable workflows."),
           button(
             class="secondary-button",
-            on_click=dispatch(SelectWorkspaceMode(Desk)),
-            "Browse MoonBooks",
+            on_click=dispatch(SetPackInspection(Some(Studio))),
+            "Pack Studio",
           ),
         ])
       } else {
         section(class="pack-app-section", [
           header(class="pack-section-heading", [
-            div([
+            div(class="pack-section-title", [
               h2("Applications"),
-              p("Open an owner workspace without starting a template."),
+              span(model.pack_apps.length().to_string()),
             ]),
-            span("\{model.pack_apps.length()} installed"),
           ]),
           section(
             class="pack-product-grid",
@@ -725,22 +684,7 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           ),
         ])
       },
-      render_collaboration_surface(dispatch, model),
-      details(class="pack-runtime-details", [
-        summary("How packs run"),
-        div(class="pack-runtime-strip", [
-          div([strong("Pack"), small("domain UI + contracts")]),
-          span("→"),
-          div([strong("MoonDesk"), small("operator control")]),
-          span("→"),
-          div([strong("MoonFlow"), small("durable execution")]),
-          span("→"),
-          div([strong("MoonClaw"), small("single agent runtime")]),
-        ]),
-        p(
-          "Each pack owns its domain screens, schemas, policies, providers, and workflows. MoonDesk supplies generic launch, authority, evidence, review, and composition controls.",
-        ),
-      ]),
+      render_pack_inspector(dispatch, model),
     ],
   )
 }

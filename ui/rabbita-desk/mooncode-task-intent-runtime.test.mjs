@@ -9,9 +9,14 @@ class Element {
   append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } }
   prepend(...children) { for (const child of children.reverse()) { child.parentElement = this; this.children.unshift(child); } }
   setAttribute(key, value) { this.attributes[key] = value; }
+  getAttribute(key) { return this.attributes[key] ?? null; }
+  closest() { return this.dataset.runtime ? this : this.parentElement?.closest(); }
   addEventListener(kind, listener) { this.listeners[kind] = listener; }
   dispatchEvent(event) { this.lastEvent = event; this.listeners[event.type]?.(event); }
   querySelector(selector) {
+    if (selector === '.mooncode-composer-settings > summary') {
+      return this.children.find(child => child.tag === 'summary') ?? this.children.find(child => child.className === 'mooncode-composer-settings')?.querySelector(selector) ?? null
+    }
     const [, attr, value] = selector.match(/^\[data-(testid|mooncode-control-sync)="([^"]+)"\]$/) || []
     const key = attr === 'testid' ? 'testid' : 'mooncodeControlSync'
     for (const child of this.children) {
@@ -31,7 +36,7 @@ class Select extends Element {
 }
 const mount = (taskIntent = 'auto') => {
   const root = new Element()
-  root.dataset = { models: 'moongate/example', selectedModel: 'moongate/example', taskIntent }
+  root.dataset = { runtime: 'mooncode-composer-controls-v1', models: 'moongate/example', selectedModel: 'moongate/example', taskIntent }
   const sync = new Input(); sync.dataset.mooncodeControlSync = 'task-intent'; root.append(sync)
   const scope = { querySelectorAll: selector => selector === '[data-runtime="mooncode-composer-controls-v1"]' ? [root] : [] }
   return { root, sync, scope }
@@ -58,14 +63,14 @@ test('task purpose lazy control survives repeat install reset and reopen', () =>
     root.dataset.taskIntent = 'read_only'
     installMoonCodeDeveloperTools(scope)
     assert.equal(select.value, 'read_only')
-    assert.equal(root.children.length, 4)
+    assert.equal(root.children.length, 3)
     root.dataset.taskIntent = 'auto'
     installMoonCodeDeveloperTools(scope)
     assert.equal(select.value, 'auto')
     const reopened = mount('workspace_change')
     installMoonCodeDeveloperTools(reopened.scope)
     assert.equal(reopened.root.querySelector('[data-testid="mooncode-task-intent-select"]').value, 'workspace_change')
-    assert.equal(reopened.root.children.length, 4)
+    assert.equal(reopened.root.children.length, 3)
   } finally {
     for (const [name, value] of prior) value === undefined ? delete globalThis[name] : globalThis[name] = value
   }

@@ -806,9 +806,8 @@ fn moonclaw_configuration_evidence_from_values(
 ) -> Json {
   {
     "configured": service_configured,
-    "valid": repair_available ||
-    !installed ||
-    (service_configured && configuration_valid),
+    "valid": !repair_available &&
+    (!installed || (service_configured && configuration_valid)),
     "reason": if repair_available {
       "stale-managed-service-config"
     } else if !installed {

@@ -294,6 +294,11 @@ pub fn moonclaw_task_events_route() -> String {
 }
 
 ///|
+pub fn moonclaw_task_cancel_route() -> String {
+  desktop_api_path(["api", "moonclaw"]) + "/tasks/<task-id>/cancel"
+}
+
+///|
 pub fn moonclaw_supervisor_activation_route() -> String {
   moonclaw_route("supervisors/activate")
 }
@@ -677,6 +682,7 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(moonclaw_route("events"), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("chat"), ["POST"]),
     desktop_api_route_contract(moonclaw_task_events_route(), ["GET", "HEAD"]),
+    desktop_api_route_contract(moonclaw_task_cancel_route(), ["POST"]),
     desktop_api_route_contract(moonclaw_run_artifacts_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("daemon"), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("daemon/install"), ["POST"]),

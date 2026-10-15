@@ -28,6 +28,18 @@ async fn route_moonclaw_api(
       }
       true
     }
+    ["api", "moonclaw", "tasks", task_id, "cancel"] => {
+      let endpoint = @desk.moonclaw_task_cancel_route()
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        ignore(body)
+        handle_moonclaw_general_task_cancel(
+          workspace_root, task_id, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "moonclaw", "runs"] => {
       let endpoint = @desk.moonclaw_route("runs")
       if desktop_api_route_accepts_read(endpoint, method_) {

@@ -185,29 +185,29 @@
   overflow: auto;
 }
 
-.mooncode-center:has(.mooncode-git-context) {
+.mooncode-center:has(> .mooncode-git-context) {
   display: flex;
   flex-direction: column;
 }
 
-.mooncode-center:has(.mooncode-git-context) .mooncode-context-bar,
-.mooncode-center:has(.mooncode-git-context) .mooncode-git-context,
-.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors,
-.mooncode-center:has(.mooncode-git-context) .mooncode-developer-tools {
+.mooncode-center:has(> .mooncode-git-context) .mooncode-context-bar,
+.mooncode-center:has(> .mooncode-git-context) .mooncode-git-context,
+.mooncode-center:has(> .mooncode-git-context) .mooncode-workspace-editors,
+.mooncode-center:has(> .mooncode-git-context) .mooncode-developer-tools {
   flex: 0 0 auto;
 }
 
-.mooncode-center:has(.mooncode-git-context) .mooncode-chat-surface {
+.mooncode-center:has(> .mooncode-git-context) .mooncode-chat-surface {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open] {
+.mooncode-center:has(> .mooncode-git-context) .mooncode-workspace-editors[open] {
   max-height: min(60vh, 560px);
   overflow: auto;
 }
 
-.mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors-body {
+.mooncode-center:has(> .mooncode-git-context) .mooncode-workspace-editors-body {
   max-height: min(54vh, 500px);
 }
 
@@ -754,25 +754,25 @@ button.mooncode-git-line-number:focus-visible {
     margin: 8px;
   }
 
-  .code-main:has(.mooncode-git-context) {
+  .code-main:has(> .mooncode-center > .mooncode-git-context) {
     grid-template-rows: clamp(180px, 24dvh, 240px) minmax(0, 1fr);
   }
 
-  .mooncode-center:has(.mooncode-git-context) {
+  .mooncode-center:has(> .mooncode-git-context) {
     overflow-y: auto;
     overscroll-behavior: contain;
   }
 
-  .mooncode-center:has(.mooncode-git-context) .mooncode-chat-surface {
+  .mooncode-center:has(> .mooncode-git-context) .mooncode-chat-surface {
     flex: 0 0 auto;
     min-height: min(520px, 62dvh);
   }
 
-  .mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open] {
+  .mooncode-center:has(> .mooncode-git-context) .mooncode-workspace-editors[open] {
     max-height: min(260px, 32dvh);
   }
 
-  .mooncode-center:has(.mooncode-git-context) .mooncode-workspace-editors[open]:has(.mooncode-workspace-editors-body[data-coding-focus="true"]) {
+  .mooncode-center:has(> .mooncode-git-context) .mooncode-workspace-editors[open]:has(.mooncode-workspace-editors-body[data-coding-focus="true"]) {
     max-height: min(680px, 68dvh);
   }
 

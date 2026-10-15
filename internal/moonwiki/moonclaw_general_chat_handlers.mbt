@@ -107,6 +107,8 @@ fn moonclaw_general_chat_response(
   automation_suggestion : Json,
   preferences_used : Int,
   preference_ids : Array[String],
+  events_cursor? : String = "start",
+  message_id? : String = "",
 ) -> Json {
   {
     "task_id": task_id,
@@ -118,6 +120,8 @@ fn moonclaw_general_chat_response(
     },
     "queued": queued,
     "owner": "moonclaw-general-agent",
+    "events_cursor": events_cursor,
+    "message_id": message_id,
     "automation_suggestion": automation_suggestion,
     "preferences_used": preferences_used,
     "preference_ids": Json::array(preference_ids.map(id => Json::string(id))),
@@ -267,6 +271,7 @@ fn moonclaw_general_new_task_request(
   workspace_root : String,
   content : String,
   routed_model : String,
+  workspace_trust? : String = "unknown",
 ) -> Json {
   {
     "name": "MoonDesk · " + @desk.display_name(workspace_root),
@@ -275,7 +280,7 @@ fn moonclaw_general_new_task_request(
     "cwd": workspace_root,
     "web_search": true,
     "source_kind": "moondesk.general",
-    "workspace_trust": "unknown",
+    "workspace_trust": workspace_trust,
   }
 }
 
@@ -404,6 +409,12 @@ async fn handle_moonclaw_general_chat(
         return
       }
     }
+    if moonclaw_general_task_workspace(existing) != workspace.root_path {
+      send_api_error(
+        conn, method_, 403, "Forbidden", "Task belongs to a different workspace",
+      )
+      return
+    }
     if !moonclaw_general_existing_task_is_routed(existing) {
       send_api_error(
         conn, method_, 409, "Conflict", "This conversation predates MoonGate routing. Start a new chat.",
@@ -429,6 +440,11 @@ async fn handle_moonclaw_general_chat(
       workspace.root_path,
       content,
       routed_model,
+      workspace_trust=moonclaw_general_workspace_trust(
+        workspace_root,
+        workspace_id,
+        workspace.root_path,
+      ),
     )
     match moonclaw_post_json(daemon, "/v1/task", request) {
       Err(error) => send_api_error(conn, method_, 502, "Bad Gateway", error)
@@ -453,6 +469,7 @@ async fn handle_moonclaw_general_chat(
                 automation_suggestion,
                 preferences_used,
                 preference_ids,
+                message_id=json_string(message_response, "id", default=""),
               ),
             )
           {
@@ -482,6 +499,14 @@ async fn handle_moonclaw_general_chat(
       "message": { "role": "user", "content": content },
       "web_search": true,
     }
+    let events_cursor = match
+      moonclaw_general_task_head_cursor(daemon, task_id) {
+      Ok(value) => value
+      Err(error) => {
+        send_api_error(conn, method_, 502, "Bad Gateway", error)
+        return
+      }
+    }
     match
       moonclaw_post_json(daemon, "/v1/task/" + task_id + "/message", request) {
       Err(error) => send_api_error(conn, method_, 502, "Bad Gateway", error)
@@ -506,6 +531,8 @@ async fn handle_moonclaw_general_chat(
               automation_suggestion,
               preferences_used,
               preference_ids,
+              events_cursor~,
+              message_id=json_string(response, "id", default=""),
             ),
           )
         }
@@ -533,6 +560,19 @@ async fn handle_moonclaw_general_task_events(
   if !json_bool(daemon, "running", default=false) {
     send_api_error(
       conn, method_, 503, "Service Unavailable", "The document assistant is not ready",
+    )
+    return
+  }
+  let task = match moonclaw_get_json(daemon, "/v1/task/" + task_id) {
+    Ok(value) => value
+    Err(error) => {
+      send_api_error(conn, method_, 502, "Bad Gateway", error)
+      return
+    }
+  }
+  if !moonclaw_general_task_belongs_to_suite(workspace_root, task) {
+    send_api_error(
+      conn, method_, 403, "Forbidden", "Task is outside this workspace",
     )
     return
   }

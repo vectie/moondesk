@@ -40,6 +40,15 @@ fn update_navigation_actions(
       } else {
         select_workspace_action(dispatch, workspace_id, model)
       }
+    OpenMoonBook(workspace_id, action) =>
+      if markdown_navigation_needs_confirmation(model, true) {
+        queue_markdown_navigation(
+          model,
+          PendingMoonBookAction(workspace_id, action),
+        )
+      } else {
+        open_moonbook_action(dispatch, workspace_id, action, model)
+      }
     SelectPath(path) =>
       if markdown_navigation_needs_confirmation(
           model,
@@ -48,6 +57,21 @@ fn update_navigation_actions(
         queue_markdown_navigation(model, PendingPath(path))
       } else {
         select_path_action(dispatch, model, path)
+      }
+    OpenWorkFile(path) =>
+      if markdown_navigation_needs_confirmation(
+          model,
+          path != model.markdown_editor_path,
+        ) {
+        queue_markdown_navigation(model, PendingWorkFile(path))
+      } else {
+        open_work_file_action(dispatch, model, path)
+      }
+    ReturnToWork =>
+      if markdown_navigation_needs_confirmation(model, true) {
+        queue_markdown_navigation(model, PendingWorkReturn)
+      } else {
+        return_to_work_action(dispatch, model)
       }
     OpenDirectory(path) =>
       if markdown_navigation_needs_confirmation(model, true) {
@@ -147,6 +171,23 @@ fn confirm_markdown_navigation_action(
       select_activity_action(dispatch, activity, cleared)
     PendingWorkspace(workspace_id) =>
       select_workspace_action(dispatch, workspace_id, cleared)
+    PendingMoonBookAction(workspace_id, action) =>
+      open_moonbook_action(dispatch, workspace_id, action, cleared)
+    PendingWorkFile(path) => open_work_file_action(dispatch, cleared, path)
+    PendingWorkSearch(workspace_id, path) =>
+      choose_universal_search_result(
+        dispatch, cleared, workspace_id, path, "open",
+      )
+    PendingWorkReturn => return_to_work_action(dispatch, cleared)
+    PendingWorkThread(task, path, entries, position) =>
+      restore_wiki_chat_thread(
+        dispatch,
+        cleared,
+        task,
+        path,
+        entries,
+        position_text=position,
+      )
     PendingPath(path) => select_path_action(dispatch, cleared, path)
     PendingDirectory(path) => open_directory_action(dispatch, cleared, path)
     PendingQuickPath(path) => open_quick_path_action(dispatch, path, cleared)
@@ -237,6 +278,67 @@ fn select_workspace_action(
   workspace_id : String,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if workspace_id == model.selected_workspace_id {
+    return (@rabbita.none, model)
+  }
+  let (cmd, next) = select_workspace_fresh_action(dispatch, workspace_id, {
+    ..model,
+    book_positions: remember_book_work(model),
+  })
+  if next.selected_workspace_id != workspace_id {
+    return (cmd, next)
+  }
+  let restored = restore_book_work(next)
+  let (viewer_cmd, office_editor) = if restored.workspace_mode == MoonWiki {
+    open_office_path_transition(
+      dispatch,
+      restored.office_editor,
+      restored.selected_path,
+    )
+  } else {
+    (@rabbita.none, restored.office_editor)
+  }
+  (
+    @rabbita.batch([
+      cmd,
+      viewer_cmd,
+      if restored.workspace_mode == MoonCode &&
+        restored.selected_mooncode_session_id != "" {
+        @rabbita.batch([
+          fetch_mooncode_selected_session_cmd(
+            dispatch,
+            restored.selected_mooncode_session_id,
+          ),
+          mooncode_watch_cmd(dispatch, restored),
+        ])
+      } else {
+        @rabbita.none
+      },
+      if restored.wiki_chat_stream_task_id != "" {
+        start_wiki_chat_stream_cmd(
+          dispatch,
+          restored.wiki_chat_stream_task_id,
+          restored.wiki_chat_stream_cursor,
+        )
+      } else {
+        @rabbita.none
+      },
+      sync_workspace_context_cmd(workspace_id, restored.selected_path),
+      sync_mooncode_context_cmd(
+        workspace_id,
+        restored.selected_mooncode_session_id,
+      ),
+    ]),
+    { ..restored, office_editor, work_return: Some(work_location(model)), },
+  )
+}
+
+///|
+fn select_workspace_fresh_action(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+  model : Model,
+) -> (@rabbita.Cmd, Model) {
   if workspace_id != model.selected_workspace_id &&
     model.git_review_note.trim() != "" {
     return (
@@ -249,7 +351,12 @@ fn select_workspace_action(
   }
   (
     @rabbita.batch([
-      reload_workspace_cmds(dispatch, workspace_id, ""),
+      reload_workspace_cmds(
+        dispatch,
+        workspace_id,
+        remembered_work_location(model, workspace_id).path,
+        directory=remembered_work_location(model, workspace_id).directory,
+      ),
       sync_workspace_context_cmd(workspace_id, ""),
       sync_mooncode_context_cmd(workspace_id, ""),
       stop_mooncode_watch_cmd(),
@@ -267,6 +374,7 @@ fn select_workspace_action(
     clear_markdown_editor({
       ..model,
       selected_workspace_id: workspace_id,
+      work_title: "",
       requested_workspace_id: workspace_id,
       mooncode_selected_session_loading: false,
       mooncode_auto_select_session: false,
@@ -299,6 +407,8 @@ fn select_workspace_action(
       mooncode_watch_failure_count: 0,
       mooncode_new_chat_active: false,
       mooncode_prompt: "",
+      request_prompt: "",
+      request_status: "draft",
       request_material_paths: [],
       request_material_status: "",
       wiki_agent_task_id: "",
@@ -841,7 +951,11 @@ fn select_workspace_mode_action(
     MoonFlow => Files
     MoonWiki => model.activity
   }
-  let desk_directory = desk_context_directory(model)
+  let desk_directory = if model.selected_path == "" {
+    model.current_directory
+  } else {
+    desk_context_directory(model)
+  }
   let mooncode_listing_issued = mode == MoonCode &&
     (match model.moonclaw_daemon {
       Some(daemon) => daemon.running
@@ -851,11 +965,7 @@ fn select_workspace_mode_action(
     sync_shell_batch(
       mode,
       activity,
-      @rabbita.batch([
-        fetch_pack_apps_cmd(dispatch),
-        fetch_agent_catalog_cmd(dispatch),
-        fetch_moonflow_collaboration_cmd(dispatch, model.selected_workspace_id),
-      ]),
+      @rabbita.batch([fetch_pack_apps_cmd(dispatch)]),
     )
   } else if mode == Desk && model.selected_workspace_id != "" {
     sync_shell_batch(
@@ -939,6 +1049,11 @@ fn select_workspace_mode_action(
   let next = {
     ..clear_if_switching_out_of_markdown_editor(model, mode),
     workspace_mode: mode,
+    work_return: if mode_changed {
+      Some(work_location(model))
+    } else {
+      model.work_return
+    },
     git_projection_workspace_id: if mode == MoonCode {
       mooncode_git_workspace_id(model)
     } else {
@@ -968,11 +1083,7 @@ fn select_workspace_mode_action(
     } else {
       model.desk_location_input
     },
-    desk_filter_query: if mode == Desk {
-      ""
-    } else {
-      model.desk_filter_query
-    },
+    desk_filter_query: model.desk_filter_query,
     entries: if mode == Desk {
       desk_entries_rows_while_loading(
         model,
@@ -1016,11 +1127,7 @@ fn select_workspace_mode_action(
     } else {
       model.mooncode_sessions_error
     },
-    mooncode_prompt: if mode == MoonCode {
-      ""
-    } else {
-      model.mooncode_prompt
-    },
+    mooncode_prompt: model.mooncode_prompt,
     mooncode_new_chat_active: if mode == MoonCode {
       false
     } else {

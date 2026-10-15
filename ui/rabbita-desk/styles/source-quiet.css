@@ -1,0 +1,97 @@
+/* Keep the file and code prominent; richer authoring tools open on demand. */
+.code-workbench-work > .mooncode-workspace-editors > summary {
+  display: none;
+}
+
+.source-editor .source-quiet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-block: 2px 8px;
+}
+
+.source-editor .source-quiet-disclosure {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.source-editor .source-quiet-disclosure[open] {
+  flex: 1 0 100%;
+}
+
+.source-editor .source-quiet-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  width: fit-content;
+  padding: 0 7px;
+  list-style: none;
+  border-radius: 6px;
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.source-editor .source-quiet-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.source-editor .source-quiet-disclosure > summary::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  -webkit-mask: var(--moon-icon-chevron-down) center / contain no-repeat;
+  mask: var(--moon-icon-chevron-down) center / contain no-repeat;
+}
+
+.source-editor .source-quiet-disclosure[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.source-editor .source-quiet-disclosure > summary:hover,
+.source-editor .source-quiet-disclosure[open] > summary {
+  color: var(--mooncode-ink);
+  background: var(--mooncode-field);
+}
+
+.source-editor .source-quiet-disclosure > summary:focus-visible {
+  outline: 2px solid var(--mooncode-accent);
+  outline-offset: 2px;
+}
+
+.source-editor .source-quiet-disclosure-body {
+  max-height: min(32dvh, 320px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-field);
+}
+
+.source-editor .source-quiet-disclosure-body .source-editor-find,
+.source-editor .source-quiet-disclosure-body .source-editor-line-actions {
+  margin-block: 0 8px;
+}
+
+.source-editor .source-quiet-disclosure-body > :last-child {
+  margin-bottom: 0;
+}
+
+.source-editor .source-editor-toolbar {
+  margin-top: 0;
+}
+
+.source-editor .source-editor-assist {
+  margin-top: 8px;
+}
+
+@media (pointer: coarse), (max-width: 780px) {
+  .source-editor .source-quiet-disclosure > summary {
+    min-height: 44px;
+  }
+}

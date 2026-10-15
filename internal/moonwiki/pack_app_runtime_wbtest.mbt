@@ -77,6 +77,195 @@ test "pack app proxy keeps query filters and rejects unsafe query text" {
 }
 
 ///|
+test "pack app proxy forwards explicit octet-stream request bytes" {
+  assert_true(pack_app_proxy_binary_body("application/octet-stream"))
+  assert_true(pack_app_proxy_binary_body("APPLICATION/OCTET-STREAM"))
+  assert_false(pack_app_proxy_binary_body("application/json"))
+  assert_false(pack_app_proxy_binary_body("text/plain"))
+  assert_false(pack_app_proxy_binary_body(""))
+}
+
+///|
+async test "pack app proxy bounds binary request bodies" {
+  let binary = Bytes::from_array([b'P', b'K', b'\x00', b'\xff'])
+  let reader = @io.MemoryReader() <| writer => { writer.write(binary) }
+  defer reader.close()
+  assert_eq(pack_app_proxy_bounded_body(reader), Some(binary))
+  let oversized = Bytes::make(PackAppProxyMaximumBodyBytes + 1, b'x')
+  let large_reader = @io.MemoryReader() <| writer => { writer.write(oversized) }
+  defer large_reader.close()
+  assert_eq(pack_app_proxy_bounded_body(large_reader), None)
+}
+
+///|
+test "declared pack runtime identity is constrained to the app route" {
+  let legacy : Json = {
+    "app_entrypoints": [{ "id": "app", "path": "/apps/sample" }],
+  }
+  assert_eq(
+    pack_app_runtime_identity_declaration(legacy),
+    (false, true, "", ""),
+  )
+  let declared : Json = {
+    "app_entrypoints": [{ "id": "app", "path": "/apps/sample" }],
+    "app_runtime_identity": {
+      "contract": "sample.runtime-identity.v1",
+      "path": "/apps/sample/api/v1/runtime-identity",
+    },
+  }
+  assert_eq(
+    pack_app_runtime_identity_declaration(declared),
+    (
+      true, true, "/apps/sample/api/v1/runtime-identity", "sample.runtime-identity.v1",
+    ),
+  )
+  let outside : Json = {
+    "app_entrypoints": [{ "id": "app", "path": "/apps/sample" }],
+    "app_runtime_identity": {
+      "contract": "sample.runtime-identity.v1",
+      "path": "/private/metadata",
+    },
+  }
+  let (_, outside_valid, _, _) = pack_app_runtime_identity_declaration(outside)
+  assert_false(outside_valid)
+}
+
+///|
+test "pack runtime identity rejects a different version or workspace" {
+  let workspace_ref = pack_app_workspace_ref("/tmp/sample-workspace")
+  let identity : Json = {
+    "contract": "sample.runtime-identity.v1",
+    "pack_id": "sample",
+    "version": "1.2.3",
+    "workspace_ref": workspace_ref,
+  }
+  assert_true(
+    pack_app_runtime_identity_matches(
+      identity, "sample.runtime-identity.v1", "sample", "1.2.3", workspace_ref,
+    ),
+  )
+  assert_false(
+    pack_app_runtime_identity_matches(
+      identity, "sample.runtime-identity.v1", "sample", "1.2.4", workspace_ref,
+    ),
+  )
+  assert_false(
+    pack_app_runtime_identity_matches(
+      identity,
+      "sample.runtime-identity.v1",
+      "sample",
+      "1.2.3",
+      pack_app_workspace_ref("/tmp/other-workspace"),
+    ),
+  )
+  assert_false(
+    pack_app_runtime_identity_matches(
+      identity, "sample.runtime-identity.v2", "sample", "1.2.3", workspace_ref,
+    ),
+  )
+}
+
+///|
+async test "pack catalog and proxy reject an identity bound to another workspace" {
+  let root = "/tmp/moondesk-pack-runtime-identity-wbtest-" +
+    @desk.stable_id("pack-runtime-identity", @async.now().to_string())
+  let installed_root = @pathx.join(root, "installed/sample")
+  @fsx.make_directory(installed_root, recursive=true, exists_ok=true)
+  @fsx.make_directory(active_packs_root(root), recursive=true, exists_ok=true)
+  @fsx.make_directory(
+    pack_apps_state_root(root),
+    recursive=true,
+    exists_ok=true,
+  )
+  let manifest : Json = {
+    "id": "sample",
+    "version": "1.2.3",
+    "app_entrypoints": [{ "id": "app", "path": "/apps/sample" }],
+    "app_runtime_identity": {
+      "contract": "sample.runtime-identity.v1",
+      "path": "/apps/sample/api/v1/runtime-identity",
+    },
+  }
+  @fsx.write_to_file(
+    @pathx.join(installed_root, "pack.json"),
+    manifest.stringify(),
+    create=0o644,
+  )
+  let active : Json = {
+    "pack_id": "sample",
+    "version": "1.2.3",
+    "installed_root": installed_root,
+  }
+  @fsx.write_to_file(
+    @pathx.join(active_packs_root(root), "sample.json"),
+    active.stringify(),
+    create=0o644,
+  )
+  let canonical_root = @fs.realpath(root)
+  let identity = @ref.new(
+    (
+      {
+        "contract": "sample.runtime-identity.v1",
+        "pack_id": "sample",
+        "version": "1.2.3",
+        "workspace_ref": pack_app_workspace_ref(canonical_root),
+      } : Json),
+  )
+  let server = @http.Server::Server(@socket.Addr::parse("127.0.0.1:0"))
+  defer server.close()
+  @async.with_task_group(group => {
+    group.spawn_bg(
+      () => {
+        server.run_forever(
+          (request, _, conn) => send_json(conn, request.meth, identity.val),
+          allow_failure=true,
+        )
+      },
+      no_wait=true,
+      allow_failure=true,
+    )
+    @async.sleep(20)
+    let service_url = "http://127.0.0.1:\{server.addr.port()}"
+    let runtime : Json = {
+      "contract": "moonsuite.pack-app-runtime.v1",
+      "pack_id": "sample",
+      "app_url": service_url + "/apps/sample",
+      "service_url": service_url,
+    }
+    @fsx.write_to_file(
+      @pathx.join(pack_apps_state_root(root), "sample.json"),
+      runtime.stringify(),
+      create=0o644,
+    )
+    assert_true(configured_pack_app(root, "sample") is Some(_))
+    let catalog = installed_pack_apps(root)
+    assert_eq(json_int(catalog, "configured_count", default=0), 1)
+    identity.val = {
+      "contract": "sample.runtime-identity.v1",
+      "pack_id": "sample",
+      "version": "1.2.4",
+      "workspace_ref": pack_app_workspace_ref(canonical_root),
+    }
+    assert_true(configured_pack_app(root, "sample") is None)
+    let wrong_version_catalog = installed_pack_apps(root)
+    assert_eq(json_int(wrong_version_catalog, "configured_count", default=0), 0)
+    identity.val = {
+      "contract": "sample.runtime-identity.v1",
+      "pack_id": "sample",
+      "version": "1.2.3",
+      "workspace_ref": pack_app_workspace_ref("/tmp/another-workspace"),
+    }
+    assert_true(configured_pack_app(root, "sample") is None)
+    let wrong_workspace_catalog = installed_pack_apps(root)
+    assert_eq(
+      json_int(wrong_workspace_catalog, "configured_count", default=0),
+      0,
+    )
+  })
+  @fs.rmdir(root, recursive=true)
+}
+
+///|
 test "template catalog digest rejects tampered presentation and ceilings" {
   let zero = "sha256:" +
     "0000000000000000000000000000000000000000000000000000000000000000"

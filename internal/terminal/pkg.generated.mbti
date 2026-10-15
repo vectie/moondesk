@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/terminal"
+
+// Values
+
+// Errors
+pub suberror TerminalError {
+  TerminalError(String)
+}
+
+// Types and methods
+pub type Session
+pub fn Session::close(Self) -> Unit
+pub fn Session::open(String, columns? : Int, rows? : Int) -> Self raise TerminalError
+pub fn Session::read(Self, Int64) -> (Bytes, Int64, Int64)
+pub fn Session::resize(Self, Int, Int) -> Bool
+pub fn Session::status(Self) -> Int
+pub fn Session::write(Self, Bytes) -> Int
+
+// Type aliases
+
+// Traits

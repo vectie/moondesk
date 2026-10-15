@@ -98,6 +98,7 @@ fn document_review_thread_decision(
   let decided = match action {
     "resolve" =>
       @mooncore.session_with_field(record, "status", "resolved".to_json())
+    "reopen" => @mooncore.session_with_field(record, "status", "open".to_json())
     "pin" => @mooncore.session_with_field(record, "pinned", true.to_json())
     "unpin" => @mooncore.session_with_field(record, "pinned", false.to_json())
     _ => record
@@ -201,7 +202,12 @@ async fn handle_save_document_review_thread(
     .to_owned()
   if workspace_id == "" ||
     document_path == "" ||
-    (!["resolve", "pin", "unpin", "mark-read"].contains(action) && detail == "") {
+    (
+      !["resolve", "reopen", "assign", "pin", "unpin", "mark-read"].contains(
+        action,
+      ) &&
+      detail == ""
+    ) {
     send_api_error(
       conn, method_, 400, "Bad Request", "Review thread fields are required",
     )
@@ -257,7 +263,8 @@ async fn handle_save_document_review_thread(
       break
     }
   }
-  if ["resolve", "reply", "pin", "unpin"].contains(action) && parent is None {
+  if ["resolve", "reopen", "assign", "reply", "pin", "unpin"].contains(action) &&
+    parent is None {
     send_api_error(conn, method_, 404, "Not Found", "Unknown review thread")
     return
   }
@@ -279,7 +286,7 @@ async fn handle_save_document_review_thread(
     })
     return
   }
-  if ["resolve", "pin", "unpin"].contains(action) {
+  if ["resolve", "reopen", "assign", "pin", "unpin"].contains(action) {
     if thread_id == "" {
       send_api_error(conn, method_, 400, "Bad Request", "thread_id is required")
       return
@@ -289,9 +296,21 @@ async fn handle_save_document_review_thread(
     let next = records.map(record => {
       if json_string(record, "id", default="") == thread_id &&
         json_string(record, "kind", default="") == "thread" {
-        let updated = document_review_thread_decision(
+        let decided = document_review_thread_decision(
           record, action, now, parent_revision,
         )
+        let updated = if action == "assign" {
+          @mooncore.session_with_field(
+            decided,
+            "assigned_to",
+            json_string(payload, "assigned_to", default="")
+            .trim()
+            .to_owned()
+            .to_json(),
+          )
+        } else {
+          decided
+        }
         updated_thread = updated
         updated
       } else {

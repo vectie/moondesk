@@ -1,0 +1,70 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn request(args : Array[String]) -> Json {
+  let response = @shell.Cmd("curl", ["-fsS", ..args]).output()
+  response.check()
+  @json.parse(response.stdout())
+}
+
+///|
+async fn main {
+  guard @env.args() is [_, desk_url, town_url] else {
+    fail("Usage: register-desktop-schedule-books.mbtx DESK_URL TOWN_URL")
+  }
+  guard request([desk_url + "/api/workspaces"]) is Array(books) else {
+    fail("MoonDesk workspace catalog unavailable")
+  }
+  let mut registered = 0
+  for book in books {
+    guard book
+      is {
+        "id": String(workspace_id),
+        "name": String(name),
+        "root_path": String(root),
+        "kind": "MoonBook",
+        ..
+      } else {
+      continue
+    }
+    let id = workspace_id
+      .strip_prefix("book-")
+      .unwrap_or(workspace_id[:])
+      .to_owned()
+    // Older Desk libraries contain imported book directories without a book
+    // manifest. Give those existing books their normal identity metadata;
+    // leave all documents, skills and existing manifests in place.
+    if !@fs.exists(root + "/book.json") {
+      let manifest : Json = {
+        "id": id,
+        "name": name,
+        "created_by": "moondesk-workspace-connection",
+        "summary": "Existing MoonDesk book",
+        "version": "1.0.0",
+      }
+      @fs.write_file(
+        root + "/book.json",
+        manifest.stringify(indent=2),
+        create_mode=CreateNew,
+      )
+    }
+    let body : Json = {
+      "book_id": id,
+      "title": name,
+      "purpose": "Tasks and recurring work from MoonDesk",
+      "workspace_root": root,
+    }
+    ignore(
+      request(["--json", body.stringify(), town_url + "/api/book-registrations"]),
+    )
+    registered += 1
+  }
+  println("Registered \{registered} MoonDesk books with MoonTown")
+}

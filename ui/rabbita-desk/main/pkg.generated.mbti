@@ -15,8 +15,6 @@ type Activity derive(Eq)
 
 type ActivityButton
 
-type AgentCatalog derive(@json.FromJson)
-
 type AgentImportEffect
 
 type AgentImportMembers derive(@json.FromJson)
@@ -37,13 +35,13 @@ type AgentImportState
 
 type AgentImportWire derive(@json.FromJson)
 
-type AgentPassportRecord derive(@json.FromJson)
-
 type BookBaseTypeRecord derive(@json.FromJson)
 
 type BookPatternCreationResult derive(@json.FromJson)
 
 type BookPatternRecord derive(@json.FromJson)
+
+type BookWorkPosition
 
 type BrowserLocalImportBatch derive(@json.FromJson)
 
@@ -148,6 +146,8 @@ type LocalImportFile derive(@json.FromJson)
 type MarkdownEditResult derive(@json.FromJson)
 
 type Model
+
+type MoonBookAction derive(Eq)
 
 type MoonClawAuthStatus derive(@json.FromJson)
 
@@ -347,6 +347,8 @@ type PackAppCatalog derive(@json.FromJson)
 
 type PackAppRecord derive(@json.FromJson)
 
+type PackInspection derive(Eq)
+
 type PackTemplateCeilings derive(@json.FromJson)
 
 type PackTemplateCostCeiling derive(@json.FromJson)
@@ -480,6 +482,8 @@ type WorkHumanLineChange derive(Eq, @debug.Debug)
 type WorkHumanRevisionMsg
 
 type WorkHumanRevisionState
+
+type WorkLocation
 
 type WorkResumeState
 

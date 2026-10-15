@@ -1062,10 +1062,13 @@ async fn handle_pack_app_proxy(
     return
   }
   let service_url = json_string(app, "service_url", default="")
-  let target_path = if rest.length() == 0 {
-    json_string(app, "entrypoint_path", default="/")
-  } else {
-    "/" + rest.join("/")
+  let entrypoint_path = json_string(app, "entrypoint_path", default="/")
+  let target_path = match pack_app_proxy_scoped_target(entrypoint_path, rest) {
+    Some(path) => path
+    None => {
+      send_status(conn, 404, "Not Found", "Pack application route not found\n")
+      return
+    }
   }
   let target = service_url + target_path + query_suffix
   let upstream = if method_ is Post ||
@@ -1092,7 +1095,7 @@ async fn handle_pack_app_proxy(
         }
       }
     }
-    let headers : Map[String, String] = {
+    let headers : @http.Headers = {
       "Content-Type": if binary_upload {
         "application/octet-stream"
       } else {
@@ -1142,7 +1145,7 @@ async fn handle_pack_app_proxy(
     target_path,
     json_string(app, "entrypoint_path", default="/"),
   )
-  let headers : Map[String, String] = {
+  let headers : @http.Headers = {
     "content-type": response.headers
     .get("content-type")
     .unwrap_or(fallback_type),

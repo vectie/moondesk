@@ -249,7 +249,7 @@ test('explicit new conversations cannot be auto-restored over by document histor
 import { readFile } from 'node:fs/promises'
 
 const sourcePath = new URL('./workspace-features-runtime.js', import.meta.url)
-const source = await readFile(sourcePath, 'utf8')
+const source = (await readFile(sourcePath, 'utf8')).replace("'./work-journey-runtime.js'", JSON.stringify(new URL('./work-journey-runtime.js', import.meta.url).href))
 
 test('continuation inspection anchors explicitly bypass client route interception', async () => {
   const view = await readFile(new URL('./main/work_continuation_outputs.mbt', import.meta.url), 'utf8')

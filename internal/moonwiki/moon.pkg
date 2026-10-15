@@ -30,6 +30,7 @@ import {
   "vectie/moondesk/internal/preview",
   "vectie/moondesk/internal/review",
   "vectie/moondesk/internal/town",
+  "vectie/moondesk/internal/terminal",
   "vectie/moondesk/internal/trusted_host_process" @trusted_host,
   "vectie/moonleaf",
   "vectie/moonleaf/jsontable",

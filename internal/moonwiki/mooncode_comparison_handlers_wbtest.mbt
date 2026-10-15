@@ -1,4 +1,29 @@
 ///|
+test "partial model comparison retains accepted answer and measured usage" {
+  let normalized = normalized_mooncode_comparison_sessions({
+    "sessions": [
+      {
+        "label": "A",
+        "id": "accepted-a",
+        "model": "chosen-model",
+        "answer": "Actual response",
+        "input_tokens": 12,
+        "output_tokens": 8,
+        "usage_measured": true,
+      },
+    ],
+  })
+  guard normalized is Ok(items) else {
+    fail("Accepted branch must remain available")
+  }
+  assert_eq(items.length(), 1)
+  assert_eq(json_string(items[0], "answer", default=""), "Actual response")
+  assert_eq(json_string(items[0], "model", default=""), "chosen-model")
+  assert_eq(json_int(items[0], "input_tokens", default=0), 12)
+  assert_true(json_bool(items[0], "usage_measured", default=false))
+}
+
+///|
 async test "MoonCode comparisons persist two evidence-bound branches and a selection candidate" {
   let root : String = "/tmp/moondesk-mooncode-comparison-\{@async.now()}"
   let book = @pathx.join(root, "books/comparison-book")

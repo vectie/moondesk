@@ -374,27 +374,24 @@ fn render_markdown_document(
   preview : @desk.DeskPreview,
 ) -> Array[@rabbita.Html] {
   let nodes : Array[@rabbita.Html] = []
-  let mut saw_heading = false
-  for raw in preview.body.split("\n") {
-    let line = raw.trim().to_owned()
-    if line == "" {
-      continue
-    } else if line.has_prefix("# ") {
-      saw_heading = true
-      nodes.push(h1(line[2:].to_owned()))
-    } else if line.has_prefix("## ") {
-      nodes.push(h2(line[3:].to_owned()))
-    } else if line.has_prefix("### ") {
-      nodes.push(h3(line[4:].to_owned()))
-    } else if line.has_prefix("- ") {
-      nodes.push(p(class="doc-list-line", line[2:].to_owned()))
-    } else {
-      nodes.push(p(line))
-    }
-  }
+  let saw_heading = preview.body
+    .split("\n")
+    .any(line => line.trim().has_prefix("# "))
   if !saw_heading {
-    nodes.insert(0, h1(preview.title))
+    nodes.push(h1(preview.title))
   }
+  // Share Code's Markdown renderer so tables, inline formatting and fenced
+  // code render the same in a report and its conversation. Preserve the full
+  // source, including whitespace, for live editor updates.
+  nodes.push(
+    div(
+      class="book-markdown-source",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "mooncode-markdown-source")
+        .aria_label("Document content"),
+      preview.body,
+    ),
+  )
   if preview.warnings.length() > 0 {
     nodes.push(render_preview_warnings(preview))
   }

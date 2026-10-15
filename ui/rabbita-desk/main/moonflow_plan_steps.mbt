@@ -14,19 +14,32 @@ fn moonflow_plan_safe_id(id : String) -> Bool {
 }
 
 ///|
-fn moonflow_plan_validate_templates(composition : MoonFlowComposition, fields : Array[MoonFlowPlanFields]) -> Unit raise {
+fn moonflow_plan_validate_templates(
+  composition : MoonFlowComposition,
+  fields : Array[MoonFlowPlanFields],
+) -> Unit raise {
   let source_ids = composition.items.map(item => item.work_item_id)
   let seen : Array[String] = []
   guard fields.length() <= 256 else { fail("Too many saved work items") }
   for item in fields {
-    guard !seen.contains(item.work_item_id) else { fail("Duplicate work item ID") }
+    guard !seen.contains(item.work_item_id) else {
+      fail("Duplicate work item ID")
+    }
     seen.push(item.work_item_id)
     match item.source_item_id {
       Some(template) => {
-        guard moonflow_plan_safe_id(item.work_item_id) && !source_ids.contains(item.work_item_id) && source_ids.contains(template) else { fail("Duplicate must name an original source operation and a safe new ID") }
+        guard moonflow_plan_safe_id(item.work_item_id) &&
+          !source_ids.contains(item.work_item_id) &&
+          source_ids.contains(template) else {
+          fail(
+            "Duplicate must name an original source operation and a safe new ID",
+          )
+        }
       }
       None => {
-        guard source_ids.contains(item.work_item_id) else { fail("Unknown source work item") }
+        guard source_ids.contains(item.work_item_id) else {
+          fail("Unknown source work item")
+        }
       }
     }
   }

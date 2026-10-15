@@ -83,7 +83,19 @@ test "Home complementary landmarks have distinct names" {
     }),
   )
   assert_eq(markup.split("aria-label=\"MoonBook library\"").length(), 2)
-  assert_eq(markup.split("aria-label=\"Selection details\"").length(), 2)
+  assert_eq(
+    markup
+    .split("<aside")
+    .filter(part => {
+      part
+      .split(">")
+      .next()
+      .unwrap()
+      .contains("aria-label=\"Selection details\"")
+    })
+    .length(),
+    1,
+  )
 }
 
 ///|
@@ -155,7 +167,8 @@ test "navigation selection and destination announcement share current mode" {
   assert_eq(markup.split("aria-label=\"Primary destinations\"").length(), 3)
   assert_eq(markup.split("aria-label=\"Wiki sections\"").length(), 2)
   assert_eq(markup.split("aria-current=\"page\"").length(), 4)
-  assert_eq(markup.split("aria-pressed=\"true\"").length(), 4)
+  // The book picker also exposes its current book as a pressed option.
+  assert_eq(markup.split("aria-pressed=\"true\"").length(), 5)
   assert_eq(markup.split("aria-current=\"false\"").length(), 13)
   assert_eq(markup.split("class=\"mode-button active\"").length(), 3)
   assert_eq(markup.split("class=\"workspace-tab active\"").length(), 2)

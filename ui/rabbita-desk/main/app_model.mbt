@@ -29,6 +29,9 @@ struct Model {
   office_editor : OfficeEditorState
   bootstrapped : Bool
   workspace_mode : WorkspaceMode
+  book_positions : Array[BookWorkPosition]
+  work_return : WorkLocation?
+  work_title : String
   activity : Activity
   command_open : Bool
   command_query : String
@@ -41,8 +44,8 @@ struct Model {
   moonsuite_products : Array[MoonSuiteProduct]
   pack_apps : Array[PackAppRecord]
   pack_apps_status : String
-  agent_passports : Array[AgentPassportRecord]
-  agent_catalog_status : String
+  moonbook_query : String
+  pack_inspection : PackInspection?
   collaboration_surface : CollaborationSurfaceProjection
   collaboration_status : String
   collaboration_message : String
@@ -353,7 +356,6 @@ enum Msg {
   LibraryFolderPicked(Result[String, String])
   SelectedLibrary(Result[WorkspaceMetadata, String])
   LoadedPackApps(Result[PackAppCatalog, String])
-  LoadedAgentCatalog(Result[AgentCatalog, String])
   LoadedMoonFlowCollaboration(
     String,
     Result[MoonFlowCollaborationReply, String]
@@ -617,6 +619,9 @@ enum Msg {
   RefreshMoonCodeMetadata(Int)
   ResumeMoonCodeWatch(Int, String)
   SelectWorkspace(String)
+  OpenMoonBook(String, MoonBookAction)
+  OpenWorkFile(String)
+  ReturnToWork
   SelectPath(String)
   OpenDirectory(String)
   NavigateDeskBack
@@ -687,6 +692,8 @@ enum Msg {
   SaveMarkdownEdit
   StageSelectedLink
   SetSearchQuery(String)
+  SetMoonBookQuery(String)
+  SetPackInspection(PackInspection?)
   SearchNow
   SetDeskSort(DeskSortKey)
   SetDeskFilterQuery(String)

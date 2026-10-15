@@ -311,9 +311,7 @@ test "Quick Access current Book empty state and rendered history controls stay h
     ),
   )
   assert_true(empty.contains("desk-quick-access-empty"))
-  assert_true(
-    empty.contains("No favorites or recent files in this MoonBook yet"),
-  )
+  assert_true(empty.contains("No favorites or recent files yet."))
   let (_, opened) = update(
     dispatch,
     OpenQuickPath("raw/report.md"),
