@@ -1675,6 +1675,7 @@ const zhHans = {
   "Install Code assistance": "安装代码辅助",
   "Repair Code assistance": "修复代码辅助",
   "Connect Codex": "连接 Codex",
+  "Scan connection QR": "扫描连接二维码",
   "Review configuration": "检查配置",
   "Check again": "再次检查",
   "Installing Code assistance…": "正在安装代码辅助…",

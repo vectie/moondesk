@@ -10,6 +10,12 @@ fn render_settings_pane(
       div(class="pane-heading", [
         div([p(class="eyebrow", "Book tools"), h2("More")]),
       ]),
+      button(
+        type_="button",
+        class="secondary-button full",
+        attrs=@html.Attrs::build().data_set("provider-connection-import", ""),
+        "Scan connection QR",
+      ),
       section(class="side-section attention-summary", [
         h3("Needs your attention"),
         div(class="attention-counts", [

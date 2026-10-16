@@ -321,6 +321,12 @@ fn render_moongate_setup(
       ]),
       render_home_code_assistance_public(dispatch, model, state, action),
       render_code_assistance_technical_details(model),
+      button(
+        type_="button",
+        class="secondary-button full",
+        attrs=@html.Attrs::build().data_set("provider-connection-import", ""),
+        "Scan connection QR",
+      ),
     ],
   )
 }

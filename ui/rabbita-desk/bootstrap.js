@@ -1,4 +1,5 @@
 import '/styles.css'
+import '/styles/provider-connection.css'
 import '/styles/product-shell.css'
 import '/styles/mooncode-workflow.css'
 import '/styles/mooncode-tool-transcript.css'
@@ -46,6 +47,7 @@ if (app) {
 
 const startWorkspace = () => {
   void import('./quiet-controls-runtime.js')
+  void import('./provider-connection-runtime.js')
   // Keep the shell and the generated Rabbita application as independent async
   // chunks. The shell can parse and paint the loading surface without waiting
   // for either the interaction handlers or the multi-megabyte application.

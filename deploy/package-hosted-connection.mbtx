@@ -1,0 +1,194 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+}
+
+///|
+async fn command(program : String, args : Array[String]) -> String {
+  let result = @shell.Cmd(program, args).output()
+  result.check()
+  result.stdout().trim().to_owned()
+}
+
+///|
+async fn digest(path : String) -> String {
+  command("sha256sum", [path]).split(" ").next().unwrap().to_owned()
+}
+
+///|
+async fn size(path : String) -> Int {
+  @string.parse_int(command("stat", ["-c", "%s", path]))
+}
+
+///|
+async fn write_blob(root : String, name : String, value : Json) -> Json {
+  let path = root + "/" + name
+  @fs.write_file(path, value.stringify(), create_mode=CreateNew)
+  let hash = digest(path)
+  let bytes = size(path)
+  @fs.rename(path, root + "/blobs/sha256/" + hash)
+  { "digest": "sha256:" + hash, "size": bytes }
+}
+
+///|
+async fn main {
+  guard @env.args() is [_, base, binary, ui, root, image] else {
+    fail(
+      "Usage: package-hosted-webide.mbtx BASE_OCI DESKTOP_BINARY UI_DIR NEW_WORK_DIR IMAGE_TAG",
+    )
+  }
+  guard command("uname", ["-m"]) == "x86_64" else {
+    fail("Package MoonDesk on its Linux amd64 build host")
+  }
+  @fs.mkdir(root, permission=0o700)
+  @shell.Cmd("tar", ["-xf", base, "-C", root]).run()
+  let index = @json.parse(@fs.read_file(root + "/index.json").text())
+  guard index is { "manifests": [{ "digest": String(manifest_hash), .. }], .. } else {
+    fail("Expected a single-platform OCI image")
+  }
+  let manifest = @json.parse(
+    @fs.read_file(
+      root +
+      "/blobs/sha256/" +
+      manifest_hash.strip_prefix("sha256:").unwrap().to_owned(),
+    ).text(),
+  )
+  guard manifest is Object(fields) &&
+    manifest
+    is {
+      "config": { "digest": String(config_hash), .. },
+      "layers": Array(layers),
+      ..
+    } else {
+    fail("Invalid OCI manifest")
+  }
+  let config = @json.parse(
+    @fs.read_file(
+      root +
+      "/blobs/sha256/" +
+      config_hash.strip_prefix("sha256:").unwrap().to_owned(),
+    ).text(),
+  )
+  guard config
+    is {
+      "architecture": "amd64",
+      "os": "linux",
+      "config": Object(runtime),
+      "rootfs": { "diff_ids": Array(diffs), .. },
+      ..
+    } else {
+    fail("Expected Linux amd64 base")
+  }
+  let layer = root + "/layer"
+  @shell.Cmd("install", [
+    "-d",
+    layer + "/usr/local/bin",
+    layer + "/opt/moondesk/ui",
+  ]).run()
+  @shell.Cmd("install", ["-m", "755", binary, layer + "/usr/local/bin/moondesk"]).run()
+  @shell.Cmd("cp", ["-a", ui + "/.", layer + "/opt/moondesk/ui/"]).run()
+  // async/tls loads OpenSSL dynamically; ldd on the binary cannot find it.
+  let tls_version = if @fs.exists("/lib/x86_64-linux-gnu/libssl.so.3") {
+    "3"
+  } else {
+    "1.1"
+  }
+  let tls_libraries = [
+    "/lib/x86_64-linux-gnu/libssl.so." + tls_version,
+    "/lib/x86_64-linux-gnu/libcrypto.so." + tls_version,
+  ]
+  for library in tls_libraries {
+    @shell.Cmd("install", ["-D", "-m", "644", library, layer + library]).run()
+  }
+  for
+    destination in [
+      "/etc/ssl/certs/ca-certificates.crt", "/usr/lib/ssl/cert.pem",
+    ] {
+    @shell.Cmd("install", [
+      "-D",
+      "-m",
+      "644",
+      "/etc/ssl/certs/ca-certificates.crt",
+      layer + destination,
+    ]).run()
+  }
+  for executable in [binary, ..tls_libraries] {
+    for line in command("ldd", [executable]).split("\n") {
+      for part in line.trim().split(" ") {
+        if part.has_prefix("/") {
+          let path = part.to_owned()
+          let parent = path[:path.rev_find("/").unwrap()].to_owned()
+          @shell.Cmd("install", ["-d", layer + parent]).run()
+          @shell.Cmd("cp", ["-L", path, layer + path]).run()
+        }
+      }
+    }
+  }
+  let archive = root + "/moondesk-layer.tar"
+  @shell.Cmd("tar", [
+    "--owner=0", "--group=0", "--mode=u+rwX,go+rX", "-C", layer, "-cf", archive,
+    ".",
+  ]).run()
+  diffs.push(Json::string("sha256:" + digest(archive)))
+  @shell.Cmd("gzip", ["-n", "-k", archive]).run()
+  let hash = digest(archive + ".gz")
+  let bytes = size(archive + ".gz")
+  @fs.rename(archive + ".gz", root + "/blobs/sha256/" + hash)
+  layers.push({
+    "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+    "digest": "sha256:" + hash,
+    "size": bytes,
+  })
+  fields["mediaType"] = Json::string(
+    "application/vnd.oci.image.manifest.v1+json",
+  )
+  for entry in layers {
+    guard entry is Object(layer_fields) else {
+      fail("Invalid layer descriptor")
+    }
+    if layer_fields.get("mediaType") ==
+      Some(Json::string("application/vnd.docker.image.rootfs.diff.tar.gzip")) {
+      layer_fields["mediaType"] = Json::string(
+        "application/vnd.oci.image.layer.v1.tar+gzip",
+      )
+    }
+  }
+  ignore(runtime) // Preserve the existing entrypoint, user and runtime configuration.
+  guard write_blob(root, "new-config.json", config) is Object(new_config) else {
+    fail("Invalid OCI config")
+  }
+  new_config["mediaType"] = Json::string(
+    "application/vnd.oci.image.config.v1+json",
+  )
+  fields["config"] = Json::object(new_config)
+  guard write_blob(root, "new-manifest.json", manifest) is Object(descriptor) else {
+    fail("Invalid OCI descriptor")
+  }
+  descriptor["mediaType"] = Json::string(
+    "application/vnd.oci.image.manifest.v1+json",
+  )
+  descriptor["annotations"] = {
+    "org.opencontainers.image.ref.name": image,
+    "io.containerd.image.name": image,
+  }
+  descriptor["platform"] = { "architecture": "amd64", "os": "linux" }
+  @fs.write_file(
+    root + "/index.json",
+    ({ "schemaVersion": 2, "manifests": [Json::object(descriptor)] } : Json).stringify(),
+  )
+  @shell.Cmd("tar", [
+    "-C",
+    root,
+    "-cf",
+    root + ".oci.tar",
+    "oci-layout",
+    "index.json",
+    "blobs",
+  ]).run()
+  println(image + " " + descriptor["digest"].stringify())
+}
