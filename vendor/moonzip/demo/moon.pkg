@@ -1,0 +1,34 @@
+import {
+  "ivgtr/moonzip/types",
+  "ivgtr/moonzip/internal/deflate",
+  "ivgtr/moonzip/internal/gzip",
+  "ivgtr/moonzip/internal/zlib",
+  "ivgtr/moonzip/internal/zip",
+}
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "js_ffi.mbt": [ "js" ], "wasm_ffi.mbt": [ "wasm", "wasm-gc" ] },
+  link: {
+    "js": {
+      "exports": [
+        "set_level",
+        "set_encoding",
+        "gzip_compress",
+        "gzip_decompress",
+        "zlib_compress",
+        "zlib_decompress",
+        "deflate_compress",
+        "deflate_decompress",
+        "decompress_auto",
+        "unzip_list",
+        "unzip_extract",
+        "zip_add_entry",
+        "zip_build",
+        "zip_clear",
+      ],
+      "format": "iife",
+    },
+  },
+)

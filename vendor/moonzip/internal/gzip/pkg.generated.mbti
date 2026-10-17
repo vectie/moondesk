@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ivgtr/moonzip/internal/gzip"
+
+import {
+  "ivgtr/moonzip/types",
+}
+
+// Values
+pub fn gunzip_sync(FixedArray[Byte], opts? : @types.InflateOptions) -> FixedArray[Byte] raise @types.FlateError
+
+pub fn gzip_sync(FixedArray[Byte], opts? : @types.GzipOptions) -> FixedArray[Byte]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

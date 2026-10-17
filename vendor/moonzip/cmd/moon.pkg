@@ -1,0 +1,9 @@
+import {
+  "ivgtr/moonzip/types",
+  "ivgtr/moonzip/internal/deflate",
+  "ivgtr/moonzip/internal/gzip",
+  "ivgtr/moonzip/internal/zlib",
+  "ivgtr/moonzip/internal/zip",
+}
+
+pkgtype(kind: "executable")

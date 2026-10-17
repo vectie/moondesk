@@ -4,4 +4,5 @@ members = [
   "../../../moonleaf",
   "../../../moonlib",
   "../../../moonedit",
+  "../../vendor/moonzip",
 ]

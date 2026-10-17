@@ -1,0 +1,13 @@
+name = "ivgtr/moonzip"
+
+version = "0.2.4"
+
+readme = "README.mbt.md"
+
+repository = "https://github.com/ivgtr/moonzip"
+
+license = "MIT"
+
+keywords = [ "compression", "deflate", "gzip", "zlib", "zip" ]
+
+description = "A MoonBit compression library compatible with fflate"

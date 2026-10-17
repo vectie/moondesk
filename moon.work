@@ -2,4 +2,5 @@ members = [
   ".",
   "../moonleaf",
   "../moonlib",
+  "vendor/moonzip",
 ]
