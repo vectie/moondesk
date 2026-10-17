@@ -844,13 +844,11 @@ async fn installed_pack_template_envelopes(
       }
       match envelope {
         Object(fields) => {
-          fields["catalog_id"] = declared_id.to_json()
-          fields["catalog_version"] = declared_version.to_json()
-          fields["catalog_digest"] = json_string(
-            catalog,
-            "catalog_digest",
-            default="",
-          ).to_json()
+          fields["catalog_id"] = ToJson::to_json(declared_id)
+          fields["catalog_version"] = ToJson::to_json(declared_version)
+          fields["catalog_digest"] = ToJson::to_json(
+            json_string(catalog, "catalog_digest", default=""),
+          )
         }
         _ => continue
       }
@@ -1235,9 +1233,11 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
         match app {
           Object(fields) => {
             fields["templates"] = Json::array(templates)
-            fields["template_count"] = templates.length().to_json()
+            fields["template_count"] = ToJson::to_json(templates.length())
             if !identity_valid {
-              fields["configuration_message"] = "The pack service identity does not match this workspace and active version.".to_json()
+              fields["configuration_message"] = ToJson::to_json(
+                "The pack service identity does not match this workspace and active version.",
+              )
             }
           }
           _ => ()

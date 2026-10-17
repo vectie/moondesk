@@ -114,7 +114,11 @@ async fn route_workspace_api(
     ["api", "workspaces"] => {
       let endpoint = @desk.workspaces_route()
       if desktop_api_route_accepts_read(endpoint, method_) {
-        send_json(conn, method_, discover_workspaces(workspace_root).to_json())
+        send_json(
+          conn,
+          method_,
+          ToJson::to_json(discover_workspaces(workspace_root)),
+        )
       } else if desktop_api_route_accepts_post(endpoint, method_) {
         handle_workspace_create(workspace_root, body, method_, conn)
       } else {

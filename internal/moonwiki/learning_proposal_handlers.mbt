@@ -99,9 +99,9 @@ fn learning_proposal_decide(
   let decided = @mooncore.session_with_field(
     current,
     "status",
-    (if action == "accept" { "accepted" } else { "rejected" }).to_json(),
+    ToJson::to_json(if action == "accept" { "accepted" } else { "rejected" }),
   )
-  Ok(@mooncore.session_with_field(decided, "decided_at", now.to_json()))
+  Ok(@mooncore.session_with_field(decided, "decided_at", ToJson::to_json(now)))
 }
 
 ///|

@@ -360,7 +360,7 @@ fn render_work_handoff_files(
         match handoff_relative_path(canonical.root_path, entry.path) {
           None => @html.nothing
           Some(path) =>
-            if entry.kind == @desk.Directory {
+            if entry.kind == Directory {
               button(
                 on_click=dispatch(WorkHandoff(Browse(path))),
                 entry.display_name + "/",

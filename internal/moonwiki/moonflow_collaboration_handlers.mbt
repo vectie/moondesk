@@ -75,8 +75,10 @@ fn moonflow_collaboration_reply(
   handover_catalog~ : Json = Json::null(),
 ) -> Json {
   let fields : Map[String, Json] = Map([])
-  fields["workspace_id"] = workspace_id.to_json()
-  fields["source_contract"] = "moonflow.collaboration-snapshot.v1".to_json()
+  fields["workspace_id"] = ToJson::to_json(workspace_id)
+  fields["source_contract"] = ToJson::to_json(
+    "moonflow.collaboration-snapshot.v1",
+  )
   match snapshot {
     Some(value) => fields["snapshot"] = value
     None => ()

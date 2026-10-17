@@ -96,7 +96,7 @@ test "automatic and explicit restores preserve local saved position fields" {
       },
     }
     let position : Json = {
-      "restore_kind": kind.to_json(),
+      "restore_kind": ToJson::to_json(kind),
       "title": "Saved title",
       "prompt": "Saved prompt",
       "files": ["saved.md"],

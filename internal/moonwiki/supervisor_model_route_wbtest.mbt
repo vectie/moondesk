@@ -161,7 +161,7 @@ test "explicit supervisor route works without a default and missing route never 
   }
   guard pending is Object(fields) else { fail("fixture") }
   let tampered = fields.copy()
-  tampered["request_digest"] = ("sha256:" + "0".repeat(64)).to_json()
+  tampered["request_digest"] = ToJson::to_json("sha256:" + "0".repeat(64))
   assert_true(
     supervisor_bridge_resolve_activation_model(
       Json::object(tampered),
@@ -191,7 +191,7 @@ async test "delegate transport preserves routed model and existing legacy select
       fail("delegate fixture")
     }
     let task = task_fields.copy()
-    task["model"] = model.to_json()
+    task["model"] = ToJson::to_json(model)
     let handoff = handoff_fields.copy()
     handoff["worker_task"] = Json::object(task)
     let result = supervisor_bridge_execution_dispatch(

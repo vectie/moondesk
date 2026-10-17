@@ -19,7 +19,7 @@ fn native_work_fixture_contract() -> Json {
   {
     "schema": "moontown.api.v1",
     "nativeWorkStatusSchema": town_native_work_schema(),
-    "endpoints": endpoints.to_json(),
+    "endpoints": ToJson::to_json(endpoints),
   }
 }
 
@@ -39,8 +39,8 @@ fn native_work_fixture_item() -> Json {
     "engineering_status": "verified",
     "output": "Ordinary result\nNo rewriting: token, config, prompt are words too.\n",
     "generation": 2,
-    "observed_at_ms": 1790986000123UL.to_json(),
-    "retry_after_ms": 1790986060123UL.to_json(),
+    "observed_at_ms": ToJson::to_json(1790986000123UL),
+    "retry_after_ms": ToJson::to_json(1790986060123UL),
     "prompt": "PRIVATE-PROMPT",
     "raw_request": { "body": "PRIVATE-REQUEST" },
     "credential": "PRIVATE-CREDENTIAL",
@@ -145,7 +145,7 @@ test "native work capability remains specific to complete owner surface" {
       @mooncore.session_with_field(
         native_work_fixture_contract(),
         "nativeWorkStatusSchema",
-        "wrong".to_json(),
+        ToJson::to_json("wrong"),
       ),
     ),
   )
@@ -210,60 +210,60 @@ test "native work rejects malformed and incoherent owner projections" {
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "schema",
-        "wrong".to_json(),
+        ToJson::to_json("wrong"),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "revision",
-        (-1).to_json(),
+        ToJson::to_json(-1),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "revision",
-        "7".to_json(),
+        ToJson::to_json("7"),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "revision",
-        7.5.to_json(),
+        ToJson::to_json(7.5),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "items",
-        [native_work_fixture_item(), native_work_fixture_item()].to_json(),
+        ToJson::to_json([native_work_fixture_item(), native_work_fixture_item()]),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "items",
-        [
+        ToJson::to_json([
           @mooncore.session_with_field(
             native_work_fixture_item(),
             "observed_at_ms",
-            (-1).to_json(),
+            ToJson::to_json(-1),
           ),
-        ].to_json(),
+        ]),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "items",
-        [
+        ToJson::to_json([
           @mooncore.session_with_field(
             native_work_fixture_item(),
             "generation",
-            "2".to_json(),
+            ToJson::to_json("2"),
           ),
-        ].to_json(),
+        ]),
       ),
       @mooncore.session_with_field(
         native_work_fixture_list(),
         "items",
-        [
+        ToJson::to_json([
           @mooncore.session_with_field(
             native_work_fixture_item(),
             "generation",
-            2.5.to_json(),
+            ToJson::to_json(2.5),
           ),
-        ].to_json(),
+        ]),
       ),
     ] {
     assert_true(town_native_work_project(payload, SavedList) is Err((503, _)))
@@ -463,9 +463,9 @@ test "native work success and error response helpers are never cacheable" {
 
 ///|
 async test "native work owner deadline cancels stalled operation without retry" {
-  let calls = @ref.new(0)
-  let completed = @ref.new(false)
-  let cleaned = @ref.new(false)
+  let calls = Ref(0)
+  let completed = Ref(false)
+  let cleaned = Ref(false)
   let result = town_native_work_with_deadline(
     () => {
       calls.val += 1

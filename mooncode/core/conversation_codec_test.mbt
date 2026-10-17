@@ -173,7 +173,7 @@ test "canonical conversation codec rejects malformed, unsupported, and wrong-own
     let next_turn = turn_fields.copy()
     next_turn["work"] = { "steps": [{ "evidence": evidence }] }
     let next_fields = fields.copy()
-    next_fields["turns"] = [Json::object(next_turn)].to_json()
+    next_fields["turns"] = ToJson::to_json([Json::object(next_turn)])
     assert_true(
       @core.decode_mooncode_conversation(Json::object(next_fields))
       is Err(Malformed(_)),
@@ -186,7 +186,7 @@ test "canonical conversation codec reports unsupported protocol and contract" {
   let unsupported_protocol : Json = match conversation_fixture() {
     Object(fields) => {
       let next = fields.copy()
-      next["protocol"] = "mooncode.v7".to_json()
+      next["protocol"] = ToJson::to_json("mooncode.v7")
       Json::object(next)
     }
     _ => Json::null()
@@ -199,7 +199,7 @@ test "canonical conversation codec reports unsupported protocol and contract" {
   let unsupported_contract : Json = match conversation_fixture() {
     Object(fields) => {
       let next = fields.copy()
-      next["contract_id"] = "moonsuite-conversation.v9".to_json()
+      next["contract_id"] = ToJson::to_json("moonsuite-conversation.v9")
       Json::object(next)
     }
     _ => Json::null()
@@ -244,12 +244,12 @@ test "conversation v3 requires canonical exact decimal strings" {
   for invalid in ["01", "+1", "-1", " 1", "1 "] {
     let payload = conversation_fixture()
     guard payload is Object(fields) else { fail("fixture") }
-    fields["revision"] = invalid.to_json()
+    fields["revision"] = ToJson::to_json(invalid)
     assert_true(
       @core.decode_mooncode_conversation(payload) is Err(Malformed(_)),
     )
-    fields["revision"] = "4".to_json()
-    fields["last_sequence"] = invalid.to_json()
+    fields["revision"] = ToJson::to_json("4")
+    fields["last_sequence"] = ToJson::to_json(invalid)
     assert_true(
       @core.decode_mooncode_conversation(payload) is Err(Malformed(_)),
     )
@@ -261,7 +261,7 @@ test "conversation v3 requires canonical exact decimal strings" {
     assert_true(
       @core.decode_mooncode_conversation(payload) is Err(Malformed(_)),
     )
-    fields["revision"] = "4".to_json()
+    fields["revision"] = ToJson::to_json("4")
     fields["last_sequence"] = invalid
     assert_true(
       @core.decode_mooncode_conversation(payload) is Err(Malformed(_)),
@@ -273,8 +273,12 @@ test "conversation v3 requires canonical exact decimal strings" {
 test "conversation v3 compares arbitrary decimal magnitude exactly" {
   let payload = conversation_fixture()
   guard payload is Object(fields) else { fail("fixture") }
-  fields["revision"] = "100000000000000000000000000000000000000".to_json()
-  fields["last_sequence"] = "100000000000000000000000000000000000000".to_json()
+  fields["revision"] = ToJson::to_json(
+    "100000000000000000000000000000000000000",
+  )
+  fields["last_sequence"] = ToJson::to_json(
+    "100000000000000000000000000000000000000",
+  )
   assert_true(
     @core.decode_mooncode_conversation(
       payload,

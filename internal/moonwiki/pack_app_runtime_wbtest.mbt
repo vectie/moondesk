@@ -202,7 +202,7 @@ async test "pack catalog and proxy reject an identity bound to another workspace
     create=0o644,
   )
   let canonical_root = @fs.realpath(root)
-  let identity = @ref.new(
+  let identity = Ref(
     (
       {
         "contract": "sample.runtime-identity.v1",

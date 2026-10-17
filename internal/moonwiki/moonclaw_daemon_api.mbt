@@ -242,7 +242,7 @@ fn moonclaw_auth_status_response_from_probe(
       fields["daemon"] = daemon
       fields["auth_readiness"] = auth_readiness
       if moonclaw_daemon_model_ready(daemon) is Some(model_ready) {
-        fields["model_ready"] = model_ready.to_json()
+        fields["model_ready"] = ToJson::to_json(model_ready)
       }
       api_contract_response(
         Json::object(fields),
@@ -359,9 +359,9 @@ fn moonclaw_auth_start_response_from_probe(
         _ => Map([])
       }
       fields["daemon"] = daemon
-      fields["provider"] = provider.to_json()
+      fields["provider"] = ToJson::to_json(provider)
       if moonclaw_daemon_model_ready(daemon) is Some(model_ready) {
-        fields["model_ready"] = model_ready.to_json()
+        fields["model_ready"] = ToJson::to_json(model_ready)
       }
       api_contract_response(
         Json::object(fields),
@@ -464,7 +464,7 @@ fn moonclaw_config_with_openrouter_key(
     Object(fields) => fields.copy()
     _ => Map([])
   }
-  fields["api_key"] = api_key.to_json()
+  fields["api_key"] = ToJson::to_json(api_key)
   Json::object(fields)
 }
 
@@ -1212,12 +1212,12 @@ async fn moonclaw_daemon_configuration_failure(
     Object(fields) => fields.copy()
     _ => {}
   }
-  fields["action"] = action.to_json()
-  fields["ok"] = false.to_json()
-  fields["running"] = false.to_json()
-  fields["status"] = "misconfigured".to_json()
-  fields["message"] = message.to_json()
-  fields["next_action"] = "configure_moonclaw".to_json()
+  fields["action"] = ToJson::to_json(action)
+  fields["ok"] = ToJson::to_json(false)
+  fields["running"] = ToJson::to_json(false)
+  fields["status"] = ToJson::to_json("misconfigured")
+  fields["message"] = ToJson::to_json(message)
+  fields["next_action"] = ToJson::to_json("configure_moonclaw")
   Json::object(fields)
 }
 
@@ -1305,9 +1305,9 @@ fn moonclaw_daemon_info_path(workspace_root : String) -> String {
 ///|
 fn moonclaw_daemon_with_message(daemon : Json, message : String) -> Json {
   @mooncore.session_with_field(
-    @mooncore.session_with_field(daemon, "ok", false.to_json()),
+    @mooncore.session_with_field(daemon, "ok", ToJson::to_json(false)),
     "message",
-    message.to_json(),
+    ToJson::to_json(message),
   )
 }
 

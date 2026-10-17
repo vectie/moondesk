@@ -152,12 +152,12 @@ fn compare_tables(
       values.push(
         before_value
         .map(value => @leafscene.CellValue::Text(value))
-        .unwrap_or(@leafscene.Empty),
+        .unwrap_or(Empty),
       )
       values.push(
         after_value
         .map(value => @leafscene.CellValue::Text(value))
-        .unwrap_or(@leafscene.Empty),
+        .unwrap_or(Empty),
       )
     }
     let status = match (left, right) {

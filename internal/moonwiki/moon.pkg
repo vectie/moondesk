@@ -11,7 +11,6 @@ import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/json",
   "moonbitlang/core/buffer",
-  "moonbitlang/core/ref",
   "moonbitlang/core/string",
   "ivgtr/moonzip",
   "moonbitlang/x/fs" @nativefs,

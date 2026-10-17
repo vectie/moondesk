@@ -144,7 +144,9 @@ async test "all accepted lesson kinds preserve provenance and produce actual exp
     let (path, content) = learning_book_content(saved).unwrap()
     assert_true(path.length() < 120)
     assert_eq(@fsx.read_file(@pathx.join(book, path)), content)
-    assert_true(content.contains("lesson_kind: " + kind.to_json().stringify()))
+    assert_true(
+      content.contains("lesson_kind: " + ToJson::to_json(kind).stringify()),
+    )
     assert_true(content.contains(json_string(proposed, "detail", default="")))
     assert_true(content.contains(json_string(proposed, "source", default="")))
     if kind == "capability" {
@@ -210,7 +212,7 @@ async test "all accepted lesson kinds preserve provenance and produce actual exp
           "accepted": Json::array(accepted),
           "proposed": pending,
           "rejected": rejected,
-          "protected": before.to_json(),
+          "protected": ToJson::to_json(before),
         } : Json).stringify(indent=2),
     )
   }

@@ -268,7 +268,7 @@ fn agent_import_decode_reply(
         handoff_text(reply.exact_import_receipt, "binding_digest") !=
         session.binding_digest ||
         handoff_field(reply.exact_import_receipt, "member_bytes_verified") !=
-        true.to_json()
+        ToJson::to_json(true)
       ) {
       return None
     }

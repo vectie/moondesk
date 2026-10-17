@@ -265,11 +265,11 @@ test "portable Book decodes and renders unchanged real pack wire proof" {
     @rabbita.static_cell(render_portable_book_inspection(prepared, true)),
   )
   assert_eq(
-    html.split("data-testid=\"portable-book-member\"").length(),
+    html.split("data-testid=\"portable-book-member\"").count(),
     prepared.inspection.file_count + 1,
   )
   assert_eq(
-    html.split("data-testid=\"portable-book-exclusion\"").length(),
+    html.split("data-testid=\"portable-book-exclusion\"").count(),
     prepared.inspection.exclusions.length() + 1,
   )
   for file in prepared.inspection.files {

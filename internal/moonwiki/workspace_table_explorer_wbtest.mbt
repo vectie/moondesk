@@ -85,7 +85,7 @@ async test "local HTTP explorer shares CSV TSV JSON JSONL and XLSX projection" {
       })
     @fs.write_file(
       book + "/sales.json",
-      records.to_json().stringify(),
+      ToJson::to_json(records).stringify(),
       create_mode=CreateOrTruncate,
     )
     @fs.write_file(

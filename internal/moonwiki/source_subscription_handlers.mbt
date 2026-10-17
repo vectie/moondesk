@@ -149,14 +149,14 @@ fn source_subscription_activate(
   let active = @mooncore.session_with_field(
     current,
     "status",
-    "active".to_json(),
+    ToJson::to_json("active"),
   )
   let linked = @mooncore.session_with_field(
     active,
     "standing_goal_id",
-    standing_goal_id.to_json(),
+    ToJson::to_json(standing_goal_id),
   )
-  Ok(@mooncore.session_with_field(linked, "updated_at", now.to_json()))
+  Ok(@mooncore.session_with_field(linked, "updated_at", ToJson::to_json(now)))
 }
 
 ///|

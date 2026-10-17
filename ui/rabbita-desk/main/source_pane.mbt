@@ -267,7 +267,7 @@ fn source_pane_editable(state : SourcePaneState) -> Bool {
 
 ///|
 fn source_pane_line_count(state : SourcePaneState) -> Int32 {
-  state.draft.split("\n").length()
+  state.draft.split("\n").count()
 }
 
 ///|

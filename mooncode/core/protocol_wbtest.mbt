@@ -358,7 +358,7 @@ test "mooncode core owns runtime evidence proof contract" {
     },
     0,
     1,
-    ["test_result".to_json()],
+    [ToJson::to_json("test_result")],
     [],
   ).stringify()
   assert_true(gate.contains("\"completion_blocked\":true"))

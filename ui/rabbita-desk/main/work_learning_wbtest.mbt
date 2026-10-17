@@ -194,7 +194,7 @@ test "captured learning permits only uniquely bound completed followup answers" 
     ] {
     let changed = @json.parse(record.stringify())
     if changed is Object(fields) {
-      fields[key] = value.to_json()
+      fields[key] = ToJson::to_json(value)
     }
     assert_eq(work_learning_sources(with_records([changed])).length(), 1)
   }

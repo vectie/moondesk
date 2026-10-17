@@ -2,7 +2,7 @@
 priv struct AgentExportGroupFile {
   source_path : String
   path : String
-} derive(FromJson, ToJson, Eq, Debug)
+} derive(FromJson, ToJson)
 
 ///|
 priv struct AgentExportGroup {
@@ -12,7 +12,7 @@ priv struct AgentExportGroup {
   files : Array[AgentExportGroupFile]
   preview_path : String?
   app_entrypoint : String?
-} derive(FromJson, ToJson, Eq, Debug)
+} derive(FromJson, ToJson)
 
 ///|
 fn agent_export_group_path(path : String) -> Bool {
@@ -113,19 +113,26 @@ fn agent_export_groups(
 
 ///|
 fn agent_export_group_selection(group : AgentExportGroup) -> Json {
+  // Share the typed wire codec with request serialization, retaining this
+  // selection object's original field order and optional-field behavior.
+  let encoded = ToJson::to_json(group)
+  let files = match encoded {
+    { "files": files, .. } => files
+    _ => ToJson::to_json(group.files)
+  }
   let value : Json = {
     "artifact_id": group.artifact_id,
     "label": group.label,
     "mime_type": group.mime_type,
     "included": true,
-    "files": group.files.to_json(),
+    "files": files,
   }
   guard value is Object(fields) else { return value }
   if group.preview_path is Some(path) {
-    fields["preview_path"] = path.to_json()
+    fields["preview_path"] = ToJson::to_json(path)
   }
   if group.app_entrypoint is Some(path) {
-    fields["app_entrypoint"] = path.to_json()
+    fields["app_entrypoint"] = ToJson::to_json(path)
   }
   Json::object(fields)
 }

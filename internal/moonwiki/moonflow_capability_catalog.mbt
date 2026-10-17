@@ -180,35 +180,38 @@ fn moonflow_catalog_enriched_item(item : Json, catalog : Json?) -> Json {
     None => None
   }
   fields["adapter_id"] = match operation {
-    Some(value) => json_string(value, "adapter_id", default="").to_json()
-    None => "".to_json()
+    Some(value) => ToJson::to_json(json_string(value, "adapter_id", default=""))
+    None => ToJson::to_json("")
   }
   fields["claim_ceiling"] = match operation {
-    Some(value) => json_string(value, "claim_ceiling", default="").to_json()
-    None => "".to_json()
+    Some(value) =>
+      ToJson::to_json(json_string(value, "claim_ceiling", default=""))
+    None => ToJson::to_json("")
   }
   fields["review_required"] = match operation {
-    Some(value) => json_bool(value, "review_required", default=false).to_json()
-    None => false.to_json()
+    Some(value) =>
+      ToJson::to_json(json_bool(value, "review_required", default=false))
+    None => ToJson::to_json(false)
   }
   fields["health_checked_at"] = match operation {
-    Some(value) => json_string(value, "health_checked_at", default="").to_json()
-    None => "".to_json()
+    Some(value) =>
+      ToJson::to_json(json_string(value, "health_checked_at", default=""))
+    None => ToJson::to_json("")
   }
   fields["health_valid_until"] = match operation {
     Some(value) =>
-      json_string(value, "health_valid_until", default="").to_json()
-    None => "".to_json()
+      ToJson::to_json(json_string(value, "health_valid_until", default=""))
+    None => ToJson::to_json("")
   }
   fields["health_evidence_ref"] = match operation {
     Some(value) =>
-      json_string(value, "health_evidence_ref", default="").to_json()
-    None => "".to_json()
+      ToJson::to_json(json_string(value, "health_evidence_ref", default=""))
+    None => ToJson::to_json("")
   }
   fields["health_evidence_digest"] = match operation {
     Some(value) =>
-      json_string(value, "health_evidence_digest", default="").to_json()
-    None => "".to_json()
+      ToJson::to_json(json_string(value, "health_evidence_digest", default=""))
+    None => ToJson::to_json("")
   }
   Json::object(fields)
 }

@@ -61,12 +61,12 @@ test "review host mapping uses exact authenticated account Book and existing ind
     "assigned_reviewer": principal,
     "submitted_by": review_test_principal("submitter"),
   }
-  let member : Json = {
+  let membership : Json = {
     "principal": principal,
     "status": "active",
     "roles": ["reviewer"],
   }
-  let snapshot : Json = { "payload": { "memberships": [member] } }
+  let snapshot : Json = { "payload": { "memberships": [membership] } }
   assert_true(moonflow_review_authorized(snapshot, review, principal))
   assert_false(
     moonflow_review_authorized(snapshot, review, review_test_principal("other")),
@@ -152,7 +152,7 @@ test "review payload is exact bounded and excludes browser identity commands and
     ] {
     let changed = @json.parse(payload.stringify())
     if changed is Object(fields) {
-      fields[key] = value.to_json()
+      fields[key] = ToJson::to_json(value)
     }
     assert_false(moonflow_review_request_valid(changed))
   }

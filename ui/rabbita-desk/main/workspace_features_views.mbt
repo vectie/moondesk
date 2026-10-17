@@ -322,3 +322,6 @@ fn render_quiet_work_center(
     ],
   )
 }
+
+///|
+extend WikiChatContextItem with ToJson::{to_json}

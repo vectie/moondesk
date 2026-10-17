@@ -236,9 +236,9 @@ fn portable_book_prepare_body(
   accepted_human_result_base64? : String,
 ) -> Json {
   let fields : Map[String, Json] = {
-    "expected_library": library.to_json(),
-    "operation_id": id.to_json(),
-    "version": version.to_json(),
+    "expected_library": ToJson::to_json(library),
+    "operation_id": ToJson::to_json(id),
+    "version": ToJson::to_json(version),
     "paths": json_string_array(paths),
   }
   if accepted_human_result_base64 is Some(source) {

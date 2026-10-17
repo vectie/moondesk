@@ -46,13 +46,15 @@ fn mooncode_work_session_root(
       mooncode_session_with_field(
         row,
         "book_root",
-        mooncode_work_normalized_root(
-          json_string(
-            row,
-            "book_root",
-            default=json_string(row, "workspace_root", default=""),
+        ToJson::to_json(
+          mooncode_work_normalized_root(
+            json_string(
+              row,
+              "book_root",
+              default=json_string(row, "workspace_root", default=""),
+            ),
           ),
-        ).to_json(),
+        ),
       )
     }),
     workspaces.map(workspace => {
@@ -351,13 +353,13 @@ async fn mooncode_resolve_work_handoff(
   let descriptor = mooncode_session_with_field(
     descriptor,
     "resume_scope",
-    [
+    ToJson::to_json([
       context.suite_root,
       context.books_root,
       context.books_root,
       workspace.id,
       workspace.root_path,
-    ].to_json(),
+    ]),
   )
   let descriptor = if include_session {
     mooncode_work_read_transcript(

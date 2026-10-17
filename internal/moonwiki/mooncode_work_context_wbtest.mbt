@@ -60,14 +60,14 @@ async test "compiled context boundary verifies unchanged changed and missing gen
   )
   let claims = work_handoff_test_claims()
   guard claims is Object(claim_fields) else { fail("claims") }
-  claim_fields["book_root"] = root.to_json()
+  claim_fields["book_root"] = ToJson::to_json(root)
   for item in json_array_items(claims, "delivered_commands") {
     guard json_object_field(item, "command") is Some(Object(command)) else {
       fail("command")
     }
-    command["book_root"] = root.to_json()
+    command["book_root"] = ToJson::to_json(root)
     if json_string(item, "command_id", default="") == "C0" {
-      command["context_path"] = path.to_json()
+      command["context_path"] = ToJson::to_json(path)
     }
   }
   let target : MoonCodeWorkTarget = {

@@ -168,7 +168,7 @@ fn agent_import_effect_cmd(
               "destination_folder": session.destination,
               "package_sha256": reply.source.package_sha256,
               "binding_digest": if session.exact_required {
-                session.binding_digest.to_json()
+                ToJson::to_json(session.binding_digest)
               } else {
                 Json::null()
               },

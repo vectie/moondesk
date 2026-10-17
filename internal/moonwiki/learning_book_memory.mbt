@@ -41,7 +41,7 @@ fn learning_book_content(record : Json) -> Result[(String, String), String] {
       ("created_at", json_string(record, "created_at", default="")),
       ("decided_at", json_string(record, "decided_at", default="")),
     ] {
-    content.write_string(key + ": " + value.to_json().stringify() + "\n")
+    content.write_string(key + ": " + ToJson::to_json(value).stringify() + "\n")
   }
   content.write_string(
     "---\n\n# Accepted Desk lesson\n\nKind: " + label + "\n\n",

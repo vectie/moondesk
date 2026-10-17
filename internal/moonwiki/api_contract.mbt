@@ -6,21 +6,21 @@ fn api_contract_response(
   message~ : String,
   next_action~ : String = "",
 ) -> Json {
-  let with_ok = @mooncore.session_with_field(payload, "ok", ok.to_json())
+  let with_ok = @mooncore.session_with_field(payload, "ok", ToJson::to_json(ok))
   let with_status = @mooncore.session_with_field(
     with_ok,
     "status",
-    status.to_json(),
+    ToJson::to_json(status),
   )
   let with_message = @mooncore.session_with_field(
     with_status,
     "message",
-    message.to_json(),
+    ToJson::to_json(message),
   )
   let with_contract = @mooncore.session_with_field(
     with_message,
     "api_contract",
-    "moonsuite.phase6.v1".to_json(),
+    ToJson::to_json("moonsuite.phase6.v1"),
   )
   if next_action == "" {
     with_contract
@@ -28,7 +28,7 @@ fn api_contract_response(
     @mooncore.session_with_field(
       with_contract,
       "next_action",
-      next_action.to_json(),
+      ToJson::to_json(next_action),
     )
   }
 }
@@ -44,21 +44,25 @@ fn api_service_fields(
   let next = @mooncore.session_with_field(
     payload,
     "service_configured",
-    service_configured.to_json(),
+    ToJson::to_json(service_configured),
   )
   let next = @mooncore.session_with_field(
     next,
     "service_config_path",
-    service_config_path.to_json(),
+    ToJson::to_json(service_config_path),
   )
   let next = @mooncore.session_with_field(
     next,
     "service_command",
-    service_command.to_json(),
+    ToJson::to_json(service_command),
   )
   if service_path == "" {
     next
   } else {
-    @mooncore.session_with_field(next, "service_path", service_path.to_json())
+    @mooncore.session_with_field(
+      next,
+      "service_path",
+      ToJson::to_json(service_path),
+    )
   }
 }

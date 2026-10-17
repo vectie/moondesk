@@ -56,5 +56,5 @@ async fn handle_moonclaw_runs(
       )
     }
   }
-  send_json(conn, method_, runs.to_json())
+  send_json(conn, method_, ToJson::to_json(runs))
 }

@@ -180,7 +180,7 @@ async test "HTTP duplicate review and exports retain query sheet and untouched s
           ])
         } else if format == "xlsx" {
           let document = @moonleaf.open("output.xlsx", bytes.to_fixedarray())
-          guard document is @leafscene.WorkbookDocument(workbook) else {
+          guard document is WorkbookDocument(workbook) else {
             fail("expected workbook")
           }
           assert_eq(

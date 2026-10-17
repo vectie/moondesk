@@ -20,15 +20,13 @@ fn desk_quick_access_scope(model : Model) -> String {
       break
     }
   }
-  [
+  ToJson::to_json([
     model.workspace_suite_root_path,
     model.workspace_books_root_path,
     model.workspace_library_path,
     model.selected_workspace_id,
     root,
-  ]
-  .to_json()
-  .stringify()
+  ]).stringify()
 }
 
 ///|

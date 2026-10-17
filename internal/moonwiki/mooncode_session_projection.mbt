@@ -91,7 +91,7 @@ fn compact_mooncode_session_revision_response(
     response
     |> mooncode_session_with_field("mooncode_conversation", Json::null())
     |> mooncode_session_with_field("mooncode_turn", Json::null())
-    |> mooncode_session_with_field("canonical_unchanged", true.to_json())
+    |> mooncode_session_with_field("canonical_unchanged", ToJson::to_json(true))
   } else {
     response
   }

@@ -506,7 +506,7 @@ fn render_moonflow_plan_prepared(
 fn render_moonflow_plan_capture_limits(receipt : Json) -> @rabbita.Html {
   let limitations = match handoff_field(receipt, "capture_limitations") {
     Array(values) => values
-    String(value) if value != "" => [value.to_json()]
+    String(value) if value != "" => [ToJson::to_json(value)]
     _ => []
   }
   if limitations.is_empty() {

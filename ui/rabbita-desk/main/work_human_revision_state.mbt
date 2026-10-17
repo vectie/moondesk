@@ -212,7 +212,9 @@ fn work_human_revision_saved_matches(
   "/content.txt" &&
   handoff_text(content, "sha256").length() == 64 &&
   handoff_field(content, "size_bytes") ==
-  work_human_revision_utf8_length(handoff_text(operation, "content")).to_json()
+  ToJson::to_json(
+    work_human_revision_utf8_length(handoff_text(operation, "content")),
+  )
 }
 
 ///|

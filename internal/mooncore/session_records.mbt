@@ -21,16 +21,32 @@ pub fn session_response_defaults(
   let next = session_with_default_field(
     session,
     "cwd",
-    workspace_root.to_json(),
+    ToJson::to_json(workspace_root),
   )
-  let next = session_with_default_field(next, "model", "".to_json())
-  let next = session_with_default_field(next, "port", (0).to_json())
-  let next = session_with_default_field(next, "web_search", false.to_json())
-  let next = session_with_default_field(next, "queued_count", (0).to_json())
-  let next = session_with_default_field(next, "title", default_title.to_json())
-  let next = session_with_default_field(next, "created_at", "".to_json())
-  let next = session_with_default_field(next, "updated_at", "".to_json())
-  let next = session_with_default_field(next, "last_message", "".to_json())
+  let next = session_with_default_field(next, "model", ToJson::to_json(""))
+  let next = session_with_default_field(next, "port", ToJson::to_json(0))
+  let next = session_with_default_field(
+    next,
+    "web_search",
+    ToJson::to_json(false),
+  )
+  let next = session_with_default_field(
+    next,
+    "queued_count",
+    ToJson::to_json(0),
+  )
+  let next = session_with_default_field(
+    next,
+    "title",
+    ToJson::to_json(default_title),
+  )
+  let next = session_with_default_field(next, "created_at", ToJson::to_json(""))
+  let next = session_with_default_field(next, "updated_at", ToJson::to_json(""))
+  let next = session_with_default_field(
+    next,
+    "last_message",
+    ToJson::to_json(""),
+  )
   session_with_default_field(next, "transcript", Json::array([]))
 }
 
@@ -82,7 +98,7 @@ pub fn append_transcript_message(
     transcript_message_record(id_prefix~, role~, content~, status~, created_at~),
   )
   let next = session_with_field(session, "transcript", Json::array(messages))
-  session_with_field(next, "updated_at", created_at.to_json())
+  session_with_field(next, "updated_at", ToJson::to_json(created_at))
 }
 
 ///|

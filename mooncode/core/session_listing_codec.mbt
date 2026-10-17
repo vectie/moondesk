@@ -266,29 +266,30 @@ pub fn encode_mooncode_session_summary(
   for key, value in summary.extensions {
     fields[key] = value
   }
-  fields["id"] = summary.id.to_string().to_json()
-  fields["workspace_id"] = summary.workspace_id.to_json()
-  fields["workspace_name"] = summary.workspace_name.to_json()
-  fields["cwd"] = summary.cwd.to_json()
-  fields["title"] = summary.title.to_json()
-  fields["model"] = summary.model.to_json()
-  fields["status"] = summary.status.to_string().to_json()
-  fields["queued_count"] = summary.queued_count.to_json()
-  fields["archived"] = summary.archived.to_json()
+  fields["id"] = ToJson::to_json(summary.id.to_string())
+  fields["workspace_id"] = ToJson::to_json(summary.workspace_id)
+  fields["workspace_name"] = ToJson::to_json(summary.workspace_name)
+  fields["cwd"] = ToJson::to_json(summary.cwd)
+  fields["title"] = ToJson::to_json(summary.title)
+  fields["model"] = ToJson::to_json(summary.model)
+  fields["status"] = ToJson::to_json(summary.status.to_string())
+  fields["queued_count"] = ToJson::to_json(summary.queued_count)
+  fields["archived"] = ToJson::to_json(summary.archived)
   match summary.source {
-    Some(value) => fields["source"] = value.to_json()
+    Some(value) => fields["source"] = ToJson::to_json(value)
     None => ()
   }
   match summary.runtime_session_id {
-    Some(value) => fields["mooncode_runtime_session_id"] = value.to_json()
+    Some(value) =>
+      fields["mooncode_runtime_session_id"] = ToJson::to_json(value)
     None => ()
   }
   match summary.updated_at {
-    Some(value) => fields["updated_at"] = value.to_json()
+    Some(value) => fields["updated_at"] = ToJson::to_json(value)
     None => ()
   }
   match summary.last_message {
-    Some(value) => fields["last_message"] = value.to_json()
+    Some(value) => fields["last_message"] = ToJson::to_json(value)
     None => ()
   }
   Json::object(fields)

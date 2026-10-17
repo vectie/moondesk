@@ -106,7 +106,7 @@ fn mooncode_continuation_result(item : Json, events : Json) -> Json {
     default=json_string(receipt, "claim_id", default=""),
   )
   if !receipt_id.is_empty() {
-    evidence.push(receipt_id.to_json())
+    evidence.push(ToJson::to_json(receipt_id))
   }
   for event in json_array_items(events, "events") {
     if json_string(event, "session_id", default="") != session_id ||
@@ -131,7 +131,7 @@ fn mooncode_continuation_result(item : Json, events : Json) -> Json {
     }
     let id = json_string(event, "id", default="")
     if !id.is_empty() {
-      evidence.push(id.to_json())
+      evidence.push(ToJson::to_json(id))
     }
     let kind = json_string(
       event,
@@ -248,20 +248,26 @@ fn mooncode_continuation_response(
     None => Json::empty_object()
   }
   let fields : Map[String, Json] = {
-    "schema": "moondesk.work-continuation.v1".to_json(),
-    "state": json_string(
-      result,
-      "state",
-      default=if admission == "accepted" { "queued" } else { admission },
-    ).to_json(),
-    "session_id": json_string(
-      json_object_field_or_empty(snapshot, "source"),
-      "session_id",
-      default="",
-    ).to_json(),
-    "admission": admission.to_json(),
-    "message": message.to_json(),
-    "input_status": json_string(snapshot, "input_status", default="verified").to_json(),
+    "schema": ToJson::to_json("moondesk.work-continuation.v1"),
+    "state": ToJson::to_json(
+      json_string(
+        result,
+        "state",
+        default=if admission == "accepted" { "queued" } else { admission },
+      ),
+    ),
+    "session_id": ToJson::to_json(
+      json_string(
+        json_object_field_or_empty(snapshot, "source"),
+        "session_id",
+        default="",
+      ),
+    ),
+    "admission": ToJson::to_json(admission),
+    "message": ToJson::to_json(message),
+    "input_status": ToJson::to_json(
+      json_string(snapshot, "input_status", default="verified"),
+    ),
   }
   for
     key in [

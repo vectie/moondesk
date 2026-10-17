@@ -198,14 +198,14 @@ test "watch v2 requires canonical exact decimal strings" {
   for invalid in ["01", "+1", "-1", " 1", "1 "] {
     assert_true(
       @core.decode_mooncode_watch_text(
-        watch_v2_decimal_fixture(invalid.to_json(), "1".to_json()).stringify(),
+        watch_v2_decimal_fixture(ToJson::to_json(invalid), ToJson::to_json("1")).stringify(),
         current~,
       )
       is Malformed(_),
     )
     assert_true(
       @core.decode_mooncode_watch_text(
-        watch_v2_decimal_fixture("1".to_json(), invalid.to_json()).stringify(),
+        watch_v2_decimal_fixture(ToJson::to_json("1"), ToJson::to_json(invalid)).stringify(),
         current~,
       )
       is Malformed(_),
@@ -214,14 +214,14 @@ test "watch v2 requires canonical exact decimal strings" {
   for invalid in ([1, 1.5] : Array[Json]) {
     assert_true(
       @core.decode_mooncode_watch_text(
-        watch_v2_decimal_fixture(invalid, "1".to_json()).stringify(),
+        watch_v2_decimal_fixture(invalid, ToJson::to_json("1")).stringify(),
         current~,
       )
       is Malformed(_),
     )
     assert_true(
       @core.decode_mooncode_watch_text(
-        watch_v2_decimal_fixture("1".to_json(), invalid).stringify(),
+        watch_v2_decimal_fixture(ToJson::to_json("1"), invalid).stringify(),
         current~,
       )
       is Malformed(_),
@@ -237,8 +237,8 @@ test "watch v2 compares arbitrary decimal magnitude exactly" {
   assert_true(
     @core.decode_mooncode_watch_text(
       watch_v2_decimal_fixture(
-        "99999999999999999999999999999999999999".to_json(),
-        "100000000000000000000000000000000000001".to_json(),
+        ToJson::to_json("99999999999999999999999999999999999999"),
+        ToJson::to_json("100000000000000000000000000000000000001"),
       ).stringify(),
       current~,
     )
@@ -256,7 +256,7 @@ test "typed watch encoder emits canonical v2 snapshot heartbeat and rejects loca
   }
   let provider_metadata : Json = { "region": "test-zone" }
   snapshot_fields["provider_metadata"] = provider_metadata
-  let snapshot = snapshot_fields.to_json()
+  let snapshot = ToJson::to_json(snapshot_fields)
   guard @core.decode_mooncode_selected_session(snapshot) is Ok(session) else {
     fail("expected typed session")
   }

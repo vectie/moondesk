@@ -40,11 +40,11 @@ pub fn mooncode_capability() -> MoonCodeCapability {
       ("capability_surface", native_capability_surface_json()),
       (
         "capability_surface_fingerprint",
-        native_capability_surface_fingerprint().to_json(),
+        ToJson::to_json(native_capability_surface_fingerprint()),
       ),
       (
         "executable_book_lifecycle_contract_id",
-        executable_book_lifecycle_contract_id().to_json(),
+        ToJson::to_json(executable_book_lifecycle_contract_id()),
       ),
       (
         "executable_book_lifecycle_contract",
@@ -61,13 +61,17 @@ pub fn encode_mooncode_capability(capability : MoonCodeCapability) -> Json {
   for key, value in capability.extensions {
     fields[key] = value
   }
-  fields["component"] = capability.component.to_json()
-  fields["provider"] = capability.provider.to_json()
-  fields["protocol"] = capability.protocol.to_json()
-  fields["capability_contract_id"] = capability.capability_contract_id.to_json()
-  fields["native_runtime_ready"] = capability.native_runtime_ready.to_json()
-  fields["runtime_owner"] = capability.runtime_owner.to_json()
-  fields["session_owner"] = capability.session_owner.to_json()
+  fields["component"] = ToJson::to_json(capability.component)
+  fields["provider"] = ToJson::to_json(capability.provider)
+  fields["protocol"] = ToJson::to_json(capability.protocol)
+  fields["capability_contract_id"] = ToJson::to_json(
+    capability.capability_contract_id,
+  )
+  fields["native_runtime_ready"] = ToJson::to_json(
+    capability.native_runtime_ready,
+  )
+  fields["runtime_owner"] = ToJson::to_json(capability.runtime_owner)
+  fields["session_owner"] = ToJson::to_json(capability.session_owner)
   if capability.ownership_extensions.length() > 0 {
     let ownership : Map[String, Json] = Map([])
     for key, value in capability.ownership_extensions {

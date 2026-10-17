@@ -195,7 +195,7 @@ test "adapter rejects semantic incompatibility without calling it malformed" {
   let not_ready = session_with_field(
     base,
     "native_runtime_ready",
-    false.to_json(),
+    ToJson::to_json(false),
   )
   assert_eq(
     json_string(
@@ -208,7 +208,7 @@ test "adapter rejects semantic incompatibility without calling it malformed" {
   let wrong_owner = session_with_field(
     base,
     "runtime_owner",
-    "moondesk".to_json(),
+    ToJson::to_json("moondesk"),
   )
   assert_eq(
     json_string(
@@ -221,7 +221,7 @@ test "adapter rejects semantic incompatibility without calling it malformed" {
   let mismatched_surface = session_with_field(
     json_object_field_or_empty(base, "capability_surface"),
     "capability_surface_fingerprint",
-    "different-fingerprint".to_json(),
+    ToJson::to_json("different-fingerprint"),
   )
   let mismatch = session_with_field(
     base, "capability_surface", mismatched_surface,
@@ -241,7 +241,7 @@ test "adapter keeps explicit version incompatibility distinct" {
   let incompatible_payload = session_with_field(
     supported_runtime_capability_subset("mooncode.v1"),
     "capability_contract_id",
-    "mooncode-native-capability-surface.v8".to_json(),
+    ToJson::to_json("mooncode-native-capability-surface.v8"),
   )
   let incompatible = negotiate_capabilities_json(incompatible_payload)
   assert_eq(

@@ -279,7 +279,7 @@ test "human revision late response cannot replace newer navigation and wrong man
     fail("fixture")
   }
   let changed = revision.copy()
-  changed["task_id"] = "other".to_json()
+  changed["task_id"] = ToJson::to_json("other")
   let response = fields.copy()
   response["revision"] = Json::object(changed)
   let wrong = human_revision_test_action(
@@ -355,12 +355,12 @@ test "human revision exact byte boundary survives escaped JSON and local operati
   let saving = human_revision_test_action(model, RevisionSave)
   assert_eq(saving.work_handoff.human_revision.phase, "saving")
   assert_true(saving.work_handoff.human_revision.local_saved)
-  let local = work_human_revision_local_body(
+  let saved_body = work_human_revision_local_body(
     model.work_handoff.target.unwrap(),
     model.work_handoff.output_hint,
     saving.work_handoff.human_revision,
   ).stringify()
-  assert_true(local.length() < 800000)
+  assert_true(saved_body.length() < 800000)
   let request = @json.parse(
     saving.work_handoff.human_revision.operation.stringify(),
   )

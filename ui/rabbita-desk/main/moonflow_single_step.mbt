@@ -34,7 +34,7 @@ fn moonflow_single_step_key(
   run : String,
   item : String,
 ) -> String {
-  "moondesk.single-step.v1:" + [book, run, item].to_json().stringify()
+  "moondesk.single-step.v1:" + ToJson::to_json([book, run, item]).stringify()
 }
 
 ///|

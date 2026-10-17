@@ -33,7 +33,7 @@ fn mooncode_work_context_state(
     "text": null,
     "actual_sha256": null,
     "expected_sha256": match expected {
-      Some(value) => value.to_json()
+      Some(value) => ToJson::to_json(value)
       None => Json::null()
     },
     "size_bytes": null,
@@ -90,7 +90,7 @@ async fn mooncode_work_read_context(
     )
   }
   let bytes = try {
-    let file = @fs.open(canonical, mode=@fs.ReadOnly)
+    let file = @fs.open(canonical, mode=ReadOnly)
     defer file.close()
     if file.size() > 4L * 1024L * 1024L {
       return mooncode_work_context_state(
@@ -127,7 +127,7 @@ async fn mooncode_work_read_context(
     },
     "path": path,
     "text": if matches {
-      text.to_json()
+      ToJson::to_json(text)
     } else {
       Json::null()
     },

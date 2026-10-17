@@ -226,7 +226,7 @@ async test "local HTTP selected worksheet exploration exports reload and indepen
       assert_eq(xlsx_response.code, 200)
       let xlsx = xlsx_body.binary()
       guard @moonleaf.open("filtered.xlsx", xlsx.to_fixedarray())
-        is @leafscene.WorkbookDocument(workbook) else {
+        is WorkbookDocument(workbook) else {
         fail("expected exported workbook")
       }
       assert_eq(workbook.sheets.length(), 1)

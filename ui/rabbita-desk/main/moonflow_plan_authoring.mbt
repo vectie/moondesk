@@ -94,7 +94,7 @@ fn moonflow_plan_reopen(
         fail("saved draft work items differ from source")
       }
       moonflow_plan_validate_templates(composition, restored)
-      MoonFlowPlanEditor::{
+      {
         fields: restored,
         saved_body: saved,
         notice: if handoff_text(value, "prepared_request_id") == "" {
@@ -163,7 +163,7 @@ fn moonflow_plan_form_input(composition : MoonFlowComposition) -> Json raise {
   let templates : Map[String, Json] = Map([])
   for item in editor.fields {
     if item.source_item_id is Some(template) {
-      templates[item.work_item_id] = template.to_json()
+      templates[item.work_item_id] = ToJson::to_json(template)
     }
     let timeout_text = item.timeout.trim().to_owned()
     guard !timeout_text.is_empty() &&
@@ -298,7 +298,7 @@ fn update_moonflow_plan_authoring(
       let body : Json = {
         "contract_id": "moondesk.declared-plan-draft.v2",
         "source_graph": source,
-        "fields": current.fields.to_json(),
+        "fields": ToJson::to_json(current.fields),
         "prepared_request_id": current.request_id,
       }
       let encoded = body.stringify()

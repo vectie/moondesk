@@ -199,9 +199,13 @@ fn living_artifact_apply_command(
           let toggled = @mooncore.session_with_field(
             item,
             "done",
-            (!json_bool(item, "done", default=false)).to_json(),
+            ToJson::to_json(!json_bool(item, "done", default=false)),
           )
-          @mooncore.session_with_field(toggled, "updated_at", now.to_json())
+          @mooncore.session_with_field(
+            toggled,
+            "updated_at",
+            ToJson::to_json(now),
+          )
         } else {
           item
         }
@@ -221,9 +225,13 @@ fn living_artifact_apply_command(
           let changed = @mooncore.session_with_field(
             item,
             "value",
-            value.to_json(),
+            ToJson::to_json(value),
           )
-          @mooncore.session_with_field(changed, "updated_at", now.to_json())
+          @mooncore.session_with_field(
+            changed,
+            "updated_at",
+            ToJson::to_json(now),
+          )
         } else {
           item
         }
@@ -239,14 +247,19 @@ fn living_artifact_apply_command(
   let with_revision = @mooncore.session_with_field(
     with_items,
     "revision",
-    (json_int(record, "revision", default=0) + 1).to_json(),
+    ToJson::to_json(json_int(record, "revision", default=0) + 1),
   )
-  @mooncore.session_with_field(with_revision, "updated_at", now.to_json()) |> Ok
+  @mooncore.session_with_field(
+    with_revision,
+    "updated_at",
+    ToJson::to_json(now),
+  )
+  |> Ok
 }
 
 ///|
 fn living_artifact_shell(artifact_id : String) -> String {
-  let id = artifact_id.to_json().stringify()
+  let id = ToJson::to_json(artifact_id).stringify()
   let shell =
     $|<!doctype html>
     $|<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

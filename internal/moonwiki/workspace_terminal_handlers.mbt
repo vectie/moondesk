@@ -8,7 +8,7 @@ struct WorkspaceTerminal {
 }
 
 ///|
-let workspace_terminals : Map[String, WorkspaceTerminal] = {}
+let workspace_terminals : Map[String, WorkspaceTerminal] = Map([])
 
 ///|
 let workspace_terminal_sequence : Ref[Int32] = { val: 0, }

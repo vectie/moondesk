@@ -53,13 +53,19 @@ fn mooncode_work_transcript_projection(
   let session = moonclaw_runtime_full_session_from_record(
       workspace_root, record,
     )
-    |> mooncode_session_with_field("workspace_id", workspace.id.to_json())
-    |> mooncode_session_with_field("workspace_name", workspace.name.to_json())
+    |> mooncode_session_with_field(
+      "workspace_id",
+      ToJson::to_json(workspace.id),
+    )
+    |> mooncode_session_with_field(
+      "workspace_name",
+      ToJson::to_json(workspace.name),
+    )
     |> mooncode_session_with_field(
       "workspace_root",
-      workspace.root_path.to_json(),
+      ToJson::to_json(workspace.root_path),
     )
-    |> mooncode_session_with_field("cwd", workspace.root_path.to_json())
+    |> mooncode_session_with_field("cwd", ToJson::to_json(workspace.root_path))
   match @mooncode.selected_session_response(session) {
     Ok(session) =>
       mooncode_work_transcript_result(

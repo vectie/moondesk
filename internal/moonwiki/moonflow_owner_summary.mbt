@@ -36,7 +36,8 @@ fn moonflow_owner_summary_observation(
   }
   let ids : Array[String] = []
   for index, event in history {
-    guard event is { "sequence": Number(sequence), "event_id": String(id), .. } &&
+    guard event
+      is { "sequence": Number(sequence, ..), "event_id": String(id), .. } &&
       sequence == index.to_double() &&
       !id.is_empty() &&
       !ids.contains(id) else {

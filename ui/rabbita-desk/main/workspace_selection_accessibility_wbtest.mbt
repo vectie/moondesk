@@ -24,8 +24,8 @@ test "MoonBook rows expose exactly one semantic selection" {
       }),
     ),
   )
-  assert_eq(markup.split("aria-pressed=\"true\"").length(), 2)
-  assert_eq(markup.split("aria-pressed=\"false\"").length(), 2)
+  assert_eq(markup.split("aria-pressed=\"true\"").count(), 2)
+  assert_eq(markup.split("aria-pressed=\"false\"").count(), 2)
   assert_true(markup.contains("desk-workspace-row active status-ready"))
   assert_true(markup.contains("data-workspace-id=\"book-alpha\""))
   assert_true(markup.contains("data-workspace-id=\"book-beta\""))

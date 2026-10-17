@@ -51,7 +51,7 @@ async test "human revision open reads exact bounded current output without mutat
   let request = mooncode_session_with_field(
     human_revision_request(fixture),
     "operation",
-    "open".to_json(),
+    ToJson::to_json("open"),
   )
   let result = human_revision_call(fixture, request~)
   assert_eq(result.0, 200)
@@ -190,7 +190,7 @@ async test "human revision definitive conflict survives same-ID retry and requir
   let next = mooncode_session_with_field(
     human_revision_request(fixture),
     "revision_id",
-    "new-revision".to_json(),
+    ToJson::to_json("new-revision"),
   )
   assert_eq(human_revision_call(fixture, request=next).0, 200)
   assert_eq(
@@ -259,11 +259,15 @@ async test "human revision rejects reuse with changed content baseline task or r
   assert_eq(human_revision_call(fixture).0, 200)
   let original = human_revision_request(fixture)
   let changed : Array[Json] = [
-    mooncode_session_with_field(original, "content", "replacement".to_json()),
+    mooncode_session_with_field(
+      original,
+      "content",
+      ToJson::to_json("replacement"),
+    ),
     mooncode_session_with_field(
       original,
       "expected_content",
-      "replacement".to_json(),
+      ToJson::to_json("replacement"),
     ),
     mooncode_session_with_field(
       original,
@@ -271,7 +275,7 @@ async test "human revision rejects reuse with changed content baseline task or r
       mooncode_session_with_field(
         mooncode_output_field(original, "source"),
         "task_id",
-        "other-task".to_json(),
+        ToJson::to_json("other-task"),
       ),
     ),
     mooncode_session_with_field(
@@ -280,7 +284,7 @@ async test "human revision rejects reuse with changed content baseline task or r
       mooncode_session_with_field(
         mooncode_output_field(original, "source"),
         "run_id",
-        "other-run".to_json(),
+        ToJson::to_json("other-run"),
       ),
     ),
   ]
@@ -478,12 +482,20 @@ async test "human revision UTF8 byte bound rejects binary and accepts exact empt
     assert_eq(
       human_revision_call(
         fixture,
-        request=mooncode_session_with_field(request, "content", text.to_json()),
+        request=mooncode_session_with_field(
+          request,
+          "content",
+          ToJson::to_json(text),
+        ),
       ).0,
       400,
     )
   }
-  let open = mooncode_session_with_field(request, "operation", "open".to_json())
+  let open = mooncode_session_with_field(
+    request,
+    "operation",
+    ToJson::to_json("open"),
+  )
   @fs.write_file(
     fixture.workspace.root_path + "/result.md",
     b"\xff\xfe",
@@ -507,7 +519,7 @@ async test "human revision UTF8 byte bound rejects binary and accepts exact empt
   )
   let result = human_revision_call(
     fixture,
-    request=mooncode_session_with_field(request, "content", "".to_json()),
+    request=mooncode_session_with_field(request, "content", ToJson::to_json("")),
   )
   assert_eq(result.0, 200)
   assert_eq(mooncode_output_text(result.1, "content"), "")
@@ -601,7 +613,7 @@ async test "human revision continuation output preserves exact command evidence 
   fixture.events.val = mooncode_session_with_field(
     fixture.events.val,
     "events",
-    events.to_json(),
+    ToJson::to_json(events),
   )
   let request = mooncode_session_with_field(
     human_revision_request(fixture),
@@ -614,7 +626,7 @@ async test "human revision continuation output preserves exact command evidence 
     mooncode_session_with_field(
       mooncode_output_field(request, "source"),
       "task_id",
-      "other-task".to_json(),
+      ToJson::to_json("other-task"),
     ),
   )
   assert_eq(
@@ -646,12 +658,19 @@ async test "human revision exact 256KiB control-text boundary survives JSON roun
     @fsx.write_confined_text(fixture.workspace.root_path, "result.md", baseline),
   )
   let request = human_revision_request(fixture)
-    |> mooncode_session_with_field("expected_content", baseline.to_json())
-    |> mooncode_session_with_field("content", content.to_json())
+    |> mooncode_session_with_field(
+      "expected_content",
+      ToJson::to_json(baseline),
+    )
+    |> mooncode_session_with_field("content", ToJson::to_json(content))
   let request = @json.parse(request.stringify())
   let opened = human_revision_call(
     fixture,
-    request=mooncode_session_with_field(request, "operation", "open".to_json()),
+    request=mooncode_session_with_field(
+      request,
+      "operation",
+      ToJson::to_json("open"),
+    ),
   )
   assert_eq(opened.0, 200)
   assert_eq(mooncode_output_text(opened.1, "content"), baseline)

@@ -25,7 +25,9 @@ test "command reasoning effort defaults compatibly and round trips supported val
   }
   assert_eq(automatic.planner_reasoning_effort, "none")
   for value in ["none", "minimal", "low", "medium", "high", "xhigh"] {
-    guard @core.decode_mooncode_command(reasoning_command_with(value.to_json()))
+    guard @core.decode_mooncode_command(
+        reasoning_command_with(ToJson::to_json(value)),
+      )
       is Ok(command) else {
       fail("supported reasoning effort must decode: \{value}")
     }
@@ -42,11 +44,13 @@ test "command reasoning effort defaults compatibly and round trips supported val
 ///|
 test "command reasoning effort rejects invalid names and primitive types" {
   assert_true(
-    @core.decode_mooncode_command(reasoning_command_with("maximum".to_json()))
+    @core.decode_mooncode_command(
+      reasoning_command_with(ToJson::to_json("maximum")),
+    )
     is Err(_),
   )
   assert_true(
-    @core.decode_mooncode_command(reasoning_command_with(true.to_json()))
+    @core.decode_mooncode_command(reasoning_command_with(ToJson::to_json(true)))
     is Err(_),
   )
 }

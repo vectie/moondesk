@@ -259,18 +259,24 @@ async fn moonbook_capture(
       guard may_run() else {
         return Err("MoonBook operation context changed before launch")
       }
-      // Own every descriptor explicitly, including denied/failed launches.
-      // Closing the only stdin writer gives the child EOF, with no ambient
-      // input. Pipe setup is synchronous: no yield between fence and spawn.
-      let (stdin, stdin_writer) = @pipe.pipe()
-      defer stdin.close()
-      stdin_writer.close()
-      let (stdout_reader, stdout_writer) = @pipe.pipe()
+      // Shared output channels retain explicit ownership on every exit path,
+      // including pipe creation or spawn failure. Both readers stay bounded.
+      let (stdout_reader, stdout_writer) = @process.read_from_process(
+        shared=true,
+      )
       defer stdout_reader.close()
       defer stdout_writer.close()
-      let (stderr_reader, stderr_writer) = @pipe.pipe()
+      let (stderr_reader, stderr_writer) = @process.read_from_process(
+        shared=true,
+      )
       defer stderr_reader.close()
       defer stderr_writer.close()
+      // Allocate stdin last: its only writer is closed before the immediately
+      // following spawn, so the child sees EOF without ambient input. The
+      // process API consumes/closes the read end even when spawning fails.
+      // All setup here is synchronous: no yield between fence and spawn.
+      let (stdin, stdin_writer) = @process.write_to_process()
+      stdin_writer.close()
       let process = @process.spawn(
         group,
         executable,
@@ -283,7 +289,6 @@ async fn moonbook_capture(
         inherit_env=false,
         cancel_handler=@process.hard_cancel(),
       )
-      stdin.close()
       stdout_writer.close()
       stderr_writer.close()
       let stdout = group.spawn(() => {

@@ -3,7 +3,7 @@ fn main_content_attrs(mode : WorkspaceMode) -> @html.Attrs {
   @html.Attrs::build()
   .id("moondesk-main-content")
   .tabindex(-1)
-  .aria_label(workspace_mode_label(mode) + " workspace")
+  .aria_label(workspace_mode_summary(mode))
 }
 
 ///|

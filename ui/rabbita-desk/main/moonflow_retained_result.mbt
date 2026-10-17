@@ -84,7 +84,7 @@ fn moonflow_retained_current(
     return false
   }
   let index = match handoff_field(state.identity, "artifact_index") {
-    Number(n) => n.to_int()
+    Number(n, ..) => n.to_int()
     _ => -1
   }
   moonflow_retained_identity(model, run, item, index) == Some(state.identity) &&
@@ -287,7 +287,8 @@ fn render_moonflow_retained(
               ),
               handoff_text(response, "preview_text")[:32768].to_owned(),
             ),
-            if handoff_field(response, "preview_truncated") == true.to_json() {
+            if handoff_field(response, "preview_truncated") ==
+              ToJson::to_json(true) {
               p(
                 "Preview truncated at 32 Ki UTF-16 code units. Download contains the complete exact bytes.",
               )

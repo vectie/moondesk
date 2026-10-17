@@ -16,20 +16,15 @@ test "summary exports use typed counts totals and exact group values" {
     ["=1+1", "1", "0", ""],
     ["001", "2", "2", "Overflow"],
   ])
-  assert_eq(summary.rows[0], [
-    @leafscene.Text(""),
-    Number("2"),
-    Number("2"),
-    Number("0"),
-  ])
-  assert_eq(summary.rows[1][3], @leafscene.Empty)
-  assert_eq(summary.rows[4][3], @leafscene.Text("Overflow"))
+  assert_eq(summary.rows[0], [Text(""), Number("2"), Number("2"), Number("0")])
+  assert_eq(summary.rows[1][3], Empty)
+  assert_eq(summary.rows[4][3], Text("Overflow"))
   assert_eq(
     @leafcsv.parse(summary.export_csv()).rows,
     [summary.columns] + summary.text_rows(),
   )
   guard @moonleaf.open("summary.xlsx", summary.export_xlsx())
-    is @leafscene.WorkbookDocument(workbook) else {
+    is WorkbookDocument(workbook) else {
     fail("expected summary workbook")
   }
   let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
@@ -108,7 +103,7 @@ async test "HTTP summary links export filtered sorted groups across formats and 
       (file, data) in [
         ("sales.csv", sample.export_csv()),
         ("sales.tsv", tsv.serialize_quoted()),
-        ("sales.json", records.to_json().stringify()),
+        ("sales.json", ToJson::to_json(records).stringify()),
         ("sales.jsonl", records.map(record => record.stringify()).join("\n")),
       ] {
       @fs.write_file(book + "/" + file, data, create_mode=CreateOrTruncate)
@@ -179,7 +174,7 @@ async test "HTTP summary links export filtered sorted groups across formats and 
         )
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("summary.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("expected HTTP summary workbook")
         }
         assert_eq(workbook.sheets.length(), 1)
@@ -193,8 +188,8 @@ async test "HTTP summary links export filtered sorted groups across formats and 
         )
         let summary = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([summary.columns] + summary.text_rows(), expected)
-        assert_eq(summary.rows[1][1], @leafscene.Number("3"))
-        assert_eq(summary.rows[1][3], @leafscene.Number("1550.5"))
+        assert_eq(summary.rows[1][1], Number("3"))
+        assert_eq(summary.rows[1][3], Number("1550.5"))
         // Ordinary row exports are still rows even while grouping is selected.
         let (_, rows) = @http.get(
           base +

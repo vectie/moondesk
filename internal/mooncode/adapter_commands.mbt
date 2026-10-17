@@ -124,22 +124,26 @@ fn accepted_command_packet_json(
     _ => Map([])
   }
   let action = command_action(command)
-  fields["protocol"] = protocol_version().to_json()
-  fields["kind"] = "mooncode.command".to_json()
-  fields["status"] = accepted.status.to_json()
-  fields["command_id"] = accepted.command_id.to_json()
-  fields["created_at"] = accepted.created_at.to_json()
-  fields["session_id"] = accepted.session_id.to_json()
-  fields["workspace_id"] = accepted.workspace_id.to_json()
-  fields["workspace_name"] = accepted.workspace_name.to_json()
-  fields["workspace_root"] = accepted.workspace_root.to_json()
-  fields["client_turn_id"] = command.client_turn_id.to_json()
-  fields["action"] = action.to_json()
+  fields["protocol"] = ToJson::to_json(protocol_version())
+  fields["kind"] = ToJson::to_json("mooncode.command")
+  fields["status"] = ToJson::to_json(accepted.status)
+  fields["command_id"] = ToJson::to_json(accepted.command_id)
+  fields["created_at"] = ToJson::to_json(accepted.created_at)
+  fields["session_id"] = ToJson::to_json(accepted.session_id)
+  fields["workspace_id"] = ToJson::to_json(accepted.workspace_id)
+  fields["workspace_name"] = ToJson::to_json(accepted.workspace_name)
+  fields["workspace_root"] = ToJson::to_json(accepted.workspace_root)
+  fields["client_turn_id"] = ToJson::to_json(command.client_turn_id)
+  fields["action"] = ToJson::to_json(action)
   let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
   for row in adapter_surface_command_actions(surface) {
     if json_string(row, "action", default="") == action {
-      fields["control"] = json_string(row, "control", default="").to_json()
-      fields["approval"] = json_string(row, "approval", default="").to_json()
+      fields["control"] = ToJson::to_json(
+        json_string(row, "control", default=""),
+      )
+      fields["approval"] = ToJson::to_json(
+        json_string(row, "approval", default=""),
+      )
       break
     }
   }
@@ -148,8 +152,8 @@ fn accepted_command_packet_json(
   } else {
     command.model
   }
-  fields["model"] = model.to_json()
-  fields["web_search"] = command.web_search.to_json()
+  fields["model"] = ToJson::to_json(model)
+  fields["web_search"] = ToJson::to_json(command.web_search)
   fields["runtime_tool_calls"] = Json::array(
     json_array_items(runtime_passthrough, "runtime_tool_calls"),
   )
@@ -178,15 +182,17 @@ fn native_payload(
   // native top-level content_parts field, not in the generic payload copy.
   fields.remove("content_parts")
   match command.task_intent {
-    Some(intent) => fields["task_intent"] = intent.to_string().to_json()
+    Some(intent) => fields["task_intent"] = ToJson::to_json(intent.to_string())
     None => fields.remove("task_intent")
   }
   fields["planner_guidance"] = planner_guidance()
   match command.planner_max_steps {
-    Some(steps) => fields["planner_max_steps"] = steps.to_json()
+    Some(steps) => fields["planner_max_steps"] = ToJson::to_json(steps)
     None => fields.remove("planner_max_steps")
   }
-  fields["planner_reasoning_effort"] = command.planner_reasoning_effort.to_json()
+  fields["planner_reasoning_effort"] = ToJson::to_json(
+    command.planner_reasoning_effort,
+  )
   Json::object(fields)
 }
 
@@ -219,20 +225,24 @@ pub fn native_command_body(
   let payload = native_payload(command, runtime_passthrough)
   let calls = json_array_items(payload, "runtime_tool_calls")
   let fields : Map[String, Json] = {
-    "protocol": protocol_version().to_json(),
-    "command": command_action(command).to_json(),
-    "text": command_message(command).to_json(),
-    "model": json_string(packet, "model", default="").to_json(),
-    "session_id": json_string(session, "id", default="").to_json(),
-    "book_root": json_string(
-      session,
-      "workspace_root",
-      default=json_string(session, "cwd", default=""),
-    ).to_json(),
-    "context_path": command_context_path(command).to_json(),
+    "protocol": ToJson::to_json(protocol_version()),
+    "command": ToJson::to_json(command_action(command)),
+    "text": ToJson::to_json(command_message(command)),
+    "model": ToJson::to_json(json_string(packet, "model", default="")),
+    "session_id": ToJson::to_json(json_string(session, "id", default="")),
+    "book_root": ToJson::to_json(
+      json_string(
+        session,
+        "workspace_root",
+        default=json_string(session, "cwd", default=""),
+      ),
+    ),
+    "context_path": ToJson::to_json(command_context_path(command)),
     "payload": payload,
     "packet": packet,
-    "web_search": json_bool(packet, "web_search", default=false).to_json(),
+    "web_search": ToJson::to_json(
+      json_bool(packet, "web_search", default=false),
+    ),
     "runtime_tool_calls": Json::array(calls),
   }
   if !content_parts.is_empty() {
@@ -241,7 +251,7 @@ pub fn native_command_body(
   // Keep the owner root in the typed fingerprint and the native top-level
   // binding. The runtime inherits it for existing sessions and rejects changes.
   if command.model_workspace != "" {
-    fields["model_workspace"] = command.model_workspace.to_json()
+    fields["model_workspace"] = ToJson::to_json(command.model_workspace)
   }
   Json::object(fields)
 }

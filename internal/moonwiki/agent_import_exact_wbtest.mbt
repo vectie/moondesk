@@ -12,7 +12,7 @@ fn receive_exact_binding(source : Json) -> Json {
   }
   guard unsigned is Object(fields) else { abort("fixture") }
   let digest = agent_import_hash(@encoding/utf8.encode(unsigned.stringify()))
-  fields["binding_digest"] = digest.to_json()
+  fields["binding_digest"] = ToJson::to_json(digest)
   Json::object(fields)
 }
 
@@ -35,8 +35,8 @@ fn receive_exact_runner(
     guard @json.parse(@fs.read_file(path).text()) is Object(fields) else {
       fail("fixture")
     }
-    fields["action"] = "import-exact".to_json()
-    fields["receipt_id"] = "synthetic-installation".to_json()
+    fields["action"] = ToJson::to_json("import-exact")
+    fields["receipt_id"] = ToJson::to_json("synthetic-installation")
     @fs.write_file(
       path,
       Json::object(fields).stringify(),
@@ -57,7 +57,7 @@ fn receive_exact_runner(
       "installation_receipt_id": "synthetic-installation",
       "local_target_root": args[0],
       "local_book_id": args[0].split("/").last().unwrap_or("").to_owned(),
-      "imported_at": 1791230000000L.to_json(),
+      "imported_at": ToJson::to_json(1791230000000L),
       "member_bytes_verified": true,
       "status": "complete",
     }
@@ -141,7 +141,7 @@ async test "Town binding mismatch invalid digest and replaced binding cannot imp
     fail("fixture")
   }
   let wrong = binding_fields.copy()
-  wrong["binding_digest"] = ("sha256:" + "0".repeat(64)).to_json()
+  wrong["binding_digest"] = ToJson::to_json("sha256:" + "0".repeat(64))
   assert_true(
     try {
       ignore(agent_import_checked_binding(Json::object(wrong), source))
@@ -186,7 +186,7 @@ async test "Town binding mismatch invalid digest and replaced binding cannot imp
   )
   assert_eq(@fs.readdir(context.books_root), ["existing"])
   let replacement = binding_fields.copy()
-  replacement["listing_id"] = "different-listing".to_json()
+  replacement["listing_id"] = ToJson::to_json("different-listing")
   assert_true(
     try {
       ignore(

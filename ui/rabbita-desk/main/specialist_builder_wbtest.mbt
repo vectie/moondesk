@@ -106,14 +106,14 @@ test "specialist rejects active chat current draft and unrecognized Book without
     specialist_test_binding(["wiki/method.md"]),
   )
   assert_eq(mismatch.selected_workspace_id, "previous-book")
-  let (_, unsafe) = prepare_specialist_example(
+  let (_, rejected) = prepare_specialist_example(
     dispatch,
     base,
     "book-research",
     "Example",
     specialist_test_binding(["wiki/../outside.md"]),
   )
-  assert_eq(unsafe.selected_workspace_id, "previous-book")
+  assert_eq(rejected.selected_workspace_id, "previous-book")
 }
 
 ///|
@@ -152,10 +152,7 @@ test "specialist catalog is loaded on demand and stale library replies cannot au
   )
   assert_true(waiting.agent_passports.is_empty())
   assert_eq(waiting.request_prompt, "Keep this draft")
-  let catalog : SpecialistAgentCatalog = {
-    agent_count: 1,
-    agents: base.agent_passports,
-  }
+  let catalog : SpecialistAgentCatalog = { agents: base.agent_passports, }
   let (_, stale) = update_workspace_results(
     dispatch,
     LoadedSpecialistCatalog("another library", Ok(catalog)),

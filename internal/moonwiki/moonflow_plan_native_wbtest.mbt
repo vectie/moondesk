@@ -162,7 +162,7 @@ async test "Desk production UI request crosses native host Flow prepare import a
   if @env.get_env_var("MOONDESK_FLOW_PLAN_EVIDENCE") is Some(path) {
     @fs.write_file(
       path,
-      evidence.to_json().stringify(indent=2),
+      ToJson::to_json(evidence).stringify(indent=2),
       create_mode=CreateOrTruncate,
     )
   }

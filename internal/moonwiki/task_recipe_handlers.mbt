@@ -133,7 +133,7 @@ fn task_recipe_normalize_inputs(
       (json_bool(field, "required", default=false) && value == "") {
       return Err("missing_or_invalid_recipe_input:" + key)
     }
-    values[key] = value.to_json()
+    values[key] = ToJson::to_json(value)
   }
   Ok(Json::object(values))
 }

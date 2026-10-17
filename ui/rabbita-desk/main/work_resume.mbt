@@ -21,11 +21,11 @@ fn work_resume_host_scope(
     !scope.all(value => {
       value is String(text) && text != "" && text.length() <= 8192
     }) ||
-    scope[3] != canonical.workspace_id.to_json() ||
-    scope[4] != canonical.root_path.to_json() {
+    scope[3] != ToJson::to_json(canonical.workspace_id) ||
+    scope[4] != ToJson::to_json(canonical.root_path) {
     return ""
   }
-  scope.to_json().stringify()
+  ToJson::to_json(scope).stringify()
 }
 
 ///|

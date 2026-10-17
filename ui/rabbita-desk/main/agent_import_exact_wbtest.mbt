@@ -245,7 +245,7 @@ test "Town exact import recovery retains binding and requires an exact completio
   assert_true(effect is OpenAgentImport(_))
   let changed = fields.copy()
   guard exact_import_test_binding() is Object(binding) else { fail("fixture") }
-  binding["listing_id"] = "different-listing".to_json()
+  binding["listing_id"] = ToJson::to_json("different-listing")
   changed["town_binding"] = Json::object(binding)
   assert_true(
     agent_import_decode_reply(Json::object(changed), complete.session) is None,

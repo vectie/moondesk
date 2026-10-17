@@ -15,13 +15,13 @@ fn table_from_sheet(
     return Err("Table exceeds the explorer's one-million-cell limit")
   }
   let rows : Array[Array[@leafscene.CellValue]] = Array::makei(height, _ => {
-    Array::make(width, @leafscene.CellValue::Empty)
+    Array::make(width, Empty)
   })
   for cell in sheet.cells {
     if cell.row > 0 && cell.column > 0 {
       rows[cell.row - 1][cell.column - 1] = match cell.value {
-        Formula(cached=Some(value), ..) => @leafscene.CellValue::Text(value)
-        Formula(cached=None, ..) => @leafscene.CellValue::Empty
+        Formula(cached=Some(value), ..) => Text(value)
+        Formula(cached=None, ..) => Empty
         value => value
       }
     }
@@ -37,7 +37,7 @@ fn table_from_sheet(
       value
     }
   })
-  Ok({ columns, rows: rows[1:].to_array(), })
+  Ok({ columns, rows: rows[1:].to_owned(), })
 }
 
 ///|

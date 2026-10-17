@@ -161,7 +161,7 @@ async fn handle_town_native_work(
   } else {
     b""
   }
-  let owner_url : Ref[String?] = @ref.new(None)
+  let owner_url : Ref[String?] = Ref(None)
   let result = town_native_work_with_deadline(() => {
     town_native_work_request_with(request_path, method_, bytes, (
       verb,

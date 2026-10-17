@@ -84,10 +84,10 @@ fn moonflow_review_authorized(
   json_object_field(review, "assigned_reviewer") == Some(principal) &&
   json_object_field(review, "submitted_by") != Some(principal) &&
   json_array_items(payload, "memberships")
-  .filter(member => {
-    json_object_field(member, "principal") == Some(principal) &&
-    json_string(member, "status", default="") == "active" &&
-    json_array_items(member, "roles").contains("reviewer".to_json())
+  .filter(membership => {
+    json_object_field(membership, "principal") == Some(principal) &&
+    json_string(membership, "status", default="") == "active" &&
+    json_array_items(membership, "roles").contains(ToJson::to_json("reviewer"))
   })
   .length() ==
   1

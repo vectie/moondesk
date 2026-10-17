@@ -153,7 +153,11 @@ test "grouped preparation preserves flat and human result inputs without duplica
       "output_groups": [
         {
           "files": [
-            { "source_path": "outputs/demo/index.html", "path": "index.html" },
+            {
+              "source_path": "outputs/demo/index.html",
+              "path": "index.html",
+              ..
+            },
           ],
           ..
         },

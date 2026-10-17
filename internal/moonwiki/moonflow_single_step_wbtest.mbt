@@ -84,7 +84,7 @@ async test "single step host selects exact imported Book run item and typed oper
     "2026-10-07T00:00:00Z",
     operation => {
       match operation {
-        @trusted_host.ExecuteOne(run_id~, item_id~, request_id~, recorded_at~) => {
+        ExecuteOne(run_id~, item_id~, request_id~, recorded_at~) => {
           assert_eq(run_id, "single-fixture")
           assert_eq(item_id, "selected")
           assert_eq(request_id, "action-0001")
@@ -179,8 +179,8 @@ async test "single step run responses restore safe action identity without adapt
     json_string(actions[0], "request_id", default=""),
     "original-action",
   )
-  assert_false(actions.to_json().stringify().contains("must-not-leak"))
-  assert_false(actions.to_json().stringify().contains("adapter_request"))
+  assert_false(ToJson::to_json(actions).stringify().contains("must-not-leak"))
+  assert_false(ToJson::to_json(actions).stringify().contains("adapter_request"))
 }
 
 ///|

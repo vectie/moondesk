@@ -113,7 +113,7 @@ async fn moonflow_retained_result(
   // identical. It is an observation seal, not an adapter signature.
   let record_digest = moonflow_retained_sha(
     @encoding/utf8.encode(
-      records.map(moonflow_retained_sha).to_json().stringify(),
+      ToJson::to_json(records.map(moonflow_retained_sha)).stringify(),
     ),
   )
   let projection = values[0]
@@ -144,9 +144,9 @@ async fn moonflow_retained_result(
     json_string(item, "requested_authority", default="") == "workspace-mutation" &&
     json_string(item, "required_claim", default="") == "digital-artifact" &&
     json_object_field(item, "input_contracts") ==
-    Some(["moonmold/spatial-operation-request@1.0.0"].to_json()) &&
+    Some(ToJson::to_json(["moonmold/spatial-operation-request@1.0.0"])) &&
     json_object_field(item, "output_contracts") ==
-    Some(["moonmold/spatial-operation-receipt@1.0.0"].to_json()) else {
+    Some(ToJson::to_json(["moonmold/spatial-operation-receipt@1.0.0"])) else {
     fail(
       "Unsupported result protocol: only the existing native single-step Mold operation can be inspected",
     )
@@ -183,7 +183,7 @@ async fn moonflow_retained_result(
   let outputs = json_array_items(result, "output_artifacts")
   guard !outputs.is_empty() &&
     outputs.length() <= 64 &&
-    json_object_field(item, "artifacts") == Some(outputs.to_json()) &&
+    json_object_field(item, "artifacts") == Some(ToJson::to_json(outputs)) &&
     manifest is Array(observations) &&
     observations.length() == outputs.length() else {
     fail(
@@ -197,7 +197,7 @@ async fn moonflow_retained_result(
   let receipt_ref = ".moonsuite/products/moonmold/adapter-attempts/" +
     json_string(result, "attempt_id", default="") +
     "/operation-receipt.json"
-  guard outputs[0] == receipt_ref.to_json() else {
+  guard outputs[0] == ToJson::to_json(receipt_ref) else {
     fail("Unsupported adapter receipt location")
   }
   let receipt_bytes = moonflow_retained_bytes(suite_root, receipt_ref)
@@ -223,7 +223,7 @@ async fn moonflow_retained_result(
     !json_bool(receipt, "physical_authority", default=true) &&
     json_bool(receipt, "review_required", default=false) &&
     json_object_field(receipt, "artifacts") ==
-    Some(outputs[1:].to_owned().to_json()) &&
+    Some(ToJson::to_json(outputs[1:].to_owned())) &&
     json_string(qualification, "evidence_class", default="") ==
     "fixture-reference-only" &&
     !json_bool(qualification, "production_qualified", default=true) &&

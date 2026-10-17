@@ -292,7 +292,7 @@ test "retained compiled UI consumes actual native HTTP and preserves exact downl
     assert_true(html.contains(handoff_text(response, "sha256")))
     assert_eq(
       handoff_field(observation, "download_bytes_equal"),
-      true.to_json(),
+      ToJson::to_json(true),
     )
     if index == 1 {
       assert_true(html.contains("&lt;script&gt;"))

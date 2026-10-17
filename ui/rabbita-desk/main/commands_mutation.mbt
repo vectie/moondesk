@@ -299,7 +299,7 @@ fn import_desk_local_files_cmd(
 fn string_array_json(items : Array[String]) -> Json {
   let values : Array[Json] = []
   for item in items {
-    values.push(item.to_json())
+    values.push(ToJson::to_json(item))
   }
   Json::array(values)
 }

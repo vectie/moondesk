@@ -175,7 +175,7 @@ test "work handoff rejects mismatched runtime envelope body and receipt identity
   for field in ["session_id", "book_root"] {
     let claims = work_handoff_test_claims()
     guard claims is Object(fields) else { fail("claims") }
-    fields[field] = "wrong".to_json()
+    fields[field] = ToJson::to_json("wrong")
     let (code, result) = mooncode_work_command_projection(
       work_handoff_test_target(),
       work_handoff_test_workspace(),
@@ -190,7 +190,7 @@ test "work handoff rejects mismatched runtime envelope body and receipt identity
     guard json_object_field(item, location) is Some(Object(fields)) else {
       fail("nested")
     }
-    fields["session_id"] = "different-session".to_json()
+    fields["session_id"] = ToJson::to_json("different-session")
     assert_eq(
       mooncode_work_command_projection(
         work_handoff_test_target(),

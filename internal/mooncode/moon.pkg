@@ -4,3 +4,7 @@ import {
   "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/mooncode/core" @mooncode_core,
 }
+
+import {
+  "moonbitlang/core/json",
+} for "wbtest"

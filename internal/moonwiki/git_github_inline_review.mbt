@@ -106,15 +106,15 @@ fn github_inline_draft_id(repository : String, payload : Json) -> String {
   @desk.stable_id(
     "github-inline-draft",
     Json::array([
-      repository.to_json(),
-      json_int(payload, "number", default=0).to_json(),
-      json_string(payload, "head_oid", default="").to_json(),
-      json_string(payload, "base_oid", default="").to_json(),
-      json_string(payload, "path", default="").to_json(),
-      json_string(payload, "digest", default="").to_json(),
-      json_string(payload, "hunk", default="").to_json(),
-      json_string(payload, "side", default="").to_json(),
-      json_int(payload, "line", default=0).to_json(),
+      ToJson::to_json(repository),
+      ToJson::to_json(json_int(payload, "number", default=0)),
+      ToJson::to_json(json_string(payload, "head_oid", default="")),
+      ToJson::to_json(json_string(payload, "base_oid", default="")),
+      ToJson::to_json(json_string(payload, "path", default="")),
+      ToJson::to_json(json_string(payload, "digest", default="")),
+      ToJson::to_json(json_string(payload, "hunk", default="")),
+      ToJson::to_json(json_string(payload, "side", default="")),
+      ToJson::to_json(json_int(payload, "line", default=0)),
     ]).stringify(),
   )
 }

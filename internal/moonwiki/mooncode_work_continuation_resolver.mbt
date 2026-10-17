@@ -216,10 +216,13 @@ async fn mooncode_work_with_continuations(
   )
   |> mooncode_session_with_field("continuations", Json::array(continuations))
   |> mooncode_session_with_field("continuation", selected)
-  |> mooncode_session_with_field("continuation_state", selected_state.to_json())
+  |> mooncode_session_with_field(
+    "continuation_state",
+    ToJson::to_json(selected_state),
+  )
   |> mooncode_session_with_field(
     "continuation_message",
-    selected_message.to_json(),
+    ToJson::to_json(selected_message),
   )
   |> mooncode_session_with_field(
     "pending_guidance",
@@ -227,7 +230,7 @@ async fn mooncode_work_with_continuations(
   )
   |> mooncode_session_with_field(
     "pending_guidance_state",
-    (if events is Null { "unavailable" } else { "ready" }).to_json(),
+    ToJson::to_json(if events is Null { "unavailable" } else { "ready" }),
   )
 }
 
@@ -257,7 +260,7 @@ async fn mooncode_work_saved_unavailable(
       return descriptor
         |> mooncode_session_with_field(
           "continuation_state",
-          "unavailable".to_json(),
+          ToJson::to_json("unavailable"),
         )
   }
   let response = mooncode_continuation_response(
@@ -269,10 +272,10 @@ async fn mooncode_work_saved_unavailable(
   )
   descriptor
   |> mooncode_session_with_field("continuation", response)
-  |> mooncode_session_with_field("continuation_state", "ready".to_json())
+  |> mooncode_session_with_field("continuation_state", ToJson::to_json("ready"))
   |> mooncode_session_with_field("continuations", Json::array([response]))
   |> mooncode_session_with_field(
     "pending_guidance_state",
-    "unavailable".to_json(),
+    ToJson::to_json("unavailable"),
   )
 }

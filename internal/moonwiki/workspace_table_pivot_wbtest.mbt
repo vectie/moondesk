@@ -37,9 +37,9 @@ test "pivot count and sum preserve exact categories numeric meaning and totals" 
     ["Group", "<b>\n,東京", "100", "", "", "", "100"],
     ["Grand total", "", "100", "2.5", "", "", "102.5"],
   ])
-  assert_eq(sum.table.rows[0][1], @leafscene.Text("001"))
-  assert_eq(sum.table.rows[0][2], @leafscene.Number("0"))
-  assert_eq(sum.table.rows[0][3], @leafscene.Empty)
+  assert_eq(sum.table.rows[0][1], Text("001"))
+  assert_eq(sum.table.rows[0][2], Number("0"))
+  assert_eq(sum.table.rows[0][3], Empty)
   assert_eq(input, pivot_fixture())
   let reordered : @jsontable.Table = {
     columns: ["amount", "month", "region & 東京"],
@@ -57,8 +57,8 @@ test "pivot count and sum preserve exact categories numeric meaning and totals" 
     ],
   }
   let report = pivot_report(overflow, "row", "category", "sum", "value").unwrap()
-  assert_eq(report.table.rows[0][2], @leafscene.Text("Overflow"))
-  assert_eq(report.table.rows[1][3], @leafscene.Text("Overflow"))
+  assert_eq(report.table.rows[0][2], Text("Overflow"))
+  assert_eq(report.table.rows[1][3], Text("Overflow"))
   assert_eq(report.table.text_rows()[0][0], "Group")
 }
 
@@ -89,11 +89,11 @@ test "pivot invalid selections empty input and matrix bounds are explicit" {
   )
   assert_eq(
     pivot_report(empty, "row", "category", "sum", "value").unwrap().table.rows[0][2],
-    @leafscene.Empty,
+    Empty,
   )
   let many_categories : @jsontable.Table = {
     columns: ["row", "category"],
-    rows: Array::makei(998, i => [@leafscene.Text("x"), Text(i.to_string())]),
+    rows: Array::makei(998, i => [Text("x"), Text(i.to_string())]),
   }
   assert_true(
     pivot_report(many_categories, "row", "category", "count", "") is Err(_),
@@ -101,7 +101,7 @@ test "pivot invalid selections empty input and matrix bounds are explicit" {
   let large_matrix : @jsontable.Table = {
     columns: ["row", "category"],
     rows: Array::makei(2000, i => {
-      [@leafscene.Text(i.to_string()), Text((i % 600).to_string())]
+      [Text(i.to_string()), Text((i % 600).to_string())]
     }),
   }
   assert_true(
@@ -150,7 +150,7 @@ async test "pivot HTTP six formats actual CSV XLSX downloads context and errors"
       book + "/data.xlsx",
       Bytes::from_array(
         @leafxlsx.create(
-          [table.columns.map(name => @leafscene.Text(name))] + table.rows,
+          [table.columns.map(name => Text(name))] + table.rows,
           sheet_name="Months & 東京",
         ),
       ),
@@ -216,15 +216,15 @@ async test "pivot HTTP six formats actual CSV XLSX downloads context and errors"
         assert_eq(xlsx_response.code, 200)
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("pivot.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("Expected actual XLSX workbook")
         }
         let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([reopened.columns] + reopened.text_rows(), rows)
-        assert_eq(reopened.rows[0][1], @leafscene.Text("001"))
-        assert_eq(reopened.rows[1][1], @leafscene.Text("=1+1"))
-        assert_eq(reopened.rows[0][2], @leafscene.Number("0"))
-        assert_eq(reopened.rows[0][3], @leafscene.Empty)
+        assert_eq(reopened.rows[0][1], Text("001"))
+        assert_eq(reopened.rows[1][1], Text("=1+1"))
+        assert_eq(reopened.rows[0][2], Number("0"))
+        assert_eq(reopened.rows[0][3], Empty)
         let (_, reload) = @http.get(request)
         assert_eq(reload.text(), html)
         assert_eq(@fs.read_file(book + "/" + file).binary(), before)

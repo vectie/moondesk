@@ -959,8 +959,8 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   @fsx.write_to_file(@pathx.join(book_root, "wiki/move-b.md"), "move b\n")
   let batch_move = move_workspace_entry(workspace, {
     "paths": Json::array([
-      "wiki/move-a.md".to_json(),
-      "wiki/move-b.md".to_json(),
+      ToJson::to_json("wiki/move-a.md"),
+      ToJson::to_json("wiki/move-b.md"),
     ]),
     "directory": "wiki/batch-target",
   })
@@ -987,8 +987,8 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   match
     move_workspace_entry(workspace, {
       "paths": Json::array([
-        "wiki/parent".to_json(),
-        "wiki/parent/child/nested.md".to_json(),
+        ToJson::to_json("wiki/parent"),
+        ToJson::to_json("wiki/parent/child/nested.md"),
       ]),
       "directory": "raw",
     }) {
@@ -1062,8 +1062,8 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   @fsx.write_to_file(@pathx.join(book_root, "wiki/batch-copy-b.md"), "b\n")
   let batch_copy = copy_workspace_entry(workspace, {
     "paths": Json::array([
-      "wiki/batch-copy-a.md".to_json(),
-      "wiki/batch-copy-b.md".to_json(),
+      ToJson::to_json("wiki/batch-copy-a.md"),
+      ToJson::to_json("wiki/batch-copy-b.md"),
     ]),
   })
   let batch_copy_json = match batch_copy {
@@ -1124,8 +1124,8 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   @fsx.write_to_file(@pathx.join(book_root, "wiki/same-b/name.md"), "b\n")
   let same_name_paste = copy_workspace_entry(workspace, {
     "paths": Json::array([
-      "wiki/same-a/name.md".to_json(),
-      "wiki/same-b/name.md".to_json(),
+      ToJson::to_json("wiki/same-a/name.md"),
+      ToJson::to_json("wiki/same-b/name.md"),
     ]),
     "directory": "wiki/paste-target",
   })
@@ -1206,8 +1206,8 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   @fsx.write_to_file(@pathx.join(book_root, "wiki/batch-b.md"), "b\n")
   let batch_trash = trash_workspace_entry(workspace, {
     "paths": Json::array([
-      "wiki/batch-a.md".to_json(),
-      "wiki/batch-b.md".to_json(),
+      ToJson::to_json("wiki/batch-a.md"),
+      ToJson::to_json("wiki/batch-b.md"),
     ]),
   })
   let batch_trash_json = match batch_trash {

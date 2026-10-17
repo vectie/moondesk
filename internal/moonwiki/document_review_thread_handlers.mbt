@@ -20,11 +20,15 @@ fn document_review_record_with_anchor_state(
   @mooncore.session_with_field(
     record,
     "anchor_status",
-    (if current_baseline == "" || baseline == "" || baseline == current_baseline {
-      "current"
-    } else {
-      "stale"
-    }).to_json(),
+    ToJson::to_json(
+      if current_baseline == "" ||
+        baseline == "" ||
+        baseline == current_baseline {
+        "current"
+      } else {
+        "stale"
+      },
+    ),
   )
 }
 
@@ -97,18 +101,29 @@ fn document_review_thread_decision(
 ) -> Json {
   let decided = match action {
     "resolve" =>
-      @mooncore.session_with_field(record, "status", "resolved".to_json())
-    "reopen" => @mooncore.session_with_field(record, "status", "open".to_json())
-    "pin" => @mooncore.session_with_field(record, "pinned", true.to_json())
-    "unpin" => @mooncore.session_with_field(record, "pinned", false.to_json())
+      @mooncore.session_with_field(
+        record,
+        "status",
+        ToJson::to_json("resolved"),
+      )
+    "reopen" =>
+      @mooncore.session_with_field(record, "status", ToJson::to_json("open"))
+    "pin" =>
+      @mooncore.session_with_field(record, "pinned", ToJson::to_json(true))
+    "unpin" =>
+      @mooncore.session_with_field(record, "pinned", ToJson::to_json(false))
     _ => record
   }
   let updated = @mooncore.session_with_field(
     decided,
     "updated_at",
-    now.to_json(),
+    ToJson::to_json(now),
   )
-  @mooncore.session_with_field(updated, "revision", (revision + 1).to_json())
+  @mooncore.session_with_field(
+    updated,
+    "revision",
+    ToJson::to_json(revision + 1),
+  )
 }
 
 ///|
@@ -170,7 +185,7 @@ async fn handle_document_review_threads(
     ),
     "pinned_count": json_int(counts, "pinned_count", default=0),
     "participants": Json::array(
-      participants.map(participant => participant.to_json()),
+      participants.map(participant => ToJson::to_json(participant)),
     ),
   })
 }
@@ -303,10 +318,9 @@ async fn handle_save_document_review_thread(
           @mooncore.session_with_field(
             decided,
             "assigned_to",
-            json_string(payload, "assigned_to", default="")
-            .trim()
-            .to_owned()
-            .to_json(),
+            ToJson::to_json(
+              json_string(payload, "assigned_to", default="").trim().to_owned(),
+            ),
           )
         } else {
           decided
@@ -384,12 +398,12 @@ async fn handle_save_document_review_thread(
           let updated = @mooncore.session_with_field(
             item,
             "updated_at",
-            now.to_json(),
+            ToJson::to_json(now),
           )
           @mooncore.session_with_field(
             updated,
             "revision",
-            (parent_revision + 1).to_json(),
+            ToJson::to_json(parent_revision + 1),
           )
         } else {
           item

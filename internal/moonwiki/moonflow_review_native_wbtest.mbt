@@ -5,9 +5,9 @@ async fn review_test_http(
   account : String,
   payload : Json?,
 ) -> Json {
-  let headers : Map[@http.CaseInsensitiveString, String] = {}
-  headers[@http.CaseInsensitiveString("Cookie")] = account
-  headers[@http.CaseInsensitiveString("Origin")] = base
+  let headers : Map[@http.CaseInsensitiveString, String] = Map([])
+  headers[CaseInsensitiveString("Cookie")] = account
+  headers[CaseInsensitiveString("Origin")] = base
   let (response, body) = match payload {
     Some(value) => @http.post(base + path, value, headers~)
     None => @http.get(base + path, headers~)
@@ -163,21 +163,13 @@ async test "exact review real Desk HTTP authenticates maps existing human applie
     }
     let mapping = @env.get_env_var("MOONDESK_REVIEW_PRINCIPAL_MAP").unwrap()
     @fs.rename(mapping, mapping + ".held", replace=false)
-    let missing = review_test_http(
-      base,
-      "/api/moonflow/review",
-      "reviewer",
-      Some(request),
-    ) catch {
-      error => {
-        @fs.rename(mapping + ".held", mapping, replace=false)
-        raise error
-      }
+    let missing = {
+      defer @fs.rename(mapping + ".held", mapping, replace=false)
+      review_test_http(base, "/api/moonflow/review", "reviewer", Some(request))
     }
-    @fs.rename(mapping + ".held", mapping, replace=false)
     assert_true(json_string(missing, "message", default="").contains("mapping"))
     let stale = review_test_rewrite(request, {
-      "expected_head": ("sha256:" + "0".repeat(64)).to_json(),
+      "expected_head": ToJson::to_json("sha256:" + "0".repeat(64)),
       "mutation_id": "stale-head",
     })
     let stale_response = review_test_http(
@@ -199,7 +191,7 @@ async test "exact review real Desk HTTP authenticates maps existing human applie
       Some(stale),
     )
     let wrong_subject = review_test_rewrite(request, {
-      "sha256": ("sha256:" + "0".repeat(64)).to_json(),
+      "sha256": ToJson::to_json("sha256:" + "0".repeat(64)),
       "mutation_id": "wrong-subject",
     })
     assert_eq(
@@ -238,18 +230,10 @@ async test "exact review real Desk HTTP authenticates maps existing human applie
       original + b"changed",
       create_mode=TruncateExisting,
     )
-    let changed = review_test_http(
-      base,
-      "/api/moonflow/review",
-      "reviewer",
-      Some(request),
-    ) catch {
-      error => {
-        @fs.write_file(artifact, original, create_mode=TruncateExisting)
-        raise error
-      }
+    let changed = {
+      defer @fs.write_file(artifact, original, create_mode=TruncateExisting)
+      review_test_http(base, "/api/moonflow/review", "reviewer", Some(request))
     }
-    @fs.write_file(artifact, original, create_mode=TruncateExisting)
     assert_eq(json_string(changed, "status", default=""), "unavailable")
     assert_eq(@fs.read_file(snapshot_path).binary(), before_snapshot)
     let applied = review_test_http(

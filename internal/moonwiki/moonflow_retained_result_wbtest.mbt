@@ -303,10 +303,10 @@ async test "retained result native HTTP inspection and downloads preserve exact 
         retained_test_set(
           entries[1],
           "sha256",
-          moonflow_retained_sha(binary).to_json(),
+          ToJson::to_json(moonflow_retained_sha(binary)),
         ),
         "byte_length",
-        binary.length().to_json(),
+        ToJson::to_json(binary.length()),
       )
     }
     @fs.write_file(artifact_path, binary, create_mode=CreateOrTruncate)

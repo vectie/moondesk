@@ -104,7 +104,10 @@ fn agent_human_result_decode(
   let text = @encoding/utf8.decode(source) catch {
     _ => return Err("Accepted human result source must be UTF-8 JSON")
   }
-  let envelope = @json.parse(text, max_nesting_depth=4) catch {
+  if !agent_human_json_depth_at_most_four(text) {
+    return Err("Accepted human result source must be valid JSON")
+  }
+  let envelope = @json.parse(text) catch {
     _ => return Err("Accepted human result source must be valid JSON")
   }
   guard envelope is Object(fields) &&
@@ -175,6 +178,36 @@ fn agent_human_result_decode(
     return Err("Accepted human result content cannot contain NUL bytes")
   }
   Ok({ source, content: bytes, source_sha256: agent_human_result_hash(source), })
+}
+
+///|
+// Preserve the original parser's four-container limit before parsing. String
+// contents and escapes do not add nesting; the JSON parser owns syntax errors.
+fn agent_human_json_depth_at_most_four(text : String) -> Bool {
+  let mut depth = 0
+  let mut in_string = false
+  let mut escaped = false
+  for char in text {
+    if in_string {
+      if escaped {
+        escaped = false
+      } else if char == '\\' {
+        escaped = true
+      } else if char == '"' {
+        in_string = false
+      }
+    } else if char == '"' {
+      in_string = true
+    } else if char == '[' || char == '{' {
+      depth += 1
+      if depth > 4 {
+        return false
+      }
+    } else if (char == ']' || char == '}') && depth > 0 {
+      depth -= 1
+    }
+  }
+  true
 }
 
 ///|

@@ -75,7 +75,7 @@ pub fn session_response_defaults(session : Json) -> Json {
       json_with_field(
         session,
         "archived",
-        json_bool(session, "archived", default=false).to_json(),
+        ToJson::to_json(json_bool(session, "archived", default=false)),
       ),
       default_title="MoonCode Session",
     ),
@@ -135,11 +135,13 @@ fn normalized_listing_row(row : Json) -> Json? {
     row
     |> json_with_field(
       "runtime_binding_status",
-      json_string(row, "runtime_binding_status", default=status).to_json(),
+      ToJson::to_json(
+        json_string(row, "runtime_binding_status", default=status),
+      ),
     )
     |> json_with_field(
       "status",
-      (if status == "live" { "unknown" } else { status }).to_json(),
+      ToJson::to_json(if status == "live" { "unknown" } else { status }),
     )
   } else {
     row
@@ -159,45 +161,53 @@ fn normalized_listing_row(row : Json) -> Json? {
     row
     |> json_with_field(
       "runtime_source",
-      json_string(row, "source", default="moonclaw").to_json(),
+      ToJson::to_json(json_string(row, "source", default="moonclaw")),
     )
-    |> json_with_field("source", "mooncode-runtime-session-listing".to_json())
-    |> json_with_field("protocol", protocol_version().to_json())
-    |> json_with_field("component", "mooncode".to_json())
+    |> json_with_field(
+      "source",
+      ToJson::to_json("mooncode-runtime-session-listing"),
+    )
+    |> json_with_field("protocol", ToJson::to_json(protocol_version()))
+    |> json_with_field("component", ToJson::to_json("mooncode"))
     |> json_with_field(
       "workspace_id",
-      json_string(row, "workspace_id", default="").to_json(),
+      ToJson::to_json(json_string(row, "workspace_id", default="")),
     )
     |> json_with_field(
       "workspace_name",
-      json_string(row, "workspace_name", default="").to_json(),
+      ToJson::to_json(json_string(row, "workspace_name", default="")),
     )
-    |> json_with_field("workspace_root", workspace_root.to_json())
-    |> json_with_field("cwd", workspace_root.to_json())
+    |> json_with_field("workspace_root", ToJson::to_json(workspace_root))
+    |> json_with_field("cwd", ToJson::to_json(workspace_root))
     |> json_with_field(
       "title",
-      json_string(row, "title", default=session_id).to_json(),
+      ToJson::to_json(json_string(row, "title", default=session_id)),
     )
-    |> json_with_field("model", json_string(row, "model", default="").to_json())
+    |> json_with_field(
+      "model",
+      ToJson::to_json(json_string(row, "model", default="")),
+    )
     |> json_with_field(
       "status",
-      json_string(row, "status", default="durable").to_json(),
+      ToJson::to_json(json_string(row, "status", default="durable")),
     )
     |> json_with_field(
       "updated_at",
-      listing_scalar_text(row, "updated_at").to_json(),
+      ToJson::to_json(listing_scalar_text(row, "updated_at")),
     )
     |> json_with_field(
       "queued_count",
-      json_int(row, "queued_count", default=0).to_json(),
+      ToJson::to_json(json_int(row, "queued_count", default=0)),
     )
     |> json_with_field(
       "mooncode_runtime_session_id",
-      json_string(row, "mooncode_runtime_session_id", default=session_id).to_json(),
+      ToJson::to_json(
+        json_string(row, "mooncode_runtime_session_id", default=session_id),
+      ),
     )
     |> json_with_field(
       "archived",
-      json_bool(row, "archived", default=false).to_json(),
+      ToJson::to_json(json_bool(row, "archived", default=false)),
     )
     |> json_with_field("mooncode_summary", {
       "event_count": json_int(

@@ -166,7 +166,7 @@ test "old local plan drafts without template fields still reopen" {
   let model = plan_form_fixture_model()
   let composition = model.moonflow_composition.unwrap()
   let source = composition.source_graph.unwrap()
-  let fields = moonflow_plan_seed(composition).fields.to_json()
+  let fields = ToJson::to_json(moonflow_plan_seed(composition).fields)
   guard fields is Array(items) else { fail("fields") }
   for item in items {
     guard item is Object(value) else { fail("item") }

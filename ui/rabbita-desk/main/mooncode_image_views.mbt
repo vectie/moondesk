@@ -36,7 +36,7 @@ fn render_mooncode_image_tray(
             .data_set("i18n-aria-label", "code.remove_image_aria")
             .data_set(
               "i18n-params",
-              Json::object({ "name": label.to_json() }).stringify(),
+              Json::object({ "name": ToJson::to_json(label) }).stringify(),
             )
             .data_set("testid", "mooncode-remove-image"),
           on_click=dispatch(RemoveMoonCodeImage(index)),

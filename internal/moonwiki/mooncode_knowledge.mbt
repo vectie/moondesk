@@ -77,7 +77,7 @@ fn mooncode_knowledge_search(
     json_int(b, "score", default=0).compare(json_int(a, "score", default=0))
   })
   if hits.length() > 12 {
-    hits[:12].to_array()
+    hits[:12].to_owned()
   } else {
     hits
   }

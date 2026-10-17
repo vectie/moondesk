@@ -273,9 +273,9 @@ async fn moonflow_plan_handle_with(
     guard form is Object(form_fields) else {
       fail("The plan form must be an object")
     }
-    form_fields["source_ref"] = canonical_source[suite_root.length() + 1:]
-      .to_owned()
-      .to_json()
+    form_fields["source_ref"] = ToJson::to_json(
+      canonical_source[suite_root.length() + 1:].to_owned(),
+    )
     guard form.stringify().length() <= 655360 else {
       fail("This plan exceeds the 640 KiB form limit")
     }
@@ -312,7 +312,7 @@ async fn moonflow_plan_handle_with(
     } else {
       let value = moonflow_plan_command(
         run,
-        @trusted_host.PrepareForm(
+        PrepareForm(
           form_ref=relative + "/form.json",
           catalog_ref=relative + "/catalog.json",
           draft_id="desk-" + request_id,
@@ -379,7 +379,7 @@ async fn moonflow_plan_handle_with(
       // under its own lock. Cached Desk receipts never authorize execution.
       let applied = moonflow_plan_command(
         run,
-        @trusted_host.ApplyPrepared(
+        ApplyPrepared(
           preparation_id~,
           catalog_ref=relative + "/catalog.json",
           evaluated_at~,

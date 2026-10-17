@@ -13,9 +13,9 @@ test "private command decoder rejects invalid primitive field types" {
 test "command decoder refuses media fields until the native turn can retain them" {
   for field in ["content", "images", "attachments"] {
     let fields : Map[String, Json] = {
-      "action": "prompt".to_json(),
-      "client_turn_id": "client-media".to_json(),
-      "message": "Inspect this image".to_json(),
+      "action": ToJson::to_json("prompt"),
+      "client_turn_id": ToJson::to_json("client-media"),
+      "message": ToJson::to_json("Inspect this image"),
     }
     fields[field] = Json::array([])
     assert_true(decode_mooncode_command(Json::object(fields)) is Err(_))

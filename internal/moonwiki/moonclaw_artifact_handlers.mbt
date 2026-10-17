@@ -12,7 +12,7 @@ async fn handle_moonclaw_artifacts(
           send_json(
             conn,
             method_,
-            run_artifacts(workspace, run.run_id, run.run_root).to_json(),
+            ToJson::to_json(run_artifacts(workspace, run.run_id, run.run_root)),
           )
         None =>
           send_api_error(

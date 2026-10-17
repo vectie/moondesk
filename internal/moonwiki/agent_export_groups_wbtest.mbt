@@ -352,7 +352,7 @@ async test "grouped export actual Book CLI retains named app and report layouts"
         "prepared": prepared,
         "workspace_root": root,
         "request": {
-          "output_groups": request.output_groups.to_json(),
+          "output_groups": ToJson::to_json(request.output_groups),
           "paths": request.paths,
         },
         "pack_calls": 1,

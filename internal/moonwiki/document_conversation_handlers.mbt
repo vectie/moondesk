@@ -281,13 +281,13 @@ async fn handle_save_document_conversation(
         @mooncore.session_with_field(
           item,
           "id",
-          json_string(item, "conversation_id", default="").to_json(),
+          ToJson::to_json(json_string(item, "conversation_id", default="")),
         )
       } else {
         item
       }
     }),
-    @mooncore.session_with_field(record, "id", conversation_id.to_json()),
+    @mooncore.session_with_field(record, "id", ToJson::to_json(conversation_id)),
   )
   next.sort_by((left, right) => {
     json_string(right, "updated_at", default="").compare(

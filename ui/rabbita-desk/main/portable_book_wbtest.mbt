@@ -349,8 +349,8 @@ test "portable Book complete inspection shows every member exclusion and private
   let html = @rabbita.render_to_string(
     @rabbita.static_cell(render_portable_book_inspection(bundle, true)),
   )
-  assert_eq(html.split("data-testid=\"portable-book-member\"").length(), 3)
-  assert_eq(html.split("data-testid=\"portable-book-exclusion\"").length(), 2)
+  assert_eq(html.split("data-testid=\"portable-book-member\"").count(), 3)
+  assert_eq(html.split("data-testid=\"portable-book-exclusion\"").count(), 2)
   for
     text in [
       "wiki/accepted.md", "memory/preferences.json", "accepted-knowledge", "learned-preferences",

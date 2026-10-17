@@ -83,14 +83,14 @@ fn portable_book_group_wire(group : PortableBookGroup) -> Json {
     } else {
       "application/octet-stream"
     },
-    "files": group.files.to_json(),
+    "files": ToJson::to_json(group.files),
   }
   guard value is Object(fields) else { return value }
   if group.preview_path is Some(path) {
-    fields["preview_path"] = path.to_json()
+    fields["preview_path"] = ToJson::to_json(path)
   }
   if group.app_entrypoint is Some(path) {
-    fields["app_entrypoint"] = path.to_json()
+    fields["app_entrypoint"] = ToJson::to_json(path)
   }
   Json::object(fields)
 }
@@ -116,7 +116,9 @@ fn portable_book_grouped_body(
     None => portable_book_prepare_body(library, id, version, paths)
   }
   guard body is Object(fields) else { return body }
-  fields["output_groups"] = groups.map(portable_book_group_wire).to_json()
+  fields["output_groups"] = ToJson::to_json(
+    groups.map(portable_book_group_wire),
+  )
   Json::object(fields)
 }
 

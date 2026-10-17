@@ -45,7 +45,8 @@ test "Desk typed task intent reaches native payload and packet" {
 
 ///|
 test "Desk absent intent remains auto and invalid intent is rejected" {
-  for value in [Json::string("automatic"), Json::number(3), true.to_json()] {
+  for
+    value in [Json::string("automatic"), Json::number(3), ToJson::to_json(true)] {
     assert_true(
       decode_command_submission({
         "action": "prompt",

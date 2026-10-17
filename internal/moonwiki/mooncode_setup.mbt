@@ -50,7 +50,7 @@ fn mooncode_setup_skill_files(payload : Json) -> Result[Array[Json], String] {
     return Err("Give this skill a folder name, such as review-changes")
   }
   let files = json_array_items(payload, "files")
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for file in files {
     let path = json_string(file, "path", default="")
     if !mooncode_setup_relative_file(path) || seen.contains(path) {
@@ -307,7 +307,7 @@ async fn mooncode_setup_apply(
     Object(values) => values
     _ => Map([])
   }
-  entry["saved_at"] = @async.now().to_string().to_json()
+  entry["saved_at"] = ToJson::to_json(@async.now().to_string())
   history.insert(0, Json::object(entry))
   fields["history"] = Json::array(history)
   mooncode_setup_write(state_path, Json::object(fields).stringify(indent=2))

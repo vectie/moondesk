@@ -7,9 +7,9 @@ fn agent_export_runtime_runner(
     let operation = match (command, args) {
       ("pack", [version, output, selection]) =>
         @trusted_host.Pack(version~, output~, selection~)
-      ("inspect", [path]) => @trusted_host.Inspect(package_path=path)
-      ("verify", [path]) => @trusted_host.Verify(package_path=path)
-      ("source", [path]) => @trusted_host.Source(package_path=path)
+      ("inspect", [path]) => Inspect(package_path=path)
+      ("verify", [path]) => Verify(package_path=path)
+      ("source", [path]) => Source(package_path=path)
       _ => return Err("Unsupported MoonBook export operation")
     }
     runtime.run(root, operation)

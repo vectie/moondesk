@@ -212,7 +212,10 @@ async fn WorkContinuationFixture::post(
       },
     }
     self.claims.val = self.claims.val
-      |> mooncode_session_with_field("claimed_commands", [accepted].to_json())
+      |> mooncode_session_with_field(
+        "claimed_commands",
+        ToJson::to_json([accepted]),
+      )
   }
   if self.lose_response.val {
     return Err("response lost after send")
@@ -328,7 +331,7 @@ async test "bound continuation duplicate lost response and explicit resume use e
   assert_eq(fixture.posts[1], exact)
   let command = json_array_items(fixture.claims.val, "claimed_commands")[0]
   let completed = command
-    |> mooncode_session_with_field("claim_status", "delivered".to_json())
+    |> mooncode_session_with_field("claim_status", ToJson::to_json("delivered"))
     |> mooncode_session_with_field("receipt", {
       "session_id": "S",
       "command_id": json_string(command, "command_id", default=""),
@@ -338,7 +341,10 @@ async test "bound continuation duplicate lost response and explicit resume use e
     |> mooncode_session_with_field("claimed_commands", Json::array([]))
     |> mooncode_session_with_field(
       "delivered_commands",
-      [json_array_items(fixture.claims.val, "delivered_commands")[0], completed].to_json(),
+      ToJson::to_json([
+        json_array_items(fixture.claims.val, "delivered_commands")[0],
+        completed,
+      ]),
     )
   let settled = fixture.submit(request=fixture.resume_request())
   assert_eq(json_string(settled.1, "state", default=""), "completed")
@@ -352,17 +358,26 @@ async test "bound continuation changed instruction lineage or reused client id c
   for
     request in [
       fixture.request
-      |> mooncode_session_with_field("instruction", "changed".to_json()),
+      |> mooncode_session_with_field("instruction", ToJson::to_json("changed")),
       fixture.request
-      |> mooncode_session_with_field("client_turn_id", "changed-U".to_json()),
+      |> mooncode_session_with_field(
+        "client_turn_id",
+        ToJson::to_json("changed-U"),
+      ),
       fixture.request
       |> mooncode_session_with_field(
         "source",
         json_object_field_or_empty(fixture.request, "source")
-        |> mooncode_session_with_field("task_id", "different-T".to_json()),
+        |> mooncode_session_with_field(
+          "task_id",
+          ToJson::to_json("different-T"),
+        ),
       ),
       fixture.request
-      |> mooncode_session_with_field("continuation_id", "different-K".to_json()),
+      |> mooncode_session_with_field(
+        "continuation_id",
+        ToJson::to_json("different-K"),
+      ),
     ] {
     assert_eq(fixture.submit(request~).0, 409)
   }
@@ -457,7 +472,7 @@ async test "bound continuation unrelated C2 cannot become prior result and C1 pi
   let fixture = work_continuation_fixture()
   let original = json_array_items(fixture.claims.val, "delivered_commands")[0]
   let unrelated = original
-    |> mooncode_session_with_field("command_id", "C2".to_json())
+    |> mooncode_session_with_field("command_id", ToJson::to_json("C2"))
     |> mooncode_session_with_field(
       "command",
       json_object_field_or_empty(original, "command")
@@ -471,17 +486,20 @@ async test "bound continuation unrelated C2 cannot become prior result and C1 pi
   fixture.claims.val = fixture.claims.val
     |> mooncode_session_with_field(
       "delivered_commands",
-      [original, unrelated].to_json(),
+      ToJson::to_json([original, unrelated]),
     )
   let bad = fixture.request
-    |> mooncode_session_with_field("prior_result_command_id", "C2".to_json())
+    |> mooncode_session_with_field(
+      "prior_result_command_id",
+      ToJson::to_json("C2"),
+    )
   assert_eq(fixture.submit(request=bad).0, 409)
   assert_eq(fixture.posts.length(), 0)
   let first = fixture.submit()
   assert_eq(first.0, 200)
   let second = fixture.request
-    |> mooncode_session_with_field("continuation_id", "K2".to_json())
-    |> mooncode_session_with_field("client_turn_id", "U2".to_json())
+    |> mooncode_session_with_field("continuation_id", ToJson::to_json("K2"))
+    |> mooncode_session_with_field("client_turn_id", ToJson::to_json("U2"))
     |> mooncode_session_with_field(
       "prior_result_command_id",
       json_object_field(first.1, "command_id").unwrap(),
@@ -536,7 +554,7 @@ async test "bound continuation recovery is read only and pending steering remain
   fixture.events.val = fixture.events.val
     |> mooncode_session_with_field(
       "events",
-      [
+      ToJson::to_json([
         {
           "session_id": "S",
           "command_id": "steer-1",
@@ -544,7 +562,7 @@ async test "bound continuation recovery is read only and pending steering remain
           "steering_text": "Pending human steering",
         },
         { "session_id": "S", "command_id": "steer-1", "kind": "steer_applied" },
-      ].to_json(),
+      ]),
     )
   assert_eq(
     mooncode_continuation_pending_guidance(
@@ -605,13 +623,16 @@ async test "bound continuation digest-consistent injected executable state canno
   let body = @json.parse(json_string(snapshot, "request_body", default=""))
     |> mooncode_session_with_field(
       "unexpected_execution_option",
-      true.to_json(),
+      ToJson::to_json(true),
     )
   let changed = snapshot
-    |> mooncode_session_with_field("request_body", body.stringify().to_json())
+    |> mooncode_session_with_field(
+      "request_body",
+      ToJson::to_json(body.stringify()),
+    )
     |> mooncode_session_with_field(
       "request_sha256",
-      mooncode_continuation_hash(body.stringify()).to_json(),
+      ToJson::to_json(mooncode_continuation_hash(body.stringify())),
     )
   @fs.write_file(path, changed.stringify(), create_mode=TruncateExisting)
   assert_eq(fixture.submit(request=fixture.resume_request()).0, 409)
@@ -720,7 +741,7 @@ async test "bound continuation publishes an opt-in Desk producer fixture for Pro
   let accepted = json_array_items(fixture.claims.val, "claimed_commands")[0]
   let command_id = json_string(accepted, "command_id", default="")
   let completed = accepted
-    |> mooncode_session_with_field("claim_status", "delivered".to_json())
+    |> mooncode_session_with_field("claim_status", ToJson::to_json("delivered"))
     |> mooncode_session_with_field("receipt", {
       "id": "fixture-receipt-C1",
       "session_id": "S",
@@ -744,7 +765,10 @@ async test "bound continuation publishes an opt-in Desk producer fixture for Pro
     |> mooncode_session_with_field("claimed_commands", Json::array([]))
     |> mooncode_session_with_field(
       "delivered_commands",
-      [json_array_items(fixture.claims.val, "delivered_commands")[0], completed].to_json(),
+      ToJson::to_json([
+        json_array_items(fixture.claims.val, "delivered_commands")[0],
+        completed,
+      ]),
     )
   fixture.events.val = fixture.events.val
     |> mooncode_session_with_field(
@@ -833,7 +857,7 @@ async test "bound continuation native accepted identity with missing capture nev
       request=fixture.request
         |> mooncode_session_with_field(
           "client_turn_id",
-          "replacement-U".to_json(),
+          ToJson::to_json("replacement-U"),
         ),
     ).0,
     409,
@@ -919,7 +943,7 @@ test "bound continuation exact checkpoint and service state are not borrowed fro
         checkpoint
         |> mooncode_session_with_field(
           "state",
-          "planner-replan-paused".to_json(),
+          ToJson::to_json("planner-replan-paused"),
         ),
       ]),
     )
@@ -963,7 +987,10 @@ async test "bound continuation missing capture never relabels another original c
   let command = json_object_field_or_empty(item, "command")
   let payload = json_object_field_or_empty(command, "payload")
   let lineage = json_object_field_or_empty(payload, "moonproj_continuation")
-    |> mooncode_session_with_field("original_command_id", "other-C0".to_json())
+    |> mooncode_session_with_field(
+      "original_command_id",
+      ToJson::to_json("other-C0"),
+    )
   let changed = item
     |> mooncode_session_with_field(
       "command",

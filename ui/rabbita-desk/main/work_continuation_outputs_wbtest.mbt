@@ -8,13 +8,13 @@ fn continuation_output_record(command : String, evidence : String) -> Json {
   )
   let record = continuation_desk_record(operation, command~)
   guard record is Object(fields) else { abort("fixture") }
-  fields["output_refs"] = [
+  fields["output_refs"] = ToJson::to_json([
     {
       "command_id": command,
       "path": "results/a & 书.md",
       "evidence_id": evidence,
     },
-  ].to_json()
+  ])
   record
 }
 
@@ -120,7 +120,7 @@ test "continuation output links refuse unverified source evidence and unsafe pat
       ("path", ""),
     ] {
     let changed = fields.copy()
-    changed[key] = value.to_json()
+    changed[key] = ToJson::to_json(value)
     assert_eq(
       work_continuation_output_url(target, record, Json::object(changed)),
       "",
@@ -189,7 +189,7 @@ test "continuation output route still requires verified host response and preser
     "evidence_id": "E?1",
   }
   guard record is Object(record_fields) else { fail("fixture") }
-  record_fields["output_refs"] = [hint].to_json()
+  record_fields["output_refs"] = ToJson::to_json([hint])
   let url = work_continuation_output_url(target, record, hint)
   let initial = { ..base, work_handoff: work_handoff_from_query(url), }
   let (_, loading) = update_work_handoff(

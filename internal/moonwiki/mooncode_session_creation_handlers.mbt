@@ -67,7 +67,7 @@ async fn handle_create_mooncode_session(
   let command_payload = match payload {
     Object(fields) => {
       let values = fields.copy()
-      values["action"] = "prompt".to_json()
+      values["action"] = ToJson::to_json("prompt")
       Json::object(values)
     }
     _ => payload

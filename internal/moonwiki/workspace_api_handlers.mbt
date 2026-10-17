@@ -105,7 +105,7 @@ async fn workspace_library_metadata(workspace_root : String) -> Json {
       "product_registry_path": context.product_registry_path,
       "workspace_context": workspace_context_json(context),
       "workspace_count": workspaces.length(),
-      "workspaces": workspaces.to_json(),
+      "workspaces": ToJson::to_json(workspaces),
       "product_count": products.length(),
       "products": Json::array(products),
     },

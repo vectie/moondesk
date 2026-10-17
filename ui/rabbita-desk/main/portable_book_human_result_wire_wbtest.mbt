@@ -64,8 +64,7 @@ fn portable_human_wire_change(
 }
 
 ///|
-// Called by the evidence harness, which supplies its own async test scheduler.
-// Candidate dependency manifests remain unchanged.
+// Shared with the evidence harness and normal UI regression scheduler.
 async fn portable_human_check_exact_wire() -> Unit {
   let wire = " \n" + portable_human_wire_fixture().stringify(indent=2) + "\r\n"
   let raw = portable_human_wire_encode(wire)
@@ -107,29 +106,29 @@ async fn portable_human_check_empty_content() -> Unit {
 async fn portable_human_check_invalid_schema() -> Unit {
   for
     (section, field, value) in [
-      ("", "contract_version", "wrong".to_json()),
-      ("", "source_product", "other".to_json()),
-      ("", "provenance_scope", "live".to_json()),
-      ("", "authenticity", "signed".to_json()),
-      ("", "authorizing", true.to_json()),
-      ("", "workspace_path", "/private/workspace".to_json()),
-      ("task", "record_id", "../task".to_json()),
-      ("task", "record_id", "..".to_json()),
-      ("task", "record_version", "0".to_json()),
-      ("task", "record_version", "01".to_json()),
-      ("task", "record_version", "2147483648".to_json()),
-      ("task", "record_version", (3).to_json()),
-      ("report", "record_digest", "sha256:bad".to_json()),
-      ("revision", "revision_id", "revision:1".to_json()),
-      ("revision", "original_run_id", "/run".to_json()),
-      ("revision", "output_evidence_id", "/absolute/path".to_json()),
-      ("revision", "output_evidence_id", "C:/absolute/path".to_json()),
-      ("revision", "output_evidence_id", "FiLe:secret".to_json()),
-      ("revision", "output_evidence_id", "path\\secret".to_json()),
-      ("revision", "output_evidence_id", "a\nsecret".to_json()),
-      ("revision", "output_evidence_id", " ".to_json()),
-      ("content", "encoding", "utf8".to_json()),
-      ("content", "media_type", "text/html".to_json()),
+      ("", "contract_version", ToJson::to_json("wrong")),
+      ("", "source_product", ToJson::to_json("other")),
+      ("", "provenance_scope", ToJson::to_json("live")),
+      ("", "authenticity", ToJson::to_json("signed")),
+      ("", "authorizing", ToJson::to_json(true)),
+      ("", "workspace_path", ToJson::to_json("/private/workspace")),
+      ("task", "record_id", ToJson::to_json("../task")),
+      ("task", "record_id", ToJson::to_json("..")),
+      ("task", "record_version", ToJson::to_json("0")),
+      ("task", "record_version", ToJson::to_json("01")),
+      ("task", "record_version", ToJson::to_json("2147483648")),
+      ("task", "record_version", ToJson::to_json(3)),
+      ("report", "record_digest", ToJson::to_json("sha256:bad")),
+      ("revision", "revision_id", ToJson::to_json("revision:1")),
+      ("revision", "original_run_id", ToJson::to_json("/run")),
+      ("revision", "output_evidence_id", ToJson::to_json("/absolute/path")),
+      ("revision", "output_evidence_id", ToJson::to_json("C:/absolute/path")),
+      ("revision", "output_evidence_id", ToJson::to_json("FiLe:secret")),
+      ("revision", "output_evidence_id", ToJson::to_json("path\\secret")),
+      ("revision", "output_evidence_id", ToJson::to_json("a\nsecret")),
+      ("revision", "output_evidence_id", ToJson::to_json(" ")),
+      ("content", "encoding", ToJson::to_json("utf8")),
+      ("content", "media_type", ToJson::to_json("text/html")),
     ] {
     let wire = portable_human_wire_change(section, field, value)
     assert_true(
@@ -160,16 +159,16 @@ async fn portable_human_check_invalid_bytes() -> Unit {
   )
   for
     (field, value) in [
-      ("data", "aGVsbG8".to_json()),
-      ("data", "aGVsbG8=\n".to_json()),
-      ("data", "aGVsbG9=".to_json()),
-      ("data", "aGVsbG8_".to_json()),
-      ("data", "aGVsAG8=".to_json()),
-      ("data", "//////8=".to_json()),
-      ("size_bytes", (4).to_json()),
-      ("size_bytes", (-1).to_json()),
-      ("size_bytes", (262145).to_json()),
-      ("sha256", portable_book_test_sha().to_json()),
+      ("data", ToJson::to_json("aGVsbG8")),
+      ("data", ToJson::to_json("aGVsbG8=\n")),
+      ("data", ToJson::to_json("aGVsbG9=")),
+      ("data", ToJson::to_json("aGVsbG8_")),
+      ("data", ToJson::to_json("aGVsAG8=")),
+      ("data", ToJson::to_json("//////8=")),
+      ("size_bytes", ToJson::to_json(4)),
+      ("size_bytes", ToJson::to_json(-1)),
+      ("size_bytes", ToJson::to_json(262145)),
+      ("sha256", ToJson::to_json(portable_book_test_sha())),
     ] {
     let invalid = portable_human_wire_change("content", field, value)
     assert_true(
@@ -309,4 +308,18 @@ async fn portable_human_check_actual_producer() -> Unit {
     )
     assert_eq(handoff_text(request, "accepted_human_result_base64"), raw)
   }
+}
+
+///|
+test "accepted human result wire preserves bytes and rejects invalid boundaries" {
+  @js.async_test(async fn() {
+    portable_human_check_exact_wire()
+    portable_human_check_empty_content()
+    portable_human_check_invalid_schema()
+    portable_human_check_invalid_bytes()
+    portable_human_check_byte_boundaries()
+    // This helper additionally verifies retained real exports when the
+    // existing opt-in fixture directory is supplied by the evidence runner.
+    portable_human_check_actual_producer()
+  })
 }

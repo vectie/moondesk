@@ -208,7 +208,7 @@ fn town_native_work_project(
       Ok({
         "schema": schema,
         "revision": revision,
-        "items": projected.to_json(),
+        "items": ToJson::to_json(projected),
       })
     }
   }

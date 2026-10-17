@@ -2,7 +2,7 @@
 fn http_transport_headers(values : Map[String, String]) -> @http.Headers {
   let headers : @http.Headers = Map([])
   for name, value in values {
-    headers[@http.CaseInsensitiveString(name)] = value
+    headers[CaseInsensitiveString(name)] = value
   }
   headers
 }

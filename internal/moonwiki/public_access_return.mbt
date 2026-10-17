@@ -12,8 +12,7 @@ fn moondesk_operator_login_target(request_path : String) -> String {
   } else {
     "/"
   }
-  target
-  .to_json()
+  ToJson::to_json(target)
   .stringify()
   .replace_all(old="<", new="\\u003c")
   .replace_all(old=">", new="\\u003e")

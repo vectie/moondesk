@@ -71,12 +71,7 @@ test "Desk preview explicitly lists added source operation and removed step" {
 fn desk_plan_stub(calls : Array[String]) -> MoonFlowPlanningRun {
   operation => {
     match operation {
-      @trusted_host.PrepareForm(
-        form_ref~,
-        catalog_ref~,
-        draft_id~,
-        recorded_at~
-      ) => {
+      PrepareForm(form_ref~, catalog_ref~, draft_id~, recorded_at~) => {
         calls.push("prepare")
         assert_true(form_ref.has_suffix("/form.json"))
         assert_true(catalog_ref.has_suffix("/catalog.json"))
@@ -96,11 +91,7 @@ fn desk_plan_stub(calls : Array[String]) -> MoonFlowPlanningRun {
             } : Json).stringify(),
         )
       }
-      @trusted_host.ApplyPrepared(
-        preparation_id~,
-        catalog_ref=_,
-        evaluated_at=_
-      ) => {
+      ApplyPrepared(preparation_id~, catalog_ref=_, evaluated_at=_) => {
         calls.push("apply")
         assert_eq(preparation_id, "plan-fixture")
         Ok(

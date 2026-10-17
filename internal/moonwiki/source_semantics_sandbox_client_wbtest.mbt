@@ -37,8 +37,8 @@ test "source semantics accepts only a matching enforced receipt" {
   let ide = match payload {
     Object(fields) => {
       let fields = fields.copy()
-      fields["operation"] = "moon_ide".to_json()
-      fields["action"] = "definition".to_json()
+      fields["operation"] = ToJson::to_json("moon_ide")
+      fields["action"] = ToJson::to_json("definition")
       Json::object(fields)
     }
     _ => fail("expected object")

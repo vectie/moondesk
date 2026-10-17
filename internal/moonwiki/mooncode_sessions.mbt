@@ -225,15 +225,17 @@ fn moonclaw_runtime_full_session_from_record(
   })
   |> mooncode_session_with_field(
     "mooncode_journal_path",
-    json_string(
-      json_object_field_or_empty(record, "storage"),
-      "journal_jsonl",
-      default="",
-    ).to_json(),
+    ToJson::to_json(
+      json_string(
+        json_object_field_or_empty(record, "storage"),
+        "journal_jsonl",
+        default="",
+      ),
+    ),
   )
   |> mooncode_session_with_field(
     "mooncode_journal_sequence",
-    json_int(record, "journal_sequence", default=0).to_json(),
+    ToJson::to_json(json_int(record, "journal_sequence", default=0)),
   )
 }
 
@@ -353,27 +355,33 @@ fn moonclaw_runtime_full_session_base(
   let session = base
     |> mooncode_session_with_field(
       "title",
-      json_string(row, "title", default=session_id).to_json(),
+      ToJson::to_json(json_string(row, "title", default=session_id)),
     )
-    |> mooncode_session_with_field("workspace_id", workspace_id.to_json())
-    |> mooncode_session_with_field("workspace_name", workspace_name.to_json())
-    |> mooncode_session_with_field("cwd", book_root.to_json())
-    |> mooncode_session_with_field("status", execution_status.to_json())
+    |> mooncode_session_with_field(
+      "workspace_id",
+      ToJson::to_json(workspace_id),
+    )
+    |> mooncode_session_with_field(
+      "workspace_name",
+      ToJson::to_json(workspace_name),
+    )
+    |> mooncode_session_with_field("cwd", ToJson::to_json(book_root))
+    |> mooncode_session_with_field("status", ToJson::to_json(execution_status))
     |> mooncode_session_with_field(
       "model",
-      json_string(row, "model", default="").to_json(),
+      ToJson::to_json(json_string(row, "model", default="")),
     )
     |> mooncode_session_with_field(
       "queued_count",
-      json_int(row, "queued_count", default=0).to_json(),
+      ToJson::to_json(json_int(row, "queued_count", default=0)),
     )
     |> mooncode_session_with_field(
       "updated_at",
-      json_string(row, "updated_at", default="").to_json(),
+      ToJson::to_json(json_string(row, "updated_at", default="")),
     )
     |> mooncode_session_with_field(
       "last_message",
-      json_string(row, "last_message", default="").to_json(),
+      ToJson::to_json(json_string(row, "last_message", default="")),
     )
   if canonical {
     mooncode_session_with_field(session, "mooncode_conversation", conversation)
@@ -467,14 +475,17 @@ fn moonclaw_runtime_listing_row_with_workspace(
   for workspace in workspaces {
     if row_root == @pathx.normalize(workspace.root_path) {
       return row
-        |> mooncode_session_with_field("workspace_id", workspace.id.to_json())
+        |> mooncode_session_with_field(
+          "workspace_id",
+          ToJson::to_json(workspace.id),
+        )
         |> mooncode_session_with_field(
           "workspace_name",
-          workspace.name.to_json(),
+          ToJson::to_json(workspace.name),
         )
     }
   }
   row
-  |> mooncode_session_with_field("workspace_id", "".to_json())
-  |> mooncode_session_with_field("workspace_name", "".to_json())
+  |> mooncode_session_with_field("workspace_id", ToJson::to_json(""))
+  |> mooncode_session_with_field("workspace_name", ToJson::to_json(""))
 }

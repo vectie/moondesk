@@ -336,10 +336,7 @@ async test "MoonBook live library launch fence prevents child creation" {
 
 ///|
 async test "MoonBook denied launch fences do not retain file descriptors" {
-  if !@fs.exists("/proc/self/fd") {
-    return
-  }
-  let before = @fs.readdir("/proc/self/fd").length()
+  guard moonbook_test_fd_count() is Some(before) else { return }
   for _ in 0..<64 {
     let result = moonbook_capture(
       "/nonexistent-moonbook-must-not-launch",
@@ -361,9 +358,91 @@ async test "MoonBook denied launch fences do not retain file descriptors" {
     )
     assert_true(failed is Err(_))
   }
-  let after = @fs.readdir("/proc/self/fd").length()
+  let after = moonbook_test_fd_count().unwrap()
   // Allow incidental test-runner descriptors, not per-denial retained handles.
   assert_true(after <= before + 4)
+}
+
+///|
+async test "MoonBook capture closes stdin and preserves literal argv and separate output" {
+  let empty = moonbook_capture("/bin/cat", [], "/", 2000, 1024).unwrap()
+  assert_eq(empty.status, 0)
+  assert_eq(empty.stdout, b"")
+  assert_eq(empty.stderr, b"")
+  let literal = "space ; $(never-executed) \"quoted\" 中"
+  let printed = moonbook_capture(
+    "/usr/bin/printf",
+    ["%s", literal],
+    "/",
+    2000,
+    1024,
+  ).unwrap()
+  assert_eq(printed.status, 0)
+  assert_eq(@utf8.decode(printed.stdout), literal)
+  assert_eq(printed.stderr, b"")
+  let failed = moonbook_capture(
+    "/bin/ls",
+    ["/nonexistent-moonbook-capture-fixture"],
+    "/",
+    2000,
+    1024,
+  ).unwrap()
+  assert_true(failed.status != 0)
+  assert_eq(failed.stdout, b"")
+  assert_true(failed.stderr.length() > 0)
+}
+
+///|
+async test "MoonBook capture enforces exact byte bounds and cancels overflowing child" {
+  let exact = moonbook_capture(
+    "/usr/bin/printf",
+    ["%s", "1234567890abcdef"],
+    "/",
+    2000,
+    16,
+  ).unwrap()
+  assert_eq(exact.stdout, b"1234567890abcdef")
+  assert_true(
+    moonbook_capture("/usr/bin/yes", [], "/", 2000, 16)
+    is Err("MoonBook output exceeds the export limit"),
+  )
+}
+
+///|
+async test "MoonBook capture times out sleeping child and releases descriptors" {
+  let before = moonbook_test_fd_count()
+  for _ in 0..<3 {
+    assert_true(
+      moonbook_capture("/bin/sleep", ["10"], "/", 30, 1024)
+      is Err("MoonBook export operation timed out"),
+    )
+  }
+  if before is Some(before) {
+    assert_true(moonbook_test_fd_count().unwrap() <= before + 4)
+  }
+}
+
+///|
+async fn moonbook_test_fd_count() -> Int32? {
+  if @fs.exists("/proc/self/fd") {
+    return Some(@fs.readdir("/proc/self/fd").length())
+  }
+  guard @fs.exists("/dev/fd") else { return None }
+  // Darwin's synthetic /dev/fd entries cannot be reliably enumerated with
+  // asynchronous directory metadata queries. Probe the low descriptor range
+  // directly; failed launches in this regression allocate well below 1024.
+  let mut count = 0
+  for fd in 0..<1024 {
+    let open = @fs.exists("/dev/fd/" + fd.to_string()) catch {
+      // EBADF is 9 on the Darwin/POSIX descriptor probe used here.
+      @os_error.OSError(9, ..) => false
+      error => raise error
+    }
+    if open {
+      count += 1
+    }
+  }
+  Some(count)
 }
 
 ///|

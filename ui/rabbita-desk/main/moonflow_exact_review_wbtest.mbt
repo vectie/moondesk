@@ -123,7 +123,7 @@ test "confirmed exact stale-head rejection retires only original request then sa
   let current = reopened.moonflow_retained.unwrap()
   let response = @json.parse(exact_review_ui_response(current).stringify())
   if response is Object(fields) {
-    fields["head_digest"] = ("sha256:" + "d".repeat(64)).to_json()
+    fields["head_digest"] = ToJson::to_json("sha256:" + "d".repeat(64))
   }
   let (_, ready) = update_moonflow_exact_review(
     code_mode_test_dispatch,
@@ -332,7 +332,7 @@ test "exact review UI disables unmapped humans and binds head bytes subject and 
   assert_true(html.contains("customer delivery"))
   let changed = @json.parse(exact_review_ui_response(retained).stringify())
   if changed is Object(fields) {
-    fields["record_digest"] = ("sha256:" + "d".repeat(64)).to_json()
+    fields["record_digest"] = ToJson::to_json("sha256:" + "d".repeat(64))
   }
   assert_false(moonflow_exact_review_matches(retained, changed))
 }

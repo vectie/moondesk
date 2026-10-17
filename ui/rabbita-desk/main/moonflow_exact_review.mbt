@@ -198,7 +198,7 @@ fn update_moonflow_exact_review(
         review.selected_review
       })
       guard matches.length() == 1 &&
-        handoff_field(matches[0], "authorized") == true.to_json() else {
+        handoff_field(matches[0], "authorized") == ToJson::to_json(true) else {
         return (@rabbita.none, model)
       }
       let state = handoff_text(handoff_field(matches[0], "review"), "state")
@@ -404,7 +404,7 @@ fn render_moonflow_exact_review(
   let review_state = handoff_text(review, "state")
   let can_decide = !state.pending &&
     state.request is None &&
-    handoff_field(selected, "authorized") == true.to_json() &&
+    handoff_field(selected, "authorized") == ToJson::to_json(true) &&
     ["requested", "in-review"].contains(review_state)
   section(attrs=@html.Attrs::build().data_set("testid", "flow-exact-review"), [
     h3("Existing collaboration review"),

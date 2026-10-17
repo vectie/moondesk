@@ -47,7 +47,7 @@ fn source_semantics_diagnostics(
           None => continue
         }
       }
-      next["relative_path"] = relative.to_json()
+      next["relative_path"] = ToJson::to_json(relative)
     }
     diagnostics.push(Json::object(next))
   }

@@ -36,15 +36,15 @@ test "keyed table comparison ignores record and column order and keeps exact tex
     ["Removed", "gone", "3", "", "name, amount", "removed", "", "30", ""],
     ["Added", "=1+1", "", "3", "name, amount", "", "new\nline", "", "0"],
   ])
-  assert_eq(report.differences.rows[0][1], @leafscene.Text("001"))
-  assert_eq(report.differences.rows[2][1], @leafscene.Text("=1+1"))
-  assert_eq(report.differences.rows[0][2], @leafscene.Number("1"))
+  assert_eq(report.differences.rows[0][1], Text("001"))
+  assert_eq(report.differences.rows[2][1], Text("=1+1"))
+  assert_eq(report.differences.rows[0][2], Number("1"))
   assert_eq(
     @leafcsv.parse(report.differences.export_csv()).rows,
     [report.differences.columns] + report.differences.text_rows(),
   )
   guard @moonleaf.open("diff.xlsx", report.differences.export_xlsx())
-    is @leafscene.WorkbookDocument(workbook) else {
+    is WorkbookDocument(workbook) else {
     fail("expected comparison XLSX")
   }
   assert_eq(table_from_sheet(workbook.sheets[0]).unwrap(), report.differences)
@@ -63,8 +63,8 @@ test "table comparison exposes schema changes blank values and key-only addition
   assert_eq(report.added_columns, ["new"])
   assert_eq(report.removed_columns, ["old"])
   assert_eq(report.differences.text_rows()[0][4], "old, new")
-  assert_eq(report.differences.rows[0][5], @leafscene.Text(""))
-  assert_eq(report.differences.rows[0][6], @leafscene.Empty)
+  assert_eq(report.differences.rows[0][5], Text(""))
+  assert_eq(report.differences.rows[0][6], Empty)
   let keys = @jsontable.parse("[{\"id\":\"a\"},{\"id\":\"b\"}]")
   let empty : @jsontable.Table = { columns: ["id"], rows: [], }
   let additions = compare_tables(empty, keys, 0, 0).unwrap()
@@ -151,7 +151,7 @@ async test "HTTP table comparison selects files and keys then downloads reloadab
       (name, data) in [
         ("after.csv", after.export_csv()),
         ("after.tsv", tsv.serialize_quoted()),
-        ("after.json", records.to_json().stringify()),
+        ("after.json", ToJson::to_json(records).stringify()),
         ("after.jsonl", records.map(record => record.stringify()).join("\n\n")),
         ("after.ndjson", records.map(record => record.stringify()).join("\n")),
       ] {
@@ -161,8 +161,7 @@ async test "HTTP table comparison selects files and keys then downloads reloadab
       book + "/after.xlsx",
       Bytes::from_array(
         @leafxlsx.create(
-          [after.columns.map(value => @leafscene.CellValue::Text(value))] +
-          after.rows,
+          [after.columns.map(value => Text(value))] + after.rows,
           sheet_name="Revised & 東京",
         ),
       ),
@@ -233,14 +232,14 @@ async test "HTTP table comparison selects files and keys then downloads reloadab
         assert_eq(xlsx_response.code, 200)
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("difference.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("expected real comparison workbook")
         }
         assert_eq(workbook.sheets[0].name, "Table differences")
         let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([reopened.columns] + reopened.text_rows(), downloaded)
-        assert_eq(reopened.rows[2][1], @leafscene.Text("=1+1"))
-        assert_eq(reopened.rows[0][1], @leafscene.Text("001"))
+        assert_eq(reopened.rows[2][1], Text("=1+1"))
+        assert_eq(reopened.rows[0][1], Text("001"))
         let (_, reload) = @http.get(choose + query)
         assert_eq(reload.text(), html)
         assert_eq(
@@ -357,7 +356,7 @@ async test "comparison worksheets retain exact names and recover from duplicate 
       // A saved edit is visible on an old download URL, and key column names
       // remain stable when the source columns move.
       let changed = explorer_sample()
-      changed.rows[0][2] = @leafscene.Number("777")
+      changed.rows[0][2] = Number("777")
       let reordered : @jsontable.Table = {
         columns: [
           changed.columns[2],
@@ -371,8 +370,7 @@ async test "comparison worksheets retain exact names and recover from duplicate 
         book + "/after.xlsx",
         Bytes::from_array(
           @leafxlsx.create(
-            [reordered.columns.map(value => @leafscene.CellValue::Text(value))] +
-            reordered.rows,
+            [reordered.columns.map(value => Text(value))] + reordered.rows,
             sheet_name="Sales & 東京",
           ),
         ),

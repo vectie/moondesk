@@ -45,7 +45,7 @@ async fn moonflow_review_snapshot(
   run : MoonFlowReviewRun,
   workspace_id : String,
 ) -> Json {
-  let text = match run(@trusted_host.InspectReviewWorkspace(workspace_id~)) {
+  let text = match run(InspectReviewWorkspace(workspace_id~)) {
     Ok(value) => value
     Err(message) => fail(message)
   }
@@ -362,15 +362,9 @@ async fn moonflow_review_apply(
   }
   let applied = run(
     if action == "begin" {
-      @trusted_host.BeginExistingReview(
-        workspace_id=workspace.id,
-        mutation_ref~,
-      )
+      BeginExistingReview(workspace_id=workspace.id, mutation_ref~)
     } else {
-      @trusted_host.DecideExistingReview(
-        workspace_id=workspace.id,
-        mutation_ref~,
-      )
+      DecideExistingReview(workspace_id=workspace.id, mutation_ref~)
     },
   )
   // Always reopen through Flow validation, including lost acknowledgment.
@@ -458,12 +452,14 @@ async fn moonflow_review_apply(
     run,
   )
   if result is Object(fields) {
-    fields["mutation_id"] = mutation_id.to_json()
-    fields["mutation_status"] = (if existing {
-      "reconciled"
-    } else {
-      "persisted"
-    }).to_json()
+    fields["mutation_id"] = ToJson::to_json(mutation_id)
+    fields["mutation_status"] = ToJson::to_json(
+      if existing {
+        "reconciled"
+      } else {
+        "persisted"
+      },
+    )
   }
   result
 }

@@ -93,7 +93,7 @@ async fn handle_create_standing_goal(
     return
   }
   let record = standing_goal_record_from_payload(
-    @mooncore.session_with_field(payload, "id", goal_id.to_json()),
+    @mooncore.session_with_field(payload, "id", ToJson::to_json(goal_id)),
     daemon_tick=0,
   )
   save_document_automation_binding(workspace_root, goal_id, payload) catch {

@@ -82,7 +82,7 @@ async fn moonflow_capability_evidence() -> Json {
   )
   guard evidence is Object(fields) else { return evidence }
   let planning = @trusted_host.moonflow_planning_runtime()
-  fields["planning_available"] = (planning is Ok(_)).to_json()
+  fields["planning_available"] = ToJson::to_json(planning is Ok(_))
   fields["planning_boundary"] = {
     "kind": "trusted-native-flow-planning.v1",
     "available": planning is Ok(_),

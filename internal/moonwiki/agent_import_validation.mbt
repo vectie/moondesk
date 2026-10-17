@@ -147,9 +147,9 @@ fn agent_import_manifest(request : AgentImportStage) -> Json {
   }
   guard manifest is Object(fields) else { return manifest }
   if request.town_binding is Some(binding) {
-    fields["town_binding_sha256"] = agent_import_hash(
-      @encoding/utf8.encode(binding.stringify()),
-    ).to_json()
+    fields["town_binding_sha256"] = ToJson::to_json(
+      agent_import_hash(@encoding/utf8.encode(binding.stringify())),
+    )
   }
   Json::object(fields)
 }

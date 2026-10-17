@@ -366,7 +366,9 @@ async fn moonflow_rebase_graph_input_artifacts(
         fail("MoonFlow input artifact must be a string")
       }
       rebased.push(
-        moonflow_rebased_artifact_ref(suite_root, graph_root, reference).to_json(),
+        ToJson::to_json(
+          moonflow_rebased_artifact_ref(suite_root, graph_root, reference),
+        ),
       )
     }
     fields["input_artifacts"] = Json::array(rebased)
@@ -421,15 +423,15 @@ async fn moonflow_compile_composition(
     graph, selected, compiled_items,
   )
   let suffix = compiled_digest[0:12].to_owned()
-  fields["graph_id"] = (moonflow_graph_run_id(graph) + "-compiled-" + suffix).to_json()
-  fields["declaration_revision"] = (json_string(
-    graph,
-    "declaration_revision",
-    default="r0",
-  ) +
-  "-compiled-" +
-  suffix).to_json()
-  fields["source_digest"] = ("sha256:" + compiled_digest).to_json()
+  fields["graph_id"] = ToJson::to_json(
+    moonflow_graph_run_id(graph) + "-compiled-" + suffix,
+  )
+  fields["declaration_revision"] = ToJson::to_json(
+    json_string(graph, "declaration_revision", default="r0") +
+    "-compiled-" +
+    suffix,
+  )
+  fields["source_digest"] = ToJson::to_json("sha256:" + compiled_digest)
   fields["items"] = Json::array(compiled_items)
   let compiled = Json::object(fields)
   let directory = @pathx.join(

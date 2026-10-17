@@ -85,7 +85,7 @@ pub async fn Server::serve_desk(
     ignore(prepare_moonsuite_workspace_root(bootstrap_root))
     bootstrap_root
   }
-  let active_root = @ref.new(initial_root)
+  let active_root = Ref(initial_root)
   @async.with_task_group(group => {
     group.spawn_bg(
       () => supervisor_bridge_auto_pump(active_root),

@@ -387,7 +387,7 @@ fn mooncode_submission_with_task_intent(
   guard submission is Object(fields) else { return submission }
   let next = fields.copy()
   if intent == "read_only" || intent == "workspace_change" {
-    next["task_intent"] = intent.to_json()
+    next["task_intent"] = ToJson::to_json(intent)
   } else {
     next.remove("task_intent")
   }

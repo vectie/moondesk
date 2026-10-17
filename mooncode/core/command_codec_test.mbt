@@ -26,19 +26,19 @@ fn command_codec_public_scoped(action : String) -> Json {
   let base = command_codec_public_payload(action)
   if action == "approve_tool" || action == "reject_tool" {
     base
-    |> command_codec_public_with("approval_id", "approval-one".to_json())
+    |> command_codec_public_with("approval_id", ToJson::to_json("approval-one"))
     |> command_codec_public_with(
       "target_command_id",
-      "command-target".to_json(),
+      ToJson::to_json("command-target"),
     )
-    |> command_codec_public_with("tool_call_id", "call-one".to_json())
+    |> command_codec_public_with("tool_call_id", ToJson::to_json("call-one"))
   } else if action == "apply_patch" ||
     action == "revert_patch" ||
     action == "cancel" {
     command_codec_public_with(
       base,
       "target_command_id",
-      "command-target".to_json(),
+      ToJson::to_json("command-target"),
     )
   } else {
     base
@@ -93,7 +93,7 @@ test "public command codec rejects malformed unsupported and invalid combination
       command_codec_public_with(
         command_codec_public_payload("prompt"),
         "action",
-        true.to_json(),
+        ToJson::to_json(true),
       ),
     )
     is Err(_),
@@ -107,7 +107,7 @@ test "public command codec rejects malformed unsupported and invalid combination
       command_codec_public_with(
         command_codec_public_payload("prompt"),
         "target_command_id",
-        "unexpected".to_json(),
+        ToJson::to_json("unexpected"),
       ),
     )
     is Err(_),
@@ -117,7 +117,7 @@ test "public command codec rejects malformed unsupported and invalid combination
       command_codec_public_with(
         command_codec_public_scoped("approve_tool"),
         "tool_call_id",
-        "".to_json(),
+        ToJson::to_json(""),
       ),
     )
     is Err(_),
@@ -137,7 +137,7 @@ test "public command codec omits absent planner limit and preserves positive int
   let explicit = command_codec_public_with(
     command_codec_public_payload("prompt"),
     "planner_max_steps",
-    (13).to_json(),
+    ToJson::to_json(13),
   )
   guard @core.decode_mooncode_command(explicit) is Ok(command) else {
     fail("positive integer limit must decode")
@@ -153,7 +153,7 @@ test "public command codec omits absent planner limit and preserves positive int
         command_codec_public_with(
           command_codec_public_payload("prompt"),
           "planner_max_steps",
-          value.to_json(),
+          ToJson::to_json(value),
         ),
       )
       is Err(_),

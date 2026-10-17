@@ -568,7 +568,7 @@ test "package receive renders all actual retained export proof contents with col
     @rabbita.static_cell(render_agent_import(dispatch, model)),
   )
   assert_eq(
-    html.split("data-testid=\"agent-import-member\"").length(),
+    html.split("data-testid=\"agent-import-member\"").count(),
     reply.inspection.file_count + 1,
   )
   for file in reply.inspection.files {

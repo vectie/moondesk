@@ -91,7 +91,7 @@ test "output rejects wrong source workspace scope and traversal from host respon
       ("path", "../secret"),
     ] {
     let modified = fields.copy()
-    modified[key] = value.to_json()
+    modified[key] = ToJson::to_json(value)
     assert_eq(
       handoff_text(
         work_output_decode(

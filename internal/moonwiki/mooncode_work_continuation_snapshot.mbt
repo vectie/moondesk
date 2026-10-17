@@ -401,7 +401,10 @@ async fn mooncode_continuation_load(
       return Ok(
         Some(
           snapshot
-          |> mooncode_session_with_field("input_status", "missing".to_json()),
+          |> mooncode_session_with_field(
+            "input_status",
+            ToJson::to_json("missing"),
+          ),
         ),
       )
     Ok(None) =>

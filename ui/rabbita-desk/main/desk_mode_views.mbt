@@ -2095,7 +2095,7 @@ fn desk_outline_child_depth(directory : String) -> Int32 {
   if directory == "" {
     1
   } else {
-    directory.split("/").filter(part => part != "").length() + 1
+    directory.split("/").filter(part => part != "").count() + 1
   }
 }
 

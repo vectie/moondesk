@@ -52,15 +52,15 @@ pub fn encode_mooncode_lifecycle_action(
   action : MoonCodeLifecycleAction,
   book_root? : String,
 ) -> Json {
-  let fields : Map[String, Json] = { "action": action.name().to_json() }
+  let fields : Map[String, Json] = { "action": ToJson::to_json(action.name()) }
   if action is Rename(title) {
-    fields["title"] = title.to_json()
+    fields["title"] = ToJson::to_json(title)
   }
   match book_root {
-    Some(root) => fields["book_root"] = root.to_json()
+    Some(root) => fields["book_root"] = ToJson::to_json(root)
     None => ()
   }
-  fields.to_json()
+  ToJson::to_json(fields)
 }
 
 ///|

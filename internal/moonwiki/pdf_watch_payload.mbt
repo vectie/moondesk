@@ -38,7 +38,7 @@ fn standing_goal_record_from_payload(
     "next_due_tick": next_due,
     "last_run_tick": match json_int(payload, "last_run_tick", default=-1) {
       -1 => Json::null()
-      tick => tick.to_json()
+      tick => ToJson::to_json(tick)
     },
     "enabled": json_bool(payload, "enabled", default=true),
     "source_policy": json_string(payload, "source_policy", default="web-first"),

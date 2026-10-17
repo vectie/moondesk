@@ -72,16 +72,20 @@ async test "declared step compiled UI request crosses production HTTP fixed Flow
           })[0]
         let checkpoint = @json.parse(registration.stringify())
         guard checkpoint is Object(fields) else { fail("checkpoint") }
-        fields["sequence"] = events.length().to_json()
-        fields["event_id"] = ("synthetic-history-" + id).to_json()
+        fields["sequence"] = ToJson::to_json(events.length())
+        fields["event_id"] = ToJson::to_json("synthetic-history-" + id)
         fields["kind"] = "checkpoint-reused"
-        fields["detail"] = ("synthetic-reviewed-checkpoint-" + id).to_json()
-        fields["request_id"] = ("synthetic-request-" + id).to_json()
-        fields["result_id"] = ("synthetic-result-" + id).to_json()
-        fields["attempt_id"] = ("synthetic-attempt-" + id).to_json()
+        fields["detail"] = ToJson::to_json(
+          "synthetic-reviewed-checkpoint-" + id,
+        )
+        fields["request_id"] = ToJson::to_json("synthetic-request-" + id)
+        fields["result_id"] = ToJson::to_json("synthetic-result-" + id)
+        fields["attempt_id"] = ToJson::to_json("synthetic-attempt-" + id)
         fields["input_digest"] = "sha256:synthetic-prior-input"
         fields["output_digest"] = "sha256:synthetic-prior-output"
-        fields["artifact_id"] = ("requests/review-" + id + ".json").to_json()
+        fields["artifact_id"] = ToJson::to_json(
+          "requests/review-" + id + ".json",
+        )
         fields["authority_id"] = "synthetic-fixture-reviewer"
         @fs.write_file(
           root + "/requests/review-" + id + ".json",
@@ -277,7 +281,7 @@ async test "declared step compiled UI request crosses production HTTP fixed Flow
   }
   @fs.write_file(
     fixture + "/http-evidence.json",
-    evidence.to_json().stringify(indent=2),
+    ToJson::to_json(evidence).stringify(indent=2),
     create_mode=CreateOrTruncate,
   )
   println(

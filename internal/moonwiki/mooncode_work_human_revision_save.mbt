@@ -176,7 +176,7 @@ async fn mooncode_human_revision_save_locked(
       let record = mooncode_session_with_field(
         mooncode_human_revision_marker(prepared, "conflict"),
         "current_content",
-        current.to_json(),
+        ToJson::to_json(current),
       )
       match
         capture(
@@ -190,7 +190,7 @@ async fn mooncode_human_revision_save_locked(
             503, "capture_unavailable", error,
           )
       }
-      return mooncode_human_revision_conflict(current.to_json())
+      return mooncode_human_revision_conflict(ToJson::to_json(current))
     }
   }
   // Existing observation survives source changes/deletion. Reflushing it also

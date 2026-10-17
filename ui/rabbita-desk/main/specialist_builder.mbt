@@ -1,12 +1,10 @@
 ///|
 fn specialist_library_scope(model : Model) -> String {
-  [
+  ToJson::to_json([
     model.workspace_suite_root_path,
     model.workspace_books_root_path,
     model.workspace_library_path,
-  ]
-  .to_json()
-  .stringify()
+  ]).stringify()
 }
 
 ///|

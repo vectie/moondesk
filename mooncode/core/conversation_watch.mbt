@@ -461,7 +461,7 @@ fn encode_mooncode_watch_snapshot(
     )
   }
   fields["mooncode_conversation"] = encode_mooncode_conversation(conversation)
-  Ok(fields.to_json())
+  Ok(ToJson::to_json(fields))
 }
 
 ///|

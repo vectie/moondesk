@@ -26,7 +26,7 @@ async fn mooncode_setup_save_integrations(
     "servers",
   )
   let saved : Array[Json] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for server in json_array_items(payload, "servers") {
     let id = json_string(server, "id", default="").trim().to_owned()
     let url = json_string(server, "url", default="").trim().to_owned()

@@ -50,12 +50,12 @@ fn mooncode_session_from_native_record(
   let with_source = mooncode_session_with_field(
     base,
     "source",
-    "moonclaw-canonical-session".to_json(),
+    ToJson::to_json("moonclaw-canonical-session"),
   )
   let with_updated = mooncode_session_with_field(
     with_source,
     "updated_at",
-    updated_at.to_json(),
+    ToJson::to_json(updated_at),
   )
   if !moonclaw_runtime_record_conversation_belongs_to_session(
       conversation, session_id,
@@ -65,7 +65,7 @@ fn mooncode_session_from_native_record(
   with_updated
   |> mooncode_session_with_field(
     "status",
-    mooncode_canonical_session_status(conversation).to_json(),
+    ToJson::to_json(mooncode_canonical_session_status(conversation)),
   )
   |> mooncode_session_with_field("mooncode_conversation", conversation)
 }

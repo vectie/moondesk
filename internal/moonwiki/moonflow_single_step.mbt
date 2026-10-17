@@ -107,7 +107,7 @@ async fn moonflow_single_step_handle_with(
   let operation = if json_string(payload, "action", default="") == "execute" {
     @trusted_host.ExecuteOne(run_id~, item_id~, request_id~, recorded_at~)
   } else {
-    @trusted_host.ReconcileOne(run_id~, item_id~, request_id~, recorded_at~)
+    ReconcileOne(run_id~, item_id~, request_id~, recorded_at~)
   }
   let outcome = run(operation) catch {
     error =>

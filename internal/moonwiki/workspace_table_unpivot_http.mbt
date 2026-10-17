@@ -53,8 +53,7 @@ async fn handle_workspace_table_unpivot(
       ("text/csv; charset=utf-8", @encoding/utf8.encode(report.export_csv()))
     "xlsx" => {
       let data = @leafxlsx.create(
-        [report.columns.map(value => @leafscene.CellValue::Text(value))] +
-        report.rows,
+        [report.columns.map(value => Text(value))] + report.rows,
         sheet_name="Reshaped table",
       ) catch {
         error => {

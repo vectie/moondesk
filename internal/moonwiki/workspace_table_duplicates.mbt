@@ -37,7 +37,7 @@ fn table_duplicate_indexes(
           Some(other) => [row[column], row[other]]
         }
     }
-    let key = values.to_json().stringify()
+    let key = ToJson::to_json(values).stringify()
     keys.push(key)
     let (first_index, _, count) = groups.get(key).unwrap_or((index, index, 0))
     groups[key] = (first_index, index, count + 1)

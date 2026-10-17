@@ -7,20 +7,18 @@ fn agent_import_runtime_runner(
   (command, args) => {
     let operation = match (command, args) {
       ("inspect", [package_path]) => @trusted_host.Inspect(package_path~)
-      ("verify", [package_path]) => @trusted_host.Verify(package_path~)
-      ("source", [package_path]) => @trusted_host.Source(package_path~)
+      ("verify", [package_path]) => Verify(package_path~)
+      ("source", [package_path]) => Source(package_path~)
       ("import", [destination, package_path, source_path]) =>
-        @trusted_host.Import(destination~, package_path~, source_path~)
+        Import(destination~, package_path~, source_path~)
       ("import-exact", [destination, package_path, source_path]) =>
-        @trusted_host.ImportExact(destination~, package_path~, source_path~)
+        ImportExact(destination~, package_path~, source_path~)
       ("verify-import", [destination, package_path]) =>
-        @trusted_host.VerifyImport(destination~, package_path~)
+        VerifyImport(destination~, package_path~)
       _ => return Err("Unsupported MoonBook receive operation")
     }
     runtime.run(root, operation, may_run=() => {
-      !(operation is @trusted_host.Import(..) ||
-      operation is @trusted_host.ImportExact(..)) ||
-      is_current()
+      !(operation is Import(..) || operation is ImportExact(..)) || is_current()
     })
   }
 }

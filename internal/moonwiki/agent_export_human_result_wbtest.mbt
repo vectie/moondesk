@@ -11,6 +11,30 @@ fn human_result_test_field(
 }
 
 ///|
+test "accepted human result keeps the original parser depth boundary" {
+  let four = @base64.encode(b"[[[[]]]]", padding=true)
+  let five = @base64.encode(b"[[[[[]]]]]", padding=true)
+  match agent_human_result_decode(four) {
+    Err(message) =>
+      assert_true(message != "Accepted human result source must be valid JSON")
+    Ok(_) => fail("an array cannot satisfy the result contract")
+  }
+  assert_true(
+    agent_human_result_decode(five)
+    is Err("Accepted human result source must be valid JSON"),
+  )
+  let quoted = @base64.encode(
+    b"{\"text\":\"[[[[[\\\"quoted\\\"]]]]]\"}",
+    padding=true,
+  )
+  match agent_human_result_decode(quoted) {
+    Err(message) =>
+      assert_true(message != "Accepted human result source must be valid JSON")
+    Ok(_) => fail("an incomplete object cannot satisfy the result contract")
+  }
+}
+
+///|
 fn human_result_test_request(
   source : Bytes,
   id~ : String = "0123456789abcdef0123456789abcdef",

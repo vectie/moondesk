@@ -49,11 +49,11 @@ test "append aligns reordered exact headers preserves repeated rows and namespac
     ["second.xlsx", "Sales & 東京", "1", "東京<&\"", "5", "", "line,\nnext"],
     ["second.xlsx", "Sales & 東京", "2", "001", "7", "", "=SUM(A1)"],
   ])
-  assert_eq(report.table.rows[0][2], @leafscene.Number("1"))
-  assert_eq(report.table.rows[0][3], @leafscene.Text("001"))
-  assert_eq(report.table.rows[1][3], @leafscene.Text("=1+1"))
-  assert_eq(report.table.rows[4][6], @leafscene.Text("=SUM(A1)"))
-  assert_eq(report.table.rows[0][6], @leafscene.Empty)
+  assert_eq(report.table.rows[0][2], Number("1"))
+  assert_eq(report.table.rows[0][3], Text("001"))
+  assert_eq(report.table.rows[1][3], Text("=1+1"))
+  assert_eq(report.table.rows[4][6], Text("=SUM(A1)"))
+  assert_eq(report.table.rows[0][6], Empty)
   assert_eq(first.table, append_first_fixture())
   assert_eq(second.table, append_second_fixture())
   assert_eq(
@@ -117,7 +117,7 @@ test "append refuses ambiguous headers and bounded output overflows" {
   assert_true(append_tables(rows, rows) is Err(_))
   let dense = append_source({
     columns: Array::makei(100, i => "c\{i}"),
-    rows: Array::make(5000, Array::make(100, @leafscene.Text("x"))),
+    rows: Array::make(5000, Array::make(100, Text("x"))),
   })
   assert_true(append_tables(dense, dense) is Err(_))
 }
@@ -168,8 +168,7 @@ async test "HTTP append combines all supported saved formats exports real files 
       book + "/second.xlsx",
       Bytes::from_array(
         @leafxlsx.create(
-          [second.columns.map(value => @leafscene.CellValue::Text(value))] +
-          second.rows,
+          [second.columns.map(value => Text(value))] + second.rows,
           sheet_name="Next & 東京",
         ),
       ),
@@ -241,16 +240,16 @@ async test "HTTP append combines all supported saved formats exports real files 
         assert_eq(xlsx_response.code, 200)
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("combined.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("Expected actual XLSX")
         }
         assert_eq(workbook.sheets[0].name, "Combined table")
         let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([reopened.columns] + reopened.text_rows(), rows)
-        assert_eq(reopened.rows[0][3], @leafscene.Text("001"))
-        assert_eq(reopened.rows[1][3], @leafscene.Text("=1+1"))
-        assert_eq(reopened.rows[4][6], @leafscene.Text("=SUM(A1)"))
-        assert_eq(reopened.rows[0][2], @leafscene.Number("1"))
+        assert_eq(reopened.rows[0][3], Text("001"))
+        assert_eq(reopened.rows[1][3], Text("=1+1"))
+        assert_eq(reopened.rows[4][6], Text("=SUM(A1)"))
+        assert_eq(reopened.rows[0][2], Number("1"))
         let (_, reload) = @http.get(url)
         assert_eq(reload.text(), html)
         assert_eq(@fs.read_file(book + "/" + first_name).binary(), first_bytes)

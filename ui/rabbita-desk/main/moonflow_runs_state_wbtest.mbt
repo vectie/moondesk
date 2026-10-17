@@ -206,7 +206,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
     ),
   )
   assert_true(zero_markup.contains("data-state=\"legitimate-zero\""))
-  assert_eq(zero_markup.split("No executable work yet").length(), 2)
+  assert_eq(zero_markup.split("No executable work yet").count(), 2)
   let zero_before_canvas = zero_markup
     .split("data-testid=\"moonflow-composition-canvas\"")
     .to_array()
@@ -270,13 +270,13 @@ test "Flow capability limits preparation without erasing run history" {
     @rabbita.static_cell(render_moonflow_workspace(dispatch, limited)),
   )
   assert_true(markup.contains("data-state=\"capability-limited\""))
-  assert_eq(markup.split("Execution controls are unavailable").length(), 3)
+  assert_eq(markup.split("Execution controls are unavailable").count(), 3)
   assert_eq(
     markup
     .split(
       "Existing run evidence stays visible. Declared-plan editing and one digital Mold step use separate host setup; generic execution remains unavailable.",
     )
-    .length(),
+    .count(),
     3,
   )
   assert_true(markup.contains("run-selected"))

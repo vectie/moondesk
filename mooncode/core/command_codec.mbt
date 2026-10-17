@@ -311,17 +311,19 @@ fn command_codec_submission_fields(
   command : MoonCodeCommand,
 ) -> Map[String, Json] {
   {
-    "action": command.kind.to_string().to_json(),
-    "client_turn_id": command.client_turn_id.to_json(),
-    "context_path": command.context_path.to_json(),
-    "message": command.message.to_json(),
-    "model": command.model.to_json(),
-    "web_search": command.web_search.to_json(),
-    "planner_reasoning_effort": command.planner_reasoning_effort.to_json(),
-    "approval_id": command.approval_id.to_json(),
-    "target_command_id": command.target_command_id.to_json(),
-    "tool_call_id": command.tool_call_id.to_json(),
-    "force_preflight": command.force_preflight.to_json(),
+    "action": ToJson::to_json(command.kind.to_string()),
+    "client_turn_id": ToJson::to_json(command.client_turn_id),
+    "context_path": ToJson::to_json(command.context_path),
+    "message": ToJson::to_json(command.message),
+    "model": ToJson::to_json(command.model),
+    "web_search": ToJson::to_json(command.web_search),
+    "planner_reasoning_effort": ToJson::to_json(
+      command.planner_reasoning_effort,
+    ),
+    "approval_id": ToJson::to_json(command.approval_id),
+    "target_command_id": ToJson::to_json(command.target_command_id),
+    "tool_call_id": ToJson::to_json(command.tool_call_id),
+    "force_preflight": ToJson::to_json(command.force_preflight),
   }
 }
 
@@ -335,10 +337,11 @@ pub fn encode_mooncode_command(
     None => {
       let fields = command_codec_submission_fields(command)
       if command.model_workspace != "" {
-        fields["model_workspace"] = command.model_workspace.to_json()
+        fields["model_workspace"] = ToJson::to_json(command.model_workspace)
       }
       match command.task_intent {
-        Some(intent) => fields["task_intent"] = intent.to_string().to_json()
+        Some(intent) =>
+          fields["task_intent"] = ToJson::to_json(intent.to_string())
         None => ()
       }
       if !command.content_parts.is_empty() {
@@ -348,7 +351,7 @@ pub fn encode_mooncode_command(
       }
       match command.planner_max_steps {
         Some(value) if value > 0 =>
-          fields["planner_max_steps"] = value.to_json()
+          fields["planner_max_steps"] = ToJson::to_json(value)
         Some(_) =>
           return Err(
             "planner_max_steps must be a positive integer when supplied",
@@ -359,3 +362,9 @@ pub fn encode_mooncode_command(
     }
   }
 }
+
+///|
+pub extend MoonCodeTaskIntent with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend MoonCodeTaskIntent with Eq::{not_equal, equal}

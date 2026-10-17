@@ -1,6 +1,8 @@
 ///|
 fn resume_test_scope() -> Json {
-  ["/suite", "/suite/books", "/suite/books", "actual-desk-id", "/book"].to_json()
+  ToJson::to_json([
+    "/suite", "/suite/books", "/suite/books", "actual-desk-id", "/book",
+  ])
 }
 
 ///|
@@ -101,9 +103,9 @@ test "Resume work legacy missing or mismatched host scope keeps work usable with
   let canonical = legacy.work_handoff.canonical.unwrap()
   for
     scope in [
-      ["/suite", "/books", "/books", "other", "/book"].to_json(),
-      ["/suite", "/books", "/books", "actual-desk-id", "/other"].to_json(),
-      ["", "/books", "/books", "actual-desk-id", "/book"].to_json(),
+      ToJson::to_json(["/suite", "/books", "/books", "other", "/book"]),
+      ToJson::to_json(["/suite", "/books", "/books", "actual-desk-id", "/other"]),
+      ToJson::to_json(["", "/books", "/books", "actual-desk-id", "/book"]),
     ] {
     assert_eq(work_resume_host_scope({ "resume_scope": scope }, canonical), "")
   }

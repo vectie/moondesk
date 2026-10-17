@@ -26,7 +26,11 @@ async fn handle_workspace_entries(
   }
   if !@fs.exists(candidate) {
     if is_virtual_moonbook_section(workspace, clean_relative) {
-      send_json(conn, method_, ([] : Array[@desk.DeskFileEntry]).to_json())
+      send_json(
+        conn,
+        method_,
+        ToJson::to_json(([] : Array[@desk.DeskFileEntry])),
+      )
     } else {
       send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
     }
@@ -38,12 +42,14 @@ async fn handle_workspace_entries(
         let entries = list_workspace_entries(
           workspace, confined_relative, absolute,
         )
-        send_json(conn, method_, entries.to_json())
+        send_json(conn, method_, ToJson::to_json(entries))
       } else if @fs.exists(absolute) {
         send_json(
           conn,
           method_,
-          [workspace_file_entry(workspace, confined_relative, absolute)].to_json(),
+          ToJson::to_json([
+            workspace_file_entry(workspace, confined_relative, absolute),
+          ]),
         )
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")

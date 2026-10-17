@@ -48,7 +48,7 @@ test "title bar restores primary modes and nests Wiki work as tabs" {
     assert_true(markup.contains("class=\"primary-nav-label\""))
     assert_true(markup.contains("data-i18n=\"" + key + "\""))
   }
-  assert_eq(markup.split("class=\"primary-nav-label\"").length(), 11)
+  assert_eq(markup.split("class=\"primary-nav-label\"").count(), 11)
   assert_false(markup.contains("<button data-i18n=\"nav."))
   assert_true(markup.contains("data-testid=\"wiki-tab-pages\""))
   assert_true(markup.contains("data-testid=\"wiki-tab-requests\""))
@@ -58,10 +58,10 @@ test "title bar restores primary modes and nests Wiki work as tabs" {
   assert_false(markup.contains("data-testid=\"mode-requests\""))
   assert_false(markup.contains("data-testid=\"compact-mode-publish\""))
   assert_true(markup.contains("aria-keyshortcuts=\"Meta+5 Control+5\""))
-  assert_eq(markup.split("role=\"navigation\"").length(), 4)
-  assert_eq(markup.split("aria-label=\"Primary destinations\"").length(), 3)
-  assert_eq(markup.split("aria-label=\"Wiki sections\"").length(), 2)
-  assert_eq(markup.split("aria-current=\"page\"").length(), 4)
+  assert_eq(markup.split("role=\"navigation\"").count(), 4)
+  assert_eq(markup.split("aria-label=\"Primary destinations\"").count(), 3)
+  assert_eq(markup.split("aria-label=\"Wiki sections\"").count(), 2)
+  assert_eq(markup.split("aria-current=\"page\"").count(), 4)
 }
 
 ///|

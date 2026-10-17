@@ -2,7 +2,6 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbitlang/async/io",
-  "moonbitlang/async/pipe",
   "moonbitlang/async/process",
   "moonbitlang/async/stdio",
   "moonbitlang/core/env",
@@ -13,3 +12,7 @@ import {
 }
 
 supported_targets = "native"
+
+import {
+  "moonbitlang/async/os_error",
+} for "wbtest"

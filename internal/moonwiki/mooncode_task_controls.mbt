@@ -35,7 +35,7 @@ async fn handle_mooncode_task_controls(
     )
     return
   }
-  payload["book_root"] = book_root.to_json()
+  payload["book_root"] = ToJson::to_json(book_root)
   let lifecycle = @mooncode.moonclaw_native_session_lifecycle_endpoint(
     session_id,
   )

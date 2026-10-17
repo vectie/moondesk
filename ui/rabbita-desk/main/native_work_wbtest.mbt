@@ -356,7 +356,7 @@ test "native work component renders saved evidence exact identity escaped output
   let pending_markup = @rabbita.render_to_string(
     @rabbita.static_cell(render_native_work(dispatch, pending)),
   )
-  assert_eq(pending_markup.split(" disabled").length(), 6)
+  assert_eq(pending_markup.split(" disabled").count(), 6)
   assert_true(pending_markup.contains("pending…"))
 }
 

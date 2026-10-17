@@ -244,7 +244,7 @@ fn append_unique_contract(
   }
   let exists = items.any(item => {
     match item {
-      Object(contract) => contract.get("id") == Some(id.to_json())
+      Object(contract) => contract.get("id") == Some(ToJson::to_json(id))
       _ => false
     }
   })
@@ -273,7 +273,7 @@ pub async fn adopt_pack_bridge(
   let output_declared = schemas.any(item => {
     match item {
       Object(schema) =>
-        schema.get("id") == Some(request.output_schema_id.to_json())
+        schema.get("id") == Some(ToJson::to_json(request.output_schema_id))
       _ => false
     }
   })
@@ -298,7 +298,7 @@ pub async fn adopt_pack_bridge(
   let has_intake = tools.any(item => {
     match item {
       Object(tool) =>
-        tool.get("id") == Some(request.intake_operation_id.to_json())
+        tool.get("id") == Some(ToJson::to_json(request.intake_operation_id))
       _ => false
     }
   })

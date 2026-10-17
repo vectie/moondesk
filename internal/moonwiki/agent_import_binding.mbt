@@ -7,11 +7,11 @@ fn agent_import_checked_binding(binding : Json, source : Json) -> Json raise {
     source is Object(source_fields) &&
     fields.get("source") is Some(Object(expected_fields)) &&
     fields.get("contract") ==
-    Some("moontown.portable-listing-binding.v1".to_json()) &&
-    fields.get("binding_revision") == Some((1 : Int32).to_json()) &&
-    fields.get("reuse_mode") == Some("local_file_import".to_json()) &&
+    Some(ToJson::to_json("moontown.portable-listing-binding.v1")) &&
+    fields.get("binding_revision") == Some(ToJson::to_json((1 : Int32))) &&
+    fields.get("reuse_mode") == Some(ToJson::to_json("local_file_import")) &&
     fields.get("verification_scope") ==
-    Some("publisher_declared_expected_source".to_json()) else {
+    Some(ToJson::to_json("publisher_declared_expected_source")) else {
     fail("Choose the original v1 Town binding received with this package")
   }
   for key in ["listing_id", "publisher_principal_id", "tenant_id"] {
@@ -24,7 +24,7 @@ fn agent_import_checked_binding(binding : Json, source : Json) -> Json raise {
     fail("The Town binding has no package filename")
   }
   let expected_source = source_fields.copy()
-  expected_source["package_filename"] = filename.to_json()
+  expected_source["package_filename"] = ToJson::to_json(filename)
   guard Json::object(expected_source) == Json::object(expected_fields) else {
     fail(
       "The Town binding describes a different package. Choose its unchanged .moonbook-agent file",
@@ -79,10 +79,10 @@ async fn agent_import_exact_receipt(
   guard receipt is Object(fields) &&
     binding is Object(expected) &&
     fields.get("contract") ==
-    Some("moonbook.portable_import_receipt.v1".to_json()) &&
-    fields.get("status") == Some("complete".to_json()) &&
-    fields.get("member_bytes_verified") == Some(true.to_json()) &&
-    fields.get("local_target_root") == Some(destination.to_json()) &&
+    Some(ToJson::to_json("moonbook.portable_import_receipt.v1")) &&
+    fields.get("status") == Some(ToJson::to_json("complete")) &&
+    fields.get("member_bytes_verified") == Some(ToJson::to_json(true)) &&
+    fields.get("local_target_root") == Some(ToJson::to_json(destination)) &&
     json_string(receipt, "local_book_id", default="") ==
     destination.split("/").last().unwrap_or("").to_owned() &&
     json_string(receipt, "installation_receipt_id", default="") ==

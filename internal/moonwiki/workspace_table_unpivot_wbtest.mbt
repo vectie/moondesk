@@ -28,8 +28,8 @@ test "unpivot preserves identity blanks literal values and source order" {
     ["wide.csv", "", "2", "<b>", "Jan & 東京", "line,\nnext"],
     ["wide.csv", "", "2", "<b>", "Feb", "0"],
   ])
-  assert_eq(table.rows[0][2], @leafscene.Number("1"))
-  assert_eq(table.rows[0][5], @leafscene.Text("=1+1"))
+  assert_eq(table.rows[0][2], Number("1"))
+  assert_eq(table.rows[0][5], Text("=1+1"))
   assert_eq(source.table, unpivot_fixture())
   assert_eq(
     unpivot_table(source, source.table.columns).unwrap().rows.length(),
@@ -121,7 +121,7 @@ async test "unpivot HTTP all formats real downloads reload errors and unchanged 
       book + "/wide.xlsx",
       Bytes::from_array(
         @leafxlsx.create(
-          [table.columns.map(name => @leafscene.Text(name))] + table.rows,
+          [table.columns.map(name => Text(name))] + table.rows,
           sheet_name="Months & 東京",
         ),
       ),
@@ -177,13 +177,13 @@ async test "unpivot HTTP all formats real downloads reload errors and unchanged 
         assert_eq(xlsx_response.code, 200)
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("reshaped.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("Expected real XLSX")
         }
         let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([reopened.columns] + reopened.text_rows(), rows)
-        assert_eq(reopened.rows[0][3], @leafscene.Text("001"))
-        assert_eq(reopened.rows[0][5], @leafscene.Text("=1+1"))
+        assert_eq(reopened.rows[0][3], Text("001"))
+        assert_eq(reopened.rows[0][5], Text("=1+1"))
         let (_, reload) = @http.get(request)
         assert_eq(reload.text(), html)
         assert_eq(@fs.read_file(book + "/" + file).binary(), before)

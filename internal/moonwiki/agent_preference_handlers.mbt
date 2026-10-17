@@ -53,7 +53,7 @@ async fn moonclaw_preferences_for_prompt(
       let detail = json_string(record, "detail", default="")
       if detail != "" {
         lines.push("- " + label + ": " + detail)
-        ids.push(json_string(record, "id", default="").to_json())
+        ids.push(ToJson::to_json(json_string(record, "id", default="")))
         if lines.length() >= 40 {
           break
         }

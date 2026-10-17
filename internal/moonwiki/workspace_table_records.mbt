@@ -6,7 +6,7 @@ fn table_record_headers(columns : Array[String]) -> Result[Unit, String] {
     if seen.contains(column) {
       return Err(
         "JSON/JSONL export needs unique headers. Rename duplicate header " +
-        column.to_json().stringify() +
+        ToJson::to_json(column).stringify() +
         " in a separate saved source, or use CSV/XLSX.",
       )
     }
@@ -21,7 +21,7 @@ fn table_record_headers(columns : Array[String]) -> Result[Unit, String] {
 fn table_record_cell(value : @leafscene.CellValue) -> Result[String, String] {
   match value {
     Empty => Ok("null")
-    Text(text) | Error(text) => Ok(text.to_json().stringify())
+    Text(text) | Error(text) => Ok(ToJson::to_json(text).stringify())
     Boolean(value) => Ok(if value { "true" } else { "false" })
     Number(text) => {
       let token = text.trim().to_owned()
@@ -33,7 +33,7 @@ fn table_record_cell(value : @leafscene.CellValue) -> Result[String, String] {
         _ => Err("Number must be finite JSON-style numeric text")
       }
     }
-    Formula(cached=Some(text), ..) => Ok(text.to_json().stringify())
+    Formula(cached=Some(text), ..) => Ok(ToJson::to_json(text).stringify())
     Formula(cached=None, ..) => Ok("null")
   }
 }
@@ -63,7 +63,7 @@ fn table_export_records(
       if column_index > 0 {
         out.write_char(',')
       }
-      out.write_string(column.to_json().stringify())
+      out.write_string(ToJson::to_json(column).stringify())
       out.write_char(':')
       match table_record_cell(row[column_index]) {
         Ok(value) => out.write_string(value)

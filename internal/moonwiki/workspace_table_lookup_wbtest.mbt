@@ -34,9 +34,9 @@ test "lookup enriches repeated source keys in order without multiplying rows" {
     ["Unmatched", "5", "", "", "3", "", "", ""],
     ["Matched", "6", "4", "=1+1", "4", "=1+1", "=SUM(A1)", "formula-looking"],
   ])
-  assert_eq(report.table.rows[0][1], @leafscene.Number("1"))
-  assert_eq(report.table.rows[0][3], @leafscene.Text("001"))
-  assert_eq(report.table.rows[5][6], @leafscene.Text("=SUM(A1)"))
+  assert_eq(report.table.rows[0][1], Number("1"))
+  assert_eq(report.table.rows[0][3], Text("001"))
+  assert_eq(report.table.rows[5][6], Text("=SUM(A1)"))
   assert_eq(
     @leafcsv.parse(report.table.export_csv()).rows,
     [report.table.columns] + report.table.text_rows(),
@@ -138,7 +138,7 @@ async test "HTTP lookup connects saved formats and downloads exact enriched reco
       (name, data) in [
         ("customers.csv", lookup.export_csv()),
         ("customers.tsv", tsv.serialize_quoted()),
-        ("customers.json", records.to_json().stringify()),
+        ("customers.json", ToJson::to_json(records).stringify()),
         (
           "customers.jsonl",
           records.map(record => record.stringify()).join("\n\n"),
@@ -154,8 +154,7 @@ async test "HTTP lookup connects saved formats and downloads exact enriched reco
       book + "/customers.xlsx",
       Bytes::from_array(
         @leafxlsx.create(
-          [lookup.columns.map(value => @leafscene.CellValue::Text(value))] +
-          lookup.rows,
+          [lookup.columns.map(value => Text(value))] + lookup.rows,
           sheet_name="Customers & 東京",
         ),
       ),
@@ -226,15 +225,15 @@ async test "HTTP lookup connects saved formats and downloads exact enriched reco
         assert_eq(xlsx_response.code, 200)
         let xlsx = xlsx_body.binary()
         guard @moonleaf.open("enriched.xlsx", xlsx.to_fixedarray())
-          is @leafscene.WorkbookDocument(workbook) else {
+          is WorkbookDocument(workbook) else {
           fail("Expected real XLSX")
         }
         assert_eq(workbook.sheets[0].name, "Enriched table")
         let reopened = table_from_sheet(workbook.sheets[0]).unwrap()
         assert_eq([reopened.columns] + reopened.text_rows(), rows)
-        assert_eq(reopened.rows[0][3], @leafscene.Text("001"))
-        assert_eq(reopened.rows[5][6], @leafscene.Text("=SUM(A1)"))
-        assert_eq(reopened.rows[0][1], @leafscene.Number("1"))
+        assert_eq(reopened.rows[0][3], Text("001"))
+        assert_eq(reopened.rows[5][6], Text("=SUM(A1)"))
+        assert_eq(reopened.rows[0][1], Number("1"))
         let (_, reload) = @http.get(url)
         assert_eq(reload.text(), html)
         assert_eq(
@@ -340,7 +339,7 @@ async test "lookup worksheets survive reload and saved reordering with recoverab
       assert_false(bad_html.contains("Export enriched CSV"))
       // Reordering lookup columns cannot silently change the selected key.
       let changed = explorer_sample()
-      changed.rows[0][2] = @leafscene.Number("777")
+      changed.rows[0][2] = Number("777")
       let reordered : @jsontable.Table = {
         columns: [
           changed.columns[2],
@@ -354,8 +353,7 @@ async test "lookup worksheets survive reload and saved reordering with recoverab
         book + "/lookup.xlsx",
         Bytes::from_array(
           @leafxlsx.create(
-            [reordered.columns.map(value => @leafscene.CellValue::Text(value))] +
-            reordered.rows,
+            [reordered.columns.map(value => Text(value))] + reordered.rows,
             sheet_name="Sales & 東京",
           ),
         ),

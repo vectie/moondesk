@@ -126,10 +126,12 @@ fn capabilities_json_for(
     extra[key] = value
   }
   let ownership_extensions = capability.ownership_extensions.copy()
-  ownership_extensions["sessions"] = capability.session_owner.to_json()
-  ownership_extensions["canonical_conversation"] = capability.session_owner.to_json()
-  ownership_extensions["optimistic_rows"] = "moondesk".to_json()
-  ownership_extensions["artifacts"] = "moonbook".to_json()
+  ownership_extensions["sessions"] = ToJson::to_json(capability.session_owner)
+  ownership_extensions["canonical_conversation"] = ToJson::to_json(
+    capability.session_owner,
+  )
+  ownership_extensions["optimistic_rows"] = ToJson::to_json("moondesk")
+  ownership_extensions["artifacts"] = ToJson::to_json("moonbook")
   let enriched = { ..capability, extensions: extra, ownership_extensions, }
   @mooncode_core.encode_mooncode_capability(enriched)
 }

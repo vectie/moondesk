@@ -37,14 +37,14 @@ fn work_learning_binding(model : Model) -> Json {
     return inactive
   }
   let key : Json = [
-    state.generation.to_json(),
-    canonical.workspace_id.to_json(),
-    canonical.root_path.to_json(),
-    canonical.session_id.to_json(),
-    canonical.command_id.to_json(),
-    target.task_id.to_json(),
-    target.run_id.to_json(),
-    target.return_to.to_json(),
+    ToJson::to_json(state.generation),
+    ToJson::to_json(canonical.workspace_id),
+    ToJson::to_json(canonical.root_path),
+    ToJson::to_json(canonical.session_id),
+    ToJson::to_json(canonical.command_id),
+    ToJson::to_json(target.task_id),
+    ToJson::to_json(target.run_id),
+    ToJson::to_json(target.return_to),
     handoff_field(state.output_hint, "command_id"),
     handoff_field(state.output_hint, "path"),
     handoff_field(state.output_hint, "evidence_id"),

@@ -59,9 +59,13 @@ async test "MoonCode comparisons persist two evidence-bound branches and a selec
     },
   )
   let selected_payload = @mooncore.session_with_field(
-    @mooncore.session_with_field(record, "selected_branch", "B".to_json()),
+    @mooncore.session_with_field(
+      record,
+      "selected_branch",
+      ToJson::to_json("B"),
+    ),
     "selected_at",
-    "2026-09-04T12:00:00Z".to_json(),
+    ToJson::to_json("2026-09-04T12:00:00Z"),
   )
   let selected = persist_mooncode_comparison(root, selected_payload)
   let updated = match selected {

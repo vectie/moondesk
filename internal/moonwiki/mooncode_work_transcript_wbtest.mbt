@@ -149,9 +149,9 @@ async test "bound transcript rejects wrong root or unrelated session while retai
         is Some(Object(conversation)) else {
         fail("conversation")
       }
-      conversation["session_id"] = "unrelated".to_json()
+      conversation["session_id"] = ToJson::to_json("unrelated")
     } else {
-      fields[mismatch] = "unrelated".to_json()
+      fields[mismatch] = ToJson::to_json("unrelated")
     }
     let (status, response) = mooncode_resolve_work_handoff(
       "/suite",
@@ -199,7 +199,7 @@ test "wrong conversation kind or missing body never becomes an empty ready trans
         is Some(Object(conversation)) else {
         fail("conversation")
       }
-      conversation["kind"] = "wrong-kind".to_json()
+      conversation["kind"] = ToJson::to_json("wrong-kind")
     }
     let (_, response) = mooncode_work_transcript_projection(
       "/suite",
@@ -233,7 +233,7 @@ test "bound transcript rejects malformed canonical history and replaces stale ca
     is Some(Object(conversation)) else {
     fail("conversation")
   }
-  conversation["workspace_id"] = "old-catalog-id".to_json()
+  conversation["workspace_id"] = ToJson::to_json("old-catalog-id")
   let (_, response) = mooncode_work_transcript_projection(
     "/suite",
     work_handoff_test_workspace(),
@@ -249,7 +249,7 @@ test "bound transcript rejects malformed canonical history and replaces stale ca
     ),
     "actual-desk-id",
   )
-  conversation["revision"] = "not-a-revision".to_json()
+  conversation["revision"] = ToJson::to_json("not-a-revision")
   let (_, invalid) = mooncode_work_transcript_projection(
     "/suite",
     work_handoff_test_workspace(),

@@ -58,17 +58,21 @@ fn supervisor_bridge_resolve_activation_model(
     return Err("Town activation has an invalid runtime binding")
   }
   let next_binding = binding_fields.copy()
-  next_binding["model"] = selected.to_json()
-  next_binding["model_resolution"] = (if requested == "" {
-    "configured_default"
-  } else {
-    "explicit"
-  }).to_json()
+  next_binding["model"] = ToJson::to_json(selected)
+  next_binding["model_resolution"] = ToJson::to_json(
+    if requested == "" {
+      "configured_default"
+    } else {
+      "explicit"
+    },
+  )
   let next_payload = payload_fields.copy()
   next_payload["runtime_binding"] = Json::object(next_binding)
   let resolved = Json::object(next_payload)
   let next_handoff = handoff_fields.copy()
   next_handoff["payload"] = resolved
-  next_handoff["request_digest"] = supervisor_bridge_digest(resolved).to_json()
+  next_handoff["request_digest"] = ToJson::to_json(
+    supervisor_bridge_digest(resolved),
+  )
   Ok(Json::object(next_handoff))
 }

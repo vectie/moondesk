@@ -38,8 +38,7 @@ async fn read_workspace_json_table(
     ) catch {
       error => return Err("\{Repr(error)}")
     }
-    guard document is @leafscene.WorkbookDocument(workbook) &&
-      !workbook.sheets.is_empty() else {
+    guard document is WorkbookDocument(workbook) && !workbook.sheets.is_empty() else {
       return Err("Workbook has no sheets")
     }
     let selected = sheet.unwrap_or(workbook.sheets[0].name)
@@ -344,7 +343,7 @@ async fn handle_workspace_json_table(
       ("text/csv; charset=utf-8", @encoding/utf8.encode(table.export_csv()))
     "xlsx" => {
       let bytes = @leafxlsx.create(
-        [table.columns.map(column => @leafscene.Text(column))] + table.rows,
+        [table.columns.map(column => Text(column))] + table.rows,
         sheet_name=source.selected_sheet.unwrap_or(
           if summary {
             "Group summary"

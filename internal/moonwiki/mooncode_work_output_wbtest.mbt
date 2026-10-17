@@ -91,7 +91,7 @@ test "output missing native evidence and invalid continuation inputs never becom
     let changed = record.copy()
     changed[key] = Json::null()
     let modified = fields.copy()
-    modified["continuations"] = [Json::object(changed)].to_json()
+    modified["continuations"] = ToJson::to_json([Json::object(changed)])
     assert_eq(
       mooncode_output_text(
         mooncode_work_output_projection(Json::object(modified), hint),
@@ -101,7 +101,7 @@ test "output missing native evidence and invalid continuation inputs never becom
     )
   }
   let unavailable = fields.copy()
-  unavailable["state"] = "runtime_unavailable".to_json()
+  unavailable["state"] = ToJson::to_json("runtime_unavailable")
   assert_eq(
     mooncode_output_text(
       mooncode_work_output_projection(Json::object(unavailable), hint),

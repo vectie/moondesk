@@ -60,17 +60,19 @@ async fn agent_import_inspect_with(
   }
   let town_binding = agent_import_retained_binding(directory, manifest, source)
   let response : Map[String, Json] = {
-    "operation_id": id.to_json(),
-    "expected_library": expected_library.to_json(),
-    "status": "inspected".to_json(),
-    "filename": json_string(manifest, "filename", default="").to_json(),
-    "destination_folder": "".to_json(),
+    "operation_id": ToJson::to_json(id),
+    "expected_library": ToJson::to_json(expected_library),
+    "status": ToJson::to_json("inspected"),
+    "filename": ToJson::to_json(json_string(manifest, "filename", default="")),
+    "destination_folder": ToJson::to_json(""),
     "inspection": inspection,
     "verification": verification,
     "source": source,
     "import_verification": Json::null(),
     "created": Json::null(),
-    "message": "Package verified. Review its contents before importing.".to_json(),
+    "message": ToJson::to_json(
+      "Package verified. Review its contents before importing.",
+    ),
     "town_binding": town_binding.unwrap_or(Json::null()),
     "exact_import_receipt": Json::null(),
   }
@@ -94,15 +96,19 @@ async fn agent_import_inspect_with(
     }) else {
     fail("Import reservation does not match the retained Town binding")
   }
-  response["destination_folder"] = request.destination_folder.to_json()
+  response["destination_folder"] = ToJson::to_json(request.destination_folder)
   let destination = context.books_root + "/" + request.destination_folder
-  response["status"] = "uncertain".to_json()
-  response["message"] = "The import was started. Check its result; this operation will not import again.".to_json()
+  response["status"] = ToJson::to_json("uncertain")
+  response["message"] = ToJson::to_json(
+    "The import was started. Check its result; this operation will not import again.",
+  )
   if !agent_import_path_present(destination) {
     return Json::object(response)
   }
-  response["status"] = "partial".to_json()
-  response["message"] = "A destination exists, but its imported files could not all be verified. It has been left in place.".to_json()
+  response["status"] = ToJson::to_json("partial")
+  response["message"] = ToJson::to_json(
+    "A destination exists, but its imported files could not all be verified. It has been left in place.",
+  )
   let verified = try {
     agent_import_canonical_directory(destination)
     for entry in @mooncore.json_array_items(inspection, "files") {
@@ -152,7 +158,7 @@ async fn agent_import_inspect_with(
       json_string(source, "agent_version", default="") &&
       @mooncore.json_array_items(receipt, "applied_files") ==
       @mooncore.json_array_items(inspection, "files").map(file => {
-        json_string(file, "path", default="").to_json()
+        ToJson::to_json(json_string(file, "path", default=""))
       }) &&
       agent_import_package_identity(package_path) == (before_hash, before_size) else {
       fail("Imported receipt or package source does not match")
@@ -203,11 +209,13 @@ async fn agent_import_inspect_with(
     _ => None
   }
   if verified is Some((member_verification, created, exact_receipt)) {
-    response["status"] = "imported".to_json()
+    response["status"] = ToJson::to_json("imported")
     response["import_verification"] = member_verification
     response["created"] = created
     response["exact_import_receipt"] = exact_receipt
-    response["message"] = "Imported Book verified and ready to open.".to_json()
+    response["message"] = ToJson::to_json(
+      "Imported Book verified and ready to open.",
+    )
   }
   Json::object(response)
 }
@@ -352,7 +360,9 @@ async fn agent_import_apply_with(
       fail("Missing received package inspection")
     }
     let response = fields.copy()
-    response["message"] = "That destination already exists or shares a Book identifier with another folder. Choose a different Book folder to import this verified package.".to_json()
+    response["message"] = ToJson::to_json(
+      "That destination already exists or shares a Book identifier with another folder. Choose a different Book folder to import this verified package.",
+    )
     return Json::object(response)
   }
   guard is_current() else { fail("The active library changed before import") }

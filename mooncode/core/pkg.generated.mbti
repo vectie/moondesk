@@ -353,6 +353,9 @@ pub(all) enum MoonCodeTaskIntent {
   ReadOnly
   WorkspaceChange
 } derive(Eq, @debug.Debug)
+pub fn MoonCodeTaskIntent::equal(Self, Self) -> Bool
+pub fn MoonCodeTaskIntent::not_equal(Self, Self) -> Bool
+pub fn MoonCodeTaskIntent::to_repr(Self) -> @debug.Repr
 pub fn MoonCodeTaskIntent::to_string(Self) -> String
 
 pub(all) struct MoonCodeTurn {

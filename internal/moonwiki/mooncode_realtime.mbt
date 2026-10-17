@@ -19,7 +19,7 @@ async fn handle_mooncode_realtime_session(
     return
   }
   let payload = fields.copy()
-  payload["book_root"] = workspace.root_path.to_json()
+  payload["book_root"] = ToJson::to_json(workspace.root_path)
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="realtime-session",

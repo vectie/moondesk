@@ -97,7 +97,7 @@ fn agent_import_recovery_json(state : AgentImportState) -> Json {
       })
     }
   }
-  saved.to_json()
+  ToJson::to_json(saved)
 }
 
 ///|

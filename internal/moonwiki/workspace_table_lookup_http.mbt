@@ -93,8 +93,7 @@ async fn handle_workspace_table_lookup(
       )
     "xlsx" => {
       let data = @leafxlsx.create(
-        [report.table.columns.map(value => @leafscene.CellValue::Text(value))] +
-        report.table.rows,
+        [report.table.columns.map(value => Text(value))] + report.table.rows,
         sheet_name="Enriched table",
       ) catch {
         error => {

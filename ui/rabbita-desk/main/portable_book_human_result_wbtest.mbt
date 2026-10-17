@@ -210,7 +210,7 @@ test "accepted human result prepare wire preserves four old fields and exact opt
   )
   guard body is Object(fields) else { fail("body must be an object") }
   assert_eq(fields.length(), 5)
-  assert_eq(fields["accepted_human_result_base64"], raw.to_json())
+  assert_eq(fields["accepted_human_result_base64"], ToJson::to_json(raw))
   for key, value in old_fields {
     assert_eq(fields[key], value)
   }
@@ -250,7 +250,7 @@ test "accepted human result preview escapes full text and labels captured unsign
     ),
   )
   assert_eq(
-    html.split("data-testid=\"portable-book-human-result-choose\"").length(),
+    html.split("data-testid=\"portable-book-human-result-choose\"").count(),
     2,
   )
   assert_true(html.contains("Remove accepted human result"))

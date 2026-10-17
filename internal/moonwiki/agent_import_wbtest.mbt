@@ -200,10 +200,10 @@ test "receive request rejects traversal aliases extra authority and malformed by
       ("data_url", "data:;base64,YQ"),
     ] {
     let changed = fields.copy()
-    changed[key] = invalid.to_json()
+    changed[key] = ToJson::to_json(invalid)
     assert_true(agent_import_stage_request(Json::object(changed)) is Err(_))
   }
-  fields["executable"] = "/tmp/tool".to_json()
+  fields["executable"] = ToJson::to_json("/tmp/tool")
   assert_true(agent_import_stage_request(Json::object(fields)) is Err(_))
   for
     folder in [
@@ -643,7 +643,7 @@ async test "actual retained package receive imports and opens original Book iden
     json_string(created, "workspace_id", default=""),
   ).unwrap()
   assert_eq(workspace.root_path, context.books_root + "/local-received")
-  assert_eq(workspace.kind, @desk.MoonBook)
+  assert_eq(workspace.kind, MoonBook)
   let declared_id = json_string(
     agent_import_book_metadata(workspace.root_path),
     "id",

@@ -178,7 +178,7 @@ fn town_request_context_entries(primary : Json, fallback : Json) -> Json {
   }
   let values : Array[Json] = []
   for path in source {
-    values.push(path.to_json())
+    values.push(ToJson::to_json(path))
   }
   Json::array(values)
 }

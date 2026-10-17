@@ -68,7 +68,7 @@ async fn mooncode_knowledge_runtime_request(
     Object(fields) => fields
     _ => Map([])
   }
-  fields["book_root"] = book_root.to_json()
+  fields["book_root"] = ToJson::to_json(book_root)
   moonclaw_post_json(daemon, "/v1/mooncode/knowledge", Json::object(fields))
 }
 

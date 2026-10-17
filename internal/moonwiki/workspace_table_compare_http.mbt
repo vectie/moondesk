@@ -93,11 +93,7 @@ async fn handle_workspace_table_compare(
       )
     "xlsx" => {
       let data = @leafxlsx.create(
-        [
-          report.differences.columns.map(value => {
-            @leafscene.CellValue::Text(value)
-          }),
-        ] +
+        [report.differences.columns.map(value => Text(value))] +
         report.differences.rows,
         sheet_name="Table differences",
       ) catch {

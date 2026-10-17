@@ -46,8 +46,8 @@ test "every destination owns one skip target and one named main landmark" {
     let main_parts : Array[StringView] = markup.split("<main").collect()
     assert_eq(main_parts.length(), 2)
     assert_true(main_parts[1].contains("<h1"))
-    assert_eq(markup.split(" id=\"moondesk-main-content\"").length(), 2)
-    assert_eq(markup.split("data-testid=\"skip-to-main\"").length(), 2)
+    assert_eq(markup.split(" id=\"moondesk-main-content\"").count(), 2)
+    assert_eq(markup.split("data-testid=\"skip-to-main\"").count(), 2)
     assert_true(markup.contains("href=\"#moondesk-main-content\""))
     assert_true(markup.contains("tabindex=\"-1\""))
     assert_true(
@@ -82,7 +82,7 @@ test "Home complementary landmarks have distinct names" {
       ],
     }),
   )
-  assert_eq(markup.split("aria-label=\"MoonBook library\"").length(), 2)
+  assert_eq(markup.split("aria-label=\"MoonBook library\"").count(), 2)
   assert_eq(
     markup
     .split("<aside")
@@ -93,7 +93,7 @@ test "Home complementary landmarks have distinct names" {
       .unwrap()
       .contains("aria-label=\"Selection details\"")
     })
-    .length(),
+    .count(),
     1,
   )
 }
@@ -117,12 +117,12 @@ test "Pages and Code expose named workspace landmarks" {
       ],
     }),
   )
-  assert_eq(pages.split("aria-label=\"Document chat\"").length(), 2)
-  assert_eq(pages.split("aria-label=\"Document viewer\"").length(), 2)
+  assert_eq(pages.split("aria-label=\"Document chat\"").count(), 2)
+  assert_eq(pages.split("aria-label=\"Document viewer\"").count(), 2)
   let code = render_accessibility_test_html(
     render_app(dispatch, { ..init_model(), workspace_mode: MoonCode, }),
   )
-  assert_eq(code.split("aria-label=\"Code sessions\"").length(), 2)
+  assert_eq(code.split("aria-label=\"Code sessions\"").count(), 2)
 }
 
 ///|
@@ -163,15 +163,15 @@ test "navigation selection and destination announcement share current mode" {
     ],
   }
   let markup = render_accessibility_test_html(render_title_bar(dispatch, model))
-  assert_eq(markup.split("role=\"navigation\"").length(), 4)
-  assert_eq(markup.split("aria-label=\"Primary destinations\"").length(), 3)
-  assert_eq(markup.split("aria-label=\"Wiki sections\"").length(), 2)
-  assert_eq(markup.split("aria-current=\"page\"").length(), 4)
+  assert_eq(markup.split("role=\"navigation\"").count(), 4)
+  assert_eq(markup.split("aria-label=\"Primary destinations\"").count(), 3)
+  assert_eq(markup.split("aria-label=\"Wiki sections\"").count(), 2)
+  assert_eq(markup.split("aria-current=\"page\"").count(), 4)
   // The book picker also exposes its current book as a pressed option.
-  assert_eq(markup.split("aria-pressed=\"true\"").length(), 5)
-  assert_eq(markup.split("aria-current=\"false\"").length(), 13)
-  assert_eq(markup.split("class=\"mode-button active\"").length(), 3)
-  assert_eq(markup.split("class=\"workspace-tab active\"").length(), 2)
+  assert_eq(markup.split("aria-pressed=\"true\"").count(), 5)
+  assert_eq(markup.split("aria-current=\"false\"").count(), 13)
+  assert_eq(markup.split("class=\"mode-button active\"").count(), 3)
+  assert_eq(markup.split("class=\"workspace-tab active\"").count(), 2)
   assert_true(markup.contains("data-testid=\"wiki-tab-runs\""))
   assert_true(markup.contains("aria-keyshortcuts=\"Meta+5 Control+5\""))
   assert_true(

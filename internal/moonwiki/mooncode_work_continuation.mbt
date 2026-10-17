@@ -60,7 +60,7 @@ fn mooncode_continuation_prepare(
   let source = json_object_field_or_empty(request, "source")
     |> mooncode_session_with_field(
       "book_root",
-      mooncode_work_normalized_root(workspace.root_path).to_json(),
+      ToJson::to_json(mooncode_work_normalized_root(workspace.root_path)),
     )
   let id = json_string(request, "continuation_id", default="")
   let instruction = json_string(request, "instruction", default="")
@@ -112,13 +112,13 @@ fn mooncode_continuation_prepare(
     "sha256": mooncode_continuation_hash(input_text),
   }
   let fields : Map[String, Json] = {
-    "schema": "moondesk.work-continuation-snapshot.v1".to_json(),
+    "schema": ToJson::to_json("moondesk.work-continuation-snapshot.v1"),
     "source": source,
     "original_context": original_context,
     "prior_result": historical_result,
     "input": input,
-    "input_text": input_text.to_json(),
-    "model": model.to_json(),
+    "input_text": ToJson::to_json(input_text),
+    "model": ToJson::to_json(model),
   }
   for
     key in [
@@ -164,10 +164,12 @@ fn mooncode_continuation_prepare(
     command_id == json_string(prior, "command_id", default="") {
     return Err("A follow-up must have a fresh native command identity")
   }
-  fields["command_id"] = command_id.to_json()
-  fields["request_body"] = body.stringify().to_json()
-  fields["request_sha256"] = mooncode_continuation_hash(body.stringify()).to_json()
-  fields["created_at"] = created_at.to_json()
+  fields["command_id"] = ToJson::to_json(command_id)
+  fields["request_body"] = ToJson::to_json(body.stringify())
+  fields["request_sha256"] = ToJson::to_json(
+    mooncode_continuation_hash(body.stringify()),
+  )
+  fields["created_at"] = ToJson::to_json(created_at)
   match mooncode_continuation_limits(Json::object(fields)) {
     Err(error) => return Err(error)
     Ok(_) => ()
