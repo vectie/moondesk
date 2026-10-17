@@ -90,7 +90,7 @@ test "str_from_u8: invalid UTF-8" {
   try {
     let _ = @utf8.str_from_u8(data)
   } catch {
-    @types.FlateError(_) => caught = true
+    FlateError(_) => caught = true
   }
   assert_true(caught)
 }
@@ -102,7 +102,7 @@ test "str_from_u8: truncated multi-byte" {
   try {
     let _ = @utf8.str_from_u8(data)
   } catch {
-    @types.FlateError(_) => caught = true
+    FlateError(_) => caught = true
   }
   assert_true(caught)
 }

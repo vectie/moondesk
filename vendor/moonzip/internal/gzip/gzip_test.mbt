@@ -72,7 +72,7 @@ test "gzip: header magic number and CM" {
 ///|
 test "gzip: with filename option" {
   let data = string_to_bytes("hello")
-  let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let compressed = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     filename: Some("test.txt"),
   })
@@ -94,7 +94,7 @@ test "gzip: with filename option" {
 test "gzip: with mtime option" {
   let data = string_to_bytes("hello")
   let mtime = 1700000000
-  let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let compressed = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     mtime: Some(mtime),
   })
@@ -113,31 +113,31 @@ test "gzip: with mtime option" {
 test "gzip: XFL field verification" {
   let data = string_to_bytes("test")
   // Level 1 (fastest) => XFL should be 4
-  let c1 = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let c1 = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     level: 1,
   })
   assert_eq(c1[8], b'\x04')
   // Level 2 (fastest) => XFL should be 4
-  let c2 = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let c2 = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     level: 2,
   })
   assert_eq(c2[8], b'\x04')
   // Level 6 (normal) => XFL should be 0
-  let c6 = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let c6 = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     level: 6,
   })
   assert_eq(c6[8], b'\x00')
   // Level 7 (best compression) => XFL should be 2
-  let c7 = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let c7 = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     level: 7,
   })
   assert_eq(c7[8], b'\x02')
   // Level 9 (best compression) => XFL should be 2
-  let c9 = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let c9 = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     level: 9,
   })
@@ -153,17 +153,17 @@ test "gzip: error on invalid magic number" {
     b'\xFF', b'\x03', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00',
   ]
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = @gzip.gunzip_sync(data)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidHeader)
+  assert_eq(error_code, InvalidHeader)
 }
 
 ///|
@@ -173,17 +173,17 @@ test "gzip: error on invalid CM" {
     b'\xFF', b'\x03', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00',
   ]
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = @gzip.gunzip_sync(data)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::UnknownCompressionMethod)
+  assert_eq(error_code, UnknownCompressionMethod)
 }
 
 ///|
@@ -191,24 +191,24 @@ test "gzip: error on truncated data" {
   // Only 5 bytes - too short for even the 10-byte header
   let data : FixedArray[Byte] = [b'\x1F', b'\x8B', b'\x08', b'\x00', b'\x00']
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::InvalidHeader
+  let mut error_code : @types.FlateErrorCode = InvalidHeader
   try {
     let _ = @gzip.gunzip_sync(data)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::UnexpectedEOF)
+  assert_eq(error_code, UnexpectedEOF)
 }
 
 ///|
 test "gzip: extra option round-trip" {
   let data = string_to_bytes("extra test data")
   let extra : FixedArray[Byte] = [b'\xAA', b'\xBB', b'\xCC', b'\xDD']
-  let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let compressed = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     extra: Some(extra),
   })
@@ -222,7 +222,7 @@ test "gzip: extra option round-trip" {
 ///|
 test "gzip: comment option round-trip" {
   let data = string_to_bytes("comment test data")
-  let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let compressed = @gzip.gzip_sync(data, opts={
     ..@types.GzipOptions::default(),
     comment: Some("this is a comment"),
   })
@@ -237,7 +237,7 @@ test "gzip: comment option round-trip" {
 test "gzip: filename + extra + comment full options round-trip" {
   let data = string_to_bytes("full options test")
   let extra : FixedArray[Byte] = [b'\x01', b'\x02']
-  let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+  let compressed = @gzip.gzip_sync(data, opts={
     level: 6,
     mem: 4,
     mtime: Some(1700000000),
@@ -269,7 +269,7 @@ test "gzip: ISIZE mismatch error" {
   try {
     let _ = @gzip.gunzip_sync(compressed)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -354,7 +354,7 @@ test "gzip: multi-member each member CRC32/ISIZE verified" {
   try {
     let _ = @gzip.gunzip_sync(multi_bad)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -363,11 +363,11 @@ test "gzip: multi-member each member CRC32/ISIZE verified" {
 test "gzip: multi-member with different compression levels" {
   let data1 = string_to_bytes("Level 0 data")
   let data2 = string_to_bytes("Level 9 data")
-  let gz1 = @gzip.gzip_sync(data1, opts=@types.GzipOptions::{
+  let gz1 = @gzip.gzip_sync(data1, opts={
     ..@types.GzipOptions::default(),
     level: 0,
   })
-  let gz2 = @gzip.gzip_sync(data2, opts=@types.GzipOptions::{
+  let gz2 = @gzip.gzip_sync(data2, opts={
     ..@types.GzipOptions::default(),
     level: 9,
   })
@@ -381,7 +381,7 @@ test "gzip: multi-member with different compression levels" {
 test "gzip: gunzip_sync with size hint" {
   let data = string_to_bytes("Hello world!")
   let compressed = @gzip.gzip_sync(data)
-  let decompressed = @gzip.gunzip_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = @gzip.gunzip_sync(compressed, opts={
     size: Some(12),
     dictionary: None,
   })
@@ -410,7 +410,7 @@ test "gzip: error on too short data (deflate_end < deflate_start)" {
   try {
     let _ = @gzip.gunzip_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }

@@ -73,13 +73,13 @@ pub fn str_from_u8(
   latin1~ : Bool = false,
 ) -> String raise @types.FlateError {
   if latin1 {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < data.length(); i = i + 1 {
       buf.write_char(Int32::unsafe_to_char(data[i].to_int() & 0xFF))
     }
     return buf.to_string()
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = data.length()
   let mut i = 0
   while i < len {
@@ -91,58 +91,56 @@ pub fn str_from_u8(
     } else if (b0 & 0xE0) == 0xC0 {
       // 2-byte sequence: 110xxxxx 10xxxxxx
       if i + 1 >= len {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       let b1 = data[i + 1].to_int()
-      if not(is_continuation(b1)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_continuation(b1) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x1F) << 6) | (b1 & 0x3F)
       if cp < 0x80 {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 2
     } else if (b0 & 0xF0) == 0xE0 {
       // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
       if i + 2 >= len {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       let b1 = data[i + 1].to_int()
       let b2 = data[i + 2].to_int()
-      if not(is_continuation(b1)) || not(is_continuation(b2)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_continuation(b1) || !is_continuation(b2) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F)
       if cp < 0x800 {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 3
     } else if (b0 & 0xF8) == 0xF0 {
       // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
       if i + 3 >= len {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       let b1 = data[i + 1].to_int()
       let b2 = data[i + 2].to_int()
       let b3 = data[i + 3].to_int()
-      if not(is_continuation(b1)) ||
-        not(is_continuation(b2)) ||
-        not(is_continuation(b3)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_continuation(b1) || !is_continuation(b2) || !is_continuation(b3) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x07) << 18) |
         ((b1 & 0x3F) << 12) |
         ((b2 & 0x3F) << 6) |
         (b3 & 0x3F)
       if cp < 0x10000 || cp > 0x10FFFF {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 4
     } else {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      raise FlateError(InvalidUTF8)
     }
   }
   buf.to_string()

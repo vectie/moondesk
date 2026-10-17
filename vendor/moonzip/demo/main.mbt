@@ -1,6 +1,6 @@
 ///|
 fn str_to_bytes(s : String) -> FixedArray[Byte] {
-  let buf = Array::new()
+  let buf = Array()
   for c in s {
     let cp = c.to_int()
     if cp < 0x80 {
@@ -28,7 +28,7 @@ fn str_to_bytes(s : String) -> FixedArray[Byte] {
 
 ///|
 fn bytes_to_str(data : FixedArray[Byte]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let len = data.length()
   let mut i = 0
   while i < len {
@@ -75,7 +75,7 @@ fn bytes_to_str(data : FixedArray[Byte]) -> String {
 
 ///|
 fn bytes_to_hex(data : FixedArray[Byte]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let hex_chars : FixedArray[Char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
   ]
@@ -150,7 +150,7 @@ pub fn set_level(level_str : String) -> String {
 
 ///|
 fn normalize_encoding(encoding : String) -> String {
-  let chars = Array::new()
+  let chars = Array()
   for c in encoding {
     chars.push(c)
   }
@@ -162,7 +162,7 @@ fn normalize_encoding(encoding : String) -> String {
   while end > start && chars[end - 1] == ' ' {
     end = end - 1
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = start; i < end; i = i + 1 {
     let n = chars[i].to_int()
     let ch = if n >= 65 && n <= 90 {
@@ -220,7 +220,7 @@ pub fn gzip_decompress(hex_input : String) -> String {
     let decompressed = @gzip.gunzip_sync(data)
     "ok:" + bytes_to_str(decompressed)
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
@@ -243,7 +243,7 @@ pub fn zlib_decompress(hex_input : String) -> String {
     let decompressed = @zlib.unzlib_sync(data)
     "ok:" + bytes_to_str(decompressed)
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
@@ -266,7 +266,7 @@ pub fn deflate_decompress(hex_input : String) -> String {
     let decompressed = @deflate.inflate_sync(data)
     "ok:" + bytes_to_str(decompressed)
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
@@ -293,7 +293,7 @@ pub fn decompress_auto(hex_input : String) -> String {
     }
     "ok:" + bytes_to_str(result)
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
@@ -307,7 +307,7 @@ pub fn unzip_list(data : FixedArray[Byte]) -> String {
       Some(d) => @zip.unzip_list(data, decode=d)
       None => @zip.unzip_list(data)
     }
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     sb.write_string("ok:")
     for i = 0; i < entries.length(); i = i + 1 {
       let entry = entries[i]
@@ -332,7 +332,7 @@ pub fn unzip_list(data : FixedArray[Byte]) -> String {
     }
     sb.to_string()
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
@@ -354,14 +354,14 @@ pub fn unzip_extract(data : FixedArray[Byte], filename : String) -> String {
     }
     "err:File not found: " + filename
   } catch {
-    @types.FlateError(e) => "err:" + e.to_string()
+    FlateError(e) => "err:" + e.to_string()
   }
 }
 
 // ZIP creator
 
 ///|
-let zip_entries : Array[(String, String)] = Array::new()
+let zip_entries : Array[(String, String)] = Array()
 
 ///|
 pub fn zip_add_entry(name : String, content : String) -> String {
@@ -371,7 +371,7 @@ pub fn zip_add_entry(name : String, content : String) -> String {
 
 ///|
 pub fn zip_build() -> String {
-  let files : Array[(String, FixedArray[Byte])] = Array::new()
+  let files : Array[(String, FixedArray[Byte])] = Array()
   let mut i = 0
   while i < zip_entries.length() {
     let (name, content) = zip_entries[i]

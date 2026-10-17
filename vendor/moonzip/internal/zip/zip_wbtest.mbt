@@ -212,7 +212,7 @@ test "zip: central directory signature present" {
 test "zip: level 0 uses Store compression" {
   let data = string_to_bytes("Hello store")
   let files : Array[(String, FixedArray[Byte])] = [("store.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -232,7 +232,7 @@ test "zip: level 6 uses Deflate compression" {
     "Hello deflate test data that should be compressed",
   )
   let files : Array[(String, FixedArray[Byte])] = [("deflate.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 6,
   })
@@ -250,7 +250,7 @@ test "zip: level 6 uses Deflate compression" {
 test "zip: empty file uses Store regardless of level" {
   let data : FixedArray[Byte] = []
   let files : Array[(String, FixedArray[Byte])] = [("empty.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 9,
   })
@@ -294,17 +294,17 @@ test "zip: ASCII filename does not set bit 11 flag" {
 test "zip: error on invalid EOCD" {
   let data : FixedArray[Byte] = FixedArray::make(30, b'\x00')
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = unzip_sync(data)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidZipData)
+  assert_eq(error_code, InvalidZipData)
 }
 
 ///|
@@ -315,7 +315,7 @@ test "zip: error on truncated data" {
   try {
     let _ = unzip_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -325,7 +325,7 @@ test "zip: error on unknown compression method" {
   // Create a valid-looking ZIP with unknown compression method
   let data = string_to_bytes("test")
   let files : Array[(String, FixedArray[Byte])] = [("test.txt", data)]
-  let archive_orig = zip_sync(files, opts=@types.ZipOptions::{
+  let archive_orig = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -348,17 +348,17 @@ test "zip: error on unknown compression method" {
     }
   }
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = unzip_sync(archive)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::UnknownCompressionMethod)
+  assert_eq(error_code, UnknownCompressionMethod)
 }
 
 // === CRC32 verification tests ===
@@ -367,7 +367,7 @@ test "zip: error on unknown compression method" {
 test "zip: CRC32 mismatch detected" {
   let data = string_to_bytes("Hello CRC check")
   let files : Array[(String, FixedArray[Byte])] = [("crc.txt", data)]
-  let archive_orig = zip_sync(files, opts=@types.ZipOptions::{
+  let archive_orig = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -381,17 +381,17 @@ test "zip: CRC32 mismatch detected" {
   let data_offset = 30 + 7
   archive[data_offset] = ((archive[data_offset].to_int() + 1) & 0xFF).to_byte()
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = unzip_sync(archive)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidZipData)
+  assert_eq(error_code, InvalidZipData)
 }
 
 // === 1KB data round-trip ===
@@ -419,11 +419,11 @@ test "zip: unzip_list multiple files with Store and Deflate" {
   let files_deflate : Array[(String, FixedArray[Byte])] = [
     ("deflate.txt", data2),
   ]
-  let archive_store = zip_sync(files_store, opts=@types.ZipOptions::{
+  let archive_store = zip_sync(files_store, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
-  let archive_deflate = zip_sync(files_deflate, opts=@types.ZipOptions::{
+  let archive_deflate = zip_sync(files_deflate, opts={
     ..@types.ZipOptions::default(),
     level: 6,
   })
@@ -479,7 +479,7 @@ test "zip: mtime option is written correctly" {
   let data = string_to_bytes("time test")
   let mtime = 1700000000
   let files : Array[(String, FixedArray[Byte])] = [("time.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     mtime: Some(mtime),
   })
@@ -521,7 +521,7 @@ test "zip: 4-byte UTF-8 emoji filename round-trip" {
 test "zip: invalid local header signature" {
   let data = string_to_bytes("test")
   let files : Array[(String, FixedArray[Byte])] = [("test.txt", data)]
-  let archive_orig = zip_sync(files, opts=@types.ZipOptions::{
+  let archive_orig = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -532,17 +532,17 @@ test "zip: invalid local header signature" {
   // Tamper with local file header signature (first 4 bytes)
   archive[0] = b'\x00'
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = unzip_sync(archive)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidZipData)
+  assert_eq(error_code, InvalidZipData)
 }
 
 // ============================================================
@@ -562,14 +562,8 @@ test "zip D-1: per-entry level override (Store + Deflate mix)" {
     ("deflated.txt", data2),
   ]
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
-      ..@types.ZipEntryOptions::default(),
-      level: 0,
-    }),
-    Some(@types.ZipEntryOptions::{
-      ..@types.ZipEntryOptions::default(),
-      level: 6,
-    }),
+    Some({ ..@types.ZipEntryOptions::default(), level: 0, }),
+    Some({ ..@types.ZipEntryOptions::default(), level: 6, }),
   ]
   let archive = zip_sync(files, entry_opts=entry_options)
   let result = unzip_sync(archive)
@@ -593,14 +587,8 @@ test "zip D-1: per-entry mtime override" {
     ("file2.txt", data),
   ]
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
-      ..@types.ZipEntryOptions::default(),
-      mtime: Some(mtime1),
-    }),
-    Some(@types.ZipEntryOptions::{
-      ..@types.ZipEntryOptions::default(),
-      mtime: Some(mtime2),
-    }),
+    Some({ ..@types.ZipEntryOptions::default(), mtime: Some(mtime1), }),
+    Some({ ..@types.ZipEntryOptions::default(), mtime: Some(mtime2), }),
   ]
   let archive = zip_sync(files, entry_opts=entry_options)
   // Verify via unzip_list that mtimes are different
@@ -617,12 +605,12 @@ test "zip D-1: per-entry mtime override" {
 test "zip D-1: per-entry attrs (comment and extra)" {
   let data = string_to_bytes("attrs test")
   let files : Array[(String, FixedArray[Byte])] = [("attrs.txt", data)]
-  let extra_map : Map[Int32, FixedArray[Byte]] = {}
+  let extra_map : Map[Int32, FixedArray[Byte]] = Map([])
   extra_map[0x0001] = FixedArray::make(4, b'\xAB')
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
+    Some({
       ..@types.ZipEntryOptions::default(),
-      attrs: Some(@types.ZipAttributes::{
+      attrs: Some({
         os: None,
         attrs: Some(0x20),
         comment: Some("entry comment"),
@@ -652,11 +640,7 @@ test "zip D-1: per-entry options with None (uses global defaults)" {
   let entry_options : Array[@types.ZipEntryOptions?] = [None, None]
   let archive = zip_sync(
     files,
-    opts=@types.ZipOptions::{
-      ..@types.ZipOptions::default(),
-      level: 0,
-      mtime: Some(1700000000),
-    },
+    opts={ ..@types.ZipOptions::default(), level: 0, mtime: Some(1700000000), },
     entry_opts=entry_options,
   )
   let result = unzip_sync(archive)
@@ -724,7 +708,7 @@ test "zip D-2: unzip_sync filter by size" {
     ("small.txt", small),
     ("large.txt", large),
   ]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -750,7 +734,7 @@ test "zip D-3: unzip_list returns mtime" {
   let data = string_to_bytes("mtime test")
   let mtime = 1700000000
   let files : Array[(String, FixedArray[Byte])] = [("mtime.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     mtime: Some(mtime),
   })
@@ -766,14 +750,9 @@ test "zip D-3: unzip_list returns attrs" {
   let data = string_to_bytes("attrs test")
   let files : Array[(String, FixedArray[Byte])] = [("attrs.txt", data)]
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
+    Some({
       ..@types.ZipEntryOptions::default(),
-      attrs: Some(@types.ZipAttributes::{
-        os: None,
-        attrs: Some(0x10),
-        comment: None,
-        extra: None,
-      }),
+      attrs: Some({ os: None, attrs: Some(0x10), comment: None, extra: None, }),
     }),
   ]
   let archive = zip_sync(files, entry_opts=entry_options)
@@ -787,9 +766,9 @@ test "zip D-3: unzip_list returns comment" {
   let data = string_to_bytes("comment test")
   let files : Array[(String, FixedArray[Byte])] = [("comment.txt", data)]
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
+    Some({
       ..@types.ZipEntryOptions::default(),
-      attrs: Some(@types.ZipAttributes::{
+      attrs: Some({
         os: None,
         attrs: None,
         comment: Some("file comment here"),
@@ -807,12 +786,12 @@ test "zip D-3: unzip_list returns comment" {
 test "zip D-3: unzip_list returns extra fields" {
   let data = string_to_bytes("extra test")
   let files : Array[(String, FixedArray[Byte])] = [("extra.txt", data)]
-  let extra_map : Map[Int32, FixedArray[Byte]] = {}
+  let extra_map : Map[Int32, FixedArray[Byte]] = Map([])
   extra_map[0x5455] = FixedArray::make(5, b'\x01')
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
+    Some({
       ..@types.ZipEntryOptions::default(),
-      attrs: Some(@types.ZipAttributes::{
+      attrs: Some({
         os: None,
         attrs: None,
         comment: None,
@@ -848,7 +827,7 @@ test "zip D-4: ZIP64 EOCD parsing (synthetic)" {
   // Create a normal small archive first
   let data = string_to_bytes("zip64 test")
   let files : Array[(String, FixedArray[Byte])] = [("z64.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -865,7 +844,7 @@ test "zip D-4: ZIP64 EOCD parsing (synthetic)" {
 test "zip D-5: archive comment write and read" {
   let data = string_to_bytes("comment archive test")
   let files : Array[(String, FixedArray[Byte])] = [("commented.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     comment: Some("This is an archive comment"),
   })
@@ -886,7 +865,7 @@ test "zip D-5: archive comment empty by default" {
 test "zip D-5: archive comment with UTF-8" {
   let data = string_to_bytes("utf8 comment")
   let files : Array[(String, FixedArray[Byte])] = [("utf8.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     comment: Some("\u{3053}\u{3093}\u{306B}\u{3061}\u{306F}"),
   })
@@ -898,7 +877,7 @@ test "zip D-5: archive comment with UTF-8" {
 test "zip D-5: archive comment does not affect extraction" {
   let data = string_to_bytes("data with comment")
   let files : Array[(String, FixedArray[Byte])] = [("file.txt", data)]
-  let archive = zip_sync(files, opts=@types.ZipOptions::{
+  let archive = zip_sync(files, opts={
     ..@types.ZipOptions::default(),
     comment: Some("An important archive comment"),
   })
@@ -912,9 +891,9 @@ test "zip D-5: archive comment with entry comments" {
   let data = string_to_bytes("both comments")
   let files : Array[(String, FixedArray[Byte])] = [("both.txt", data)]
   let entry_options : Array[@types.ZipEntryOptions?] = [
-    Some(@types.ZipEntryOptions::{
+    Some({
       ..@types.ZipEntryOptions::default(),
-      attrs: Some(@types.ZipAttributes::{
+      attrs: Some({
         os: None,
         attrs: None,
         comment: Some("entry-level comment"),
@@ -924,7 +903,7 @@ test "zip D-5: archive comment with entry comments" {
   ]
   let archive = zip_sync(
     files,
-    opts=@types.ZipOptions::{
+    opts={
       ..@types.ZipOptions::default(),
       comment: Some("archive-level comment"),
     },
@@ -1112,7 +1091,7 @@ test "decode: custom decoder transforms non-UTF-8 filename" {
   let content : FixedArray[Byte] = [b'\x41']
   let archive = build_test_zip(filename, content, false)
   let result = unzip_sync(archive, decode=fn(raw) {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < raw.length(); i = i + 1 {
       let b = raw[i].to_int()
       // Convert lowercase ASCII to uppercase
@@ -1132,7 +1111,7 @@ test "decode: custom decoder transforms non-UTF-8 comment" {
   let comment : FixedArray[Byte] = [b'\x68', b'\x69'] // "hi"
   let archive = build_test_zip(filename, content, false, comment~)
   let list = unzip_list(archive, decode=fn(raw) {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < raw.length(); i = i + 1 {
       let b = raw[i].to_int()
       let ch = if b >= 0x61 && b <= 0x7A { b - 32 } else { b }
@@ -1152,7 +1131,7 @@ test "decode: decoder not called when UTF-8 flag is set" {
   let mut called_count = 0
   let result = unzip_sync(archive, decode=fn(raw) {
     called_count = called_count + 1
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < raw.length(); i = i + 1 {
       buf.write_char(raw[i].to_int().unsafe_to_char())
     }
@@ -1179,7 +1158,7 @@ test "decode: unzip_list applies custom decoder" {
   let content : FixedArray[Byte] = [b'\x41']
   let archive = build_test_zip(filename, content, false)
   let list = unzip_list(archive, decode=fn(raw) {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < raw.length(); i = i + 1 {
       let b = raw[i].to_int()
       let ch = if b >= 0x61 && b <= 0x7A { b - 32 } else { b }
@@ -1201,7 +1180,7 @@ test "decode: simulated Shift_JIS round-trip" {
   let archive = build_test_zip(sjis_bytes, content, false)
   let result = unzip_sync(archive, decode=fn(raw) {
     // Simple lookup decoder for these specific Shift_JIS bytes
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     let mut i = 0
     while i < raw.length() {
       let b1 = raw[i].to_int()

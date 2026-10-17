@@ -84,35 +84,35 @@ test "zlib: FCHECK is correct" {
 test "zlib: FLEVEL field for different compression levels" {
   let data = string_to_bytes("test")
   // Level 0 -> FLEVEL=0
-  let c0 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c0 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 0,
   })
   let flevel0 = (c0[1].to_int() >> 6) & 0x03
   assert_eq(flevel0, 0)
   // Level 1 -> FLEVEL=0
-  let c1 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c1 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 1,
   })
   let flevel1 = (c1[1].to_int() >> 6) & 0x03
   assert_eq(flevel1, 0)
   // Level 3 -> FLEVEL=1
-  let c3 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c3 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 3,
   })
   let flevel3 = (c3[1].to_int() >> 6) & 0x03
   assert_eq(flevel3, 1)
   // Level 6 -> FLEVEL=2
-  let c6 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c6 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 6,
   })
   let flevel6 = (c6[1].to_int() >> 6) & 0x03
   assert_eq(flevel6, 2)
   // Level 9 -> FLEVEL=3
-  let c9 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c9 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 9,
   })
@@ -149,7 +149,7 @@ test "zlib: error on invalid CM" {
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -165,7 +165,7 @@ test "zlib: error on invalid CINFO" {
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -178,7 +178,7 @@ test "zlib: error on FCHECK mismatch" {
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -191,7 +191,7 @@ test "zlib: error on truncated data" {
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -208,7 +208,7 @@ test "zlib: FDICT flag without dictionary raises error" {
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -217,7 +217,7 @@ test "zlib: FDICT flag without dictionary raises error" {
 test "zlib: unzlib_sync with size hint" {
   let data = string_to_bytes("Hello world!")
   let compressed = @zlib.zlib_sync(data)
-  let decompressed = @zlib.unzlib_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = @zlib.unzlib_sync(compressed, opts={
     size: Some(12),
     dictionary: None,
   })
@@ -240,17 +240,17 @@ test "zlib: FDICT with insufficient data raises error" {
   // CMF=0x78, FLG=0x20 (FDICT=1), but only 4 bytes total (needs 6)
   let data : FixedArray[Byte] = [b'\x78', b'\x20', b'\x00', b'\x00']
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::InvalidHeader
+  let mut error_code : @types.FlateErrorCode = InvalidHeader
   try {
     let _ = @zlib.unzlib_sync(data)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::UnexpectedEOF)
+  assert_eq(error_code, UnexpectedEOF)
 }
 
 // === Phase B: zlib dictionary tests (B-T3) ===
@@ -265,7 +265,7 @@ test "zlib: dictionary round-trip" {
     dictionary: Some(dict),
   }
   let compressed = @zlib.zlib_sync(data, opts=zlib_opts)
-  let decompressed = @zlib.unzlib_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = @zlib.unzlib_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -312,7 +312,7 @@ test "zlib: dictionary header is 6 bytes (CMF + FLG + 4-byte DICTID)" {
   let dict = string_to_bytes("dict")
   let data = string_to_bytes("data")
   let without_dict = @zlib.zlib_sync(data)
-  let with_dict = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let with_dict = @zlib.zlib_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
@@ -325,24 +325,24 @@ test "zlib: dictionary header is 6 bytes (CMF + FLG + 4-byte DICTID)" {
 test "zlib: FDICT without dictionary raises InvalidHeader" {
   let dict = string_to_bytes("my dictionary")
   let data = string_to_bytes("my data")
-  let compressed = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let compressed = @zlib.zlib_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
   // Try to decompress without dictionary
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
     let _ = @zlib.unzlib_sync(compressed)
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidHeader)
+  assert_eq(error_code, InvalidHeader)
 }
 
 ///|
@@ -350,27 +350,27 @@ test "zlib: wrong dictionary raises InvalidHeader" {
   let dict = string_to_bytes("correct dictionary")
   let wrong_dict = string_to_bytes("wrong dictionary")
   let data = string_to_bytes("some data")
-  let compressed = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let compressed = @zlib.zlib_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
   // Try to decompress with wrong dictionary
   let mut got_error = false
-  let mut error_code : @types.FlateErrorCode = @types.FlateErrorCode::UnexpectedEOF
+  let mut error_code : @types.FlateErrorCode = UnexpectedEOF
   try {
-    let _ = @zlib.unzlib_sync(compressed, opts=@types.InflateOptions::{
+    let _ = @zlib.unzlib_sync(compressed, opts={
       size: None,
       dictionary: Some(wrong_dict),
     })
   } catch {
-    @types.FlateError(code) => {
+    FlateError(code) => {
       got_error = true
       error_code = code
     }
   }
   assert_true(got_error)
-  assert_eq(error_code, @types.FlateErrorCode::InvalidHeader)
+  assert_eq(error_code, InvalidHeader)
 }
 
 ///|
@@ -387,12 +387,12 @@ test "zlib: no FDICT with no dictionary" {
 test "zlib: dictionary round-trip empty data" {
   let dict = string_to_bytes("dictionary")
   let data : FixedArray[Byte] = []
-  let compressed = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let compressed = @zlib.zlib_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
-  let decompressed = @zlib.unzlib_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = @zlib.unzlib_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -403,7 +403,7 @@ test "zlib: dictionary round-trip empty data" {
 test "zlib: FCHECK correct with FDICT=1" {
   let dict = string_to_bytes("dictionary data")
   let data = string_to_bytes("test")
-  let compressed = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let compressed = @zlib.zlib_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),

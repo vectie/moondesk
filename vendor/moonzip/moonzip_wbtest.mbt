@@ -110,7 +110,7 @@ test "decompressSync: invalid data raises error" {
   try {
     let _ = decompress_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -370,7 +370,7 @@ test "integration: deflate 64KB boundary" {
 test "decompressSync: with size hint via GZIP" {
   let data = string_to_bytes("decompress with opts")
   let compressed = @gzip.gzip_sync(data)
-  let decompressed = decompress_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = decompress_sync(compressed, opts={
     size: Some(20),
     dictionary: None,
   })
@@ -381,7 +381,7 @@ test "decompressSync: with size hint via GZIP" {
 test "decompressSync: with size hint via Zlib" {
   let data = string_to_bytes("decompress with opts zlib")
   let compressed = @zlib.zlib_sync(data)
-  let decompressed = decompress_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = decompress_sync(compressed, opts={
     size: Some(25),
     dictionary: None,
   })
@@ -392,7 +392,7 @@ test "decompressSync: with size hint via Zlib" {
 test "decompressSync: with size hint via raw DEFLATE" {
   let data = string_to_bytes("decompress with opts deflate")
   let compressed = @deflate.deflate_sync(data)
-  let decompressed = decompress_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = decompress_sync(compressed, opts={
     size: Some(28),
     dictionary: None,
   })
@@ -791,30 +791,30 @@ test "G2: Zlib header CMF/FLG checksum" {
 test "G2: Zlib header FLEVEL reflects compression level" {
   let data = string_to_bytes("test FLEVEL")
   // Level 0-1: FLEVEL=0
-  let c0 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c0 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 0,
   })
   assert_eq((c0[1].to_int() >> 6) & 3, 0)
-  let c1 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c1 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 1,
   })
   assert_eq((c1[1].to_int() >> 6) & 3, 0)
   // Level 2-5: FLEVEL=1
-  let c5 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c5 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 5,
   })
   assert_eq((c5[1].to_int() >> 6) & 3, 1)
   // Level 6: FLEVEL=2
-  let c6 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c6 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 6,
   })
   assert_eq((c6[1].to_int() >> 6) & 3, 2)
   // Level 7-9: FLEVEL=3
-  let c9 = @zlib.zlib_sync(data, opts=@types.ZlibOptions::{
+  let c9 = @zlib.zlib_sync(data, opts={
     ..@types.ZlibOptions::default(),
     level: 9,
   })
@@ -840,7 +840,7 @@ test "G2: Zlib Adler-32 footer correctness" {
   try {
     let _ = @zlib.unzlib_sync(tampered)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -929,7 +929,7 @@ test "G2: ZIP compression method field" {
   )
   // Level 0 -> Store (method 0)
   let files0 : Array[(String, FixedArray[Byte])] = [("s.txt", data)]
-  let a0 = @zip.zip_sync(files0, opts=@types.ZipOptions::{
+  let a0 = @zip.zip_sync(files0, opts={
     ..@types.ZipOptions::default(),
     level: 0,
   })
@@ -937,7 +937,7 @@ test "G2: ZIP compression method field" {
   assert_eq(read_u16_le(a0, 8), 0) // Store
   // Level 6 -> Deflate (method 8)
   let files6 : Array[(String, FixedArray[Byte])] = [("d.txt", data)]
-  let a6 = @zip.zip_sync(files6, opts=@types.ZipOptions::{
+  let a6 = @zip.zip_sync(files6, opts={
     ..@types.ZipOptions::default(),
     level: 6,
   })

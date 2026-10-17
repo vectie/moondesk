@@ -109,29 +109,27 @@ fn gzs_at(
 ) -> Int32 raise @types.FlateError {
   let sl = data.length()
   if offset + 10 > sl {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Validate magic number
   if data[offset] != b'\x1F' || data[offset + 1] != b'\x8B' {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   // Validate CM = 8
   if data[offset + 2] != b'\x08' {
-    raise @types.FlateError::FlateError(
-      @types.FlateErrorCode::UnknownCompressionMethod,
-    )
+    raise FlateError(UnknownCompressionMethod)
   }
   let flg = data[offset + 3].to_int()
   let mut pos = offset + 10
   // FEXTRA (bit 2)
   if (flg & 0x04) != 0 {
     if pos + 2 > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     let xlen = data[pos].to_int() | (data[pos + 1].to_int() << 8)
     pos = pos + 2 + xlen
     if pos > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
   }
   // FNAME (bit 3) - null-terminated
@@ -140,7 +138,7 @@ fn gzs_at(
       pos = pos + 1
     }
     if pos >= sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     pos = pos + 1 // skip null terminator
   }
@@ -150,7 +148,7 @@ fn gzs_at(
       pos = pos + 1
     }
     if pos >= sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     pos = pos + 1 // skip null terminator
   }
@@ -158,7 +156,7 @@ fn gzs_at(
   if (flg & 0x02) != 0 {
     pos = pos + 2
     if pos > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
   }
   pos
@@ -177,7 +175,7 @@ fn gzl_at(
   decompressed : FixedArray[Byte],
 ) -> Unit raise @types.FlateError {
   if footer_start + 8 > data.length() {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Read CRC32 from footer (4 bytes LE)
   let expected_crc = data[footer_start].to_int().reinterpret_as_uint() |
@@ -192,12 +190,12 @@ fn gzl_at(
   // Compute actual CRC32
   let actual_crc = @checksum.crc32(decompressed)
   if actual_crc != expected_crc {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   // Verify ISIZE (original size mod 2^32)
   let actual_isize = decompressed.length()
   if actual_isize != expected_isize {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
 }
 
@@ -299,7 +297,7 @@ pub fn gunzip_sync(
   while offset < sl {
     // Check for GZIP magic number at current offset
     if offset + 10 > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     // Parse header to find DEFLATE data start
     let deflate_start = gzs_at(data, offset)
@@ -320,7 +318,7 @@ pub fn gunzip_sync(
     // Footer position: right after the consumed DEFLATE data
     let footer_pos = deflate_start + bytes_consumed
     if footer_pos + 8 > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     // Verify CRC32 and ISIZE for this member
     gzl_at(data, footer_pos, decompressed)

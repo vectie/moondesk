@@ -5,7 +5,7 @@
 
 ///|
 fn str_to_bytes(s : String) -> FixedArray[Byte] {
-  let buf = Array::new()
+  let buf = Array()
   for c in s {
     let cp = c.to_int()
     if cp < 0x80 {
@@ -33,7 +33,7 @@ fn str_to_bytes(s : String) -> FixedArray[Byte] {
 
 ///|
 fn bytes_to_str(data : FixedArray[Byte]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let len = data.length()
   let mut i = 0
   while i < len {
@@ -80,7 +80,7 @@ fn demo_deflate() -> Unit {
     println("  Content:      \{bytes_to_str(decompressed)}")
     println("  Round-trip OK: \{data.length() == decompressed.length()}")
   } catch {
-    @types.FlateError(e) => println("  Error: \{e}")
+    FlateError(e) => println("  Error: \{e}")
   }
   println("")
 }
@@ -92,7 +92,7 @@ fn demo_gzip() -> Unit {
   let data = str_to_bytes(input)
   println("  Original:     \{data.length()} bytes")
   try {
-    let compressed = @gzip.gzip_sync(data, opts=@types.GzipOptions::{
+    let compressed = @gzip.gzip_sync(data, opts={
       ..@types.GzipOptions::default(),
       filename: Some("hello.txt"),
     })
@@ -102,7 +102,7 @@ fn demo_gzip() -> Unit {
     println("  Content:      \{bytes_to_str(decompressed)}")
     println("  Round-trip OK: \{data.length() == decompressed.length()}")
   } catch {
-    @types.FlateError(e) => println("  Error: \{e}")
+    FlateError(e) => println("  Error: \{e}")
   }
   println("")
 }
@@ -121,7 +121,7 @@ fn demo_zlib() -> Unit {
     println("  Content:      \{bytes_to_str(decompressed)}")
     println("  Round-trip OK: \{data.length() == decompressed.length()}")
   } catch {
-    @types.FlateError(e) => println("  Error: \{e}")
+    FlateError(e) => println("  Error: \{e}")
   }
   println("")
 }
@@ -151,7 +151,7 @@ fn demo_zip() -> Unit {
       println("    \{entry.0}: \{bytes_to_str(entry.1)}")
     }
   } catch {
-    @types.FlateError(e) => println("  Error: \{e}")
+    FlateError(e) => println("  Error: \{e}")
   }
   println("")
 }
@@ -178,7 +178,7 @@ fn demo_gzip_multi_member() -> Unit {
     println("  Decompressed:     \{decompressed.length()} bytes")
     println("  Content:          \{bytes_to_str(decompressed)}")
   } catch {
-    @types.FlateError(e) => println("  Error: \{e}")
+    FlateError(e) => println("  Error: \{e}")
   }
   println("")
 }

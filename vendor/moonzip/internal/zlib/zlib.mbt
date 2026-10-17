@@ -73,26 +73,26 @@ pub fn zlib_sync(
 /// Validate Zlib header and return (data_offset, fdict_flag).
 fn zls_ext(data : FixedArray[Byte]) -> (Int32, Bool) raise @types.FlateError {
   if data.length() < 2 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   let cmf = data[0].to_int()
   let flg = data[1].to_int()
   let cm = cmf & 0x0F
   if cm != 8 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   let cinfo = (cmf >> 4) & 0x0F
   if cinfo > 7 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   if (cmf * 256 + flg) % 31 != 0 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   let fdict = (flg >> 5) & 1
   let mut offset = 2
   if fdict != 0 {
     if data.length() < 6 {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     offset = 6
   }
@@ -113,10 +113,7 @@ pub fn unzlib_sync(
   // Validate dictionary requirement
   if has_fdict {
     match dictionary {
-      None =>
-        raise @types.FlateError::FlateError(
-          @types.FlateErrorCode::InvalidHeader,
-        )
+      None => raise FlateError(InvalidHeader)
       Some(dict) => {
         // Verify DICTID matches
         let stored_dictid = (data[2].to_uint() << 24) |
@@ -125,16 +122,14 @@ pub fn unzlib_sync(
           data[5].to_uint()
         let expected_dictid = @checksum.adler32(dict)
         if stored_dictid != expected_dictid {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidHeader,
-          )
+          raise FlateError(InvalidHeader)
         }
       }
     }
   }
   // Need at least offset + 4 bytes for footer
   if data.length() < offset + 4 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Extract DEFLATE payload (between header and 4-byte footer)
   let payload_len = data.length() - offset - 4
@@ -151,7 +146,7 @@ pub fn unzlib_sync(
     data[footer_offset + 3].to_uint()
   let computed_adler = @checksum.adler32(decompressed)
   if stored_adler != computed_adler {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidHeader)
+    raise FlateError(InvalidHeader)
   }
   decompressed
 }

@@ -64,7 +64,7 @@ test "inflate: stored block with data" {
 ///|
 test "deflate level 0: empty data round-trip" {
   let data : FixedArray[Byte] = []
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -75,7 +75,7 @@ test "deflate level 0: empty data round-trip" {
 ///|
 test "deflate level 0: small data round-trip" {
   let data = string_to_bytes("Hello world!")
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -86,7 +86,7 @@ test "deflate level 0: small data round-trip" {
 ///|
 test "deflate level 0: 1 byte round-trip" {
   let data : FixedArray[Byte] = [b'\x42']
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -97,7 +97,7 @@ test "deflate level 0: 1 byte round-trip" {
 ///|
 test "deflate level 0: all zeros 1KB round-trip" {
   let data = fill_bytes(b'\x00', 1024)
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -108,7 +108,7 @@ test "deflate level 0: all zeros 1KB round-trip" {
 ///|
 test "deflate level 0: large data 64KB+ round-trip" {
   let data = fill_bytes(b'\xAB', 65536)
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -121,7 +121,7 @@ test "deflate level 0: large data 64KB+ round-trip" {
 ///|
 test "deflate level 0: 65535 bytes (single block boundary)" {
   let data = fill_bytes(b'\x01', 65535)
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
@@ -175,7 +175,7 @@ test "inflate: truncated data" {
   try {
     let _ = inflate_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -188,7 +188,7 @@ test "inflate: invalid block type 3" {
   try {
     let _ = inflate_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -203,7 +203,7 @@ test "inflate: stored block len/nlen mismatch" {
   try {
     let _ = inflate_sync(data)
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -248,7 +248,7 @@ test "dopt: clamps negative mem to 0" {
 test "deflate: dictionary option accepted without error" {
   let data = string_to_bytes("test")
   let dict : FixedArray[Byte] = [b'\x01', b'\x02', b'\x03']
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
@@ -272,7 +272,7 @@ test "deflate level 6: 70000 bytes round-trip (multi-block)" {
 test "inflate: with size hint" {
   let data = string_to_bytes("Hello world with size hint!")
   let compressed = deflate_sync(data)
-  let decompressed = inflate_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = inflate_sync(compressed, opts={
     size: Some(data.length()),
     dictionary: None,
   })
@@ -498,11 +498,11 @@ test "compression ratio: level>0 smaller than level 0 for repeated data" {
     }
     data[i] = ch
   }
-  let store = deflate_sync(data, opts=@types.DeflateOptions::{
+  let store = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 6,
   })
@@ -512,11 +512,11 @@ test "compression ratio: level>0 smaller than level 0 for repeated data" {
 ///|
 test "compression ratio: all zeros 1KB compresses significantly" {
   let data = fill_bytes(b'\x00', 1024)
-  let store = deflate_sync(data, opts=@types.DeflateOptions::{
+  let store = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 1,
   })
@@ -531,11 +531,11 @@ test "compression ratio: 10KB repeated pattern compresses well" {
   for i = 0; i < 10240; i = i + 1 {
     data[i] = (i % 37).to_byte()
   }
-  let store = deflate_sync(data, opts=@types.DeflateOptions::{
+  let store = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   })
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 6,
   })
@@ -548,12 +548,12 @@ test "compression ratio: levels 1-9 all beat store for repeated data" {
   for i = 0; i < 2048; i = i + 1 {
     data[i] = (i % 16).to_byte()
   }
-  let store_size = deflate_sync(data, opts=@types.DeflateOptions::{
+  let store_size = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 0,
   }).length()
   for level = 1; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -578,7 +578,7 @@ fn make_pseudo_random(size : Int32) -> FixedArray[Byte] {
 test "round-trip: all levels × empty data" {
   let data : FixedArray[Byte] = []
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -591,7 +591,7 @@ test "round-trip: all levels × empty data" {
 test "round-trip: all levels × 1 byte" {
   let data : FixedArray[Byte] = [b'\x42']
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -604,7 +604,7 @@ test "round-trip: all levels × 1 byte" {
 test "round-trip: all levels × 'Hello world!'" {
   let data = string_to_bytes("Hello world!")
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -617,7 +617,7 @@ test "round-trip: all levels × 'Hello world!'" {
 test "round-trip: all levels × 1KB same byte" {
   let data = fill_bytes(b'\xAA', 1024)
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -643,7 +643,7 @@ test "round-trip: all levels × 10KB repeated pattern" {
     data[i] = ch
   }
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -656,7 +656,7 @@ test "round-trip: all levels × 10KB repeated pattern" {
 test "round-trip: all levels × pseudo-random data" {
   let data = make_pseudo_random(4096)
   for level = 0; level <= 9; level = level + 1 {
-    let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+    let compressed = deflate_sync(data, opts={
       ..@types.DeflateOptions::default(),
       level,
     })
@@ -673,12 +673,12 @@ test "round-trip: all levels × pseudo-random data" {
 test "deflate: dictionary round-trip" {
   let dict = string_to_bytes("the quick brown fox jumps over the lazy dog")
   let data = string_to_bytes("the quick brown fox jumps over the lazy cat")
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
-  let decompressed = inflate_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = inflate_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -689,12 +689,12 @@ test "deflate: dictionary round-trip" {
 test "deflate: dictionary round-trip with empty data" {
   let dict = string_to_bytes("some dictionary content")
   let data : FixedArray[Byte] = []
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
-  let decompressed = inflate_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = inflate_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -705,12 +705,12 @@ test "deflate: dictionary round-trip with empty data" {
 test "deflate: dictionary round-trip level 0" {
   let dict = string_to_bytes("dictionary data")
   let data = string_to_bytes("some test data")
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     level: 0,
     mem: 4,
     dictionary: Some(dict),
   })
-  let decompressed = inflate_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = inflate_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -725,12 +725,12 @@ test "deflate: large dictionary truncated to 32KB" {
     dict[i] = (i % 256).to_byte()
   }
   let data = string_to_bytes("test data with large dictionary")
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     level: 6,
     mem: 4,
     dictionary: Some(dict),
   })
-  let decompressed = inflate_sync(compressed, opts=@types.InflateOptions::{
+  let decompressed = inflate_sync(compressed, opts={
     size: None,
     dictionary: Some(dict),
   })
@@ -740,7 +740,7 @@ test "deflate: large dictionary truncated to 32KB" {
 ///|
 test "deflate level 6: chunked compressed ZIP world round-trip" {
   let data = string_to_bytes("Hello, chunked compressed ZIP world!")
-  let compressed = deflate_sync(data, opts=@types.DeflateOptions::{
+  let compressed = deflate_sync(data, opts={
     ..@types.DeflateOptions::default(),
     level: 6,
   })

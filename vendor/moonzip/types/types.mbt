@@ -16,7 +16,7 @@ pub(all) enum FlateErrorCode {
   StreamFinishing // 12
   InvalidZipData // 13
   UnknownCompressionMethod // 14
-} derive(Eq, Show, Debug)
+} derive(Eq, Debug)
 
 ///|
 pub(all) suberror FlateError {
@@ -54,7 +54,7 @@ pub(all) struct DeflateOptions {
   mem : Int32
   /// Preset dictionary for compression.
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 
 ///|
 pub fn DeflateOptions::default() -> DeflateOptions {
@@ -68,7 +68,7 @@ pub(all) struct InflateOptions {
   size : Int32?
   /// Preset dictionary for decompression.
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 
 ///|
 pub fn InflateOptions::default() -> InflateOptions {
@@ -90,7 +90,7 @@ pub(all) struct GzipOptions {
   comment : String?
   /// Extra field data.
   extra : FixedArray[Byte]?
-} derive(Show)
+}
 
 ///|
 pub fn GzipOptions::default() -> GzipOptions {
@@ -106,7 +106,7 @@ pub(all) struct ZlibOptions {
   mem : Int32
   /// Preset dictionary.
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 
 ///|
 pub fn ZlibOptions::default() -> ZlibOptions {
@@ -124,7 +124,7 @@ pub(all) struct ZipAttributes {
   comment : String?
   /// Extra fields (tag -> data).
   extra : Map[Int32, FixedArray[Byte]]?
-} derive(Show)
+}
 
 ///|
 /// Options for individual ZIP file entries.
@@ -135,7 +135,7 @@ pub(all) struct ZipEntryOptions {
   mtime : Int32?
   /// File attributes.
   attrs : ZipAttributes?
-} derive(Show)
+}
 
 ///|
 pub fn ZipEntryOptions::default() -> ZipEntryOptions {
@@ -151,7 +151,7 @@ pub(all) struct ZipOptions {
   mtime : Int32?
   /// Comment for the ZIP archive.
   comment : String?
-} derive(Show)
+}
 
 ///|
 pub fn ZipOptions::default() -> ZipOptions {
@@ -177,4 +177,37 @@ pub(all) struct UnzipFileInfo {
   comment : String
   /// Extra fields (tag -> data).
   extra : Map[Int32, FixedArray[Byte]]
-} derive(Show)
+}
+
+///|
+pub extend FlateErrorCode with Eq::{not_equal, equal}
+
+///|
+pub extend FlateErrorCode with Show::{to_string, output}
+
+///|
+pub extend FlateErrorCode with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend DeflateOptions with Show::{to_string, output}
+
+///|
+pub extend InflateOptions with Show::{to_string, output}
+
+///|
+pub extend GzipOptions with Show::{to_string, output}
+
+///|
+pub extend ZlibOptions with Show::{to_string, output}
+
+///|
+pub extend ZipAttributes with Show::{to_string, output}
+
+///|
+pub extend ZipEntryOptions with Show::{to_string, output}
+
+///|
+pub extend ZipOptions with Show::{to_string, output}
+
+///|
+pub extend UnzipFileInfo with Show::{to_string, output}

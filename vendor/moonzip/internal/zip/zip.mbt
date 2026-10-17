@@ -152,7 +152,7 @@ fn utf8_to_string(
   offset : Int32,
   length : Int32,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = offset
   let end = offset + length
   while i < end {
@@ -203,7 +203,7 @@ fn latin1_to_string(
   offset : Int32,
   length : Int32,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = offset; i < offset + length; i = i + 1 {
     buf.write_char((data[i].to_int() & 0xFF).unsafe_to_char())
   }
@@ -306,12 +306,12 @@ fn zh(
 ) -> CdEntry raise @types.FlateError {
   let sl = data.length()
   if offset + 46 > sl {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Verify signature
   let sig = @bits.b4(data, offset)
   if sig != 0x02014B50 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidZipData)
+    raise FlateError(InvalidZipData)
   }
   let flags = @bits.b2(data, offset + 8)
   let compression = @bits.b2(data, offset + 10)
@@ -326,7 +326,7 @@ fn zh(
   let external_attrs = @bits.b4(data, offset + 38)
   let local_header_offset = @bits.b4(data, offset + 42)
   if offset + 46 + filename_len + extra_len + comment_len > sl {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Decode filename
   let filename = decode_entry_text(
@@ -339,7 +339,7 @@ fn zh(
   // Convert DOS date/time to Unix timestamp
   let mtime = dt(dos_date, dos_time)
   // Parse extra fields
-  let extra : Map[Int32, FixedArray[Byte]] = {}
+  let extra : Map[Int32, FixedArray[Byte]] = Map([])
   let extra_start = offset + 46 + filename_len
   let mut epos = extra_start
   while epos + 4 <= extra_start + extra_len {
@@ -388,18 +388,18 @@ fn slzh(
 ) -> Int32 raise @types.FlateError {
   let sl = data.length()
   if offset + 30 > sl {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   // Verify signature
   let sig = @bits.b4(data, offset)
   if sig != 0x04034B50 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidZipData)
+    raise FlateError(InvalidZipData)
   }
   let filename_len = @bits.b2(data, offset + 26)
   let extra_len = @bits.b2(data, offset + 28)
   let data_start = offset + 30 + filename_len + extra_len
   if data_start > sl {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   data_start
 }
@@ -735,7 +735,7 @@ fn parse_eocd(
 ) -> (Int32, Int32, Int32, Int32, String) raise @types.FlateError {
   let sl = data.length()
   if sl < 22 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidZipData)
+    raise FlateError(InvalidZipData)
   }
   let mut eocd_offset = -1
   let search_start = if sl - 22 - 65535 > 0 { sl - 22 - 65535 } else { 0 }
@@ -746,7 +746,7 @@ fn parse_eocd(
     }
   }
   if eocd_offset < 0 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidZipData)
+    raise FlateError(InvalidZipData)
   }
   let mut entry_count = @bits.b2(data, eocd_offset + 10)
   let cd_size = @bits.b4(data, eocd_offset + 12)
@@ -798,7 +798,7 @@ pub fn unzip_list(
   for _i = 0; _i < entry_count; _i = _i + 1 {
     let entry = zh(data, cd_pos, decode?)
     cd_pos = cd_pos + entry.entry_total_size
-    result.push(@types.UnzipFileInfo::{
+    result.push({
       name: entry.filename,
       size: entry.compressed_size,
       original_size: entry.uncompressed_size,
@@ -862,7 +862,7 @@ pub fn unzip_sync(
           comment: entry.comment,
           extra: entry.extra,
         }
-        if not(f(info)) {
+        if !f(info) {
           continue _i + 1
         }
       }
@@ -871,7 +871,7 @@ pub fn unzip_sync(
     // Parse local file header to find data start
     let data_start = slzh(data, entry.local_header_offset)
     if data_start + entry.compressed_size > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     // Extract compressed data
     let file_data = if entry.compression == 0 {
@@ -887,20 +887,18 @@ pub fn unzip_sync(
       for j = 0; j < entry.compressed_size; j = j + 1 {
         compressed[j] = data[data_start + j]
       }
-      @deflate.inflate_sync(compressed, opts=@types.InflateOptions::{
+      @deflate.inflate_sync(compressed, opts={
         size: Some(entry.uncompressed_size),
         dictionary: None,
       })
     } else {
-      raise @types.FlateError::FlateError(
-        @types.FlateErrorCode::UnknownCompressionMethod,
-      )
+      raise FlateError(UnknownCompressionMethod)
     }
     // Verify CRC32
     let actual_crc = @checksum.crc32(file_data)
     let expected_uint = entry.crc.reinterpret_as_uint()
     if actual_crc != expected_uint {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidZipData)
+      raise FlateError(InvalidZipData)
     }
     result.push((entry.filename, file_data))
   }

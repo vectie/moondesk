@@ -64,10 +64,10 @@ pub fn inflt_pos(
   // Pre-computed fixed Huffman tables (used for type 1 blocks)
   let flrm = @huffman.flrm
   let fdrm = @huffman.fdrm
-  while not(final_block) {
+  while !final_block {
     // Ensure we have enough bits for block header (3 bits minimum)
     if pos + 3 > sl * 8 {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     // Read BFINAL (1 bit) and BTYPE (2 bits)
     let bfinal = @bits.bits(data, pos, 1)
@@ -84,23 +84,17 @@ pub fn inflt_pos(
       let byte_pos = pos >> 3
       // Read LEN and NLEN (2 bytes each, little-endian)
       if byte_pos + 4 > sl {
-        raise @types.FlateError::FlateError(
-          @types.FlateErrorCode::UnexpectedEOF,
-        )
+        raise FlateError(UnexpectedEOF)
       }
       let len = @bits.b2(data, byte_pos)
       let nlen = @bits.b2(data, byte_pos + 2)
       // Validate: LEN + NLEN should equal 0xFFFF
       if (len ^ nlen) != 0xFFFF {
-        raise @types.FlateError::FlateError(
-          @types.FlateErrorCode::InvalidLengthLiteral,
-        )
+        raise FlateError(InvalidLengthLiteral)
       }
       let src_start = byte_pos + 4
       if src_start + len > sl {
-        raise @types.FlateError::FlateError(
-          @types.FlateErrorCode::UnexpectedEOF,
-        )
+        raise FlateError(UnexpectedEOF)
       }
       // Ensure output buffer is large enough
       if bt + len > buf.length() {
@@ -138,11 +132,9 @@ pub fn inflt_pos(
         // Build code length Huffman table
         let clb = @huffman.max_bits(clt)
         if clb == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
-        let clm = @huffman.h_map(clt, clb, @huffman.Reverse)
+        let clm = @huffman.h_map(clt, clb, Reverse)
         // Decode literal/length + distance code lengths
         let tl = hlit + hdist
         let ldt : FixedArray[Int32] = FixedArray::make(tl, 0)
@@ -196,26 +188,22 @@ pub fn inflt_pos(
         lbits = @huffman.max_bits(lt)
         dbits = @huffman.max_bits(dt)
         if lbits == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
-        lmap = @huffman.h_map(lt, lbits, @huffman.Reverse)
+        lmap = @huffman.h_map(lt, lbits, Reverse)
         if dbits > 0 {
-          dmap = @huffman.h_map(dt, dbits, @huffman.Reverse)
+          dmap = @huffman.h_map(dt, dbits, Reverse)
         }
       }
       // ---- Decode Huffman symbols ----
       let mut done = false
-      while not(done) {
+      while !done {
         // Read literal/length symbol
         let r = lmap[@bits.bits(data, pos, lbits)]
         let sym = r >> 4
         let blen = r & 15
         if blen == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
         pos = pos + blen
         if sym < 256 {
@@ -233,9 +221,7 @@ pub fn inflt_pos(
           let lc = sym - 257 // length code index (0-28)
           // Validate length code
           if lc >= 29 {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidLengthLiteral,
-            )
+            raise FlateError(InvalidLengthLiteral)
           }
           // Base length + extra bits
           let add_bits = @huffman.fleb[lc]
@@ -246,17 +232,13 @@ pub fn inflt_pos(
           }
           // Read distance code
           if dbits == 0 {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidDistance,
-            )
+            raise FlateError(InvalidDistance)
           }
           let dr = dmap[@bits.bits(data, pos, dbits)]
           let dsym = dr >> 4
           let dblen = dr & 15
           if dblen == 0 {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidDistance,
-            )
+            raise FlateError(InvalidDistance)
           }
           pos = pos + dblen
           // Base distance + extra bits
@@ -268,9 +250,7 @@ pub fn inflt_pos(
           }
           // Validate distance
           if dist > bt {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidDistance,
-            )
+            raise FlateError(InvalidDistance)
           }
           // Ensure output buffer is large enough
           if bt + length > buf.length() {
@@ -286,9 +266,7 @@ pub fn inflt_pos(
       }
     } else {
       // Invalid block type (3)
-      raise @types.FlateError::FlateError(
-        @types.FlateErrorCode::InvalidBlockType,
-      )
+      raise FlateError(InvalidBlockType)
     }
   }
   // Calculate bytes consumed (round up bit position to next byte)
@@ -516,9 +494,9 @@ fn wblk(
   let (lm, lt_arr, dm, dt_arr) = if use_dynamic {
     p = write_dyn_header(out, p, ltc, dtc, final_)
     (
-      @huffman.h_map(lt.t, lt.l, @huffman.Forward),
+      @huffman.h_map(lt.t, lt.l, Forward),
       lt.t,
-      @huffman.h_map(dt_r.t, dt_r.l, @huffman.Forward),
+      @huffman.h_map(dt_r.t, dt_r.l, Forward),
       dt_r.t,
     )
   } else {
@@ -581,7 +559,7 @@ fn write_dyn_header(
   p = p + 4
   // Build code length Huffman tree
   let cl_tree = @huffman.h_tree(clt, 7)
-  let clm = @huffman.h_map(cl_tree.t, cl_tree.l, @huffman.Forward)
+  let clm = @huffman.h_map(cl_tree.t, cl_tree.l, Forward)
   let cl_lens = cl_tree.t
   // Write code length code lengths in clim order
   for i = 0; i < hclen; i = i + 1 {
@@ -918,7 +896,7 @@ pub fn deflate_sync(
             break
           }
         }
-        if not(has_dist) {
+        if !has_dist {
           dist_freq[0] = 1
         }
         // Ensure output buffer is large enough

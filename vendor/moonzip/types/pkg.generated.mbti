@@ -17,8 +17,11 @@ pub(all) struct DeflateOptions {
   level : Int
   mem : Int
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 pub fn DeflateOptions::default() -> Self
+pub fn DeflateOptions::output(Self, &Logger) -> Unit
+pub fn DeflateOptions::to_string(Self) -> String
+pub impl Show for DeflateOptions
 
 pub(all) enum FlateErrorCode {
   UnexpectedEOF
@@ -36,8 +39,14 @@ pub(all) enum FlateErrorCode {
   StreamFinishing
   InvalidZipData
   UnknownCompressionMethod
-} derive(Eq, Show, @debug.Debug)
+} derive(Eq, @debug.Debug)
 pub fn FlateErrorCode::code(Self) -> Int
+pub fn FlateErrorCode::equal(Self, Self) -> Bool
+pub fn FlateErrorCode::not_equal(Self, Self) -> Bool
+pub fn FlateErrorCode::output(Self, &Logger) -> Unit
+pub fn FlateErrorCode::to_repr(Self) -> @debug.Repr
+pub fn FlateErrorCode::to_string(Self) -> String
+pub impl Show for FlateErrorCode
 
 pub(all) struct GzipOptions {
   level : Int
@@ -46,14 +55,20 @@ pub(all) struct GzipOptions {
   filename : String?
   comment : String?
   extra : FixedArray[Byte]?
-} derive(Show)
+}
 pub fn GzipOptions::default() -> Self
+pub fn GzipOptions::output(Self, &Logger) -> Unit
+pub fn GzipOptions::to_string(Self) -> String
+pub impl Show for GzipOptions
 
 pub(all) struct InflateOptions {
   size : Int?
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 pub fn InflateOptions::default() -> Self
+pub fn InflateOptions::output(Self, &Logger) -> Unit
+pub fn InflateOptions::to_string(Self) -> String
+pub impl Show for InflateOptions
 
 pub(all) struct UnzipFileInfo {
   name : String
@@ -64,35 +79,50 @@ pub(all) struct UnzipFileInfo {
   attrs : Int
   comment : String
   extra : Map[Int, FixedArray[Byte]]
-} derive(Show)
+}
+pub fn UnzipFileInfo::output(Self, &Logger) -> Unit
+pub fn UnzipFileInfo::to_string(Self) -> String
+pub impl Show for UnzipFileInfo
 
 pub(all) struct ZipAttributes {
   os : Int?
   attrs : Int?
   comment : String?
   extra : Map[Int, FixedArray[Byte]]?
-} derive(Show)
+}
+pub fn ZipAttributes::output(Self, &Logger) -> Unit
+pub fn ZipAttributes::to_string(Self) -> String
+pub impl Show for ZipAttributes
 
 pub(all) struct ZipEntryOptions {
   level : Int
   mtime : Int?
   attrs : ZipAttributes?
-} derive(Show)
+}
 pub fn ZipEntryOptions::default() -> Self
+pub fn ZipEntryOptions::output(Self, &Logger) -> Unit
+pub fn ZipEntryOptions::to_string(Self) -> String
+pub impl Show for ZipEntryOptions
 
 pub(all) struct ZipOptions {
   level : Int
   mtime : Int?
   comment : String?
-} derive(Show)
+}
 pub fn ZipOptions::default() -> Self
+pub fn ZipOptions::output(Self, &Logger) -> Unit
+pub fn ZipOptions::to_string(Self) -> String
+pub impl Show for ZipOptions
 
 pub(all) struct ZlibOptions {
   level : Int
   mem : Int
   dictionary : FixedArray[Byte]?
-} derive(Show)
+}
 pub fn ZlibOptions::default() -> Self
+pub fn ZlibOptions::output(Self, &Logger) -> Unit
+pub fn ZlibOptions::to_string(Self) -> String
+pub impl Show for ZlibOptions
 
 // Type aliases
 

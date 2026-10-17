@@ -185,7 +185,7 @@ test "Error: push after final raises StreamFinished" {
   stream.push(data, true)
   let mut got_error = false
   stream.push(data, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -243,7 +243,7 @@ test "DeflateStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -255,7 +255,7 @@ test "InflateStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -267,7 +267,7 @@ test "GzipStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -279,7 +279,7 @@ test "GunzipStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -291,7 +291,7 @@ test "ZlibStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -303,7 +303,7 @@ test "UnzlibStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -315,7 +315,7 @@ test "DecompressStream: result before finished raises error" {
   try {
     let _ = stream.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -331,7 +331,7 @@ test "InflateStream: push after finished raises error" {
   let mut got_error = false
   let chunk : FixedArray[Byte] = [b'\x00']
   stream.push(chunk, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -343,7 +343,7 @@ test "GzipStream: push after finished raises error" {
   stream.push(data, true)
   let mut got_error = false
   stream.push(data, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -357,7 +357,7 @@ test "GunzipStream: push after finished raises error" {
   let mut got_error = false
   let chunk : FixedArray[Byte] = [b'\x00']
   stream.push(chunk, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -369,7 +369,7 @@ test "ZlibStream: push after finished raises error" {
   stream.push(data, true)
   let mut got_error = false
   stream.push(data, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -383,7 +383,7 @@ test "UnzlibStream: push after finished raises error" {
   let mut got_error = false
   let chunk : FixedArray[Byte] = [b'\x00']
   stream.push(chunk, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -397,7 +397,7 @@ test "DecompressStream: push after finished raises error" {
   let mut got_error = false
   let chunk : FixedArray[Byte] = [b'\x00']
   stream.push(chunk, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -604,7 +604,7 @@ test "E-T2: flush with ondata callback" {
   let mut flush_called = false
   let stream = @stream.DeflateStream::new(
     ondata=Some(fn(_data : FixedArray[Byte], final_ : Bool) {
-      if not(final_) {
+      if !final_ {
         flush_called = true
       }
     }),
@@ -1042,7 +1042,7 @@ test "Zip: finish after finished raises error" {
   try {
     let _ = zip.finish()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1059,7 +1059,7 @@ test "Zip: add_passthrough after finished raises error" {
   pt2.push(data, true)
   let mut got_error = false
   zip.add_passthrough(pt2) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1070,7 +1070,7 @@ test "Zip: add_passthrough with unfinished entry raises error" {
   let pt = @stream.ZipPassThrough::new("test.txt")
   let mut got_error = false
   zip.add_passthrough(pt) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1082,7 +1082,7 @@ test "Unzip: result before finished raises error" {
   try {
     let _ = unzip.result()
   } catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1097,7 +1097,7 @@ test "Unzip: push after finished raises error" {
   let mut got_error = false
   let chunk : FixedArray[Byte] = [b'\x00']
   unzip.push(chunk, false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1168,7 +1168,7 @@ test "EncodeUTF8: push after final raises error" {
   enc.push("test", true)
   let mut got_error = false
   enc.push("more", false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1246,7 +1246,7 @@ test "DecodeUTF8: invalid continuation byte raises error" {
   let dec = @stream.DecodeUTF8::new(ondata=fn(_chunk, _final) {  })
   let mut got_error = false
   dec.push(data, true) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1258,7 +1258,7 @@ test "DecodeUTF8: truncated sequence at final raises error" {
   let dec = @stream.DecodeUTF8::new(ondata=fn(_chunk, _final) {  })
   let mut got_error = false
   dec.push(data, true) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1270,7 +1270,7 @@ test "DecodeUTF8: invalid leading byte raises error" {
   let dec = @stream.DecodeUTF8::new(ondata=fn(_chunk, _final) {  })
   let mut got_error = false
   dec.push(data, true) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1292,7 +1292,7 @@ test "DecodeUTF8: push after final raises error" {
   dec.push(FixedArray::make(0, b'\x00'), true)
   let mut got_error = false
   dec.push(FixedArray::make(0, b'\x00'), false) catch {
-    @types.FlateError(_) => got_error = true
+    FlateError(_) => got_error = true
   }
   assert_true(got_error)
 }
@@ -1341,7 +1341,7 @@ fn concat_test_chunks(chunks : Array[FixedArray[Byte]]) -> FixedArray[Byte] {
 
 ///|
 fn concat_strings(strings : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < strings.length(); i = i + 1 {
     buf.write_string(strings[i])
   }

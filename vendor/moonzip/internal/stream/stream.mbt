@@ -58,7 +58,7 @@ pub fn DeflateStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -82,8 +82,8 @@ pub fn DeflateStream::push(
 pub fn DeflateStream::result(
   self : DeflateStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -140,7 +140,7 @@ pub fn InflateStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -159,8 +159,8 @@ pub fn InflateStream::push(
 pub fn InflateStream::result(
   self : InflateStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -218,7 +218,7 @@ pub fn GzipStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -242,8 +242,8 @@ pub fn GzipStream::push(
 pub fn GzipStream::result(
   self : GzipStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -302,7 +302,7 @@ pub fn GunzipStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -321,8 +321,8 @@ pub fn GunzipStream::push(
 pub fn GunzipStream::result(
   self : GunzipStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -378,7 +378,7 @@ fn gunzip_multi_member(
     offset = member_end
   }
   if parts.length() == 0 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   concat_chunks(parts)
 }
@@ -387,14 +387,14 @@ fn gunzip_multi_member(
 fn gzip_header_size(data : FixedArray[Byte]) -> Int32 raise @types.FlateError {
   let sl = data.length()
   if sl < 10 {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+    raise FlateError(UnexpectedEOF)
   }
   let flg = data[3].to_int()
   let mut pos = 10
   // FEXTRA (bit 2)
   if (flg & 0x04) != 0 {
     if pos + 2 > sl {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     let xlen = data[pos].to_int() | (data[pos + 1].to_int() << 8)
     pos = pos + 2 + xlen
@@ -431,9 +431,9 @@ fn find_gzip_member_end(
   let mut pos = deflate_start * 8 // bit position
   let sl = data.length()
   let mut final_block = false
-  while not(final_block) {
+  while !final_block {
     if pos + 3 > sl * 8 {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::UnexpectedEOF)
+      raise FlateError(UnexpectedEOF)
     }
     let bfinal = @bits.bits(data, pos, 1)
     pos = pos + 1
@@ -447,9 +447,7 @@ fn find_gzip_member_end(
       pos = @bits.shft(pos)
       let byte_pos = pos >> 3
       if byte_pos + 4 > sl {
-        raise @types.FlateError::FlateError(
-          @types.FlateErrorCode::UnexpectedEOF,
-        )
+        raise FlateError(UnexpectedEOF)
       }
       let len = @bits.b2(data, byte_pos)
       pos = (byte_pos + 4 + len) * 8
@@ -476,11 +474,9 @@ fn find_gzip_member_end(
         }
         let clb = @huffman.max_bits(clt)
         if clb == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
-        let clm = @huffman.h_map(clt, clb, @huffman.Reverse)
+        let clm = @huffman.h_map(clt, clb, Reverse)
         let tl = hlit + hdist
         let ldt : FixedArray[Int32] = FixedArray::make(tl, 0)
         let mut i = 0
@@ -527,25 +523,21 @@ fn find_gzip_member_end(
         lbits = @huffman.max_bits(lt)
         dbits = @huffman.max_bits(dt)
         if lbits == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
-        lmap = @huffman.h_map(lt, lbits, @huffman.Reverse)
+        lmap = @huffman.h_map(lt, lbits, Reverse)
         if dbits > 0 {
-          dmap = @huffman.h_map(dt, dbits, @huffman.Reverse)
+          dmap = @huffman.h_map(dt, dbits, Reverse)
         }
       }
       // Decode symbols until EOB
       let mut done = false
-      while not(done) {
+      while !done {
         let r = lmap[@bits.bits(data, pos, lbits)]
         let sym = r >> 4
         let blen = r & 15
         if blen == 0 {
-          raise @types.FlateError::FlateError(
-            @types.FlateErrorCode::InvalidLengthLiteral,
-          )
+          raise FlateError(InvalidLengthLiteral)
         }
         pos = pos + blen
         if sym == 256 {
@@ -557,17 +549,13 @@ fn find_gzip_member_end(
             pos = pos + add_bits
           }
           if dbits == 0 {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidDistance,
-            )
+            raise FlateError(InvalidDistance)
           }
           let dr = dmap[@bits.bits(data, pos, dbits)]
           let dsym = dr >> 4
           let dblen = dr & 15
           if dblen == 0 {
-            raise @types.FlateError::FlateError(
-              @types.FlateErrorCode::InvalidDistance,
-            )
+            raise FlateError(InvalidDistance)
           }
           pos = pos + dblen
           let dadd_bits = @huffman.fdeb[dsym]
@@ -577,9 +565,7 @@ fn find_gzip_member_end(
         }
       }
     } else {
-      raise @types.FlateError::FlateError(
-        @types.FlateErrorCode::InvalidBlockType,
-      )
+      raise FlateError(InvalidBlockType)
     }
   }
   // pos is now the bit position after the last block
@@ -631,7 +617,7 @@ pub fn ZlibStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -655,8 +641,8 @@ pub fn ZlibStream::push(
 pub fn ZlibStream::result(
   self : ZlibStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -713,7 +699,7 @@ pub fn UnzlibStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -732,8 +718,8 @@ pub fn UnzlibStream::push(
 pub fn UnzlibStream::result(
   self : UnzlibStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -785,7 +771,7 @@ pub fn DecompressStream::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -804,8 +790,8 @@ pub fn DecompressStream::push(
 pub fn DecompressStream::result(
   self : DecompressStream,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.output)
 }
@@ -894,7 +880,7 @@ pub fn ZipPassThrough::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   self.crc_state = @checksum.crc32_update(self.crc_state, chunk)
@@ -913,8 +899,8 @@ pub fn ZipPassThrough::push(
 pub fn ZipPassThrough::result(
   self : ZipPassThrough,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   concat_chunks(self.buf)
 }
@@ -974,7 +960,7 @@ pub fn ZipDeflate::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   self.crc_state = @checksum.crc32_update(self.crc_state, chunk)
@@ -999,8 +985,8 @@ pub fn ZipDeflate::push(
 pub fn ZipDeflate::compressed_result(
   self : ZipDeflate,
 ) -> FixedArray[Byte] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   let data = concat_chunks(self.buf)
   let opts = @types.DeflateOptions::{
@@ -1058,10 +1044,10 @@ pub fn Zip::add_passthrough(
   pt : ZipPassThrough,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
-  if not(pt.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinishing)
+  if !pt.finished {
+    raise FlateError(StreamFinishing)
   }
   let data = pt.result()
   self.entries.push({
@@ -1081,10 +1067,10 @@ pub fn Zip::add_deflate(
   zd : ZipDeflate,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
-  if not(zd.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinishing)
+  if !zd.finished {
+    raise FlateError(StreamFinishing)
   }
   let compressed = zd.compressed_result()
   self.entries.push({
@@ -1101,7 +1087,7 @@ pub fn Zip::add_deflate(
 ///|
 pub fn Zip::finish(self : Zip) -> FixedArray[Byte] raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.finished = true
   let files : Array[(String, FixedArray[Byte])] = []
@@ -1354,7 +1340,7 @@ pub fn Unzip::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   self.buf.push(chunk)
   if final_ {
@@ -1376,8 +1362,8 @@ pub fn Unzip::push(
 pub fn Unzip::result(
   self : Unzip,
 ) -> Array[(String, FixedArray[Byte])] raise @types.FlateError {
-  if not(self.finished) {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+  if !self.finished {
+    raise FlateError(StreamFinished)
   }
   let data = concat_chunks(self.buf)
   @zip.unzip_sync(data)
@@ -1407,7 +1393,7 @@ pub fn EncodeUTF8::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   if final_ {
     self.finished = true
@@ -1496,7 +1482,7 @@ pub fn DecodeUTF8::push(
   final_ : Bool,
 ) -> Unit raise @types.FlateError {
   if self.finished {
-    raise @types.FlateError::FlateError(@types.FlateErrorCode::StreamFinished)
+    raise FlateError(StreamFinished)
   }
   if final_ {
     self.finished = true
@@ -1512,20 +1498,20 @@ pub fn DecodeUTF8::push(
     data[pending_len + i] = chunk[i]
   }
   self.pending.clear()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = data.length()
   let mut i = 0
   while i < len {
     let b0 = data[i].to_int()
     let seq_len = utf8_seq_len(b0)
     if seq_len == -1 {
-      raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      raise FlateError(InvalidUTF8)
     }
     // Check if we have enough bytes for the full sequence
     if i + seq_len > len {
       // Incomplete sequence at end of chunk
       if final_ {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       // Buffer remaining bytes for next push
       for j = i; j < len; j = j + 1 {
@@ -1539,24 +1525,24 @@ pub fn DecodeUTF8::push(
       i += 1
     } else if seq_len == 2 {
       let b1 = data[i + 1].to_int()
-      if not(is_utf8_continuation(b1)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_utf8_continuation(b1) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x1F) << 6) | (b1 & 0x3F)
       if cp < 0x80 {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 2
     } else if seq_len == 3 {
       let b1 = data[i + 1].to_int()
       let b2 = data[i + 2].to_int()
-      if not(is_utf8_continuation(b1)) || not(is_utf8_continuation(b2)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_utf8_continuation(b1) || !is_utf8_continuation(b2) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F)
       if cp < 0x800 {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 3
@@ -1564,17 +1550,17 @@ pub fn DecodeUTF8::push(
       let b1 = data[i + 1].to_int()
       let b2 = data[i + 2].to_int()
       let b3 = data[i + 3].to_int()
-      if not(is_utf8_continuation(b1)) ||
-        not(is_utf8_continuation(b2)) ||
-        not(is_utf8_continuation(b3)) {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+      if !is_utf8_continuation(b1) ||
+        !is_utf8_continuation(b2) ||
+        !is_utf8_continuation(b3) {
+        raise FlateError(InvalidUTF8)
       }
       let cp = ((b0 & 0x07) << 18) |
         ((b1 & 0x3F) << 12) |
         ((b2 & 0x3F) << 6) |
         (b3 & 0x3F)
       if cp < 0x10000 || cp > 0x10FFFF {
-        raise @types.FlateError::FlateError(@types.FlateErrorCode::InvalidUTF8)
+        raise FlateError(InvalidUTF8)
       }
       buf.write_char(Int32::unsafe_to_char(cp))
       i += 4
