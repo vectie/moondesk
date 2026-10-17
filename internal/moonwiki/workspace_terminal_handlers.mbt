@@ -1,10 +1,10 @@
 ///|
-struct WorkspaceTerminal {
-  id : String
-  root : String
-  directory : String
-  handle : @terminal.Session
-  mut title : String
+pub struct WorkspaceTerminal {
+  priv id : String
+  priv root : String
+  priv directory : String
+  priv handle : @terminal.Session
+  priv mut title : String
 }
 
 ///|

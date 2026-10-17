@@ -89,43 +89,6 @@ async fn town_native_work_read_body(
 }
 
 ///|
-async fn town_native_work_owner_exchange(
-  service_url : String,
-  method_ : String,
-  path : String,
-  body : Json?,
-) -> Result[(Int32, Json), String] {
-  let client = @http.Client(service_url)
-  defer client.close()
-  let response = if method_ == "POST" {
-    guard body is Some(payload) else { return Err("Missing work request") }
-    let encoded = @encoding/utf8.encode(payload.stringify())
-    client.post(path, encoded, extra_headers={
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "Content-Length": encoded.length().to_string(),
-    }) catch {
-      _ => return Err("Town owner unavailable")
-    }
-  } else {
-    client.get(path) catch {
-      _ => return Err("Town owner unavailable")
-    }
-  }
-  // Error bodies may contain private native details; never forward them.
-  if response.code < 200 || response.code > 299 {
-    return Ok((response.code, Json::null()))
-  }
-  let text = client.read_all().text() catch {
-      _ => return Err("Unreadable Town owner response")
-    }
-  let payload = @json.parse(text) catch {
-    _ => return Err("Invalid Town owner response")
-  }
-  Ok((response.code, payload))
-}
-
-///|
 async fn handle_town_native_work(
   workspace_root : String,
   request_path : String,

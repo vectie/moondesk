@@ -1,9 +1,9 @@
 ///|
 /// Read-only inspection of the existing native single-step protocol. The
 /// browser supplies identities and an ordinal, never a filesystem locator.
-struct MoonFlowRetainedResult {
-  metadata : Json
-  bytes : Bytes
+pub struct MoonFlowRetainedResult {
+  priv metadata : Json
+  priv bytes : Bytes
 }
 
 ///|

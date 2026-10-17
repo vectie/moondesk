@@ -693,36 +693,3 @@ async fn handle_mooncode_work_continuation(
   conn.write(payload.stringify())
   conn.end_response()
 }
-
-///|
-async fn mooncode_continuation_post_exact(
-  daemon : Json,
-  path : String,
-  body : String,
-) -> Result[Json, String] {
-  let config = match moonclaw_load_control_config(daemon) {
-    Ok(value) => value
-    Err(error) => return Err(error)
-  }
-  let port = json_int(daemon, "port", default=0)
-  if port <= 0 {
-    return Err("MoonClaw control endpoint is unavailable")
-  }
-  let (response, data) = @http.post(
-    "http://127.0.0.1:\{port}\{path}",
-    body,
-    headers=moonclaw_control_headers(config, content_type=true),
-  ) catch {
-    _ => return Err("MoonClaw continuation POST failed")
-  }
-  let text = match
-    moonclaw_control_response_text(response, data, config, "continuation POST") {
-    Ok(value) => value
-    Err(error) => return Err(error)
-  }
-  Ok(
-    @json.parse(text) catch {
-      _ => return Err("MoonClaw returned invalid continuation acknowledgement")
-    },
-  )
-}

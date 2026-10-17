@@ -70,7 +70,9 @@ pub fn GitDiffProjection::to_json(Self) -> Json
 type GitRepositoryProjection derive(ToJson)
 pub fn GitRepositoryProjection::to_json(Self) -> Json
 
-type MoonFlowRetainedResult
+pub struct MoonFlowRetainedResult {
+  // private fields
+}
 
 type OfficeDocumentKind derive(Eq, @debug.Debug)
 pub fn OfficeDocumentKind::equal(Self, Self) -> Bool
@@ -110,7 +112,9 @@ pub fn WorkspaceContext::equal(Self, Self) -> Bool
 pub fn WorkspaceContext::not_equal(Self, Self) -> Bool
 pub fn WorkspaceContext::to_repr(Self) -> @debug.Repr
 
-type WorkspaceTerminal
+pub struct WorkspaceTerminal {
+  // private fields
+}
 
 type XlsxCell derive(Eq, @debug.Debug)
 pub fn XlsxCell::equal(Self, Self) -> Bool
