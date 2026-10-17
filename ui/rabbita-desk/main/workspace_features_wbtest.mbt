@@ -61,6 +61,72 @@ test "document conversation archive restores only visible entries and task curso
 }
 
 ///|
+test "position-aware automatic restore retains a newly staged draft and its context" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let message = workspace_feature_msg(
+    "restore-thread",
+    first="saved-task",
+    third="[{\"role\":\"user\",\"content\":\"Saved conversation\"}]",
+    fourth="{\"restore_kind\":\"automatic\",\"title\":\"Saved title\",\"prompt\":\"Saved prompt\",\"files\":[\"saved.md\"]}",
+  )
+  for
+    base in [
+      { ..init_model(), request_prompt: "New specialist draft", },
+      { ..init_model(), wiki_chat_file_paths: ["new-context.md"], },
+    ] {
+    let (_, retained) = update_workspace_features(dispatch, message, base)
+    assert_eq(retained.request_prompt, base.request_prompt)
+    assert_eq(retained.wiki_chat_file_paths, base.wiki_chat_file_paths)
+    assert_eq(retained.wiki_agent_task_id, "")
+    assert_eq(retained.work_title, base.work_title)
+  }
+}
+
+///|
+test "automatic and explicit restores preserve local saved position fields" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  for kind in ["automatic", "explicit"] {
+    let base = {
+      ..init_model(),
+      selected_workspace_id: "book-demo",
+      request_prompt: if kind == "explicit" {
+        "Current draft"
+      } else {
+        ""
+      },
+    }
+    let position : Json = {
+      "restore_kind": kind.to_json(),
+      "title": "Saved title",
+      "prompt": "Saved prompt",
+      "files": ["saved.md"],
+      "materials": ["material.md"],
+      "directory": "notes",
+      "filter": "saved",
+      "status": "ready",
+      "cursor": "saved-cursor",
+    }
+    let (_, restored) = update_workspace_features(
+      dispatch,
+      workspace_feature_msg(
+        "restore-thread",
+        first="saved-task",
+        third="[{\"role\":\"user\",\"content\":\"Saved conversation\"}]",
+        fourth=position.stringify(),
+      ),
+      base,
+    )
+    assert_eq(restored.wiki_agent_task_id, "saved-task")
+    assert_eq(restored.work_title, "Saved title")
+    assert_eq(restored.request_prompt, "Saved prompt")
+    assert_eq(restored.wiki_chat_file_paths, ["saved.md"])
+    assert_eq(restored.request_material_paths, ["material.md"])
+    assert_eq(restored.current_directory, "notes")
+    assert_eq(restored.desk_filter_query, "saved")
+  }
+}
+
+///|
 test "workspace bridge projects transcript changes without duplicating content" {
   let model = {
     ..init_model(),

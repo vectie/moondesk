@@ -40,6 +40,7 @@ fn init_model() -> Model {
     moonsuite_products: [],
     pack_apps: [],
     pack_apps_status: "loading installed packs",
+    agent_passports: [],
     moonbook_query: "",
     pack_inspection: None,
     collaboration_surface: empty_collaboration_surface(),

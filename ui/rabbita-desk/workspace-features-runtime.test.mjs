@@ -407,7 +407,8 @@ async function capturedHarness(initial = canonicalBinding()) {
   })
   const imported = await import(`data:text/javascript;base64,${Buffer.from(`${source}
 export const capturedRuntimeHarness${++harnessNumber} = true
-export { emit as emitForTest, render as renderForTest, install as installForTest }
+export { emit as emitForTest, render as renderForTest, install as installForTest, restoreTask as restoreForTest }
+export const restoreStateForTest = () => ({ pending: pendingTaskTransition, scroll: pendingTaskScroll })
 export const ordinaryForTest = featureState
 export const capturedForTest = () => capturedLearning
 `).toString('base64')}`)
@@ -857,4 +858,61 @@ test('a matching proposal acknowledgment accepts the backend-normalized source a
     assert.equal(h.capturedForTest().learning_proposals[0].id, 'confirmed-lesson')
     assert.match(runtimeText(h.root), /Waiting for your review/)
   } finally { h.close() }
+})
+
+
+test('prepared specialist text or selected knowledge prevents automatic history restoration', () => {
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', true), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', false), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, '', true), false)
+  // Even a delayed history load that clears the handled-key set cannot replace it.
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', true), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, '', false), true)
+})
+
+test('automatic restore carries saved positions and releases rejected transitions without changing the panel', async () => {
+  const h = await capturedHarness()
+  const previous = Object.getOwnPropertyDescriptor(globalThis, '__moondeskWorkspaceFeaturesDispatch')
+  const calls = []
+  globalThis.__moondeskWorkspaceFeaturesDispatch = (...args) => calls.push(args)
+  const project = extra => {
+    h.root.dataset.state = JSON.stringify({
+      workspace_id: 'restore-book', workspace_mode: 'Wiki', task_id: '',
+      selected_document: '', request_prompt: '', chat_count: 0,
+      chat_draft_has_context: false, ...extra,
+    })
+    h.renderForTest()
+  }
+  const saved = {
+    id: 'saved-task', title: 'Saved title', document: '',
+    chat: [{ role: 'user', content: 'Saved conversation' }],
+    position: { prompt: 'Saved draft', files: ['saved.md'], directory: 'notes',
+      chat_scroll: 120, panel: { open: true, tab: 'results' } },
+  }
+  try {
+    project({})
+    h.restoreForTest(saved, undefined, true)
+    const automatic = calls.at(-1)
+    assert.equal(automatic[0], 'restore-thread')
+    assert.equal(automatic[1], 'saved-task')
+    assert.deepEqual(JSON.parse(automatic[4]), {
+      ...saved.position, title: saved.title, restore_kind: 'automatic',
+    })
+    assert.equal(h.restoreStateForTest().pending.automaticRestore, true)
+    assert.equal(h.ordinaryForTest.toolbox_open, false)
+    project({ request_prompt: 'New specialist draft', chat_draft_has_context: true })
+    assert.equal(h.restoreStateForTest().pending, null)
+    assert.equal(h.restoreStateForTest().scroll, null)
+    assert.equal(h.ordinaryForTest.toolbox_open, false)
+
+    h.restoreForTest(saved)
+    assert.equal(JSON.parse(calls.at(-1)[4]).restore_kind, 'explicit')
+    assert.deepEqual(JSON.parse(calls.at(-1)[4]).files, ['saved.md'])
+    assert.equal(h.ordinaryForTest.toolbox_open, true)
+    assert.equal(h.ordinaryForTest.toolbox_tab, 'results')
+  } finally {
+    h.close()
+    if (previous) Object.defineProperty(globalThis, '__moondeskWorkspaceFeaturesDispatch', previous)
+    else delete globalThis.__moondeskWorkspaceFeaturesDispatch
+  }
 })

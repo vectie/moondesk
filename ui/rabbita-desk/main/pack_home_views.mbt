@@ -646,6 +646,7 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         div([h1("Packs")]),
         div(class="pack-home-summary", [
           span(model.pack_apps_status),
+          render_specialist_builder_action(dispatch),
           pack_inspect_button(dispatch, model, Studio, "Pack Studio", "package"),
           pack_inspect_button(dispatch, model, Runtime, "How packs run", "help"),
           button(

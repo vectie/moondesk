@@ -12,7 +12,8 @@
     "dev": "vite --host 127.0.0.1 --port 5188",
     "prebuild": "moon build --target js --release && node prepare-rabbita-build.mjs release",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4188"
+    "preview": "vite preview --host 127.0.0.1 --port 4188",
+    "test:specialists": "node --test specialist-task-explorer.test.mjs specialist-task-jsonl.test.mjs specialist-task-refinement.test.mjs specialist-task-results.test.mjs specialist-task-batch.test.mjs specialist-stage-replacement.test.mjs specialist-task-files.test.mjs specialist-portable.test.mjs specialist-task-csv.test.mjs specialist-variants.test.mjs specialist-task-form.test.mjs specialist-composition.test.mjs specialist-builder.test.mjs specialist-builder-dom.test.mjs specialist-history.test.mjs"
   },
   "dependencies": {
     "@rabbita/vite": "^0.2.0",

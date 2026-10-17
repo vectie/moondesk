@@ -1,4 +1,5 @@
 import { workPanelItems, renderTaskDraft, installPackWorkspace, mergeTaskThreads, taskPosition, taskResultPackage, taskArtifacts, taskSources, downloadTaskFile } from './work-journey-runtime.js'
+let specialistBuilderPromise = null
 const rootSelector = '[data-testid="workspace-feature-overlays"]'
 const taskDrafts = new Map()
 const recipeDrafts = new Map()
@@ -464,8 +465,9 @@ function sourceSubscriptionCounts(records) {
   }), { active: 0, needs_setup: 0 })
 }
 
-function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled) {
-  return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true
+function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled, draftPrompt = '', hasDraftContext = false) {
+  return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true &&
+    !String(draftPrompt || '').trim() && hasDraftContext !== true
 }
 
 function reviewRoomProjection(records, suppliedParticipants = []) {
@@ -1448,23 +1450,27 @@ function maybeRestoreCurrentThread() {
     serverState.task_id,
     (serverState.chat || []).length,
     restoredDocumentKeys.has(key),
+    serverState.request_prompt,
+    serverState.chat_draft_has_context,
   )) return
   if (!globalThis.__moondeskWorkspaceFeaturesDispatch) return
   restoredDocumentKeys.add(key)
   const thread = currentThreads().find(item =>
     !item.archived && (item.document || '') === (serverState.selected_document || ''))
   if (thread) {
-    restoreTask(thread)
+    restoreTask(thread, undefined, true)
   }
 }
 
-function restoreTask(thread, documentPath = thread.position?.document ?? thread.document ?? '') {
+function restoreTask(thread, documentPath = thread.position?.document ?? thread.document ?? '', automaticRestore = false) {
   if (!thread.position) thread = { ...thread, position: { files: taskSources(thread).filter(source => source.kind === 'workspace').map(source => source.path) } }
-  pendingTaskTransition = { taskId: thread.draft ? '' : thread.id, draftId: thread.draft ? thread.id : '', prompt: thread.position?.prompt || '', document: documentPath }
-  featureState.toolbox_open = thread.position?.panel?.open === true
-  if (thread.position?.panel?.tab) featureState.toolbox_tab = thread.position.panel.tab
+  pendingTaskTransition = { taskId: thread.draft ? '' : thread.id, draftId: thread.draft ? thread.id : '', prompt: thread.position?.prompt || '', document: documentPath, automaticRestore, panel: thread.position?.panel }
+  if (!automaticRestore) {
+    featureState.toolbox_open = thread.position?.panel?.open === true
+    if (thread.position?.panel?.tab) featureState.toolbox_tab = thread.position.panel.tab
+  }
   pendingTaskScroll = { workspaceId: serverState.workspace_id, taskId: thread.draft ? '' : thread.id, top: Number(thread.position?.chat_scroll) || 0 }
-  forward('restore-thread', thread.draft ? '' : thread.id, documentPath, JSON.stringify(thread.chat || []), JSON.stringify({ ...thread.position, title: thread.title }))
+  forward('restore-thread', thread.draft ? '' : thread.id, documentPath, JSON.stringify(thread.chat || []), JSON.stringify({ ...thread.position, title: thread.title, restore_kind: automaticRestore ? 'automatic' : 'explicit' }))
 }
 
 function forward(action, first = '', second = '', third = '', fourth = '') {
@@ -4109,8 +4115,18 @@ function render() {
   if (pendingTaskTransition && serverState.navigation_pending) pendingTaskTransition.sawPending = true
   if (pendingTaskTransition && serverState.task_id === pendingTaskTransition.taskId && serverState.request_prompt === pendingTaskTransition.prompt && (pendingTaskTransition.document === undefined || serverState.selected_document === pendingTaskTransition.document)) {
     draftTaskId = pendingTaskTransition.draftId
+    if (pendingTaskTransition.automaticRestore) {
+      featureState.toolbox_open = pendingTaskTransition.panel?.open === true
+      if (pendingTaskTransition.panel?.tab) featureState.toolbox_tab = pendingTaskTransition.panel.tab
+    }
     pendingTaskTransition = null
     lastThreadPersistenceFingerprint = ''
+  }
+  if (pendingTaskTransition?.automaticRestore && (serverState.request_prompt || serverState.chat_draft_has_context)) {
+    // The model rejected a queued restore after a new draft was staged. Do not
+    // leave stale transition state blocking persistence or restoring its panel.
+    pendingTaskTransition = null
+    pendingTaskScroll = null
   }
   if (pendingTaskTransition?.sawPending && !serverState.navigation_pending) pendingTaskTransition = null
   if (serverState.office?.kind === 'xlsx') {
@@ -4309,6 +4325,16 @@ globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
   // Typed actions may select a book and open a panel in the same render.
   // Apply that book transition before opening its requested surface.
   if (typeof document !== 'undefined') render()
+  if (action === 'open-specialist') {
+    specialistBuilderPromise ||= import('./specialist-builder.js')
+    specialistBuilderPromise.then(module => module.openSpecialistBuilder({ scope: serverState.library_scope }))
+      .catch(error => { specialistBuilderPromise = null; console.error(error) })
+    return
+  }
+  if (action === 'specialist-prepared' || action === 'specialist-error') {
+    specialistBuilderPromise?.then(module => module.receiveSpecialistSignal(action, value))
+    return
+  }
   if (action === 'teach-captured-work' || action === 'review-captured-learning') {
     openCapturedLearning(action, value)
     return

@@ -1,0 +1,3 @@
+{"subject":"001.20 pilot annotation","reader":"Research lead","note":"Keep the identifier literal"}
+{"reader":"Operations","note":"Two source lines are one task value","subject":"First observation\nSecond observation"}
+{"subject":"","reader":"Founder","note":"Correct the blank subject after import"}

@@ -23,6 +23,7 @@ import '/styles/workbench-layout.css'
 import '/styles/destination-layout.css'
 import '/styles/work-journey.css'
 import '/styles/type-hierarchy.css'
+import '/styles/specialist-builder.css'
 import {
   connectedWorkspaceUrl,
   parseProviderHandoff,

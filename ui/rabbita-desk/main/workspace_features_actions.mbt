@@ -13,6 +13,13 @@ fn update_workspace_features(
         workspace_feature_signal_cmd(action, first),
         { ..model, command_open: false, },
       )
+    "open-specialist" =>
+      (
+        fetch_specialist_catalog_cmd(dispatch, specialist_library_scope(model)),
+        { ..model, command_open: false, agent_passports: [], },
+      )
+    "prepare-specialist" =>
+      prepare_specialist_example(dispatch, model, first, second, third)
     "open-toolbox" =>
       (
         @rabbita.batch([
@@ -268,14 +275,36 @@ fn update_workspace_features(
     "append-background-results" =>
       append_wiki_chat_background_results(model, first)
     "restore-thread" =>
-      restore_wiki_chat_thread(
-        dispatch,
-        model,
-        first,
-        second,
-        third,
-        position_text=fourth,
-      )
+      if (
+          fourth == "automatic" ||
+          json_field_string(
+            @json.parse(fourth) catch {
+              _ => Json::object({})
+            },
+            "restore_kind",
+            default="",
+          ) ==
+          "automatic"
+        ) &&
+        (
+          !model.request_prompt.trim().is_empty() ||
+          !model.wiki_chat_file_paths.is_empty() ||
+          !model.request_material_paths.is_empty() ||
+          !model.wiki_chat_context_items.is_empty()
+        ) {
+        // A history response may have queued this before the specialist draft
+        // was staged. Never let that delayed automatic restore erase it.
+        (@rabbita.none, model)
+      } else {
+        restore_wiki_chat_thread(
+          dispatch,
+          model,
+          first,
+          second,
+          third,
+          position_text=fourth,
+        )
+      }
     "new-thread" =>
       (
         @rabbita.none,

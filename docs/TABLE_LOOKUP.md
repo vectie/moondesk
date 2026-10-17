@@ -1,5 +1,15 @@
 # Enrich a saved table with lookup fields
 
+For duplicate CSV/TSV lookup keys, use the source editor's
+[duplicate-key preview and first/last resolution](TABLE_DUPLICATE_KEYS.md).
+Review and Apply to the unsaved draft, explicitly correct any retained blank
+keys, then Save and reopen. Lookup matching and its key requirements stay exact.
+
+Need an explicit split/trim key first? The source editor can
+[preview and append a derived CSV/TSV column](TABLE_DERIVED_COLUMN.md).
+Choose Apply and Save yourself, then reopen the saved table and select that
+column. Lookup matching itself remains exact and unchanged.
+
 Open a saved table in Desk or Wiki with **View as table**, then choose
 **Enrich from a lookup table**. Match a customer, product or other identifier
 against a saved reference table and download a combined file. Both inputs stay

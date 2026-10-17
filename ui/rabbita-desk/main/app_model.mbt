@@ -44,6 +44,7 @@ struct Model {
   moonsuite_products : Array[MoonSuiteProduct]
   pack_apps : Array[PackAppRecord]
   pack_apps_status : String
+  agent_passports : Array[AgentPassportRecord]
   moonbook_query : String
   pack_inspection : PackInspection?
   collaboration_surface : CollaborationSurfaceProjection
@@ -356,6 +357,7 @@ enum Msg {
   LibraryFolderPicked(Result[String, String])
   SelectedLibrary(Result[WorkspaceMetadata, String])
   LoadedPackApps(Result[PackAppCatalog, String])
+  LoadedSpecialistCatalog(String, Result[SpecialistAgentCatalog, String])
   LoadedMoonFlowCollaboration(
     String,
     Result[MoonFlowCollaborationReply, String]

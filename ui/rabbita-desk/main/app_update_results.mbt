@@ -7,6 +7,7 @@ fn update_app_results(
   match msg {
     LoadedWorkspaceMetadata(_)
     | LoadedPackApps(_)
+    | LoadedSpecialistCatalog(_, _)
     | LoadedMoonFlowCollaboration(_, _)
     | LoadedWorkspaces(_)
     | RequestEntries(_, _)

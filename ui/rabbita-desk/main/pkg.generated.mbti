@@ -35,6 +35,8 @@ type AgentImportState
 
 type AgentImportWire derive(@json.FromJson)
 
+type AgentPassportRecord derive(@json.FromJson)
+
 type BookBaseTypeRecord derive(@json.FromJson)
 
 type BookPatternCreationResult derive(@json.FromJson)
@@ -440,6 +442,8 @@ type SourcePaneSaveRequest derive(Eq, @debug.Debug)
 type SourcePaneState derive(Eq, @debug.Debug)
 
 type SourceSaveOutcome derive(Eq, @debug.Debug)
+
+type SpecialistAgentCatalog derive(@json.FromJson)
 
 type StandingGoalRecord derive(@json.FromJson)
 

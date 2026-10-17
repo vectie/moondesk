@@ -1,9 +1,12 @@
 import { syncMarkdownLinks, changeMarkdownLinks, actMarkdownLinks } from './source-markdown-links-ui.js'
-import { syncJsonExplorer, actJsonExplorer, changeJsonReplacement } from './source-json-explorer.js'
+import { syncJsonExplorer, actJsonExplorer, changeJsonReplacement, changeJsonInsertion, changeJsonMove, changeJsonCopy, changeJsonOrder } from './source-json-explorer.js'
 import { syncJsonComparison, changeJsonComparison, actJsonComparison } from './source-json-comparison-ui.js'
 import { codeOutline } from './source-code-outline.js'
 import { parseSourceLocation, SourceNavigation } from './source-navigation.js'
 import { SourcePositionMemory } from './source-position-memory.js'
+import { syncTableDerive, changeTableDerive, actTableDerive } from './source-table-derive-ui.js'
+import { syncTableDeduplicate, changeTableDeduplicate, actTableDeduplicate } from './source-table-deduplicate-ui.js'
+import { syncTableReshape, changeTableReshape, actTableReshape } from './source-table-reshape-ui.js'
 
 const KEYWORDS = {
   MoonBit: [
@@ -228,6 +231,9 @@ function syncEditor(element) {
   syncJsonExplorer(parts)
   syncJsonComparison(parts)
   syncMarkdownLinks(parts)
+  syncTableDerive(parts)
+  syncTableDeduplicate(parts)
+  syncTableReshape(parts)
   applyPendingReveal(parts)
 }
 
@@ -713,11 +719,28 @@ export function installSourceEditorRuntime() {
   if (installed) return
   installed = true
   document.addEventListener('input', event => {
+    if (event.target instanceof HTMLInputElement && ['column','delimiter','part','name','trim'].some(name => event.target.matches(`[data-table-derive-${name}]`))) changeTableDerive(editorParts(event.target))
+    if (event.target instanceof HTMLInputElement && event.target.matches('[data-table-deduplicate-key]')) changeTableDeduplicate(editorParts(event.target))
+    if (event.target instanceof HTMLInputElement && ['measure', 'variable', 'value'].some(name => event.target.matches(`[data-table-reshape-${name}]`))) changeTableReshape(editorParts(event.target))
+    if (event.target instanceof HTMLInputElement && ['field', 'type', 'direction', 'missing'].some(name => event.target.matches(`[data-json-order-${name}]`))) {
+      changeJsonOrder(editorParts(event.target))
+    }
+    if (event.target instanceof HTMLInputElement && ['destination', 'key', 'position'].some(name => event.target.matches(`[data-json-copy-${name}]`))) {
+      changeJsonCopy(editorParts(event.target))
+      return
+    }
+    if (event.target instanceof HTMLInputElement && ['destination', 'key', 'position'].some(name => event.target.matches(`[data-json-move-${name}]`))) {
+      changeJsonMove(editorParts(event.target))
+    }
     if (event.target instanceof HTMLInputElement && event.target.matches('[data-markdown-links-replacement]')) {
       changeMarkdownLinks(editorParts(event.target))
     }
     if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-json-compare-reference]')) {
       changeJsonComparison(editorParts(event.target))
+    }
+    if ((event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLInputElement) &&
+        ['key', 'position', 'value'].some(name => event.target.matches(`[data-json-insert-${name}]`))) {
+      changeJsonInsertion(editorParts(event.target))
     }
     if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-json-replacement]')) {
       changeJsonReplacement(editorParts(event.target))
@@ -756,7 +779,10 @@ export function installSourceEditorRuntime() {
     }
     const action = event.target instanceof Element ? event.target.closest('[data-action]') : null
     if (!(action instanceof HTMLElement)) return
-    if (action.dataset.action.startsWith('source-markdown-links-')) actMarkdownLinks(editorParts(action), action, revealSourceLocation)
+    if (action.dataset.action.startsWith('source-table-derive-')) actTableDerive(editorParts(action), action)
+    if (action.dataset.action.startsWith('source-table-deduplicate-')) actTableDeduplicate(editorParts(action), action)
+    else if (action.dataset.action.startsWith('source-table-reshape-')) actTableReshape(editorParts(action), action)
+    else if (action.dataset.action.startsWith('source-markdown-links-')) actMarkdownLinks(editorParts(action), action, revealSourceLocation)
     else if (action.dataset.action.startsWith('source-json-compare-')) actJsonComparison(editorParts(action), action, revealSourceLocation)
     else if (action.dataset.action.startsWith('source-json-')) actJsonExplorer(editorParts(action), action, revealSourceLocation)
     else if (action.dataset.action === 'source-code-outline-select') selectCodeOutline(editorParts(action), action)

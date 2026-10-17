@@ -40,6 +40,21 @@ fn update_workspace_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    LoadedSpecialistCatalog(scope, result) => {
+      if scope != specialist_library_scope(model) {
+        return (@rabbita.none, model)
+      }
+      let agents = match result {
+        Ok(catalog) => catalog.agents
+        Err(_) => []
+      }
+      // Opening uses the existing builder's own visible load/error UI. The
+      // typed cache remains empty on failure, so preparation still refuses.
+      (
+        workspace_feature_signal_cmd("open-specialist", ""),
+        { ..model, agent_passports: agents, },
+      )
+    }
     LoadedPackApps(Ok(catalog)) =>
       (
         @rabbita.none,

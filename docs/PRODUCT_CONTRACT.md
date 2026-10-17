@@ -15,6 +15,19 @@ presents MoonFind-authored cross-product work for selection and inspection.
 
 ## Users and jobs
 
+The saved creator CSV-task surface also supports an operator-entered output
+notebook: exact captured task/briefs, repeated observations, visible input drift,
+and JSON/CSV/Markdown output. This source-level workflow does not verify
+completion or change creator/Book authority. See
+[creator task results](CREATOR_TASK_RESULTS.md) for its current bounded tests and
+remaining compiled/native/browser/provider qualification gates.
+
+An observed task can also open a [creator refinement](CREATOR_TASK_REFINEMENT.md):
+write a concrete correction in the ordinary purpose, create an independent
+variant, and prepare the same captured task/file snapshot through the existing
+guarded chat path. Send and Save remain explicit; retry does not prove improvement
+or accept Book learning. The original creator and observation are preserved.
+
 - Operators browse books, files, tasks, artifacts and reviews.
 - People approve, reject, steer and cancel agent work.
 - Pack applications expose domain workflows without entering MoonDesk source.
