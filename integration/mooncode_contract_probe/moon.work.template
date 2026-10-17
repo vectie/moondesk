@@ -1,5 +1,8 @@
 members = [
   "./moondesk",
   "./moonclaw",
+  "./moonleaf",
+  "./moonlib",
+  "./moondesk/vendor/moonzip",
   "./probe",
 ]

@@ -27,6 +27,18 @@ if ! command -v "${moon_bin}" >/dev/null 2>&1; then
 fi
 
 moonclaw_root="$(cd "${MOONCLAW_ROOT}" && pwd)"
+moonleaf_root="${MOONLEAF_ROOT:-${moondesk_root}/../moonleaf}"
+moonlib_root="${MOONLIB_ROOT:-${moondesk_root}/../moonlib}"
+
+# Match MoonDesk's supported local workspace dependencies without changing any
+# module version requirements or fetching an older registry substitute.
+for local_root in "${moonleaf_root}" "${moonlib_root}"; do
+  if [[ ! -f "${local_root}/moon.mod" ]]; then
+    echo "Local workspace dependency not found: ${local_root}/moon.mod" >&2
+    echo "Set MOONLEAF_ROOT and MOONLIB_ROOT to the accepted local checkouts." >&2
+    exit 2
+  fi
+done
 
 if [[ ! -d "${moonclaw_root}/mooncode/core" ]]; then
   echo "MoonClaw mooncode/core package not found: ${moonclaw_root}/mooncode/core" >&2
@@ -39,13 +51,21 @@ trap 'rm -rf "${workspace}"' EXIT HUP INT TERM
 
 ln -s "${moondesk_root}" "${workspace}/moondesk"
 ln -s "${moonclaw_root}" "${workspace}/moonclaw"
-ln -s "${probe_root}" "${workspace}/probe"
+ln -s "${moonleaf_root}" "${workspace}/moonleaf"
+ln -s "${moonlib_root}" "${workspace}/moonlib"
+# Keep the executable package physically inside the workspace. A symlinked
+# package is canonicalized to its source checkout before workspace discovery.
+mkdir "${workspace}/probe"
+cp "${probe_root}/moon.mod" "${probe_root}/moon.pkg" \
+  "${probe_root}/main.mbt" "${workspace}/probe/"
 cp "${probe_root}/moon.work.template" "${workspace}/moon.work"
 
 echo "+ execute MoonClaw producer -> MoonDesk consumer contract probe"
 (
-  cd "${workspace}/probe"
-  "${moon_bin}" run --target native .
+  # Start at the workspace root. Entering the probe symlink can canonicalize
+  # back to its source checkout and lose the isolated workspace membership.
+  cd "${workspace}"
+  "${moon_bin}" run --target native --strip -j 2 probe
 )
 
 echo "MoonCode producer/consumer compatibility passed."

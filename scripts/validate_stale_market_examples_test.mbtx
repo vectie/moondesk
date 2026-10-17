@@ -1,0 +1,192 @@
+///|
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+// Run from the repository root: moon run scripts/validate_stale_market_examples_test.mbtx
+// Optional arguments: JSON report path, prior scanner source for differential proof.
+
+///|
+fn scanner_harness(source : String, status : Int32?) -> String raise {
+  let marker = "validate_no_stale_market_example_data() {"
+  let parts = source.split(marker).map(s => s.to_owned()).collect()
+  assert_eq(parts.length(), 2)
+  let body = parts[1]
+    .split("\nvalidate_moonbook_moonwiki_boundary() {")
+    .next()
+    .unwrap()
+    .to_owned()
+  let stub = match status {
+    Some(code) => "rg() { return " + code.to_string() + "; }\n"
+    None => ""
+  }
+  "set -euo pipefail\n" +
+  stub +
+  marker +
+  body +
+  "\nvalidate_no_stale_market_example_data \"$1\" fixture \"$2\"\n"
+}
+
+///|
+async fn main {
+  let args = @env.args()
+  let source = @fs.read_file("scripts/validate-core-boundaries.sh").text()
+  let prior = match args.get(2) {
+    Some(path) => Some(@fs.read_file(path).text())
+    None => None
+  }
+  let made = @shell.Cmd("mktemp", ["-d", "-t", "stale-market-fixtures"]).output()
+  made.check()
+  let temp = made.stdout().trim().to_owned()
+  println("Focused fixture inputs retained at " + temp)
+  let cases : Array[(String, String, Int32, Int32)] = []
+  for index in 0..<9 {
+    let number = ["40.132084", "40.117295", "40.117225"][index % 3]
+    cases.push(
+      (
+        "geographic-" + index.to_string(),
+        "{\"latitude\": " + number + "}\n",
+        0,
+        1,
+      ),
+    )
+  }
+  for prefix in ["1320", "1172"] {
+    for suffix in 0..<100 {
+      let digits = if suffix < 10 {
+        "0" + suffix.to_string()
+      } else {
+        suffix.to_string()
+      }
+      let code = prefix + digits
+      cases.push(("financial-" + code, "security " + code + "\n", 1, 1))
+    }
+  }
+  for
+    (name, text, expected, old) in [
+      ("sentence-period", "security 132084.\n", 1, 1),
+      ("quoted-code", "{\"security\":\"117295\"}\n", 1, 1),
+      ("integer-json", "{\"security\":132084}\n", 1, 1),
+      ("negative-integer", "value -117295\n", 1, 1),
+      ("code-after-decimal", "[40.132084] security 117295\n", 1, 1),
+      ("code-before-decimal", "132084 [40.117295]\n", 1, 1),
+      ("word-after-decimal", "[40.132084] exchangeable\n", 1, 1),
+      ("decimal-leading-code", "value 132084.5\n", 0, 1),
+      ("fractional-sentence", "latitude 40.132084.\n", 0, 1),
+      ("leading-dot-fraction", "value .117295\n", 0, 1),
+      ("negative-fraction", "value -40.117295\n", 0, 1),
+      ("scientific-exponent", "value 1e+132084\n", 0, 1),
+      ("negative-exponent", "value 1E-117295\n", 0, 1),
+      ("scientific-mantissa", "value 132084e2\n", 0, 0),
+      ("decimal-exponent", "value 40.132084e+2\n", 0, 0),
+      ("fractional-exponent", "value .132084e2\n", 0, 0),
+      ("hex-colour", "#132084 #117295\n", 0, 0),
+      ("identifier", "a132084z _117295_\n", 0, 0),
+      ("longer-integer", "1132084 1320849 1172950\n", 0, 0),
+      ("outside-code-ranges", "132100 117300\n", 0, 0),
+      ("ordinary", "ordinary documentation 40.123456\n", 0, 0),
+      ("adjacent-codes", "132084,117295\n", 1, 1),
+      ("uppercase-code-boundary", "EB.\n", 1, 1),
+      ("lowercase-original-rule", "eb\n", 0, 0),
+    ] {
+    cases.push((name, text, expected, old))
+  }
+  // Preserve every original non-numeric branch and the ASCII word boundaries
+  // across punctuation and non-ASCII characters when changing regex engines.
+  for
+    index, boundary in [
+      "", " ", ".", "#", "\"", ":", "é", "α", "中", "１", "\u{00a0}",
+    ] {
+    for word in ["EB", "exchangeable", "可交换", "G三峡", "江铜"] {
+      cases.push(
+        (
+          "word-boundary-" + index.to_string() + "-" + word,
+          boundary + word + boundary + "\n",
+          1,
+          1,
+        ),
+      )
+    }
+  }
+  for word in ["aEBz", "_EB_", "exchanged", "ordinary"] {
+    cases.push(("word-negative-" + word, word + "\n", 0, 0))
+  }
+  let results : Array[Json] = []
+  for index, entry in cases {
+    let (name, text, expected, expected_old) = entry
+    let filename = "case-" + index.to_string() + ".txt"
+    @fs.write_file(temp + "/" + filename, text)
+    let r = @shell.Cmd("bash", [
+      "-c",
+      scanner_harness(source, None),
+      "fixture",
+      temp,
+      filename,
+    ]).output(max_output_bytes=20000)
+    assert_eq(
+      r.exit_code(),
+      expected,
+      msg=name + ": " + r.stdout() + r.stderr(),
+    )
+    let mut old_exit : Json = Json::null()
+    if prior is Some(old_source) {
+      let old = @shell.Cmd("bash", [
+        "-c",
+        scanner_harness(old_source, None),
+        "fixture",
+        temp,
+        filename,
+      ]).output(max_output_bytes=20000)
+      assert_eq(
+        old.exit_code(),
+        expected_old,
+        msg="baseline " + name + ": " + old.stdout() + old.stderr(),
+      )
+      old_exit = Json(old.exit_code())
+    }
+    results.push({
+      "name": name,
+      "input": text,
+      "expected_exit": expected,
+      "actual_exit": r.exit_code(),
+      "prior_expected_exit": expected_old,
+      "prior_actual_exit": old_exit,
+    })
+  }
+  for code in [2, 127] {
+    let r = @shell.Cmd("bash", [
+      "-c",
+      scanner_harness(source, Some(code)),
+      "fixture",
+      temp,
+      "case-0.txt",
+    ]).output(max_output_bytes=20000)
+    assert_eq(r.exit_code(), code, msg="scanner error must fail closed")
+    results.push({
+      "name": "scanner-error-" + code.to_string(),
+      "expected_exit": code,
+      "actual_exit": r.exit_code(),
+      "failure_is_not_clean_scan": true,
+    })
+  }
+  let report : Json = {
+    "fixture_cases_passed": results.length(),
+    "prohibited_integer_codes_tested": 200,
+    "actual_geographic_false_positive_cases": 9,
+    "scanner_errors_fail_closed": true,
+    "prior_scanner_compared": prior is Some(_),
+    "fixtures_directory": temp,
+    "results": results,
+  }
+  if args.get(1) is Some(path) {
+    @fs.write_file(path, report.stringify(indent=2))
+  }
+  println(
+    "Stale-market scanner regression fixtures passed: " +
+    results.length().to_string(),
+  )
+}

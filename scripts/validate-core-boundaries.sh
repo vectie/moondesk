@@ -176,7 +176,14 @@ validate_no_stale_market_example_data() {
   local root="$1"
   local label="$2"
   shift 2
-  local stale_example_pattern='(^|[^[:alnum:]_])EB([^[:alnum:]_]|$)|exchangeable|可交换|(^|[^[:alnum:]_#])1320[0-9]{2}([^[:alnum:]_]|$)|(^|[^[:alnum:]_#])1172[0-9]{2}([^[:alnum:]_]|$)|G三峡|江铜'
+  # Security codes are complete integer tokens, not fragments of decimal or
+  # scientific numeric literals. A sentence-final dot is punctuation, so
+  # "132084." still matches. Words and standalone code ranges are unchanged.
+  # Explicit ASCII classes preserve rg's POSIX alnum boundaries under PCRE2.
+  local numeric_literal='(?<![A-Za-z0-9_.])[-+]?(?:[0-9]+[.][0-9]+(?:[eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+|[.][0-9]+(?:[eE][+-]?[0-9]+)?)(?![A-Za-z0-9_])'
+  # Code boundaries must be zero-width: consuming the preceding separator
+  # would match an integer prefix before the lexer reaches that number.
+  local stale_example_pattern="${numeric_literal}(*SKIP)(*F)|(^|[^A-Za-z0-9_])EB([^A-Za-z0-9_]|$)|exchangeable|可交换|(?<![A-Za-z0-9_#])1320[0-9]{2}(?![A-Za-z0-9_])|(?<![A-Za-z0-9_#])1172[0-9]{2}(?![A-Za-z0-9_])|G三峡|江铜"
   local existing_paths=()
 
   for path in "$@"; do
@@ -191,7 +198,7 @@ validate_no_stale_market_example_data() {
   fi
 
   echo "+ validate no stale market/example data in ${label}"
-  if (cd "${root}" && rg -n --hidden \
+  if (cd "${root}" && rg --pcre2 -n --hidden \
     --glob '!**/dist/**' \
     --glob '!**/_build/**' \
     --glob '!**/.moon/**' \
@@ -202,6 +209,12 @@ validate_no_stale_market_example_data() {
     echo "Stale market-specific example data found in ${label}." >&2
     echo "Keep generated discovery examples in standalone app-tool packs, not product runtime or core docs." >&2
     exit 1
+  else
+    local scan_status=$?
+    if [[ "${scan_status}" -ne 1 ]]; then
+      echo "Stale market/example scan failed in ${label} (status ${scan_status})." >&2
+      exit "${scan_status}"
+    fi
   fi
 }
 
@@ -374,6 +387,7 @@ validate_no_local_machine_paths "${moondesk_root}"
 validate_no_inline_production_tests "${moondesk_root}"
 validate_moondesk_root_layout "${moondesk_root}"
 validate_no_builtin_domain_pack "${moondesk_root}"
+run_moon "${moondesk_root}" run scripts/validate_stale_market_examples_test.mbtx
 validate_no_stale_market_example_data "${moondesk_root}" "MoonDesk" \
   README.md README.mbt.md docs adapters cmd core host internal mooncode plugin ui/rabbita-desk/main
 validate_no_stale_market_example_data "${moonclaw_root}" "MoonClaw" \
