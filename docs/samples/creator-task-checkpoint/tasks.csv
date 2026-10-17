@@ -1,0 +1,4 @@
+Reader,Subject,Notes
+Founder,,Correct the missing topic locally before checkpointing
+Analyst,"001.00, quoted",Unmapped notes remain in the checkpoint
+Reader,"A literal {{topic}} and $&",No interpolation of cell contents

@@ -1,0 +1,9 @@
+{
+  "name": "Report creator",
+  "steps": [
+    {"name": "Summarize", "confidence": 1.00},
+    {"name": "Read supplied inputs", "source_id": 9007199254740993123},
+    {"name": "Check missing context", "optional": false}
+  ],
+  "later": []
+}

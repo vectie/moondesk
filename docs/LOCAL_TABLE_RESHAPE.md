@@ -1,5 +1,9 @@
 # Reshape columns into rows
 
+For current unsaved CSV/TSV source-editor content, use the separately bounded
+[draft reshape panel](DRAFT_TABLE_RESHAPE.md), with explicit output names,
+Preview, Apply, Cancel and scoped Undo. The workflow below reads saved files.
+
 A wide monthly export such as `account,Jan,Feb` can now become a long table
 with one record per account/month. This helps prepare data for charting,
 joining to another table or analysis without manually copying each column.

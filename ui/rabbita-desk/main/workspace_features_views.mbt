@@ -80,12 +80,16 @@ fn workspace_features_state_payload(model : Model) -> Json {
     ),
     "workspace": workspace_name(model),
     "workspace_id": model.selected_workspace_id,
+    "library_scope": specialist_library_scope(model),
     "captured_work": work_learning_binding(model),
     "workspace_path": workspace_root(model),
     "selected_document": model.selected_path,
     "task_id": model.wiki_agent_task_id,
     "request_status": model.request_status,
     "request_prompt": model.request_prompt,
+    "chat_draft_has_context": !model.wiki_chat_file_paths.is_empty() ||
+    !model.request_material_paths.is_empty() ||
+    !model.wiki_chat_context_items.is_empty(),
     "office": workspace_office_state_payload(model.office_editor),
     // The transcript is already present in the visible chat DOM. Keep only a
     // tiny change projection here so a long streamed answer is not copied into

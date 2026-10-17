@@ -44,13 +44,14 @@ export function parseJsonDocument(text) {
       offset += 1; whitespace()
       if (text[offset] !== close) {
         while (true) {
+          const memberStart = offset
           let key = String(children.length)
           if (type === 'object') {
             if (text[offset] !== '"') fail('Expected an object key')
             key = string(); whitespace()
             if (text[offset++] !== ':') fail('Expected a colon')
           }
-          children.push({ key, node: value(depth + 1) })
+          children.push({ key, memberStart, node: value(depth + 1) })
           whitespace()
           if (text[offset] !== ',') break
           offset += 1; whitespace()

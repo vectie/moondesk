@@ -858,3 +858,13 @@ test('a matching proposal acknowledgment accepts the backend-normalized source a
     assert.match(runtimeText(h.root), /Waiting for your review/)
   } finally { h.close() }
 })
+
+
+test('prepared specialist text or selected knowledge prevents automatic history restoration', () => {
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', true), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', false), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, '', true), false)
+  // Even a delayed history load that clears the handled-key set cannot replace it.
+  assert.equal(shouldRestoreDocumentThread('', 0, false, 'Exact specialist example', true), false)
+  assert.equal(shouldRestoreDocumentThread('', 0, false, '', false), true)
+})

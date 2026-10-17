@@ -1,6 +1,15 @@
 import { parseJsonDocument, resolveJsonPointer, jsonChildPointers } from './source-json-values.js'
+import { createJsonCopyPanel, resetJsonCopy, syncJsonCopy, actJsonCopy } from './source-json-copy-ui.js'
+export { changeJsonCopy } from './source-json-copy-ui.js'
+import { createJsonOrderPanel, resetJsonOrder, syncJsonOrder, actJsonOrder } from './source-json-order-ui.js'
+export { changeJsonOrder } from './source-json-order-ui.js'
+import { createJsonMovePanel, resetJsonMove, syncJsonMove, actJsonMove } from './source-json-move-ui.js'
+export { changeJsonMove } from './source-json-move-ui.js'
+import { createJsonRemovalPanel, resetJsonRemoval, syncJsonRemoval, actJsonRemoval } from './source-json-removal-ui.js'
 import { createJsonReplacementPanel, syncJsonReplacement, resetJsonReplacement, actJsonReplacement } from './source-json-replacement-ui.js'
 export { changeJsonReplacement } from './source-json-replacement-ui.js'
+import { createJsonInsertionPanel, syncJsonInsertion, resetJsonInsertion, actJsonInsertion } from './source-json-insertion-ui.js'
+export { changeJsonInsertion } from './source-json-insertion-ui.js'
 
 const states = new WeakMap()
 const PAGE_SIZE = 50
@@ -32,6 +41,12 @@ function createPanel(surface) {
     status, button('select', 'Select value in editor'), button('download', 'Download value JSON'), button('replace-open', 'Replace displayed value'), preview,
     children, button('previous', 'Previous values'), button('next', 'Next values'))
   createJsonReplacementPanel(panel, button)
+  panel.append(button('insert-open', 'Insert member or item'))
+  createJsonInsertionPanel(panel, button)
+  createJsonRemovalPanel(panel, button)
+  createJsonMovePanel(panel, button)
+  createJsonCopyPanel(panel, button)
+  createJsonOrderPanel(panel, button)
   surface.append(panel)
   return panel
 }
@@ -39,7 +54,7 @@ function createPanel(surface) {
 export function syncJsonExplorer(parts) {
   let panel = parts.surface.querySelector('[data-json-explorer]')
   if (parts.language !== 'JSON') {
-    if (panel) { panel.hidden = true; states.delete(panel); resetJsonReplacement(panel) }
+    if (panel) { panel.hidden = true; states.delete(panel); resetJsonReplacement(panel); resetJsonInsertion(panel); resetJsonRemoval(panel); resetJsonMove(panel); resetJsonCopy(panel); resetJsonOrder(panel) }
     return
   }
   if (!panel) panel = createPanel(parts.surface)
@@ -49,6 +64,11 @@ export function syncJsonExplorer(parts) {
   if (!state || state.identity !== key) {
     state = { identity: key, pointer: '', page: 0, text: null, root: null, node: null, generation: 0 }
     states.set(panel, state); control(panel, 'pointer').value = ''; resetJsonReplacement(panel)
+    resetJsonInsertion(panel)
+    resetJsonRemoval(panel)
+    resetJsonMove(panel)
+    resetJsonCopy(panel)
+    resetJsonOrder(panel)
   }
   const signature = JSON.stringify([parts.editor.value, parts.editor.disabled, state.pointer, state.page])
   if (state.signature === signature) return
@@ -77,6 +97,7 @@ export function syncJsonExplorer(parts) {
   const setDisabled = (action, unavailable) => { panel.querySelector(`[data-action="source-json-${action}"]`).disabled = parts.editor.disabled || unavailable }
   setDisabled('go', false); setDisabled('parent', !state.pointer); setDisabled('root', !state.pointer)
   setDisabled('select', !state.node); setDisabled('download', !state.node); setDisabled('replace-open', !state.node)
+  setDisabled('insert-open', !['object', 'array'].includes(state.node?.type))
   setDisabled('previous', state.page === 0); setDisabled('next', start + PAGE_SIZE >= children.length)
   state.signature = JSON.stringify([parts.editor.value, parts.editor.disabled, state.pointer, state.page])
   control(panel, 'children').replaceChildren(...children.slice(start, start + PAGE_SIZE).map(child => {
@@ -87,6 +108,11 @@ export function syncJsonExplorer(parts) {
     return item
   }))
   syncJsonReplacement(parts, panel, state)
+  syncJsonInsertion(parts, panel, state)
+  syncJsonRemoval(parts, panel, state)
+  syncJsonMove(parts, panel, state)
+  syncJsonCopy(parts, panel, state)
+  syncJsonOrder(parts, panel, state)
 }
 
 export function actJsonExplorer(parts, action, reveal) {
@@ -99,6 +125,11 @@ export function actJsonExplorer(parts, action, reveal) {
     return
   }
   const kind = action.dataset.action.slice('source-json-'.length)
+  if (kind.startsWith('copy-')) { actJsonCopy(parts, panel, before, kind.slice('copy-'.length)); return }
+  if (kind.startsWith('order-')) { actJsonOrder(parts, panel, before, kind.slice('order-'.length)); return }
+  if (kind.startsWith('move-')) { actJsonMove(parts, panel, before, kind.slice('move-'.length)); return }
+  if (kind.startsWith('remove-')) { actJsonRemoval(parts, panel, before, kind.slice('remove-'.length)); return }
+  if (kind.startsWith('insert-')) { actJsonInsertion(parts, panel, before, kind.slice('insert-'.length)); return }
   if (kind.startsWith('replace-')) { actJsonReplacement(parts, panel, before, kind.slice('replace-'.length)); return }
   if (kind === 'go') { before.pointer = control(panel, 'pointer').value; before.page = 0 }
   else if (kind === 'root') { before.pointer = ''; before.page = 0 }

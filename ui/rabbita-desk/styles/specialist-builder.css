@@ -1,0 +1,17 @@
+.specialist-overlay { position: fixed; z-index: 1000; inset: 0; background: #0006; }
+.specialist-builder { position: absolute; inset: 4vh max(12px, calc((100vw - 820px)/2)); overflow: auto; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-raised); color: var(--ink); }
+.specialist-header, .specialist-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.specialist-builder h2 { margin: 0; }
+.specialist-builder h3 { margin-top: 22px; }
+.specialist-builder p { line-height: 1.5; }
+.specialist-field { display: grid; gap: 6px; margin: 12px 0; }
+.specialist-field input, .specialist-field textarea, .specialist-field select { width: 100%; border: 1px solid var(--line); padding: 10px; border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+.specialist-field textarea { min-height: 90px; resize: vertical; }
+.specialist-choice { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0; overflow-wrap: anywhere; }
+.specialist-builder button { margin: 4px; min-height: 36px; }
+.specialist-builder pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.specialist-builder :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.specialist-warning { color: var(--red); }
+@media (max-width: 600px) { .specialist-builder { inset: 10px; padding: 16px; } }
+.specialist-stage { margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 8px; }
+.specialist-stage h4 { margin: 0 0 8px; }

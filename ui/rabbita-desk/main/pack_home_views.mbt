@@ -145,7 +145,15 @@ fn render_agent_library(
             "Each agent carries one MoonBook's knowledge, skills, and ongoing work.",
           ),
         ]),
-        span(model.agent_catalog_status),
+        div([
+          span(model.agent_catalog_status),
+          button(
+            class="primary-button",
+            attrs=@html.Attrs::build().data_set("testid", "build-specialist"),
+            on_click=dispatch(workspace_feature_msg("open-specialist")),
+            "Build your specialist",
+          ),
+        ]),
       ]),
       if model.agent_passports.is_empty() {
         div(class="agent-library-empty", [

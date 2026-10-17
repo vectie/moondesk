@@ -1,3 +1,4 @@
+let specialistBuilderPromise = null
 const rootSelector = '[data-testid="workspace-feature-overlays"]'
 let serverState = {}
 let learningRequestGeneration = 0
@@ -443,8 +444,9 @@ function sourceSubscriptionCounts(records) {
   }), { active: 0, needs_setup: 0 })
 }
 
-function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled) {
-  return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true
+function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled, draftPrompt = '', hasDraftContext = false) {
+  return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true &&
+    !String(draftPrompt || '').trim() && hasDraftContext !== true
 }
 
 function reviewRoomProjection(records, suppliedParticipants = []) {
@@ -1383,13 +1385,15 @@ function maybeRestoreCurrentThread() {
     serverState.task_id,
     (serverState.chat || []).length,
     restoredDocumentKeys.has(key),
+    serverState.request_prompt,
+    serverState.chat_draft_has_context,
   )) return
   if (!globalThis.__moondeskWorkspaceFeaturesDispatch) return
   restoredDocumentKeys.add(key)
   const thread = currentThreads().find(item =>
     !item.archived && (item.document || '') === (serverState.selected_document || ''))
   if (thread) {
-    forward('restore-thread', thread.id, thread.document || '', JSON.stringify(thread.chat || []))
+    forward('restore-thread', thread.id, thread.document || '', JSON.stringify(thread.chat || []), 'automatic')
   }
 }
 
@@ -3938,6 +3942,16 @@ function workPackageFromState() {
 }
 
 globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
+  if (action === 'open-specialist') {
+    specialistBuilderPromise ||= import('./specialist-builder.js')
+    specialistBuilderPromise.then(module => module.openSpecialistBuilder({ scope: serverState.library_scope }))
+      .catch(error => { specialistBuilderPromise = null; console.error(error) })
+    return
+  }
+  if (action === 'specialist-prepared' || action === 'specialist-error') {
+    specialistBuilderPromise?.then(module => module.receiveSpecialistSignal(action, value))
+    return
+  }
   if (action === 'teach-captured-work' || action === 'review-captured-learning') {
     openCapturedLearning(action, value)
     return
