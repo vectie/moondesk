@@ -28,7 +28,7 @@ test "plan UI renders actual native preparation import and migration receipts" {
       receipt: Some(prepared),
     }
     let updated = moonflow_plan_replace(model, composition, editor)
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_plan_authoring(code_mode_test_dispatch, updated),
       ),
@@ -55,7 +55,7 @@ test "plan UI renders actual native preparation import and migration receipts" {
       phase: "imported",
       receipt: Some(applied),
     })
-    let complete = @rabbita.render_to_string(
+    let complete = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_plan_authoring(code_mode_test_dispatch, imported),
       ),

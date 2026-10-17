@@ -271,7 +271,7 @@ test "single step UI restores server action and renders honest Review result" {
     step_ui_reply(pending, "review"),
     pending,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_single_step(code_mode_test_dispatch, reviewed, run),
     ),
@@ -367,7 +367,7 @@ test "single step UI failed local identity save blocks execution and retains set
       "no request was sent",
     ),
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_single_step(
         code_mode_test_dispatch,

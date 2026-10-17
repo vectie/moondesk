@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "Code schedule panel keeps MoonTown state scoped to selected MoonBook" {
   let model = { ..init_model(), selected_workspace_id: "book-a", }
   let (_, opened) = update_mooncode_actions(
@@ -50,7 +49,7 @@ test "Code schedule panel keeps MoonTown state scoped to selected MoonBook" {
     opened,
   )
   assert_false(loaded.mooncode_schedules_loading)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_schedules(code_mode_test_dispatch, loaded),
     ),
@@ -59,7 +58,7 @@ test "Code schedule panel keeps MoonTown state scoped to selected MoonBook" {
   assert_true(markup.contains("Review changed code"))
   assert_true(markup.contains("data-i18n=\"code.schedule_next\""))
   let switched = { ..loaded, selected_workspace_id: "book-b", }
-  let switched_markup = @rabbita.render_to_string(
+  let switched_markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_schedules(code_mode_test_dispatch, switched),
     ),

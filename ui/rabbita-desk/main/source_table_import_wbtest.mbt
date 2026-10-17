@@ -15,7 +15,7 @@ extern "js" fn source_table_import_evidence(
 ///|
 test "table toolbar exposes CSV and TSV conversions in the source editor" {
   let ready = literal_search_test_state("Item,Status\nLaunch,Ready")
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, ready)),
   )
   assert_true(html.contains("data-testid=\"source-table-csv\""))
@@ -60,7 +60,7 @@ test "CSV selection becomes a useful table through the real action path and atom
   let saving = update_source_pane(redone, Save)
   assert_true(saving.saving)
   assert_eq(saving.pending_save.unwrap().content, expected)
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, redone)),
   )
   source_table_import_evidence(redone.draft, html)
@@ -141,7 +141,7 @@ test "table controls stay inactive when source is unavailable loading or saving"
         state,
       )
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_table_import(fn(_) { @rabbita.none }, state),
       ),

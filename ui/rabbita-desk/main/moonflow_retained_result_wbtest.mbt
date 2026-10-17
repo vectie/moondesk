@@ -70,7 +70,7 @@ test "retained UI binds all context and escapes bounded preview before exact dow
     url, "/api/moonflow/retained/book-selected/run-1/selected/attempt-1/result-1/action-1/1",
   )
   assert_false(url.contains("retained/output.json"))
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_retained(
         code_mode_test_dispatch,
@@ -202,7 +202,7 @@ test "retained UI rejects mismatched response and shows missing changed unsuppor
       Reply(state.generation, state.identity, Ok(response)),
       pending,
     )
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_retained(
           code_mode_test_dispatch,
@@ -216,7 +216,7 @@ test "retained UI rejects mismatched response and shows missing changed unsuppor
   }
   let run = pending.moonflow_runs[0]
   let unsupported = { ..run, single_step_actions: None, }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_retained_references(
         code_mode_test_dispatch,
@@ -283,7 +283,7 @@ test "retained compiled UI consumes actual native HTTP and preserves exact downl
       Reply(state.generation, identity, Ok(response)),
       pending,
     )
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_retained(code_mode_test_dispatch, ready, run),
       ),

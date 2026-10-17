@@ -9,10 +9,9 @@ fn code_mode_test_summary() -> MoonCodeSummary {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code workspace keeps source and Office editors in one disclosure" {
   let model = init_model()
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_workspace_editors(code_mode_test_dispatch, model),
     ),
@@ -43,7 +42,7 @@ test "Code workspace keeps source and Office editors in one disclosure" {
     ..model,
     source_pane: { ..model.source_pane, requested_path: "src/main.mbt", },
   }
-  let editing_markup = @rabbita.render_to_string(
+  let editing_markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_workspace_editors(code_mode_test_dispatch, editing),
     ),
@@ -2304,7 +2303,6 @@ test "code mode renders a pending approval inside its canonical work turn" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "code mode approval copy identifies ownership and durable decisions" {
   let base : MoonCodeEvidenceRow = {
     item_id: "approval-evidence",
@@ -2347,12 +2345,12 @@ test "code mode approval copy identifies ownership and durable decisions" {
       ),
     ),
   }
-  let allow_html = @rabbita.render_to_string(
+  let allow_html = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_approval(fn(_msg) { @rabbita.none }, approved),
     ),
   )
-  let deny_html = @rabbita.render_to_string(
+  let deny_html = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_approval(fn(_msg) { @rabbita.none }, denied),
     ),
@@ -3515,7 +3513,6 @@ test "MoonCode guidance has no optimistic turn and retains its draft until accep
 }
 
 ///|
-#warnings("-alert_unstable")
 test "running MoonCode shows distinct guidance and next-turn actions" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),
@@ -3531,7 +3528,7 @@ test "running MoonCode shows distinct guidance and next-turn actions" {
     mooncode_sessions: [session],
     mooncode_prompt: "Consider the parser",
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("data-testid=\"mooncode-guide-current\""))
@@ -3747,7 +3744,6 @@ test "MoonGate setup handoff uses the proven Desk mode action" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code unavailable blocks submission and preserves the draft" {
   let model = {
     ..init_model(),
@@ -3766,7 +3762,7 @@ test "Code unavailable blocks submission and preserves the draft" {
     next.mooncode_composer_status,
     "Code runtime is unavailable; draft preserved",
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, next)),
   )
   assert_true(markup.contains("data-testid=\"mooncode-send\""))

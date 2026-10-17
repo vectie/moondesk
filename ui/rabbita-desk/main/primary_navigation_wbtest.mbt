@@ -28,10 +28,9 @@ test "primary navigation localization keys remain explicit and ordered" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "title bar restores primary modes and nests Wiki work as tabs" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_title_bar(dispatch, {
         ..init_model(),
@@ -65,10 +64,9 @@ test "title bar restores primary modes and nests Wiki work as tabs" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "focused Wiki keeps operational sections out of the document workspace" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_title_bar(dispatch, { ..init_model(), workspace_mode: MoonWiki, }),
     ),
@@ -125,14 +123,13 @@ test "every workspace palette retains primary modes and Wiki tabs" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "runs workspace distinguishes no book from a legitimate zero" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let no_book = @rabbita.render_to_string(
+  let no_book = render_test_dom(
     @rabbita.static_cell(render_runs_workspace(dispatch, init_model())),
   )
   assert_true(no_book.contains("Choose a book to see its runs"))
-  let empty = @rabbita.render_to_string(
+  let empty = render_test_dom(
     @rabbita.static_cell(
       render_runs_workspace(dispatch, {
         ..init_model(),
@@ -146,10 +143,9 @@ test "runs workspace distinguishes no book from a legitimate zero" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "publish workspace blocks on review without claiming output exists" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let ready = @rabbita.render_to_string(
+  let ready = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),
@@ -161,7 +157,7 @@ test "publish workspace blocks on review without claiming output exists" {
   assert_true(ready.contains("data-testid=\"publish-output-check\""))
   assert_true(ready.contains("Open output location"))
   assert_false(ready.contains("output is ready"))
-  let pending = @rabbita.render_to_string(
+  let pending = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),

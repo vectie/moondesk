@@ -33,7 +33,7 @@ test "source literal search renders real count navigation case and replacement c
   )
   let insensitive = update_source_pane(selected, FindCaseSensitive(false))
   assert_eq(source_literal_summary(insensitive), "0/3 matches")
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_source_editor(fn(_) { @rabbita.none }, insensitive),
     ),

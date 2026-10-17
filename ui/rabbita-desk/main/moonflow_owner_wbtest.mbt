@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "owner card decodes actual CLI fixtures and keeps exact action and evidence parity" {
   let dispatch : Dispatch[Msg] = fn(_) { @rabbita.none }
   for
@@ -21,7 +20,7 @@ test "owner card decodes actual CLI fixtures and keeps exact action and evidence
       is None,
     )
     let value = run.owner_summary.unwrap()
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_owner_summary(
           dispatch,
@@ -57,13 +56,12 @@ test "owner card decodes actual CLI fixtures and keeps exact action and evidence
 }
 
 ///|
-#warnings("-alert_unstable")
 test "owner completion is hidden for stale loading mismatched and legacy observations" {
   let dispatch : Dispatch[Msg] = fn(_) { @rabbita.none }
   let accepted = owner_cli_accepted_fixture()
   let ready_model = { ..init_model(), moonflow_runs_state: None, }
   for state in [Some(Stale), Some(Loading), Some(RecoverableError)] {
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_owner_summary(
           dispatch,
@@ -97,7 +95,7 @@ test "owner completion is hidden for stale loading mismatched and legacy observa
       },
     ] {
     assert_true(moonflow_owner_unavailable(ready_model, run) is Some(_))
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_owner_summary(dispatch, ready_model, run),
       ),

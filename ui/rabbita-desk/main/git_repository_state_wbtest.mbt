@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "Code repository context shows branch, paths, and truthful change states" {
   let projection : GitRepositoryProjection = {
     state: "ready",
@@ -35,7 +34,7 @@ test "Code repository context shows branch, paths, and truthful change states" {
     git_projection_workspace_id: "book-a",
     git_projection: Some(projection),
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, model),
     ),
@@ -55,7 +54,7 @@ test "Code repository context shows branch, paths, and truthful change states" {
     SetGitChangeQuery("NEW NAME"),
     model,
   )
-  let searched_markup = @rabbita.render_to_string(
+  let searched_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, searched),
     ),
@@ -68,7 +67,7 @@ test "Code repository context shows branch, paths, and truthful change states" {
     SetGitChangeFilter("reviewed"),
     model,
   )
-  let reviewed_markup = @rabbita.render_to_string(
+  let reviewed_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, reviewed_only),
     ),
@@ -113,7 +112,6 @@ test "GitHub PR file error keeps server recovery detail" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code diff result stays scoped to the selected file and HEAD" {
   let projection : GitRepositoryProjection = {
     state: "ready",
@@ -164,7 +162,7 @@ test "Code diff result stays scoped to the selected file and HEAD" {
     LoadedGitDiff("book-a", "src/main.mbt", "abc123", Ok(diff)),
     opened,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, loaded),
     ),
@@ -184,7 +182,7 @@ test "Code diff result stays scoped to the selected file and HEAD" {
     loaded,
   )
   assert_eq(selected_line.git_diff_selected_line, 1)
-  let selected_markup = @rabbita.render_to_string(
+  let selected_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, selected_line),
     ),
@@ -195,7 +193,7 @@ test "Code diff result stays scoped to the selected file and HEAD" {
     SelectGitDiffHunk(1),
     loaded,
   )
-  let second_markup = @rabbita.render_to_string(
+  let second_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, second_hunk),
     ),
@@ -224,7 +222,7 @@ test "Code diff result stays scoped to the selected file and HEAD" {
     LoadedGitDiff("book-a", "src/main.mbt", "abc123", Ok(failed_diff)),
     opened,
   )
-  let failure_markup = @rabbita.render_to_string(
+  let failure_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, failed),
     ),
@@ -246,7 +244,7 @@ test "Code diff result stays scoped to the selected file and HEAD" {
     LoadedGitDiff("book-a", "src/main.mbt", "abc123", Ok(binary_diff)),
     opened,
   )
-  let binary_markup = @rabbita.render_to_string(
+  let binary_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, binary),
     ),
@@ -288,7 +286,6 @@ test "Code repository result cannot cross workspace selection" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "review progress follows current HEAD and unsent notes block file switches" {
   let projection : GitRepositoryProjection = {
     state: "ready",
@@ -349,7 +346,7 @@ test "review progress follows current HEAD and unsent notes block file switches"
       { path: "b.mbt", status: "reviewed", },
     ],
   }
-  let complete_markup = @rabbita.render_to_string(
+  let complete_markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, {
         ..current,
@@ -367,7 +364,7 @@ test "review progress follows current HEAD and unsent notes block file switches"
     { ..model, git_review_progress: None, },
   )
   assert_true(outdated_progress.git_review_progress is None)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_git_repository_context(code_mode_test_dispatch, current),
     ),
@@ -423,7 +420,6 @@ test "review progress follows current HEAD and unsent notes block file switches"
 }
 
 ///|
-#warnings("-alert_unstable")
 test "local Code review is tied to the loaded patch and preserves failed notes" {
   let diff : GitDiffProjection = {
     state: "ready",
@@ -485,7 +481,7 @@ test "local Code review is tied to the loaded patch and preserves failed notes" 
     LoadedGitReview("book-a", diff.path, diff.digest, Ok(review)),
     model,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_git_review_controls(code_mode_test_dispatch, loaded, diff),
     ),
@@ -534,7 +530,6 @@ test "Git review save accepts only the exact local record" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "GitHub context names remote authority and refuses stale branch responses" {
   let repository : GitRepositoryProjection = {
     state: "ready",
@@ -584,7 +579,7 @@ test "GitHub context names remote authority and refuses stale branch responses" 
     LoadedGitHubContext("book-a", "local-head", "feature/review", Ok(context)),
     model,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, loaded, "feature/review"),
     ),
@@ -606,7 +601,6 @@ test "GitHub context names remote authority and refuses stale branch responses" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "GitHub PR comment draft survives failed publication and rejects stale result" {
   let head = "0123456789abcdef0123456789abcdef01234567"
   let repository : GitRepositoryProjection = {
@@ -647,7 +641,7 @@ test "GitHub PR comment draft survives failed publication and rejects stale resu
     git_projection: Some(repository),
     github_context: Some(context),
   }
-  let context_markup = @rabbita.render_to_string(
+  let context_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, model, "feature/review"),
     ),
@@ -684,7 +678,7 @@ test "GitHub PR comment draft survives failed publication and rejects stale resu
     failed,
   )
   assert_eq(stale.github_comment_draft, "Please review this")
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, failed, "feature/review"),
     ),
@@ -701,7 +695,7 @@ test "GitHub PR comment draft survives failed publication and rejects stale resu
       error: "GitHub offline",
     }),
   }
-  let disconnected_markup = @rabbita.render_to_string(
+  let disconnected_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(
         code_mode_test_dispatch, disconnected, "feature/review",
@@ -721,7 +715,7 @@ test "GitHub PR comment draft survives failed publication and rejects stale resu
     github_context: Some({ ..context, pull_requests: [changed_pull], }),
     github_comment_error: "",
   }
-  let moved_markup = @rabbita.render_to_string(
+  let moved_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, moved, "feature/review"),
     ),
@@ -731,7 +725,6 @@ test "GitHub PR comment draft survives failed publication and rejects stale resu
 }
 
 ///|
-#warnings("-alert_unstable")
 test "GitHub saved draft restores and discard waits for storage receipt" {
   let head = "0123456789abcdef0123456789abcdef01234567"
   let repository : GitRepositoryProjection = {
@@ -776,7 +769,7 @@ test "GitHub saved draft restores and discard waits for storage receipt" {
     ..model,
     github_context: Some({ ..context, state: "unavailable", pull_requests: [], }),
   }
-  let offline_markup = @rabbita.render_to_string(
+  let offline_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, offline, "feature/review"),
     ),
@@ -825,7 +818,6 @@ test "GitHub PR file groups identify root and top directory" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "GitHub remote line review stays bound to exact PR head and retains failed post" {
   let head = "0123456789abcdef0123456789abcdef01234567"
   let repository : GitRepositoryProjection = {
@@ -877,7 +869,7 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
     LoadedGitHubInlineReview("book-a", 42, head, Err("GitHub timed out")),
     opened,
   )
-  let recovery_markup = @rabbita.render_to_string(
+  let recovery_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_inline_review(
         code_mode_test_dispatch, failed_load, "book-a", head,
@@ -938,7 +930,7 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
     opened,
   )
   assert_eq(loaded.github_inline_path, "src/main.mbt")
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_github_inline_review(
         code_mode_test_dispatch, loaded, "book-a", head,
@@ -957,7 +949,7 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
     SetGitHubInlineQuery("OLD.MBT"),
     loaded,
   )
-  let filtered_markup = @rabbita.render_to_string(
+  let filtered_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_inline_review(
         code_mode_test_dispatch, filtered, "book-a", head,
@@ -972,7 +964,7 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
     SetGitHubInlineQuery("absent"),
     loaded,
   )
-  let empty_markup = @rabbita.render_to_string(
+  let empty_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_inline_review(
         code_mode_test_dispatch, no_matches, "book-a", head,
@@ -1072,7 +1064,6 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "saved PR line draft remains accessible when GitHub is offline" {
   let head = "0123456789abcdef0123456789abcdef01234567"
   let draft : GitHubInlineDraftProjection = {
@@ -1101,7 +1092,7 @@ test "saved PR line draft remains accessible when GitHub is offline" {
     git_projection_workspace_id: "book-a",
     github_context: Some(context),
   }
-  let inventory = @rabbita.render_to_string(
+  let inventory = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, model, "feature/review"),
     ),
@@ -1114,7 +1105,7 @@ test "saved PR line draft remains accessible when GitHub is offline" {
   )
   assert_eq(opened.github_inline_draft, "Retained line note")
   assert_true(opened.github_inline_saved)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_github_inline_review(
         code_mode_test_dispatch, opened, "book-a", head,

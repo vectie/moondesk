@@ -76,7 +76,7 @@ test "single step compiled UI renders actual HTTP Review after lost response rec
     ),
     pending,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_single_step(code_mode_test_dispatch, reviewed, projection),
     ),

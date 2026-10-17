@@ -139,10 +139,9 @@ test "cold start copy state keys and primary actions are exact" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "empty-library creation fields have stable accessible names" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_new_moonbook_panel_open(dispatch, init_model())),
   )
   assert_true(markup.contains("data-testid=\"desk-new-book-name\""))
@@ -180,7 +179,6 @@ test "workspace result preserves known selection and falls back deterministicall
 }
 
 ///|
-#warnings("-alert_unstable")
 test "restored Flow workspace immediately hydrates its full operator state" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let workspace = cold_start_test_workspace("book-flow")
@@ -200,7 +198,7 @@ test "restored Flow workspace immediately hydrates its full operator state" {
     restored.moonflow_operator_action_status,
     "Loading operator actions…",
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_moonflow_composition_canvas(dispatch, restored)),
   )
   assert_true(markup.contains("Loading executable Work graph"))

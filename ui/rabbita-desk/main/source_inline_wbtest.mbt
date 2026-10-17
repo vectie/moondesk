@@ -27,7 +27,7 @@ test "inline toolbar captures actual backward UTF16 selection with one undo step
   let undone = update_source_pane(next.source_pane, UndoEdit)
   assert_eq(undone.draft, text)
   assert_eq(update_source_pane(undone, RedoEdit).draft, next.source_pane.draft)
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_source_editor(fn(_) { @rabbita.none }, next.source_pane),
     ),
@@ -99,7 +99,7 @@ test "inline empty multiline repeated and unavailable states remain explicit" {
   let saving = update_source_pane(wrapped, Save)
   for state in [saving, init_source_pane("book-demo", "")] {
     assert_eq(update_source_pane(state, WrapMarkdown(Bold)), state)
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_line_authoring(fn(_) { @rabbita.none }, state),
       ),

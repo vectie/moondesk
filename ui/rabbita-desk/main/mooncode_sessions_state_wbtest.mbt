@@ -4,12 +4,9 @@ fn mooncode_sessions_state_test_session() -> MoonCodeSession {
 }
 
 ///|
-#warnings("-alert_unstable")
 fn mooncode_sessions_state_test_markup(model : Model) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  @rabbita.render_to_string(
-    @rabbita.static_cell(render_mooncode_pane(dispatch, model)),
-  )
+  render_test_dom(@rabbita.static_cell(render_mooncode_pane(dispatch, model)))
 }
 
 ///|
@@ -124,7 +121,6 @@ test "MoonCode list owns all eight state mappings and bounded actions" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode list renders honest transport states and retained rows" {
   let session = mooncode_sessions_state_test_session()
   let first_use = mooncode_sessions_state_test_markup(init_model())
@@ -176,7 +172,6 @@ test "MoonCode list renders honest transport states and retained rows" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode search empty copy requires a successful listing" {
   let failed = mooncode_sessions_state_test_markup({
     ..init_model(),

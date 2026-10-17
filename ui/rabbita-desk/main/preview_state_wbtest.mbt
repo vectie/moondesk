@@ -147,11 +147,10 @@ test "clearing the selected workspace restores preview first-use state" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "preview rendering follows typed state instead of status prose" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let path = "wiki/current.md"
-  let loading_markup = @rabbita.render_to_string(
+  let loading_markup = render_test_dom(
     @rabbita.static_cell(
       render_desk_inline_preview(dispatch, {
         ..preview_state_test_model(path),
@@ -162,7 +161,7 @@ test "preview rendering follows typed state instead of status prose" {
   )
   assert_true(loading_markup.contains("data-state=\"loading\""))
   assert_true(loading_markup.contains("Opening preview"))
-  let ready_markup = @rabbita.render_to_string(
+  let ready_markup = render_test_dom(
     @rabbita.static_cell(
       render_desk_inline_preview(dispatch, {
         ..preview_state_test_model(path),
@@ -174,7 +173,7 @@ test "preview rendering follows typed state instead of status prose" {
   )
   assert_true(ready_markup.contains("ready body"))
   assert_false(ready_markup.contains("Opening preview"))
-  let failed_markup = @rabbita.render_to_string(
+  let failed_markup = render_test_dom(
     @rabbita.static_cell(
       render_desk_inline_preview(dispatch, {
         ..preview_state_test_model(path),

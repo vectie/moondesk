@@ -25,7 +25,7 @@ test "Markdown outline renders actionable headings from the current unsaved draf
     Some(@edit.Range::new(@edit.Position::new(1, 0), @edit.Position::new(3, 0))),
   )
   assert_true(selected.search.undo.is_empty())
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_source_editor(fn(_) { @rabbita.none }, selected),
     ),
@@ -40,7 +40,7 @@ test "Markdown outline renders actionable headings from the current unsaved draf
   assert_true(html.contains("Ship &lt;now&gt;"))
   assert_true(html.contains("aria-pressed=\"true\""))
   let edited = update_source_pane(selected, EditDraft("# Revised\n## Next\n"))
-  let next_html = @rabbita.render_to_string(
+  let next_html = render_test_dom(
     @rabbita.static_cell(render_source_outline(fn(_) { @rabbita.none }, edited)),
   )
   assert_true(next_html.contains("Revised"))

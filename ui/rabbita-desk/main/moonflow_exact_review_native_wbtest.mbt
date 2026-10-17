@@ -172,7 +172,7 @@ test "compiled review UI consumes actual HTTP persisted evidence after lost ackn
   assert_true(
     reconciled.moonflow_retained.unwrap().review.unwrap().request is None,
   )
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_exact_review(
         code_mode_test_dispatch,
@@ -210,7 +210,7 @@ test "compiled review UI consumes actual HTTP persisted evidence after lost ackn
     Select("review-changes"),
     loaded,
   )
-  let changes_html = @rabbita.render_to_string(
+  let changes_html = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_exact_review(
         code_mode_test_dispatch,

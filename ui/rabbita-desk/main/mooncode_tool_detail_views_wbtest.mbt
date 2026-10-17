@@ -19,9 +19,8 @@ fn mooncode_tool_detail_test_row(state : String) -> MoonCodeEvidenceRow {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode tool evidence exposes stable hooks for lazy detail enhancement" {
-  let failed_markup = @rabbita.render_to_string(
+  let failed_markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_evidence(
         fn(_msg) { @rabbita.none },
@@ -43,7 +42,6 @@ test "MoonCode tool evidence exposes stable hooks for lazy detail enhancement" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode approval exposes actionable content for lazy card enhancement" {
   let row = {
     ..mooncode_tool_detail_test_row("pending"),
@@ -66,7 +64,7 @@ test "MoonCode approval exposes actionable content for lazy card enhancement" {
       ),
     ),
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_approval(fn(_msg) { @rabbita.none }, row),
     ),

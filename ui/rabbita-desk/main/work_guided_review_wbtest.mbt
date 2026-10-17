@@ -16,15 +16,13 @@ extern "js" fn guided_desk_visible(html : String, text : String) -> Bool =
   #| }
 
 ///|
-#warnings("-alert_unstable")
 fn guided_desk_markup(model : Model) -> String {
-  @rabbita.render_to_string(
+  render_test_dom(
     @rabbita.static_cell(render_work_handoff(code_mode_test_dispatch, model)),
   )
 }
 
 ///|
-#warnings("-alert_unstable")
 test "guided handoff shows current output before instruction and exact return" {
   let model = continuation_desk_ready()
   let canonical = model.work_handoff.canonical.unwrap()
@@ -88,7 +86,6 @@ test "guided handoff keeps uncertainty and recovery visible without new submissi
 }
 
 ///|
-#warnings("-alert_unstable")
 test "guided original result never substitutes later session messages" {
   let model = handoff_desk_ready()
   let session = {
@@ -108,14 +105,14 @@ test "guided original result never substitutes later session messages" {
       ]),
     ),
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_work_handoff_original_result(model, session, "C?0"),
     ),
   )
   assert_true(html.contains("Original result &lt;exact&gt;"))
   assert_false(html.contains("Later result"))
-  let absent = @rabbita.render_to_string(
+  let absent = render_test_dom(
     @rabbita.static_cell(
       render_work_handoff_original_result(model, session, "missing"),
     ),

@@ -146,11 +146,10 @@ test "workspace bridge projects transcript changes without duplicating content" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Find and Add and quiet work center render as accessible product surfaces" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = init_model()
-  let search_markup = @rabbita.render_to_string(
+  let search_markup = render_test_dom(
     @rabbita.static_cell(render_workspace_feature_overlays(dispatch, model)),
   )
   assert_true(
@@ -163,7 +162,7 @@ test "Find and Add and quiet work center render as accessible product surfaces" 
   assert_true(state.contains("\"first-use-empty\""))
   assert_true(state.contains("task_id"))
   assert_true(state.contains("office"))
-  let work_markup = @rabbita.render_to_string(
+  let work_markup = render_test_dom(
     @rabbita.static_cell(render_quiet_work_center(dispatch, model)),
   )
   assert_true(work_markup.contains("data-testid=\"quiet-work-center\""))
@@ -171,7 +170,6 @@ test "Find and Add and quiet work center render as accessible product surfaces" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "automation cards explain scope, policy, cadence, and manual run" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let goal : StandingGoalRecord = @json.from_json({
@@ -186,7 +184,7 @@ test "automation cards explain scope, policy, cadence, and manual run" {
     "source_policy": "approved-sites",
     "review_policy": "bookkeeper-review",
   })
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_automation_card(dispatch, goal)),
   )
   assert_true(markup.contains("data-testid=\"automation-card-host\""))
@@ -236,7 +234,6 @@ test "Try another version starts a fresh general-agent conversation" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "PDF preview uses the bounded workspace viewer surface" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let path = "documents/report.pdf"
@@ -248,7 +245,7 @@ test "PDF preview uses the bounded workspace viewer surface" {
       @desk.preview(@desk.file_entry(workspace_id="book-demo", path~), body=""),
     ),
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_preview_center(dispatch, model)),
   )
   assert_true(markup.contains("data-testid=\"pdf-preview-frame\""))
@@ -268,7 +265,6 @@ test "PDF preview uses the bounded workspace viewer surface" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "living artifacts use the isolated workspace viewer surface" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let path = "book/site/generated/living/decisions/index.html"
@@ -277,7 +273,7 @@ test "living artifacts use the isolated workspace viewer surface" {
     selected_workspace_id: "book-demo",
     selected_path: path,
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_document_viewer(dispatch, model)),
   )
   assert_true(wiki_living_artifact_path_supported(path))

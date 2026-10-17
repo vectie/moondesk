@@ -84,7 +84,7 @@ test "plan form controls prepare exact edited diamond fixture through host" {
   guard fields["edits"] is Array(edits) else { fail("expected edits") }
   assert_eq(handoff_text(edits[1], "work_item_id"), "left")
   assert_eq(handoff_field(edits[1], "timeout_ms"), (90000 : Json))
-  let rendered = @rabbita.render_to_string(
+  let rendered = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_plan_authoring(code_mode_test_dispatch, d),
     ),
@@ -123,7 +123,7 @@ test "plan form incomplete local draft survives save reopen with blocked prepara
     reopened.moonflow_composition.unwrap().plan_editor.unwrap().fields[1].timeout,
     "not yet",
   )
-  let rendered = @rabbita.render_to_string(
+  let rendered = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_plan_authoring(code_mode_test_dispatch, reopened),
     ),

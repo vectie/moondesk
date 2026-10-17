@@ -24,7 +24,7 @@ test "return receipt recovery remains available after acknowledged return and re
   assert_true(saved.mooncode_sandbox_locked_review_keys.contains(key))
   assert_eq(saved.mooncode_sandbox_selected_paths, ["src/main.mbt"])
   assert_true(saved.mooncode_sandbox_promotion_status.contains("src/main.mbt"))
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_sandbox_receipt(code_mode_test_dispatch, saved, receipt),
     ),

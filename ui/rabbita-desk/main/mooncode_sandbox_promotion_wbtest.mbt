@@ -85,10 +85,9 @@ fn sandbox_ui_promotion_result(
 }
 
 ///|
-#warnings("-alert_unstable")
 test "sandbox receipt renders bounded evidence and explicit per-file review" {
   let receipt = sandbox_ui_test_receipt()
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_sandbox_receipt(
         code_mode_test_dispatch,
@@ -159,7 +158,6 @@ test "sandbox review selection is receipt-bound and only promotes chosen files" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "sandbox promotion locks applied and recovery outcomes but not safe refusal" {
   let receipt = sandbox_ui_test_receipt()
   let key = receipt.review_key()
@@ -232,7 +230,7 @@ test "sandbox promotion locks applied and recovery outcomes but not safe refusal
   assert_false(
     recovery_locked.mooncode_sandbox_promotion_status.contains("/private/"),
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_sandbox_receipt(
         code_mode_test_dispatch, recovery_locked, receipt,
@@ -278,7 +276,6 @@ test "sandbox promotion fails closed for degraded, unclean, stale, or empty rece
 }
 
 ///|
-#warnings("-alert_unstable")
 test "malformed sandbox evidence renders a non-promotable alert" {
   let row : MoonCodeEvidenceRow = {
     item_id: "sandbox-invalid",
@@ -296,7 +293,7 @@ test "malformed sandbox evidence renders a non-promotable alert" {
     sandbox_receipt: None,
     sandbox_receipt_invalid: true,
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_evidence(
         code_mode_test_dispatch,

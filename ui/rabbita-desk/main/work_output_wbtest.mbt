@@ -35,7 +35,6 @@ test "output handoff retains exact query and existing original identity on reloa
 }
 
 ///|
-#warnings("-alert_unstable")
 test "output renders existing confined file route with honest current-byte label" {
   let model = handoff_desk_ready()
   let canonical = model.work_handoff.canonical.unwrap()
@@ -46,7 +45,7 @@ test "output renders existing confined file route with honest current-byte label
   )
   assert_eq(handoff_text(output, "state"), "ready")
   let state = { ..model.work_handoff, output_hint: output_desk_hint(), output, }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_output(state, canonical)),
   )
   assert_true(

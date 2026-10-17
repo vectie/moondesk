@@ -4,13 +4,12 @@ fn mooncode_markdown_test_dispatch(_msg : Msg) -> @rabbita.Cmd {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode markdown exposes a route-runtime source boundary" {
   assert_eq(
     mooncode_markdown_nodes(mooncode_markdown_test_dispatch, "", "").length(),
     0,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       div(
         mooncode_markdown_nodes(
@@ -39,13 +38,12 @@ test "MoonCode markdown accepts every streaming prefix without parsing" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode markdown keeps raw HTML and unsafe links as inert text" {
   let nodes = mooncode_markdown_nodes(
     mooncode_markdown_test_dispatch, "", "<script>alert('no')</script>\n\n[unsafe](javascript:alert(1))",
   )
   assert_eq(nodes.length(), 1)
-  let markup = @rabbita.render_to_string(@rabbita.static_cell(div(nodes)))
+  let markup = render_test_dom(@rabbita.static_cell(div(nodes)))
   assert_true(markup.contains("&lt;script&gt;"))
   assert_false(markup.contains("href=\"javascript:"))
 }

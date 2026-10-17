@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "Code export appears only for a canonical selected conversation" {
   let session = {
     ..code_mode_test_session("session-export", status="done"),
@@ -15,7 +14,7 @@ test "Code export appears only for a canonical selected conversation" {
     selected_mooncode_session_id: session.id,
     mooncode_sessions: [session],
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("data-testid=\"mooncode-export-conversation\""))
@@ -23,7 +22,7 @@ test "Code export appears only for a canonical selected conversation" {
   assert_true(
     markup.contains("data-i18n-aria-label=\"code.export_conversation\""),
   )
-  let empty = @rabbita.render_to_string(
+  let empty = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_center(code_mode_test_dispatch, init_model()),
     ),

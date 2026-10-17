@@ -261,14 +261,14 @@ test "Town exact import view explains original binding privacy ordinary route an
     workspace_library_path: "/library-a",
     agent_import: inspected,
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_agent_import(dispatch, model)),
   )
   assert_true(markup.contains("publisher-original"))
   assert_true(markup.contains("listing-original"))
   assert_true(markup.contains("not a signature"))
   assert_true(markup.contains("does not launch packaged apps"))
-  let waiting = @rabbita.render_to_string(
+  let waiting = render_test_dom(
     @rabbita.static_cell(
       render_agent_import(dispatch, {
         ..model,

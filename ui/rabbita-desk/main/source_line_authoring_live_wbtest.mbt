@@ -58,7 +58,7 @@ test "line authoring live host indents duplicates edits saves and reopens a draf
     assert_eq(cell.val.source_pane.draft, duplicated)
     let expected = "fn main {\n  println(\"Hello 🚀\")\n  println(\"Launch\")\n  println(\"Ready\")\n}\n"
     source_literal_live_send(cell, EditDraft(expected))
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_editor(fn(_) { @rabbita.none }, cell.val.source_pane),
       ),

@@ -37,7 +37,7 @@ test "line cleanup actual textarea selection sorts deduplicates and undoes atomi
   assert_eq(redone.draft, unique.draft)
   assert_eq(redone.search.selection, unique.search.selection)
   assert_true(source_pane_dirty(unique))
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, unique)),
   )
   for id in ["ascending", "descending", "unique"] {
@@ -119,7 +119,7 @@ test "line cleanup noops preserve redo and reject stale or unavailable selection
       ] {
       assert_eq(update_source_pane(state, CleanupLines(action)), state)
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_line_cleanup(fn(_) { @rabbita.none }, state),
       ),

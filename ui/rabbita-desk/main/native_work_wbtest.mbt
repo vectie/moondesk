@@ -329,11 +329,10 @@ test "native work integration preserves selected Book ordinary requests runs and
 }
 
 ///|
-#warnings("-alert_unstable")
 test "native work component renders saved evidence exact identity escaped output and limitations" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let ready = native_work_test_ready()
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_native_work(dispatch, ready)),
   )
   for
@@ -353,7 +352,7 @@ test "native work component renders saved evidence exact identity escaped output
     ready,
     ActOnNative(ready.items[0].id, SyncResults),
   )
-  let pending_markup = @rabbita.render_to_string(
+  let pending_markup = render_test_dom(
     @rabbita.static_cell(render_native_work(dispatch, pending)),
   )
   assert_eq(pending_markup.split(" disabled").count(), 6)
@@ -361,16 +360,15 @@ test "native work component renders saved evidence exact identity escaped output
 }
 
 ///|
-#warnings("-alert_unstable")
 test "native work component distinguishes empty saved status and failed reload" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let empty = { ..native_work_test_ready(), items: [], }
-  let empty_markup = @rabbita.render_to_string(
+  let empty_markup = render_test_dom(
     @rabbita.static_cell(render_native_work(dispatch, empty)),
   )
   assert_true(empty_markup.contains("No saved native work."))
   let failed = { ..empty, revision: None, error: "Town unavailable", }
-  let failed_markup = @rabbita.render_to_string(
+  let failed_markup = render_test_dom(
     @rabbita.static_cell(render_native_work(dispatch, failed)),
   )
   assert_false(failed_markup.contains("No saved native work."))

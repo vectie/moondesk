@@ -131,10 +131,9 @@ test "specialist knowledge paths stay in the declared Book knowledge layers" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Packs exposes the specialist creator without a second MoonBooks library" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_pack_home(dispatch, specialist_test_model())),
   )
   assert_true(markup.contains("data-testid=\"build-specialist\""))

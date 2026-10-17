@@ -145,15 +145,14 @@ test "Publish owns all eight state mappings and bounded actions" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Publish renders honest readiness states without false output evidence" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let no_book = @rabbita.render_to_string(
+  let no_book = render_test_dom(
     @rabbita.static_cell(render_publish_workspace(dispatch, init_model())),
   )
   assert_true(no_book.contains("Choose a book to check publishing"))
   assert_false(no_book.contains("data-testid=\"publish-state-panel\""))
-  let failed = @rabbita.render_to_string(
+  let failed = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),
@@ -168,7 +167,7 @@ test "Publish renders honest readiness states without false output evidence" {
   assert_true(failed.contains("Technical details"))
   assert_true(failed.contains("private readiness failure"))
   assert_false(failed.contains("data-testid=\"publish-output-check\""))
-  let zero = @rabbita.render_to_string(
+  let zero = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),
@@ -182,7 +181,7 @@ test "Publish renders honest readiness states without false output evidence" {
   assert_true(zero.contains("Open output location"))
   assert_true(zero.contains("Technical and portable exports"))
   assert_false(zero.contains("output is ready"))
-  let loading = @rabbita.render_to_string(
+  let loading = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),
@@ -194,7 +193,7 @@ test "Publish renders honest readiness states without false output evidence" {
   )
   assert_true(loading.contains("data-state=\"loading\""))
   assert_true(loading.contains("data-testid=\"publish-review-required\""))
-  let stale = @rabbita.render_to_string(
+  let stale = render_test_dom(
     @rabbita.static_cell(
       render_publish_workspace(dispatch, {
         ..init_model(),
@@ -221,7 +220,7 @@ test "Publish renders honest readiness states without false output evidence" {
       RecoverableError,
       TerminalError,
     ] {
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(
         render_publish_workspace(dispatch, {
           ..init_model(),

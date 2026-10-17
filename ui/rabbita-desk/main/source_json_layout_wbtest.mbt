@@ -46,7 +46,7 @@ test "JSON layout produces token exact CRLF fixture and rendered controls" {
   )
   assert_eq(compact.search.undo.length(), 2)
   assert_eq(update_source_pane(compact, UndoEdit).draft, source.draft)
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, source)),
   )
   for id in ["pretty", "compact"] {
@@ -98,7 +98,7 @@ test "JSON layout invalid input stale selection noops and unavailable states are
     for layout in [@edit.JsonLayout::Pretty, Compact] {
       assert_eq(update_source_pane(state, LayoutJson(layout)), state)
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_json_layout(fn(_) { @rabbita.none }, state),
       ),

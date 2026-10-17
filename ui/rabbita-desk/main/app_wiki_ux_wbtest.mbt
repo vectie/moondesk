@@ -33,10 +33,9 @@ test "wiki library overview keeps operational roots out of the default tree" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "wiki tree exposes stable path hooks for executable user journeys" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_tree(dispatch, {
         ..init_model(),
@@ -137,10 +136,9 @@ fn wiki_focus_test_model(warnings : Array[String]) -> Model {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki is a quiet chat and Office viewer without operator navigation" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_wiki_focus_workspace(dispatch, wiki_focus_test_model([])),
     ),
@@ -161,11 +159,10 @@ test "Wiki is a quiet chat and Office viewer without operator navigation" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki interrupts only when the document reports a warning" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let warning = "A linked chart could not be validated."
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_wiki_focus_workspace(dispatch, wiki_focus_test_model([warning])),
     ),
@@ -264,7 +261,6 @@ test "Wiki chat attaches existing files and projects MoonClaw deltas" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki chat keeps typed sources artifacts and automation separate from answers" {
   let model = wiki_focus_test_model([])
   let source : Json = {
@@ -279,7 +275,7 @@ test "Wiki chat keeps typed sources artifacts and automation separate from answe
   let (deduplicated, _) = wiki_chat_apply_stream_event(with_source, source)
   assert_eq(deduplicated.wiki_chat_entries.length(), 1)
   assert_eq(deduplicated.wiki_chat_entries[0].role, "source_ref")
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       wiki_chat_entry_view(deduplicated.wiki_chat_entries[0]),
     ),
@@ -352,10 +348,9 @@ test "Wiki chat file search rejects stale replies and scopes results to the book
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki chat renders file search and a non-importing drop target" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_wiki_focus_workspace(dispatch, {
         ..init_model(),
@@ -384,7 +379,6 @@ test "Wiki chat renders file search and a non-importing drop target" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki chat keeps a general task conversation without exposing its id" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
@@ -414,7 +408,7 @@ test "Wiki chat keeps a general task conversation without exposing its id" {
     next.wiki_chat_entries ==
     [{ role: "user", content: "Validate this presentation.", }],
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_focus_workspace(dispatch, next)),
   )
   assert_true(markup.contains("Validate this presentation."))
@@ -422,7 +416,6 @@ test "Wiki chat keeps a general task conversation without exposing its id" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki chat keeps removable typed context visible beside the composer" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = wiki_focus_test_model([])
@@ -452,7 +445,7 @@ test "Wiki chat keeps removable typed context visible beside the composer" {
     ).length(),
     1,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_focus_workspace(dispatch, with_context)),
   )
   assert_true(markup.contains("sample.docx · paragraph 2"))
@@ -468,7 +461,6 @@ test "Wiki chat keeps removable typed context visible beside the composer" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Wiki chat reports approved preferences used without exposing prompt internals" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
@@ -500,10 +492,9 @@ test "Wiki chat reports approved preferences used without exposing prompt intern
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Inbox note composer has stable accessible keyboard targets" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_inbox_pane(dispatch, init_model())),
   )
   assert_true(markup.contains("data-testid=\"wiki-inbox-title\""))
@@ -617,7 +608,6 @@ test "wiki activity imports stay in activity and join the pending task" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "captured media is visible and sent through normal document chat" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
@@ -636,7 +626,7 @@ test "captured media is visible and sent through normal document chat" {
       "inbox/imports/whiteboard.md", "inbox/imports/whiteboard.png", "wiki/context.md",
     ],
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_focus_workspace(dispatch, model)),
   )
   assert_true(markup.contains("inbox/imports/whiteboard.png"))

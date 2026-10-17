@@ -4,10 +4,9 @@ fn desk_entries_test_entry(path : String) -> @desk.DeskFileEntry {
 }
 
 ///|
-#warnings("-alert_unstable")
 fn desk_entries_test_markup(model : Model) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  @rabbita.render_to_string(
+  render_test_dom(
     @rabbita.static_cell(render_desk_file_browser(dispatch, model)),
   )
 }
@@ -215,7 +214,6 @@ test "Desk entries rejects an older response for the same folder" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Desk file list renders honest zero loading stale and error states" {
   let entry = desk_entries_test_entry("wiki/page.md")
   let base = {
@@ -270,7 +268,6 @@ test "Desk file list renders honest zero loading stale and error states" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Desk filter zero copy requires a successful nonempty listing" {
   let entry = desk_entries_test_entry("wiki/page.md")
   let base = {

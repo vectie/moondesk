@@ -93,7 +93,7 @@ test "plan UI prepare double click exact response explicit import and failed run
     prepared.moonflow_composition.unwrap().plan_editor.unwrap().phase,
     "prepared",
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_plan_authoring(code_mode_test_dispatch, prepared),
     ),

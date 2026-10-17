@@ -227,7 +227,6 @@ fn portable_book_actual_wire_fixture() -> Json {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "portable Book decodes and renders unchanged real pack wire proof" {
   let wire = portable_book_actual_wire_fixture()
   let library = handoff_text(wire, "expected_library")
@@ -261,7 +260,7 @@ test "portable Book decodes and renders unchanged real pack wire proof" {
   assert_true(effect is NoPortableEffect)
   assert_true(ready.prepared is Some(_))
   assert_eq(ready.error, "")
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_portable_book_inspection(prepared, true)),
   )
   assert_eq(

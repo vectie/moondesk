@@ -1,8 +1,7 @@
 ///|
-#warnings("-alert_unstable")
 test "MoonBook rows expose exactly one semantic selection" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_desk_workspace_sidebar(dispatch, {
         ..init_model(),

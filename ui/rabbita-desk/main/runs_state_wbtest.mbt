@@ -146,15 +146,14 @@ test "runs owns all eight plain-language mappings and actions" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "runs render has stable state hook disclosure and retained artifact action" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let no_book = @rabbita.render_to_string(
+  let no_book = render_test_dom(
     @rabbita.static_cell(render_runs_workspace(dispatch, init_model())),
   )
   assert_true(no_book.contains("Choose a book to see its runs"))
   assert_false(no_book.contains("data-testid=\"runs-state-panel\""))
-  let stale = @rabbita.render_to_string(
+  let stale = render_test_dom(
     @rabbita.static_cell(
       render_runs_workspace(dispatch, {
         ..init_model(),
@@ -172,7 +171,7 @@ test "runs render has stable state hook disclosure and retained artifact action"
   assert_true(stale.contains("Report"))
   assert_true(stale.contains("run-private-123"))
   assert_true(stale.contains("data-testid=\"runs-refresh\""))
-  let loading = @rabbita.render_to_string(
+  let loading = render_test_dom(
     @rabbita.static_cell(
       render_runs_workspace(dispatch, {
         ..init_model(),
@@ -197,7 +196,7 @@ test "runs render has stable state hook disclosure and retained artifact action"
     TerminalError,
   ]
   for state in states {
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(
         render_runs_workspace(dispatch, {
           ..init_model(),

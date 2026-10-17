@@ -126,7 +126,7 @@ test "Book document editing exposes save and cancel beside the draft" {
     markdown_editor_content: "Revised report",
     markdown_editor_original: "Original report",
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_document_viewer(dispatch, model)),
   )
   assert_true(markup.contains("aria-label=\"Save document\""))

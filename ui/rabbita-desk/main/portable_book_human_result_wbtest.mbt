@@ -217,10 +217,9 @@ test "accepted human result prepare wire preserves four old fields and exact opt
 }
 
 ///|
-#warnings("-alert_unstable")
 test "accepted human result preview escapes full text and labels captured unsigned provenance" {
   let source = portable_human_test_source()
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_portable_book_human_result_preview(source)),
   )
   assert_true(html.contains("&lt;script&gt;"))
@@ -241,7 +240,7 @@ test "accepted human result preview escapes full text and labels captured unsign
     assert_true(html.contains(text))
   }
   let dispatch : Dispatch[Msg] = _ => @rabbita.none
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_portable_book_human_result_picker(
         dispatch,

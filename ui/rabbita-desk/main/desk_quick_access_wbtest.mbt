@@ -302,10 +302,9 @@ test "Quick Access ignores old preview completion after a newer Book choice" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Quick Access current Book empty state and rendered history controls stay honest" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let empty = @rabbita.render_to_string(
+  let empty = render_test_dom(
     @rabbita.static_cell(
       render_desk_workspace_sidebar(dispatch, quick_access_test_model()),
     ),
@@ -317,7 +316,7 @@ test "Quick Access current Book empty state and rendered history controls stay h
     OpenQuickPath("raw/report.md"),
     quick_access_test_model(),
   )
-  let rendered = @rabbita.render_to_string(
+  let rendered = render_test_dom(
     @rabbita.static_cell(render_desk_file_browser(dispatch, opened)),
   )
   assert_true(rendered.contains("data-testid=\"desk-back\""))

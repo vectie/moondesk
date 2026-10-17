@@ -41,7 +41,6 @@ test "UI maps negotiated unsupported malformed and unavailable states" {
 }
 
 ///|
-#warnings("-alert_unstable")
 fn capability_setup_markup(
   state : MoonCodeCapabilityState,
   running~ : Bool = false,
@@ -87,7 +86,7 @@ fn capability_setup_markup(
   } else {
     None
   }
-  @rabbita.render_to_string(
+  render_test_dom(
     @rabbita.static_cell(
       render_mooncode_runtime_setup(dispatch, {
         ..init_model(),

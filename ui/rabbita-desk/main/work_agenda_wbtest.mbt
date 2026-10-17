@@ -36,7 +36,6 @@ test "work agenda groups due upcoming and paused work without mutating input" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "work agenda renders normal-language schedule and recent results" {
   let model = {
     ..init_model(),
@@ -73,7 +72,7 @@ test "work agenda renders normal-language schedule and recent results" {
       ),
     ],
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_work_agenda(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("Agenda"))

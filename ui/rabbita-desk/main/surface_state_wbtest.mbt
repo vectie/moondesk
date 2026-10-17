@@ -296,10 +296,9 @@ test "Review transitions distinguish loading zero ready stale and failure" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Review renders surface-owned state copy and preserves stale items" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let empty_markup = @rabbita.render_to_string(
+  let empty_markup = render_test_dom(
     @rabbita.static_cell(
       render_review_pane(dispatch, {
         ..init_model(),
@@ -312,7 +311,7 @@ test "Review renders surface-owned state copy and preserves stale items" {
   assert_true(empty_markup.contains("legitimate-zero"))
   assert_true(empty_markup.contains("Nothing needs review"))
   assert_false(empty_markup.contains("No matching pages"))
-  let stale_markup = @rabbita.render_to_string(
+  let stale_markup = render_test_dom(
     @rabbita.static_cell(
       render_review_pane(dispatch, {
         ..init_model(),

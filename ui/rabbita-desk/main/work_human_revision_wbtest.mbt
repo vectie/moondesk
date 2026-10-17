@@ -380,7 +380,6 @@ test "human revision exact byte boundary survives escaped JSON and local operati
 }
 
 ///|
-#warnings("-alert_unstable")
 test "unavailable native identity keeps operation and exact draft visible without a saved claim" {
   let storage = continuation_desk_storage_setup()
   defer continuation_desk_storage_cleanup(storage)
@@ -406,7 +405,7 @@ test "unavailable native identity keeps operation and exact draft visible withou
       human_revision: restored,
     },
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_work_human_revision_pending(
         code_mode_test_dispatch,
@@ -426,7 +425,6 @@ test "unavailable native identity keeps operation and exact draft visible withou
 }
 
 ///|
-#warnings("-alert_unstable")
 test "human revision ordered view returns only identity hint and exposes truthful authorship" {
   let storage = continuation_desk_storage_setup()
   defer continuation_desk_storage_cleanup(storage)
@@ -447,7 +445,7 @@ test "human revision ordered view returns only identity hint and exposes truthfu
     ),
   )
   let state = saved.work_handoff
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_work_human_revision(
         code_mode_test_dispatch,

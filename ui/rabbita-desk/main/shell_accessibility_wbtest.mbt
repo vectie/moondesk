@@ -1,7 +1,6 @@
 ///|
-#warnings("-alert_unstable")
 fn render_accessibility_test_html(html : @rabbita.Html) -> String {
-  @rabbita.render_to_string(@rabbita.static_cell(html))
+  render_test_dom(@rabbita.static_cell(html))
 }
 
 ///|
@@ -14,7 +13,6 @@ fn assert_polite_atomic_status(markup : String, test_id : String) -> Unit raise 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "every destination owns one skip target and one named main landmark" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let book = @desk.workspace(
@@ -64,7 +62,6 @@ test "every destination owns one skip target and one named main landmark" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Home complementary landmarks have distinct names" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let markup = render_accessibility_test_html(
@@ -99,7 +96,6 @@ test "Home complementary landmarks have distinct names" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Pages and Code expose named workspace landmarks" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let pages = render_accessibility_test_html(
@@ -146,7 +142,6 @@ test "preview tabs keep a name when no path is selected" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "navigation selection and destination announcement share current mode" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
@@ -181,7 +176,6 @@ test "navigation selection and destination announcement share current mode" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "all typed surface announcements are polite atomic and exclude diagnostics" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let raw_error = "PRIVATE_HOST_DIAGNOSTIC_040"

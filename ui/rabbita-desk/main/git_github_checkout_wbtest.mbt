@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
   let head = "0123456789abcdef0123456789abcdef01234567"
   let repository : GitRepositoryProjection = {
@@ -59,7 +58,7 @@ test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
     model,
   )
   assert_true(pending.github_checkout_pending)
-  let pending_markup = @rabbita.render_to_string(
+  let pending_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, pending, "main"),
     ),
@@ -89,7 +88,7 @@ test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
     pending,
   )
   assert_false(failed.github_checkout_pending)
-  let failed_markup = @rabbita.render_to_string(
+  let failed_markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, failed, "main"),
     ),
@@ -114,7 +113,7 @@ test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
   assert_false(ready.github_checkout_pending)
   assert_true(has_workspace(ready.workspaces, "pr-book"))
   assert_eq(ready.github_checkout_target_workspace_id, "pr-book")
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_github_context(code_mode_test_dispatch, ready, "main"),
     ),

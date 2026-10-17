@@ -420,10 +420,9 @@ test "browser local import parser preserves files and errors" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Book document preview preserves report Markdown for the shared renderer" {
   let body = "# Revenue\n\n| Period | Revenue |\n| --- | --- |\n| Current | 120 |\n\nA **20% increase**.\n\n```text\n  indentation\n```\n"
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       div(
         render_markdown_document(markdown_edit_preview("wiki/report.md", body)),

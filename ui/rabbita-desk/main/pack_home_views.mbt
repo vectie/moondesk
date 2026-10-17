@@ -33,6 +33,7 @@ fn pack_default_description(pack : PackAppRecord) -> String {
 enum PackInspection {
   Application(String)
   Studio
+  Collaboration
   Runtime
 } derive(Eq)
 
@@ -599,6 +600,8 @@ fn render_pack_inspector(
           )
       }
     Some(Studio) => ("Pack Studio", render_pack_studio())
+    Some(Collaboration) =>
+      ("Collaboration", render_collaboration_surface(dispatch, model))
     Some(Runtime) =>
       (
         "How packs run",
@@ -648,6 +651,13 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           span(model.pack_apps_status),
           render_specialist_builder_action(dispatch),
           pack_inspect_button(dispatch, model, Studio, "Pack Studio", "package"),
+          pack_inspect_button(
+            dispatch,
+            model,
+            Collaboration,
+            "Collaboration",
+            "chat",
+          ),
           pack_inspect_button(dispatch, model, Runtime, "How packs run", "help"),
           button(
             class="secondary-button compact-button moon-icon-button",

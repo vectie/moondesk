@@ -169,11 +169,10 @@ test "Flow run listing transitions through loading zero ready stale and failure"
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Flow run listing renders owned copy and confines refresh diagnostics" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let selected_run = moonflow_runs_test_run("book-selected", "run-selected")
-  let loading_markup = @rabbita.render_to_string(
+  let loading_markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_workspace(dispatch, {
         ..moonflow_runs_test_model(),
@@ -185,7 +184,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
   assert_true(loading_markup.contains("data-state=\"loading\""))
   assert_true(loading_markup.contains("Refreshing executable work"))
   assert_true(loading_markup.contains("run-selected"))
-  let ready_markup = @rabbita.render_to_string(
+  let ready_markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_workspace(dispatch, {
         ..moonflow_runs_test_model(),
@@ -197,7 +196,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
   assert_true(ready_markup.contains("run-selected"))
   assert_true(ready_markup.contains("Executable work exists"))
   assert_false(ready_markup.contains("moonflow-runs-state-announcement"))
-  let zero_markup = @rabbita.render_to_string(
+  let zero_markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_workspace(dispatch, {
         ..moonflow_runs_test_model(),
@@ -212,7 +211,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
     .to_array()
   assert_eq(zero_before_canvas.length(), 2)
   assert_true(zero_before_canvas[0].contains("data-state=\"legitimate-zero\""))
-  let stale_markup = @rabbita.render_to_string(
+  let stale_markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_workspace(dispatch, {
         ..moonflow_runs_test_model(),
@@ -229,7 +228,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
       "<summary>Technical details</summary><code>private refresh failure</code>",
     ),
   )
-  let failed_markup = @rabbita.render_to_string(
+  let failed_markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_workspace(dispatch, {
         ..moonflow_runs_test_model(),
@@ -249,7 +248,6 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Flow capability limits preparation without erasing run history" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let selected_run = moonflow_runs_test_run("book-selected", "run-selected")
@@ -266,7 +264,7 @@ test "Flow capability limits preparation without erasing run history" {
   assert_true(moonflow_effective_runs_state(limited) is Some(CapabilityLimited))
   assert_true(limited.moonflow_runs_state is None)
   assert_eq(moonflow_selected_runs(limited).length(), 1)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_moonflow_workspace(dispatch, limited)),
   )
   assert_true(markup.contains("data-state=\"capability-limited\""))
@@ -328,7 +326,6 @@ test "Flow capability probe failure preserves compatibility state" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Flow renders missing autonomy scorecard and control evidence unavailable" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let run = {
@@ -337,7 +334,7 @@ test "Flow renders missing autonomy scorecard and control evidence unavailable" 
     intervention_scorecard: None,
     run_control: None,
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_moonflow_run(dispatch, init_model(), run)),
   )
   assert_true(markup.contains("Autonomy binding evidence unavailable."))
@@ -354,7 +351,6 @@ test "Flow renders missing autonomy scorecard and control evidence unavailable" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "configured v2 receiver actions replace the unavailable operator projection fallback" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let token = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -420,7 +416,7 @@ test "configured v2 receiver actions replace the unavailable operator projection
       moonflow_runs_state: None,
     },
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_operator_surface(dispatch, with_actions, run),
     ),

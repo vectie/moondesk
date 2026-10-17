@@ -1,7 +1,6 @@
 ///|
-#warnings("-alert_unstable")
 test "MoonCode developer tools remain disclosed and identify honest execution boundaries" {
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_developer_tools(init_model())),
   )
   assert_true(markup.has_prefix("<details"))
@@ -25,13 +24,11 @@ test "MoonCode developer tools remain disclosed and identify honest execution bo
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode developer browser starts blank without an HTML workspace preview" {
   assert_eq(mooncode_developer_browser_url(init_model()), "about:blank")
 }
 
 ///|
-#warnings("-alert_unstable")
 test "HTML workspace preview opens directly in MoonCode browser tools" {
   let path = "book/site/generated/index.html"
   let model = {
@@ -45,7 +42,7 @@ test "HTML workspace preview opens directly in MoonCode browser tools" {
       ),
     ),
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_developer_tools(model)),
   )
   assert_true(markup.contains("data-preferred-tool=\"browser\""))

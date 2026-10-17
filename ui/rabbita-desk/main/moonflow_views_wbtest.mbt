@@ -108,7 +108,6 @@ test "Flow first-run action requires a selected MoonBook" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Flow composition exposes exact catalog-bound contract metadata" {
   let composition : MoonFlowComposition = @json.from_json({
     "contract_id": "composition-v1",
@@ -160,7 +159,7 @@ test "Flow composition exposes exact catalog-bound contract metadata" {
   assert_eq(composition.catalog_id, Some("catalog-2026-07-31"))
   assert_eq(composition.validation_status, Some("accepted"))
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_composition_canvas(dispatch, {
         ..init_model(),
@@ -176,7 +175,7 @@ test "Flow composition exposes exact catalog-bound contract metadata" {
   assert_true(markup.contains("Catalog validated"))
   assert_true(markup.contains("validation accepted"))
   assert_true(markup.contains("aria-label=\"Fit canvas\""))
-  let continuation = @rabbita.render_to_string(
+  let continuation = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_composition_continuation(Some(composition)),
     ),

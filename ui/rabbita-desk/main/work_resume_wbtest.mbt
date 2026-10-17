@@ -341,12 +341,11 @@ test "Resume work blocked quota and forget failures keep work and saved drafts i
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Resume work HTML labels stale observation new tab and exact scope forget honestly" {
   let storage = continuation_desk_storage_setup()
   defer continuation_desk_storage_cleanup(storage)
   let ready = resume_test_resolve(handoff_desk_model())
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_resume(code_mode_test_dispatch, ready)),
   )
   assert_true(html.contains("book · captured work"))
@@ -360,7 +359,7 @@ test "Resume work HTML labels stale observation new tab and exact scope forget h
     handoff_desk_model(),
     response=handoff_desk_fixture(),
   )
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_resume(code_mode_test_dispatch, legacy)),
   )
   assert_true(html.contains("no shortcut is saved"))
@@ -511,7 +510,6 @@ test "Resume work failed forget does not suppress a pending successful refresh" 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Resume work same-named output versions expose distinct command and evidence details" {
   let storage = continuation_desk_storage_setup()
   defer continuation_desk_storage_cleanup(storage)
@@ -532,7 +530,7 @@ test "Resume work same-named output versions expose distinct command and evidenc
     item
   })
   let model = { ..ready, work_resume: { ..ready.work_resume, entries, }, }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_resume(code_mode_test_dispatch, model)),
   )
   assert_true(html.contains("Output command / evidence: C1 / evidence-C1"))

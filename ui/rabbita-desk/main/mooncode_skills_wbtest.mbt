@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "Code skill catalog keeps MoonClaw provenance and ignores old workspace replies" {
   let model = { ..init_model(), selected_workspace_id: "book-a", }
   let (_, opened) = update_mooncode_actions(
@@ -37,7 +36,7 @@ test "Code skill catalog keeps MoonClaw provenance and ignores old workspace rep
     opened,
   )
   assert_false(loaded.mooncode_skills_loading)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_skill_catalog(code_mode_test_dispatch, loaded),
     ),
@@ -55,7 +54,7 @@ test "Code skill catalog keeps MoonClaw provenance and ignores old workspace rep
   )
   assert_false(hidden.mooncode_skills_visible)
   let switched = { ..loaded, selected_workspace_id: "book-b", }
-  let switched_markup = @rabbita.render_to_string(
+  let switched_markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_skill_catalog(code_mode_test_dispatch, switched),
     ),

@@ -14,12 +14,9 @@ fn assert_mobile_action_before(
 }
 
 ///|
-#warnings("-alert_unstable")
 fn mobile_action_markup(model : Model) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  @rabbita.render_to_string(
-    @rabbita.static_cell(render_desk_mode(dispatch, model)),
-  )
+  render_test_dom(@rabbita.static_cell(render_desk_mode(dispatch, model)))
 }
 
 ///|
@@ -77,19 +74,18 @@ test "multiple Books put switching and add controls before optional setup and fi
 }
 
 ///|
-#warnings("-alert_unstable")
 test "secondary Book diagnostics remain collapsed while first creation is open" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = cold_start_test_model(false, "/tmp/moonsuite/books", [])
-  let diagnostics = @rabbita.render_to_string(
+  let diagnostics = render_test_dom(
     @rabbita.static_cell(render_desk_library_diagnostics(dispatch, model)),
   )
   assert_false(diagnostics.contains(" open>"))
-  let closed_add = @rabbita.render_to_string(
+  let closed_add = render_test_dom(
     @rabbita.static_cell(render_new_moonbook_panel(dispatch, model)),
   )
   assert_false(closed_add.contains(" open>"))
-  let first_add = @rabbita.render_to_string(
+  let first_add = render_test_dom(
     @rabbita.static_cell(render_new_moonbook_panel_open(dispatch, model)),
   )
   assert_true(first_add.contains(" open>"))
@@ -126,7 +122,6 @@ test "Book loading and recovery remain ahead of collapsed diagnostics" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "document original action remains available without exposing living artifacts" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   for
@@ -138,7 +133,7 @@ test "document original action remains available without exposing living artifac
       selected_workspace_id: "book-demo",
       selected_path: path,
     }
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(render_wiki_document_viewer(dispatch, model)),
     )
     assert_true(markup.contains("data-testid=\"wiki-open-original\""))
@@ -150,7 +145,7 @@ test "document original action remains available without exposing living artifac
     selected_workspace_id: "book-demo",
     selected_path: "book/site/generated/living/decisions/index.html",
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_wiki_document_viewer(dispatch, living)),
   )
   assert_false(markup.contains("data-testid=\"wiki-open-original\""))

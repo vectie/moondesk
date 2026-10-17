@@ -59,7 +59,6 @@ test "continuation named outputs route same filenames through exact command evid
 }
 
 ///|
-#warnings("-alert_unstable")
 test "continuation output inspection links are read only new tabs without replacing draft prior or return selection" {
   let base = continuation_desk_ready()
   let first = continuation_output_record("C1", "E?1")
@@ -76,7 +75,7 @@ test "continuation output inspection links are read only new tabs without replac
     work_handoff: { ..base.work_handoff, continuation: state, },
   }
   for record in state.records {
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_work_continuation_outputs(
           model.work_handoff.target.unwrap(),
@@ -148,7 +147,6 @@ test "continuation output links refuse unverified source evidence and unsafe pat
 }
 
 ///|
-#warnings("-alert_unstable")
 test "continuation missing and legacy output refs remain explicitly unavailable outside details" {
   let target = continuation_desk_ready().work_handoff.target.unwrap()
   let cases : Array[Array[Json]] = [
@@ -160,7 +158,7 @@ test "continuation missing and legacy output refs remain explicitly unavailable 
     let record = continuation_output_record("C1", "E?1")
     guard record is Object(fields) else { fail("fixture") }
     fields["output_refs"] = Json::array(outputs)
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(render_work_continuation_outputs(target, record)),
     )
     assert_false(html.contains("<a "))
@@ -178,7 +176,6 @@ test "continuation missing and legacy output refs remain explicitly unavailable 
 }
 
 ///|
-#warnings("-alert_unstable")
 test "continuation output route still requires verified host response and preserves active document download policy" {
   let base = continuation_desk_ready()
   let target = base.work_handoff.target.unwrap()
@@ -212,7 +209,7 @@ test "continuation output route still requires verified host response and preser
     Resolved(loading.work_handoff.generation, Ok(response)),
     loading,
   )
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_work_output(
         ready.work_handoff,
@@ -235,7 +232,7 @@ test "continuation output route still requires verified host response and preser
     Resolved(loading.work_handoff.generation, Ok(response)),
     loading,
   )
-  let unavailable_html = @rabbita.render_to_string(
+  let unavailable_html = render_test_dom(
     @rabbita.static_cell(
       render_work_output(
         unavailable.work_handoff,

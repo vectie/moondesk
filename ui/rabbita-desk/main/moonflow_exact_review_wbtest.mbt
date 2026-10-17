@@ -322,7 +322,7 @@ test "exact review UI disables unmapped humans and binds head bytes subject and 
   assert_true(
     unchanged.moonflow_retained.unwrap().review.unwrap().request is None,
   )
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_exact_review(code_mode_test_dispatch, retained),
     ),

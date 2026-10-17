@@ -90,10 +90,9 @@ test "Requests owns state copy, actions, technical disclosure, and composer enab
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Requests renders honest zero and stale retained records without false empty activity" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let zero_markup = @rabbita.render_to_string(
+  let zero_markup = render_test_dom(
     @rabbita.static_cell(
       render_town_pane(dispatch, {
         ..init_model(),
@@ -108,7 +107,7 @@ test "Requests renders honest zero and stale retained records without false empt
   assert_true(zero_markup.contains("no saved requests yet"))
   assert_false(zero_markup.contains("No activity yet"))
   assert_false(zero_markup.contains("raw ledger failure"))
-  let stale_markup = @rabbita.render_to_string(
+  let stale_markup = render_test_dom(
     @rabbita.static_cell(
       render_town_pane(dispatch, {
         ..init_model(),

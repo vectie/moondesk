@@ -47,7 +47,6 @@ test "MoonCode reasoning choices accept only runtime-supported effort" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode composer exposes lazy model and reasoning control state" {
   let model = {
     ..init_model(),
@@ -55,7 +54,7 @@ test "MoonCode composer exposes lazy model and reasoning control state" {
     mooncode_model: "moongate/kimi-k3",
     mooncode_reasoning_effort: "high",
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_composer_controls(fn(_msg) { @rabbita.none }, model),
     ),
@@ -70,9 +69,8 @@ test "MoonCode composer exposes lazy model and reasoning control state" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "MoonCode task intent is visible and defaults to Auto" {
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_composer_controls(
         fn(_msg) { @rabbita.none },

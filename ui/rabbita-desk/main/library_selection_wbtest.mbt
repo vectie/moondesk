@@ -147,10 +147,9 @@ test "library selection errors stay visible without clearing current state" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "library selection status is rendered beside the library control" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_desk_library_diagnostics(dispatch, {
         ..init_model(),

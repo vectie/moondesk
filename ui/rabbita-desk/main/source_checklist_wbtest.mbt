@@ -42,7 +42,7 @@ test "checklist UI captures real UTF16 selection and excludes fenced lines" {
     "😀intro\n```\n- [ ] code\n```\n- [ ] review\nend",
   )
   assert_eq(next.source_pane.search.undo.length(), 1)
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_source_editor(fn(_) { @rabbita.none }, next.source_pane),
     ),
@@ -82,7 +82,7 @@ test "checklist synthetic authoring output and rendered controls" {
   println("CHECKLIST_ACTUAL_END")
   println("CHECKLIST_HTML_BEGIN")
   println(
-    @rabbita.render_to_string(
+    render_test_dom(
       @rabbita.static_cell(
         render_source_line_authoring(fn(_) { @rabbita.none }, completed),
       ),
@@ -108,7 +108,7 @@ test "checklist controls cannot modify unavailable or saving source" {
       ] {
       assert_eq(update_source_pane(state, EditChecklist(action)), state)
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_line_authoring(fn(_) { @rabbita.none }, state),
       ),

@@ -61,7 +61,7 @@ test "compiled step UI renders actual native HTTP preparation and imported revis
       prepared.moonflow_composition.unwrap().plan_editor.unwrap().phase,
       "prepared",
     )
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(
         render_moonflow_plan_authoring(code_mode_test_dispatch, prepared),
       ),

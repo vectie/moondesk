@@ -318,7 +318,6 @@ test "daemon evidence maps without parsing status messages" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "fresh and copied clean-Mac evidence remains installable or repairable" {
   let fresh = {
     ..capability_test_daemon(
@@ -357,7 +356,7 @@ test "fresh and copied clean-Mac evidence remains installable or repairable" {
   assert_true(repairing_markup.contains(">Repairing Code assistance…<"))
   assert_code_assistance_i18n_key(repairing_markup, "code.assistance_repairing")
   let dispatch : Dispatch[Msg] = fn(_) { @rabbita.none }
-  let runtime_markup = @rabbita.render_to_string(
+  let runtime_markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_runtime_setup(dispatch, repairing)),
   )
   assert_true(runtime_markup.contains(">Repairing Code assistance…<"))
@@ -751,7 +750,6 @@ test "Requests capability probe transitions preserve prior lifecycle evidence" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Requests capability rendering keeps setup technical and composer usable" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let stopped = {
@@ -770,7 +768,7 @@ test "Requests capability rendering keeps setup technical and composer usable" {
     town_capability_probe_available: true,
   }
   assert_false(wiki_task_start_disabled(stopped))
-  let stopped_markup = @rabbita.render_to_string(
+  let stopped_markup = render_test_dom(
     @rabbita.static_cell(render_town_pane(dispatch, stopped)),
   )
   assert_true(stopped_markup.contains("data-testid=\"requests-capability\""))
@@ -798,7 +796,7 @@ test "Requests capability rendering keeps setup technical and composer usable" {
       ),
     ),
   }
-  let invalid_markup = @rabbita.render_to_string(
+  let invalid_markup = render_test_dom(
     @rabbita.static_cell(render_town_pane(dispatch, invalid)),
   )
   assert_true(invalid_markup.contains("data-state=\"misconfigured\""))
@@ -815,7 +813,7 @@ test "Requests capability rendering keeps setup technical and composer usable" {
       "service-configuration-missing",
     ),
   )
-  let unavailable_markup = @rabbita.render_to_string(
+  let unavailable_markup = render_test_dom(
     @rabbita.static_cell(
       render_town_pane(dispatch, {
         ..stopped,
@@ -834,20 +832,16 @@ test "Requests capability rendering keeps setup technical and composer usable" {
 }
 
 ///|
-#warnings("-alert_unstable")
 fn home_code_capability_markup(model : Model) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  @rabbita.render_to_string(
-    @rabbita.static_cell(render_moongate_setup(dispatch, model)),
-  )
+  render_test_dom(@rabbita.static_cell(render_moongate_setup(dispatch, model)))
 }
 
 ///|
-#warnings("-alert_unstable")
 fn home_code_capability_public_markup(model : Model) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let state = moonclaw_capability_state(model.moonclaw_daemon)
-  @rabbita.render_to_string(
+  render_test_dom(
     @rabbita.static_cell(
       render_home_code_assistance_public(
         dispatch,
@@ -1063,7 +1057,6 @@ test "Home Code assistance renders every evidence state and action allowlist" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "ordinary Code assistance markup excludes raw service diagnostics" {
   let daemon = {
     ..capability_test_daemon(false, false, Some(false), platform_supported=true),
@@ -1088,14 +1081,14 @@ test "ordinary Code assistance markup excludes raw service diagnostics" {
   assert_false(public_markup.contains("MoonGate"))
   assert_false(public_markup.contains("daemon"))
   assert_false(public_markup.contains("/private/tmp/tool"))
-  let shared_summary = @rabbita.render_to_string(
+  let shared_summary = render_test_dom(
     @rabbita.static_cell(
       render_code_capability_summary(moonclaw_capability_state(Some(daemon))),
     ),
   )
   assert_false(shared_summary.contains("MoonClaw"))
   assert_false(shared_summary.contains("daemon"))
-  let progress = @rabbita.render_to_string(
+  let progress = render_test_dom(
     @rabbita.static_cell(render_moonclaw_install_progress(model)),
   )
   assert_true(progress.contains("Preparing Code assistance"))
@@ -1104,7 +1097,6 @@ test "ordinary Code assistance markup excludes raw service diagnostics" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "exact Code assistance diagnostics remain in one closed disclosure" {
   let daemon = {
     ..capability_test_daemon(false, false, Some(true), platform_supported=true),
@@ -1125,7 +1117,7 @@ test "exact Code assistance diagnostics remain in one closed disclosure" {
     moonclaw_daemon: Some(daemon),
     moonclaw_install_feedback: "raw installer path /private/tmp/tool",
   }
-  let technical_markup = @rabbita.render_to_string(
+  let technical_markup = render_test_dom(
     @rabbita.static_cell(render_code_assistance_technical_details(model)),
   )
   assert_true(
@@ -1150,7 +1142,6 @@ test "exact Code assistance diagnostics remain in one closed disclosure" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "repair and install failures stay actionable beside the setup action" {
   let daemon = {
     ..capability_test_daemon(false, false, Some(false)),
@@ -1179,7 +1170,6 @@ test "repair and install failures stay actionable beside the setup action" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "first-run setup renders provider handoffs and an advanced secret input" {
   let daemon = {
     ..capability_test_daemon(true, true, Some(true)),
@@ -1243,7 +1233,6 @@ test "first-run setup renders provider handoffs and an advanced secret input" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code setup renders every non-ready typed state including unavailable" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let cases : Array[(Model, String, String)] = [
@@ -1317,7 +1306,7 @@ test "Code setup renders every non-ready typed state including unavailable" {
   ]
   for item in cases {
     let (model, state, action) = item
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(render_mooncode_runtime_setup(dispatch, model)),
     )
     if state == "detected-running" {
@@ -1353,7 +1342,7 @@ test "Code setup renders every non-ready typed state including unavailable" {
     }
   }
   let unavailable = init_model()
-  let unavailable_markup = @rabbita.render_to_string(
+  let unavailable_markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_runtime_setup(dispatch, unavailable)),
   )
   assert_true(
@@ -1365,7 +1354,7 @@ test "Code setup renders every non-ready typed state including unavailable" {
     unavailable_markup.contains("No daemon status response was available."),
   )
   assert_false(unavailable_markup.contains(" open=\""))
-  let unavailable_summary = @rabbita.render_to_string(
+  let unavailable_summary = render_test_dom(
     @rabbita.static_cell(
       render_code_capability_summary(
         moonclaw_capability_state(unavailable.moonclaw_daemon),
@@ -1379,7 +1368,7 @@ test "Code setup renders every non-ready typed state including unavailable" {
     moonclaw_daemon: Some(capability_test_daemon(false, false, Some(false))),
     moonclaw_installing: true,
   }
-  let installing_markup = @rabbita.render_to_string(
+  let installing_markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_runtime_setup(dispatch, installing)),
   )
   assert_true(installing_markup.contains("Installing Code assistance…"))

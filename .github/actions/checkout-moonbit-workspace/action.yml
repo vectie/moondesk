@@ -1,0 +1,29 @@
+name: Checkout pinned MoonBit workspace sources
+description: Use the accepted local dependency graph without registry or branch substitutions
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        repository: vectie/moonlib
+        ref: dc62810d48cee9d8b433f160136cdfeedd75003e
+        path: _integration/moonlib
+        persist-credentials: false
+    - uses: actions/checkout@v5
+      with:
+        repository: vectie/moonleaf
+        ref: 3ac4509ac938be88f874b2fbaa57d34b05038a3c
+        path: _integration/moonleaf
+        persist-credentials: false
+    - uses: actions/checkout@v5
+      with:
+        repository: vectie/moonedit
+        ref: 0b3bf97e4c1905e282a635bbda7392fa9bf12b1d
+        path: _integration/moonedit
+        persist-credentials: false
+    - name: Link sibling workspace members
+      shell: bash
+      run: |
+        ln -s "${GITHUB_WORKSPACE}/_integration/moonlib" "${GITHUB_WORKSPACE}/../moonlib"
+        ln -s "${GITHUB_WORKSPACE}/_integration/moonleaf" "${GITHUB_WORKSPACE}/../moonleaf"
+        ln -s "${GITHUB_WORKSPACE}/_integration/moonedit" "${GITHUB_WORKSPACE}/../moonedit"

@@ -98,7 +98,6 @@ test "Flow pointer end releases gesture ownership without discarding canvas layo
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Flow node grips expose keyboard movement and Arrow keys persist geometry" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let item = flow_canvas_large_graph_item(0, [])
@@ -148,7 +147,7 @@ test "Flow node grips expose keyboard movement and Arrow keys persist geometry" 
     shifted.moonflow_composition_status,
     "Unsaved node position · stage-0",
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_flow_canvas_node(
         dispatch,

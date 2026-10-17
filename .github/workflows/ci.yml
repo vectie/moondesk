@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Checkout pinned MoonBit workspace sources
+        uses: ./.github/actions/checkout-moonbit-workspace
       - name: Checkout MoonClaw integration revision
         uses: actions/checkout@v5
         with:
@@ -45,7 +47,7 @@ jobs:
           sudo apt-get install -y ripgrep zsh
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.2
           cache: npm
           cache-dependency-path: ui/rabbita-desk/package-lock.json
       - name: Verify pinned MoonBit dependencies

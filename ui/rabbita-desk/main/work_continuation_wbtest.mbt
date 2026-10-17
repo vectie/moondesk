@@ -413,7 +413,6 @@ test "return selected result encodes exact identity no credentials and remains n
 }
 
 ///|
-#warnings("-alert_unstable")
 test "followup view separates original pending guidance immutable input and actual result" {
   let model = continuation_desk_ready()
   let target = model.work_handoff.target.unwrap()
@@ -432,7 +431,7 @@ test "followup view separates original pending guidance immutable input and actu
     ..model,
     work_handoff: { ..model.work_handoff, continuation: state, },
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_handoff(code_mode_test_dispatch, model)),
   )
   for

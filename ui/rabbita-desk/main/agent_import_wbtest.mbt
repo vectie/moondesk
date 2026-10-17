@@ -532,7 +532,6 @@ test "package receive root open is fenced to current library and library picker"
 }
 
 ///|
-#warnings("-alert_unstable")
 test "package receive renders all actual retained export proof contents with collapsed technical details" {
   let wire = portable_book_actual_wire_fixture()
   guard portable_book_decode_prepared(
@@ -564,7 +563,7 @@ test "package receive renders all actual retained export proof contents with col
     workspace_library_path: "/library-a",
     agent_import: inspected,
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_agent_import(dispatch, model)),
   )
   assert_eq(

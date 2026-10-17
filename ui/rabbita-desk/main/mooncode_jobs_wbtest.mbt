@@ -1,5 +1,4 @@
 ///|
-#warnings("-alert_unstable")
 test "Code job history shows failed and interrupted runs for selected session only" {
   let session = code_mode_test_session("session-a", workspace_id="book-a")
   let model = {
@@ -57,7 +56,7 @@ test "Code job history shows failed and interrupted runs for selected session on
     LoadedMoonCodeJobs("session-a", Ok(history)),
     opened,
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_job_history(code_mode_test_dispatch, loaded),
     ),
@@ -70,7 +69,7 @@ test "Code job history shows failed and interrupted runs for selected session on
   assert_true(markup.contains("executor unavailable"))
   assert_false(markup.contains("Completed"))
   let switched = { ..loaded, selected_mooncode_session_id: "session-b", }
-  let switched_markup = @rabbita.render_to_string(
+  let switched_markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_job_history(code_mode_test_dispatch, switched),
     ),

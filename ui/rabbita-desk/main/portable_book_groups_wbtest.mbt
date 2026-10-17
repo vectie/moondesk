@@ -226,7 +226,7 @@ test "named deliverable view offers actual file actions with no acknowledgment g
     ToggleGroupFile("outputs/demo/index.html"),
   )
   let dispatch : Dispatch[Msg] = _ => @rabbita.none
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_portable_book_groups(dispatch, state)),
   )
   for
@@ -237,7 +237,7 @@ test "named deliverable view offers actual file actions with no acknowledgment g
     assert_true(markup.contains(text))
   }
   assert_false(markup.contains("checkbox"))
-  let picker = @rabbita.render_to_string(
+  let picker = render_test_dom(
     @rabbita.static_cell(render_portable_book_picker(dispatch, state)),
   )
   assert_true(picker.contains("In Demo app: index.html"))

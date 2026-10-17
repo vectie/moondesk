@@ -23,7 +23,7 @@ fn line_authoring_test_selected(
 ///|
 test "line authoring controls expose indentation choices and keyboard shortcuts" {
   let ready = literal_search_test_state("code")
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, ready)),
   )
   for
@@ -140,7 +140,7 @@ test "line authoring no-op preserves redo and disabled source states do not muta
       ] {
       assert_eq(update_source_pane(state, action), state)
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_line_authoring(fn(_) { @rabbita.none }, state),
       ),

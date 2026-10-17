@@ -343,10 +343,9 @@ test "portable Book changed inputs invalidate the exact prepared download" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "portable Book complete inspection shows every member exclusion and private flag" {
   let bundle = portable_book_test_package()
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_portable_book_inspection(bundle, true)),
   )
   assert_eq(html.split("data-testid=\"portable-book-member\"").count(), 3)
@@ -401,7 +400,6 @@ test "portable Book SHA identities preserve the actual MoonBook contract prefix"
 }
 
 ///|
-#warnings("-alert_unstable")
 test "portable Book hides download until inspected and refuses stale Book render" {
   let dispatch : Dispatch[Msg] = _ => @rabbita.none
   let bundle = portable_book_test_package()
@@ -412,12 +410,12 @@ test "portable Book hides download until inspected and refuses stale Book render
     selected_workspace_id: "book-b",
     workspace_library_path: "/library-a",
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_portable_book(dispatch, model)),
   )
   assert_false(html.contains("portable-book-download"))
   assert_false(html.contains("memory/preferences.json"))
-  let draft = @rabbita.render_to_string(
+  let draft = render_test_dom(
     @rabbita.static_cell(
       render_portable_book(dispatch, {
         ..model,
@@ -434,7 +432,7 @@ test "portable Book hides download until inspected and refuses stale Book render
   assert_true(draft.contains("refresh generated pages and projections"))
   assert_true(draft.contains("Prepare local package"))
   assert_false(draft.contains("Send to Town"))
-  let blocked = @rabbita.render_to_string(
+  let blocked = render_test_dom(
     @rabbita.static_cell(render_portable_book_inspection(bundle, false)),
   )
   assert_false(blocked.contains("portable-book-download"))

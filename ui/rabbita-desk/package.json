@@ -2,8 +2,12 @@
   "name": "moondesk-rabbita",
   "private": true,
   "type": "module",
+  "imports": {
+    "#test-dom": "./test-dom-harness.mjs"
+  },
   "scripts": {
     "test:i18n": "node --test moonsuite-i18n.test.mjs",
+    "test:dom": "node --test test-dom-harness.test.mjs",
     "test:workspace-features": "node --test workspace-features-runtime.test.mjs living-artifacts-runtime.test.mjs",
     "test:workspace-performance": "node --test workspace-features-performance.test.mjs",
     "test:mooncode-devtools": "node --test mooncode-developer-tools-runtime.test.mjs",
@@ -24,6 +28,7 @@
     "typescript": "~6.0.3"
   },
   "devDependencies": {
+    "jsdom": "30.0.0",
     "terser": "^5.50.0",
     "vite": "^7.0.0"
   }

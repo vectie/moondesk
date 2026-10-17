@@ -37,10 +37,9 @@ test "Code image-only prompt remains a typed ordered command" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code image tray stays visible and removable" {
   let model = { ..init_model(), mooncode_images: [mooncode_test_png_image()], }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_image_tray(fn(_msg) { @rabbita.none }, model),
     ),
@@ -57,9 +56,8 @@ test "Code image tray stays visible and removable" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Code composer exposes a directly clickable image file input" {
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_center(fn(_msg) { @rabbita.none }, init_model()),
     ),
@@ -113,7 +111,6 @@ test "Code image model support requires declared catalog modality" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "canonical Code image uses a bounded same-origin media reference" {
   let parts : Array[Json] = [
     { "type": "text", "text": "Inspect this " },
@@ -125,7 +122,7 @@ test "canonical Code image uses a bounded same-origin media reference" {
     },
     { "type": "text", "text": "screenshot" },
   ]
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_mooncode_ordered_user_content("session-1", "cmd-1", parts),
     ),

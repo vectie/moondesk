@@ -144,10 +144,9 @@ test "requested missing session cannot silently create a different chat" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "requested missing session shows recovery instead of a new chat invitation" {
   let model = requested_selection_test_model()
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("data-testid=\"requested-selection\""))
@@ -416,7 +415,6 @@ test "requested workspace only can select its chat when an unrelated list arrive
 }
 
 ///|
-#warnings("-alert_unstable")
 test "requested mismatched workspace and session never open the other book" {
   let model = {
     ..requested_selection_test_model(),
@@ -435,7 +433,7 @@ test "requested mismatched workspace and session never open the other book" {
     assert_eq(next.selected_workspace_id, "book-requested")
     assert_eq(next.selected_mooncode_session_id, "session-requested")
     assert_true(selected_mooncode_session(next) is None)
-    let markup = @rabbita.render_to_string(
+    let markup = render_test_dom(
       @rabbita.static_cell(
         render_requested_selection(code_mode_test_dispatch, next),
       ),
@@ -465,14 +463,13 @@ test "requested selection leaves ordinary no-target default selection intact" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "requested missing workspace renders recoverable Desk state" {
   let model = {
     ..requested_selection_test_model(),
     selected_mooncode_session_id: "",
     workspace_mode: Desk,
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_app(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("data-testid=\"requested-selection\""))

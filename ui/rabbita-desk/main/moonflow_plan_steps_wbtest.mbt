@@ -46,7 +46,7 @@ test "declared step controls duplicate twice remove repair save reopen without r
   assert_eq(editor.request_id, "")
   assert_eq(editor.phase, "draft")
   assert_true(editor.receipt is None)
-  let rendered = @rabbita.render_to_string(
+  let rendered = render_test_dom(
     @rabbita.static_cell(
       render_moonflow_plan_authoring(code_mode_test_dispatch, reopened),
     ),

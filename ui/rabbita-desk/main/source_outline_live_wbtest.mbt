@@ -61,7 +61,7 @@ test "Markdown authoring live host opens reorders edits saves and reopens a sect
     )
     let expected = cell.val.source_pane.draft
     assert_true(expected.contains("Launch email ready for the pilot group."))
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_source_editor(fn(_) { @rabbita.none }, cell.val.source_pane),
       ),

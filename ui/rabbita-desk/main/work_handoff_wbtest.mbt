@@ -299,10 +299,9 @@ test "bound inspection blocks prompt retry file office drop import and setup mut
 }
 
 ///|
-#warnings("-alert_unstable")
 test "inspection renders original model context return and files without composer or setup gates" {
   let model = handoff_desk_ready()
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, model)),
   )
   assert_true(html.contains("captured-c0-model"))
@@ -408,7 +407,6 @@ test "departure effects clear lineage and session on reload without replacing se
 }
 
 ///|
-#warnings("-alert_unstable")
 test "canonical hidden context text requires verified captured digest and mismatch stays explicit" {
   let canonical = {
     ..handoff_desk_ready().work_handoff.canonical.unwrap(),
@@ -422,7 +420,7 @@ test "canonical hidden context text requires verified captured digest and mismat
     "expected_sha256": "captured-bytes-digest",
     "integrity": "verified",
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_handoff_context(context, canonical)),
   )
   assert_true(html.contains("Captured project requirements"))
@@ -438,7 +436,7 @@ test "canonical hidden context text requires verified captured digest and mismat
       "message": "Context cannot be read",
       "text": "must not appear",
     }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(render_work_handoff_context(response, canonical)),
     )
     assert_true(html.contains("Context cannot be read"))
@@ -452,7 +450,7 @@ test "canonical hidden context text requires verified captured digest and mismat
     "expected_sha256": "old",
     "integrity": "mismatch",
   }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_handoff_context(unverified, canonical)),
   )
   assert_false(html.contains("must not appear"))

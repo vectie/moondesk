@@ -2318,7 +2318,6 @@ test "mode switches preserve selected desk context without starting code" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "desk selection offers a destination that can display each file type" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let entries = [
@@ -2333,14 +2332,14 @@ test "desk selection offers a destination that can display each file type" {
     current_directory: "wiki",
     entries,
   }
-  let markdown = @rabbita.render_to_string(
+  let markdown = render_test_dom(
     @rabbita.static_cell(
       render_desk_details(dispatch, { ..base, selected_path: "wiki/index.md", }),
     ),
   )
   assert_true(markdown.contains("Preview in Desk"))
   assert_false(markdown.contains("Open in Wiki"))
-  let document = @rabbita.render_to_string(
+  let document = render_test_dom(
     @rabbita.static_cell(
       render_desk_details(dispatch, {
         ..base,
@@ -2349,14 +2348,14 @@ test "desk selection offers a destination that can display each file type" {
     ),
   )
   assert_true(document.contains("Open in Wiki"))
-  let directory = @rabbita.render_to_string(
+  let directory = render_test_dom(
     @rabbita.static_cell(
       render_desk_details(dispatch, { ..base, selected_path: "wiki", }),
     ),
   )
   assert_true(directory.contains("Browse folder"))
   assert_false(directory.contains("Open in Wiki"))
-  let none = @rabbita.render_to_string(
+  let none = render_test_dom(
     @rabbita.static_cell(render_desk_details(dispatch, base)),
   )
   assert_false(none.contains("Open in Wiki"))

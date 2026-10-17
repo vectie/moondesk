@@ -123,7 +123,6 @@ test "Pack Home keeps legacy catalog records without an app area" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Pack Home exposes a complete generic app area" {
   let record = {
     ..pack_home_test_record("configured"),
@@ -135,9 +134,7 @@ test "Pack Home exposes a complete generic app area" {
   assert_eq(pack_area_value(record.area_id), "finance.research")
   assert_eq(pack_area_value(record.area_category), "finance")
   assert_eq(pack_area_value(record.area_label), "Finance")
-  let markup = @rabbita.render_to_string(
-    @rabbita.static_cell(render_pack_area(record)),
-  )
+  let markup = render_test_dom(@rabbita.static_cell(render_pack_area(record)))
   assert_true(markup.contains(">Finance</span>"))
   assert_true(markup.contains("data-area-id=\"finance.research\""))
   assert_true(markup.contains("data-area-category=\"finance\""))
@@ -156,16 +153,15 @@ test "Pack Home distinguishes installed state from runtime readiness" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Pack Home exposes common lifecycle without absorbing domain rules" {
-  let pack_markup = @rabbita.render_to_string(
+  let pack_markup = render_test_dom(
     @rabbita.static_cell(
       render_pack_bridge_status(pack_home_test_record("configured")),
     ),
   )
   assert_true(pack_markup.contains("Town bridge ready"))
   assert_true(pack_markup.contains("data-bridge-ready=\"true\""))
-  let studio_markup = @rabbita.render_to_string(
+  let studio_markup = render_test_dom(
     @rabbita.static_cell(render_pack_studio()),
   )
   assert_true(studio_markup.contains("Pack Studio"))
@@ -195,7 +191,6 @@ test "Pack Home catalog result becomes the visible product list" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Packs contains applications and templates without duplicating MoonBooks" {
   let model = {
     ..init_model(),
@@ -214,7 +209,7 @@ test "Packs contains applications and templates without duplicating MoonBooks" {
       ),
     ],
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_pack_home(code_mode_test_dispatch, model)),
   )
   assert_true(markup.contains("Applications"))
@@ -226,16 +221,15 @@ test "Packs contains applications and templates without duplicating MoonBooks" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Packs icon launches preserve destinations and unavailable app behavior" {
-  let available = @rabbita.render_to_string(
+  let available = render_test_dom(
     @rabbita.static_cell(
       render_pack_primary_action(pack_home_test_record("configured")),
     ),
   )
   assert_true(available.contains("href=\"/pack-apps/sample/\""))
   assert_true(available.contains("aria-label=\"Open Sample Pack\""))
-  let unavailable = @rabbita.render_to_string(
+  let unavailable = render_test_dom(
     @rabbita.static_cell(
       render_pack_primary_action(pack_home_test_record("workflow_only")),
     ),
@@ -246,7 +240,6 @@ test "Packs icon launches preserve destinations and unavailable app behavior" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "template launch preserves safe default context and states the owner boundary" {
   let pack = {
     ..pack_home_test_record("configured"),
@@ -257,7 +250,7 @@ test "template launch preserves safe default context and states the owner bounda
     template_launch_url(pack, template),
     "/pack-apps/sample/?seed=20260727&template=sample-template&template_version=1.0.0&template_catalog=sample.templates&template_catalog_version=1.0.0&template_catalog_digest=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb&template_source_digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   )
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(render_template_card(pack, template)),
   )
   assert_true(markup.contains("Review in Sample Pack"))
@@ -266,7 +259,6 @@ test "template launch preserves safe default context and states the owner bounda
 }
 
 ///|
-#warnings("-alert_unstable")
 test "collaboration surface is honest and read only before a typed adapter publishes records" {
   let model = {
     ..init_model(),
@@ -275,7 +267,7 @@ test "collaboration surface is honest and read only before a typed adapter publi
     collaboration_message: "Collaboration has not been initialized for this MoonBook",
     collaboration_next_action: "initialize_in_moonflow",
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_collaboration_surface(code_mode_test_dispatch, model),
     ),
@@ -290,4 +282,34 @@ test "collaboration surface is honest and read only before a typed adapter publi
     markup.contains("data-handover-contract=\"moonsuite.handover-control.v1\""),
   )
   assert_true(markup.contains("data-testid=\"collaboration-open-moonflow\""))
+}
+
+///|
+test "Packs inspector opens and dismisses the documented collaboration surface" {
+  let base = { ..init_model(), workspace_mode: PackHome, }
+  let (_, opened) = update(
+    code_mode_test_dispatch,
+    SetPackInspection(Some(Collaboration)),
+    base,
+  )
+  assert_true(opened.pack_inspection == Some(Collaboration))
+  let markup = render_test_dom(
+    @rabbita.static_cell(render_app(code_mode_test_dispatch, opened)),
+  )
+  assert_true(markup.contains("aria-label=\"Collaboration\""))
+  assert_true(markup.contains("aria-controls=\"pack-inspector\""))
+  assert_true(markup.contains("aria-expanded=\"true\""))
+  assert_true(markup.contains("data-testid=\"collaboration-surface\""))
+  assert_true(markup.contains("Read only in MoonDesk"))
+  let (_, dismissed) = update(
+    code_mode_test_dispatch,
+    SetPackInspection(None),
+    opened,
+  )
+  assert_true(dismissed.pack_inspection == None)
+  assert_false(
+    render_test_dom(
+      @rabbita.static_cell(render_app(code_mode_test_dispatch, dismissed)),
+    ).contains("data-testid=\"collaboration-surface\""),
+  )
 }

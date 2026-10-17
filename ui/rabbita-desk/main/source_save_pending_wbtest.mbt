@@ -276,14 +276,13 @@ extern "js" fn source_save_disabled_label(
   #| (markup, label) => [...markup.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].some(([, attrs, text]) => text === label && /\bdisabled(?:=|\s|$)/.test(attrs))
 
 ///|
-#warnings("-alert_unstable")
 test "pending source replacement disables the existing conflict controls" {
   let conflict = {
     ..source_save_test_state(),
     server_content: Some("external edit"),
   }
   let replacing = update_source_pane(conflict, ReplaceServer)
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_source_editor(code_mode_test_dispatch, replacing),
     ),

@@ -454,7 +454,6 @@ test "submit uncertain retry and conflict retain draft while exact verified acce
 }
 
 ///|
-#warnings("-alert_unstable")
 test "draft composer exposes saved unsaved restored and discard status without automatic action" {
   let previous = continuation_desk_storage_setup()
   let model = continuation_draft_type(
@@ -463,7 +462,7 @@ test "draft composer exposes saved unsaved restored and discard status without a
   )
   for status in ["saved", "restored", "storage_failed", "invalid"] {
     let state = { ..model.work_handoff.continuation, draft_status: status, }
-    let html = @rabbita.render_to_string(
+    let html = render_test_dom(
       @rabbita.static_cell(
         render_work_continuation(
           code_mode_test_dispatch,

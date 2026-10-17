@@ -86,10 +86,9 @@ test "revision comparison bounds exact and coarse rows without mutating text" {
 }
 
 ///|
-#warnings("-alert_unstable")
 fn revision_comparison_test_html(model : Model) -> String {
   let state = model.work_handoff
-  @rabbita.render_to_string(
+  render_test_dom(
     @rabbita.static_cell(
       render_work_human_revision(
         code_mode_test_dispatch,
@@ -102,11 +101,10 @@ fn revision_comparison_test_html(model : Model) -> String {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "revision comparison has keyboard disclosure escaped bounded text and full downloads" {
   let before = "<script>alert('before')</script>\r\n"
   let after = "<img src=x onerror=evil()> & 😀\n"
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(
       render_work_human_revision_comparison(
         before, after, "Review my changes", "file when editing began", "my draft",
@@ -131,7 +129,7 @@ test "revision comparison has keyboard disclosure escaped bounded text and full 
     ),
   )
   assert_true(html.contains(work_human_revision_download_url(after)))
-  let bounded = @rabbita.render_to_string(
+  let bounded = render_test_dom(
     @rabbita.static_cell(
       render_work_human_revision_comparison(
         Array::make(1000, "old\n").join(""),

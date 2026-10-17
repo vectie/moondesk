@@ -57,10 +57,9 @@ fn office_view_test_dispatch(_msg : Msg) -> @rabbita.Cmd {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Office editor renders honest live previews for every supported kind" {
   let item = office_test_item("section", "item", 0, 0)
-  let docx = @rabbita.render_to_string(
+  let docx = render_test_dom(
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficeDocx, item),
@@ -68,7 +67,7 @@ test "Office editor renders honest live previews for every supported kind" {
       }),
     ),
   )
-  let xlsx = @rabbita.render_to_string(
+  let xlsx = render_test_dom(
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficeXlsx, item),
@@ -76,7 +75,7 @@ test "Office editor renders honest live previews for every supported kind" {
       }),
     ),
   )
-  let pptx = @rabbita.render_to_string(
+  let pptx = render_test_dom(
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..office_test_state(OfficePptx, item),
@@ -97,7 +96,6 @@ test "Office editor renders honest live previews for every supported kind" {
 }
 
 ///|
-#warnings("-alert_unstable")
 test "Office preview renders every supported item and selected geometry" {
   let first = {
     ..office_test_item("paragraph 0", "run 0", 0, 0),
@@ -116,7 +114,7 @@ test "Office preview renders every supported item and selected geometry" {
     Some(document) => { ..document, items: [first, second], }
     None => fail("office test document missing")
   }
-  let markup = @rabbita.render_to_string(
+  let markup = render_test_dom(
     @rabbita.static_cell(
       render_office_editor(office_view_test_dispatch, {
         ..initial,
