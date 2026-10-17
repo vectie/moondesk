@@ -42,7 +42,7 @@ struct AgentPassportRecord {
 ///|
 pub impl FromJson for AgentPassportRecord with fn from_json(json, path) {
   guard json is Object(_) else {
-    raise @json.JsonDecodeError(
+    raise JsonDecodeError(
       (path, "Expected object to deserialize AgentPassportRecord"),
     )
   }
@@ -77,7 +77,7 @@ struct SpecialistAgentCatalog {
 ///|
 pub impl FromJson for SpecialistAgentCatalog with fn from_json(json, path) {
   guard json is Object(_) else {
-    raise @json.JsonDecodeError(
+    raise JsonDecodeError(
       (path, "Expected object to deserialize SpecialistAgentCatalog"),
     )
   }
