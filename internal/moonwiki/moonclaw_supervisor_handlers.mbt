@@ -27,7 +27,7 @@ fn moonclaw_supervisor_command_allowed(action : String) -> Bool {
 ///|
 fn moonclaw_supervisor_query_integer_allowed(
   value : String,
-  max_length : Int,
+  max_length : Int32,
 ) -> Bool {
   if value == "" || value.length() > max_length {
     return false

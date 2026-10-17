@@ -4,8 +4,8 @@ async fn collect_search_hits(
   relative : String,
   query_lower : String,
   hits : Array[Json],
-  depth : Int,
-  limit : Int,
+  depth : Int32,
+  limit : Int32,
   mode : String,
 ) -> Unit {
   if hits.length() >= limit || depth > 6 {

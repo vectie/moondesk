@@ -2,8 +2,8 @@
 fn office_test_item(
   section : String,
   reference : String,
-  section_index : Int,
-  item_index : Int,
+  section_index : Int32,
+  item_index : Int32,
 ) -> OfficeEditorItem {
   {
     section,

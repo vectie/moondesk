@@ -19,7 +19,7 @@ fn github_checkout_request_valid(payload : Json, repository : String) -> Bool {
 fn github_checkout_live_pull_valid(
   pull : Json,
   repository : String,
-  number : Int,
+  number : Int32,
   head_oid : String,
 ) -> Bool {
   let base = json_object_field_or_empty(pull, "base")
@@ -32,7 +32,7 @@ fn github_checkout_live_pull_valid(
 }
 
 ///|
-fn github_checkout_folder_name(number : Int, head_oid : String) -> String {
+fn github_checkout_folder_name(number : Int32, head_oid : String) -> String {
   "code-pr-\{number}-" + head_oid[:8].to_owned()
 }
 
@@ -73,9 +73,9 @@ async fn github_checkout_worktree_response(
   suite_root : String,
   target : String,
   repository : String,
-  number : Int,
+  number : Int32,
   head_oid : String,
-) -> Result[Json, (Int, String)] {
+) -> Result[Json, (Int32, String)] {
   for workspace in discover_workspaces(suite_root) {
     if workspace.root_path == target {
       return Ok({
@@ -118,7 +118,7 @@ async fn github_checkout_pull_worktree(
   suite_root : String,
   book_root : String,
   payload : Json,
-) -> Result[Json, (Int, String)] {
+) -> Result[Json, (Int32, String)] {
   let repository = match github_repository_for_workspace(book_root) {
     Some(value) => value
     None => return Err((409, "This MoonBook has no GitHub remote"))

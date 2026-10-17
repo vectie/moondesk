@@ -224,8 +224,8 @@ fn flow_canvas_wheel_action(
 ///|
 fn flow_pan_start_action(
   model : Model,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> (@rabbita.Cmd, Model) {
   if model.flow_canvas.drag_node_id != "" {
     // A node drag already claimed this pointer; do not also start a pan.
@@ -248,8 +248,8 @@ fn flow_pan_start_action(
 ///|
 fn flow_pointer_move_action(
   model : Model,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> (@rabbita.Cmd, Model) {
   let next_x = x.to_double()
   let next_y = y.to_double()
@@ -332,8 +332,8 @@ fn flow_pointer_end_action(model : Model) -> (@rabbita.Cmd, Model) {
 fn flow_node_drag_start_action(
   model : Model,
   item_id : String,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> (@rabbita.Cmd, Model) {
   (
     @rabbita.none,

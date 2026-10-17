@@ -35,7 +35,7 @@ struct GitReviewRecord {
   action : String
   hunk : String
   side : String?
-  line : Int?
+  line : Int32?
   note : String
 } derive(FromJson)
 
@@ -47,7 +47,7 @@ struct GitReviewProjection {
   diff_state : String
   records : Array[GitReviewRecord]
   stale_records : Array[GitReviewRecord]
-  stale_count : Int
+  stale_count : Int32
 } derive(FromJson)
 
 ///|
@@ -60,10 +60,10 @@ struct GitReviewFileProgress {
 struct GitReviewProgress {
   state : String
   head : String
-  total : Int
-  reviewed : Int
-  needs_changes : Int
-  pending : Int
+  total : Int32
+  reviewed : Int32
+  needs_changes : Int32
+  pending : Int32
   truncated : Bool
   files : Array[GitReviewFileProgress]
 } derive(FromJson)
@@ -72,7 +72,7 @@ struct GitReviewProgress {
 fn fetch_git_review_progress_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
-  generation : Int,
+  generation : Int32,
   head : String,
 ) -> @rabbita.Cmd {
   let url = @desk.desktop_api_url([
@@ -99,14 +99,14 @@ struct GitHubCheckProjection {
 
 ///|
 struct GitHubIssueProjection {
-  number : Int
+  number : Int32
   title : String
   url : String
 } derive(FromJson)
 
 ///|
 struct GitHubPullProjection {
-  number : Int
+  number : Int32
   title : String
   url : String
   head_oid : String
@@ -131,7 +131,7 @@ struct GitHubContextProjection {
 
 ///|
 struct GitHubCommentDraftProjection {
-  number : Int
+  number : Int32
   head_oid : String
   body : String
 } derive(FromJson)
@@ -163,8 +163,8 @@ struct GitHubInlineFileProjection {
   path : String
   previous_path : String
   status : String
-  additions : Int
-  deletions : Int
+  additions : Int32
+  deletions : Int32
   patch : String
   digest : String
   commentable : Bool
@@ -174,7 +174,7 @@ struct GitHubInlineFileProjection {
 struct GitHubInlineReviewProjection {
   state : String
   repository : String
-  number : Int
+  number : Int32
   branch : String
   head_oid : String
   base_oid : String
@@ -186,14 +186,14 @@ struct GitHubInlineReviewProjection {
 
 ///|
 struct GitHubInlineDraftProjection {
-  number : Int
+  number : Int32
   head_oid : String
   base_oid : String
   path : String
   digest : String
   hunk : String
   side : String
-  line : Int
+  line : Int32
   body : String
 } derive(FromJson)
 
@@ -285,7 +285,7 @@ fn decode_github_inline_review(
 fn fetch_github_inline_review_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
-  number : Int,
+  number : Int32,
   head : String,
 ) -> @rabbita.Cmd {
   let url = @desk.desktop_api_url(
@@ -319,7 +319,7 @@ fn publish_github_inline_comment_cmd(
   file : GitHubInlineFileProjection,
   hunk : String,
   side : String,
-  line : Int,
+  line : Int32,
   body : String,
 ) -> @rabbita.Cmd {
   let payload : Json = {
@@ -373,7 +373,7 @@ fn publish_github_comment_cmd(
   workspace_id : String,
   repository : String,
   branch : String,
-  number : Int,
+  number : Int32,
   head : String,
   body : String,
 ) -> @rabbita.Cmd {
@@ -411,7 +411,7 @@ fn save_github_comment_draft_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   repository : String,
-  number : Int,
+  number : Int32,
   head : String,
   body : String,
   discard : Bool,
@@ -483,7 +483,7 @@ fn save_git_review_cmd(
   note : String,
   hunk : String,
   side : String,
-  line : Int,
+  line : Int32,
 ) -> @rabbita.Cmd {
   let payload : Json = {
     "path": diff.path,
@@ -539,7 +539,7 @@ fn git_review_save_ack(
 }
 
 ///|
-fn git_diff_hunk_start(header : String, side : String) -> Int {
+fn git_diff_hunk_start(header : String, side : String) -> Int32 {
   let parts = header.split(" ").to_array()
   if parts.length() < 3 || parts[0] != "@@" {
     return 0
@@ -618,7 +618,7 @@ fn fetch_git_diff_cmd(
 fn fetch_git_repository_projection_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
-  generation : Int,
+  generation : Int32,
 ) -> @rabbita.Cmd {
   if workspace_id == "" {
     return @rabbita.none

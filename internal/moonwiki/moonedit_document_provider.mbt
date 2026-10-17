@@ -1,21 +1,21 @@
 ///|
 /// Initial MoonEdit document limit: 4 MiB of UTF-8 bytes.
 /// DEL (U+007F) is rejected along with C0 controls other than TAB/LF/CR.
-let moonedit_max_document_bytes : Int = 4 * 1024 * 1024
+let moonedit_max_document_bytes : Int32 = 4 * 1024 * 1024
 
 ///|
 #warnings("-unused_field")
 priv enum MoonEditDocumentError {
-  Oversized(Int, Int)
+  Oversized(Int32, Int32)
   InvalidUtf8
-  BinaryControl(Int)
+  BinaryControl(Int32)
 }
 
 ///|
 #warnings("-unused_field")
 priv struct MoonEditDocument {
   text : String
-  byte_size : Int
+  byte_size : Int32
   revision : String
 }
 

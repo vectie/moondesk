@@ -1,8 +1,8 @@
 ///|
 fn work_continuation_post(
   dispatch : Dispatch[Msg],
-  generation : Int,
-  request : Int,
+  generation : Int32,
+  request : Int32,
   id : String,
   body : Json,
 ) -> @rabbita.Cmd {

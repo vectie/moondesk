@@ -2,8 +2,8 @@
 fn typed_wb_evidence(
   command_id : String,
   kind : EvidenceKind,
-  state? : EvidenceState = Recorded,
-  exit_code? : Int = -1,
+  state~ : EvidenceState = Recorded,
+  exit_code~ : Int32 = -1,
 ) -> MoonCodeEvidence {
   {
     item_id: command_id + ":evidence",

@@ -85,10 +85,10 @@ struct WikiChatStreamEnvelope {
 } derive(FromJson)
 
 ///|
-const WikiChatStreamStartPollDelayMs : Int = 100
+const WikiChatStreamStartPollDelayMs : Int32 = 100
 
 ///|
-const WikiChatStreamPollDelayMs : Int = 200
+const WikiChatStreamPollDelayMs : Int32 = 200
 
 ///|
 fn start_wiki_chat_stream_cmd(

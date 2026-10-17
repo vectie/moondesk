@@ -31,7 +31,7 @@ async fn handle_launch_agent(
 ///|
 async fn install_launch_agent(
   root : String,
-  plist_path_override? : String = "",
+  plist_path_override~ : String = "",
 ) -> Json {
   let descriptor = town_service_descriptor(root, "daemon")
   if json_bool(descriptor, "legacy_execution_rejected", default=false) {
@@ -129,7 +129,7 @@ async fn uninstall_launch_agent(root : String) -> Json {
 async fn launch_agent_record(
   root : String,
   action~ : String,
-  exit_code~ : Int,
+  exit_code~ : Int32,
   message~ : String,
 ) -> Json {
   let descriptor = town_service_descriptor(root, "daemon")

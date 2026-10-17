@@ -27,7 +27,7 @@ pub fn extension(path : StringView) -> String {
 ///|
 pub fn infer_entry_kind(
   path : StringView,
-  is_directory? : Bool = false,
+  is_directory~ : Bool = false,
 ) -> EntryKind {
   if is_directory {
     Directory

@@ -1,9 +1,9 @@
 ///|
 fn mooncode_continuation_error(
-  status : Int,
+  status : Int32,
   state : String,
   message : String,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   (
     status,
     {
@@ -185,7 +185,7 @@ async fn mooncode_continue_work(
   read : async (String) -> Result[Json, String],
   post : async (String, String) -> Result[Json, String],
   ready : async () -> Bool,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   let operation = json_string(request, "operation", default="")
   let id = json_string(request, "continuation_id", default="")
   let target = mooncode_continuation_request_target(request)

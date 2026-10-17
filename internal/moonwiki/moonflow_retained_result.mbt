@@ -57,8 +57,8 @@ extern "c" fn moonflow_retained_read_native(
   root : Bytes,
   relative : Bytes,
   output : FixedArray[Byte],
-  capacity : Int,
-) -> Int = "moonbit_moondesk_retained_read"
+  capacity : Int32,
+) -> Int32 = "moonbit_moondesk_retained_read"
 
 ///|
 fn moonflow_retained_same(

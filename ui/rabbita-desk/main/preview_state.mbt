@@ -14,7 +14,7 @@ fn preview_response_is_current(
   model : Model,
   workspace_id : String,
   path : String,
-  generation : Int,
+  generation : Int32,
 ) -> Bool {
   workspace_id == model.preview_request_workspace_id &&
   path == model.preview_request_path &&

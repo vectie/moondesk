@@ -2,13 +2,13 @@
 const DocumentConversationContract : String = "moondesk.document_conversation.v1"
 
 ///|
-const DocumentConversationMaxRecords : Int = 256
+const DocumentConversationMaxRecords : Int32 = 256
 
 ///|
-const DocumentConversationMaxEntries : Int = 240
+const DocumentConversationMaxEntries : Int32 = 240
 
 ///|
-const DocumentConversationMaxEntryChars : Int = 240_000
+const DocumentConversationMaxEntryChars : Int32 = 240_000
 
 ///|
 let document_conversation_write_mutex : @async.Mutex = Mutex()

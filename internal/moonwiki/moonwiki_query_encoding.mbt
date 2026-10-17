@@ -43,7 +43,7 @@ fn append_percent_encoded_char(pieces : Array[String], ch : Char) -> Unit {
 }
 
 ///|
-fn percent_encoded_byte(value : Int) -> String {
+fn percent_encoded_byte(value : Int32) -> String {
   let digits = "0123456789ABCDEF"
   "%" +
   digits[value / 16:value / 16 + 1].to_owned() +

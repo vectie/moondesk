@@ -3,7 +3,7 @@
 priv enum MoonCodeCapabilityState {
   CapabilityPending
   CapabilitySupported(@mooncode_core.MoonCodeCapability)
-  CapabilityUnsupportedVersion(Int)
+  CapabilityUnsupportedVersion(Int32)
   CapabilityMalformed(String)
   CapabilityUnavailable(String)
 }

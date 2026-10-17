@@ -18,7 +18,7 @@ fn mooncode_continuation_item(
   target : MoonCodeWorkTarget,
   workspace : @desk.DeskWorkspace,
   claims : Json,
-) -> Result[Json?, (Int, Json)] {
+) -> Result[Json?, (Int32, Json)] {
   let result = mooncode_work_command_projection(target, workspace, claims)
   if result.0 == 404 &&
     json_string(result.1, "state", default="") == "command_not_found" {
@@ -241,7 +241,7 @@ fn mooncode_continuation_response(
   item : Json?,
   events : Json,
   admission : String,
-  message? : String = "",
+  message~ : String = "",
 ) -> Json {
   let result = match item {
     Some(value) => mooncode_continuation_result(value, events)

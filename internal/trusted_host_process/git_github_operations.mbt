@@ -13,7 +13,7 @@ pub struct GitReadOperation {
 pub struct GitHubOperation {
   args : Array[String]
   valid : Bool
-  timeout_ms : Int
+  timeout_ms : Int32
 }
 
 ///|
@@ -52,7 +52,7 @@ fn safe_git_oid(value : String) -> Bool {
 }
 
 ///|
-fn safe_pr_number(number : Int) -> Bool {
+fn safe_pr_number(number : Int32) -> Bool {
   number > 0 && number <= 1_000_000_000
 }
 
@@ -116,7 +116,7 @@ pub fn git_common_dir() -> GitReadOperation {
 }
 
 ///|
-pub fn git_pr_ref(number : Int, head : String) -> GitReadOperation {
+pub fn git_pr_ref(number : Int32, head : String) -> GitReadOperation {
   {
     args: ["rev-parse", "--verify", "refs/moondesk/pr/\{number}/\{head}"],
     valid: safe_pr_number(number) && safe_git_oid(head),
@@ -230,7 +230,7 @@ pub async fn git_read(
 pub async fn git_fetch_pr(
   root : String,
   remote : String,
-  number : Int,
+  number : Int32,
   head : String,
 ) -> Bool {
   if !safe_absolute_path(root) ||
@@ -316,7 +316,7 @@ pub fn github_list_pulls(repository : String) -> GitHubOperation {
 }
 
 ///|
-pub fn github_get_pull(repository : String, number : Int) -> GitHubOperation {
+pub fn github_get_pull(repository : String, number : Int32) -> GitHubOperation {
   {
     args: ["api", "repos/\{repository}/pulls/\{number}"],
     valid: safe_github_repository(repository) && safe_pr_number(number),
@@ -327,8 +327,8 @@ pub fn github_get_pull(repository : String, number : Int) -> GitHubOperation {
 ///|
 pub fn github_get_pull_files(
   repository : String,
-  number : Int,
-  page : Int,
+  number : Int32,
+  page : Int32,
 ) -> GitHubOperation {
   {
     args: [
@@ -346,7 +346,7 @@ pub fn github_get_pull_files(
 ///|
 pub fn github_post_pr_comment(
   repository : String,
-  number : Int,
+  number : Int32,
   body : String,
 ) -> GitHubOperation {
   {
@@ -368,11 +368,11 @@ pub fn github_post_pr_comment(
 ///|
 pub fn github_post_pr_line(
   repository : String,
-  number : Int,
+  number : Int32,
   head : String,
   path : String,
   side : String,
-  line : Int,
+  line : Int32,
   body : String,
 ) -> GitHubOperation {
   {

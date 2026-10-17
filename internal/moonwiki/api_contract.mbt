@@ -4,7 +4,7 @@ fn api_contract_response(
   ok~ : Bool,
   status~ : String,
   message~ : String,
-  next_action? : String = "",
+  next_action~ : String = "",
 ) -> Json {
   let with_ok = @mooncore.session_with_field(payload, "ok", ok.to_json())
   let with_status = @mooncore.session_with_field(
@@ -38,8 +38,8 @@ fn api_service_fields(
   payload : Json,
   service_configured~ : Bool,
   service_config_path~ : String,
-  service_command? : String = "",
-  service_path? : String = "",
+  service_command~ : String = "",
+  service_path~ : String = "",
 ) -> Json {
   let next = @mooncore.session_with_field(
     payload,

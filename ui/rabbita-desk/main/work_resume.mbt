@@ -170,7 +170,10 @@ fn work_resume_capture(
   }
   let entries = [entry] +
     latest.entries.filter(old => handoff_text(old, "query") != query)
-  work_resume_save(latest, entries[:Int::min(entries.length(), 12)].to_owned())
+  work_resume_save(
+    latest,
+    entries[:Int32::min(entries.length(), 12)].to_owned(),
+  )
 }
 
 ///|
@@ -244,7 +247,7 @@ fn forget_resumable_work(
 }
 
 ///|
-fn work_resume_read_identity(query : String, generation : Int) -> String {
+fn work_resume_read_identity(query : String, generation : Int32) -> String {
   query + "\n" + generation.to_string()
 }
 
@@ -272,7 +275,7 @@ fn work_resume_make_query(
 
 ///|
 #cfg(target="js")
-extern "js" fn work_resume_label(value : String, limit : Int) -> String =
+extern "js" fn work_resume_label(value : String, limit : Int32) -> String =
   #| (value, limit) => value.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, limit)
 
 ///|

@@ -10,7 +10,7 @@ struct MoonCodeBrowserWatchEnvelope {
 #cfg(target="js")
 extern "js" fn browser_watch_mooncode_session(
   url : String,
-  generation : Int,
+  generation : Int32,
   session_id : String,
 ) -> @js.Promise =
   #| async (url, generation, sessionId) => {
@@ -122,7 +122,7 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
 ///|
 fn mooncode_watch_is_current(
   model : Model,
-  generation : Int,
+  generation : Int32,
   session_id : String,
 ) -> Bool {
   model.workspace_mode == MoonCode &&
@@ -139,9 +139,9 @@ fn stop_mooncode_watch_cmd() -> @rabbita.Cmd {
 ///|
 fn schedule_mooncode_watch_resume(
   dispatch : Dispatch[Msg],
-  generation : Int,
+  generation : Int32,
   session_id : String,
-  after_ms : Int,
+  after_ms : Int32,
 ) -> @rabbita.Cmd {
   @rabbita.delay(
     dispatch(ResumeMoonCodeWatch(generation, session_id)),

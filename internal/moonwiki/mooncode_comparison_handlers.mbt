@@ -2,10 +2,10 @@
 const MoonCodeComparisonContract : String = "moondesk.mooncode_comparison.v1"
 
 ///|
-const MoonCodeComparisonMaxRecords : Int = 128
+const MoonCodeComparisonMaxRecords : Int32 = 128
 
 ///|
-const MoonCodeComparisonMaxGoalChars : Int = 16_384
+const MoonCodeComparisonMaxGoalChars : Int32 = 16_384
 
 ///|
 let mooncode_comparison_write_mutex : @async.Mutex = Mutex()

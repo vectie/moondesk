@@ -94,7 +94,7 @@ pub async fn write_confined_text(
   root : StringView,
   relative : StringView,
   content : StringView,
-  create? : Int = 0o644,
+  create~ : Int32 = 0o644,
 ) -> Bool {
   match resolve_confined_write(root, relative) {
     Some(path) => {

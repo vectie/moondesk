@@ -14,7 +14,7 @@ pub(all) struct MoonCodeCapability {
 ///|
 pub(all) enum MoonCodeFailure {
   Absent
-  UnsupportedVersion(Int)
+  UnsupportedVersion(Int32)
   UnsupportedProtocol(String)
   UnsupportedContract(String)
   Stale(revision~ : String, current_revision~ : String)
@@ -91,7 +91,7 @@ fn capability_string_field(value : Json, field : String) -> String? {
 }
 
 ///|
-fn explicit_contract_version(value : String, prefix : String) -> Int? {
+fn explicit_contract_version(value : String, prefix : String) -> Int32? {
   guard value.has_prefix(prefix) else { return None }
   try @string.parse_int(value[prefix.length():].to_owned()) catch {
     _ => None

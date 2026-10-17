@@ -119,7 +119,7 @@ fn mooncode_metadata_refresh_effects() -> Array[MoonCodeSessionEffect] {
 fn mooncode_metadata_refresh_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
-  _generation : Int,
+  _generation : Int32,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
     dispatch,

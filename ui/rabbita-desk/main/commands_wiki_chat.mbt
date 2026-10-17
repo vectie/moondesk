@@ -44,7 +44,7 @@ fn submit_wiki_chat_cmd(
 /// copies or imports bytes into the book.
 fn wiki_chat_file_search_cmd(
   dispatch : Dispatch[Msg],
-  generation : Int,
+  generation : Int32,
   query : String,
   workspace_id : String,
 ) -> @rabbita.Cmd {

@@ -497,9 +497,9 @@ test "capability status projection is exact" {
 fn requests_capability_test_lifecycle(
   running : Bool,
   configured : Bool,
-  ok? : Bool = true,
-  platform_supported? : Bool? = None,
-  installed? : Bool? = None,
+  ok~ : Bool = true,
+  platform_supported~ : Bool? = None,
+  installed~ : Bool? = None,
   configuration_valid? : Bool,
 ) -> DaemonLifecycleResult {
   {

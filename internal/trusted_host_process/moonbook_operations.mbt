@@ -28,22 +28,22 @@ pub(all) enum MoonBookExportOperation {
 ///|
 priv struct MoonBookExecutableStamp {
   size : Int64
-  modified : (Int64, Int)
-  changed : (Int64, Int)
+  modified : (Int64, Int32)
+  changed : (Int64, Int32)
 } derive(Eq)
 
 ///|
 priv struct MoonBookCapturedOutput {
-  status : Int
+  status : Int32
   stdout : Bytes
   stderr : Bytes
 }
 
 ///|
-let moonbook_metadata_limit_bytes : Int = 8 * 1024 * 1024
+let moonbook_metadata_limit_bytes : Int32 = 8 * 1024 * 1024
 
 ///|
-let moonbook_error_limit_bytes : Int = 64 * 1024
+let moonbook_error_limit_bytes : Int32 = 64 * 1024
 
 ///|
 let moonbook_pack_timeout_ms = 120_000
@@ -225,7 +225,7 @@ async fn moonbook_executable_stamp(
 /// extra byte read to distinguish exact-limit EOF from overflow.
 async fn moonbook_read_bounded(
   reader : &@io.Reader,
-  limit : Int,
+  limit : Int32,
 ) -> Result[Bytes, String] {
   let output = @buffer.Buffer(size_hint=limit.min(8192))
   for ;; {
@@ -250,9 +250,9 @@ async fn moonbook_capture(
   executable : String,
   args : Array[String],
   cwd : String,
-  timeout_ms : Int,
-  stdout_limit : Int,
-  may_run? : () -> Bool = () => true,
+  timeout_ms : Int32,
+  stdout_limit : Int32,
+  may_run~ : () -> Bool = () => true,
 ) -> Result[MoonBookCapturedOutput, String] {
   @async.with_timeout(timeout_ms, () => {
     @async.with_task_group() <| group => {
@@ -317,7 +317,7 @@ async fn moonbook_capture(
 }
 
 ///|
-fn moonbook_compatible_help(status : Int, help : String) -> Bool {
+fn moonbook_compatible_help(status : Int32, help : String) -> Bool {
   status == 2 &&
   help
   .split("\n")
@@ -331,7 +331,7 @@ fn moonbook_compatible_help(status : Int, help : String) -> Bool {
 }
 
 ///|
-fn moonbook_compatible_import_help(status : Int, help : String) -> Bool {
+fn moonbook_compatible_import_help(status : Int32, help : String) -> Bool {
   moonbook_compatible_help(status, help) &&
   help
   .split("\n")
@@ -344,7 +344,7 @@ fn moonbook_compatible_import_help(status : Int, help : String) -> Bool {
 }
 
 ///|
-fn moonbook_compatible_exact_import_help(status : Int, help : String) -> Bool {
+fn moonbook_compatible_exact_import_help(status : Int32, help : String) -> Bool {
   moonbook_compatible_import_help(status, help) &&
   help
   .split("\n")
@@ -356,7 +356,7 @@ fn moonbook_compatible_exact_import_help(status : Int, help : String) -> Bool {
 
 ///|
 pub async fn moonbook_import_runtime(
-  exact? : Bool = false,
+  exact~ : Bool = false,
 ) -> Result[MoonBookExportRuntime, String] {
   match moonbook_resolve_runtime(true) {
     Ok(runtime) if exact && !runtime.supports_exact_import =>
@@ -496,7 +496,7 @@ pub async fn MoonBookExportRuntime::run(
   self : MoonBookExportRuntime,
   root : String,
   operation : MoonBookExportOperation,
-  may_run? : () -> Bool = () => true,
+  may_run~ : () -> Bool = () => true,
 ) -> Result[String, String] {
   if (operation is Import(..) || operation is VerifyImport(..)) &&
     !self.supports_import {

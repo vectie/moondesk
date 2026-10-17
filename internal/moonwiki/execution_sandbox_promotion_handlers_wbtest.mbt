@@ -21,7 +21,7 @@ fn sandbox_promotion_test_payload(
   uncertain_paths : Array[String],
   recovery_required : Bool,
   error_code : String,
-  bound_evidence? : Bool = true,
+  bound_evidence~ : Bool = true,
 ) -> Json {
   {
     "protocol_version": 1,

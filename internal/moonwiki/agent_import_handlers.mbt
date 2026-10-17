@@ -2,7 +2,7 @@
 fn agent_import_runtime_runner(
   runtime : @trusted_host.MoonBookExportRuntime,
   root : String,
-  is_current? : () -> Bool = () => true,
+  is_current~ : () -> Bool = () => true,
 ) -> AgentExportRun {
   (command, args) => {
     let operation = match (command, args) {
@@ -26,7 +26,7 @@ fn agent_import_runtime_runner(
 }
 
 ///|
-async fn agent_import_read_body(body : &@io.Reader, limit : Int) -> Json? {
+async fn agent_import_read_body(body : &@io.Reader, limit : Int32) -> Json? {
   let bytes = @buffer.Buffer(size_hint=8192)
   while body.read_some(max_len=(limit + 1 - bytes.length()).min(65536))
         is Some(chunk) {

@@ -63,7 +63,7 @@ fn is_safe_pack_app_area_label(label : String) -> Bool {
 }
 
 ///|
-fn is_safe_pack_presentation_text(value : String, max_length : Int) -> Bool {
+fn is_safe_pack_presentation_text(value : String, max_length : Int32) -> Bool {
   let text = value.trim().to_owned()
   if text == "" || text.length() > max_length {
     return false
@@ -998,7 +998,7 @@ fn pack_app_proxy_query_suffix(request_path : String) -> String? {
 }
 
 ///|
-const PackAppProxyMaximumBodyBytes : Int = 20 * 1024 * 1024
+const PackAppProxyMaximumBodyBytes : Int32 = 20 * 1024 * 1024
 
 ///|
 fn pack_app_proxy_binary_body(content_type : String) -> Bool {

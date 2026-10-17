@@ -16,7 +16,7 @@ fn moonflow_composition_depth(
   items : ArrayView[MoonFlowCompositionItem],
   item_id : String,
   trail : Array[String],
-) -> Int {
+) -> Int32 {
   if trail.contains(item_id) {
     return 0
   }

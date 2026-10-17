@@ -1,11 +1,11 @@
 ///|
 struct AgentPassportInventory {
-  knowledge_count : Int
-  skill_count : Int
-  schema_count : Int
-  tool_count : Int
-  app_count : Int
-  recurring_work_count : Int
+  knowledge_count : Int32
+  skill_count : Int32
+  schema_count : Int32
+  tool_count : Int32
+  app_count : Int32
+  recurring_work_count : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -104,7 +104,7 @@ fn agent_passport_projection(
 }
 
 ///|
-async fn agent_directory_item_count(root : String, child : String) -> Int {
+async fn agent_directory_item_count(root : String, child : String) -> Int32 {
   read_directory_names(@pathx.join(root, child), include_hidden=false).length()
 }
 

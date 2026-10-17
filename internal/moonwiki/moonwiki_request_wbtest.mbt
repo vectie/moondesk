@@ -1587,7 +1587,7 @@ async test "review item collection keeps only undecided proposals" {
 async fn test_http_head(
   base : String,
   path : String,
-  expected_code : Int,
+  expected_code : Int32,
 ) -> Unit {
   let client = @http.Client(base)
   defer client.close()
@@ -2480,7 +2480,7 @@ async test "desk library endpoint switches active roots and rejects source check
 ///|
 async fn test_http_get(
   url : String,
-  expected_code : Int,
+  expected_code : Int32,
 ) -> (@http.Response, String) {
   let (response, data) = @http.get(url)
   let body = data.text()
@@ -2492,7 +2492,7 @@ async fn test_http_get(
 async fn test_http_post_json(
   url : String,
   body : Json,
-  expected_code : Int,
+  expected_code : Int32,
 ) -> Json {
   let parts = url.split("/").to_array()
   let origin = parts[0].to_owned() + "//" + parts[2].to_owned()
@@ -2511,7 +2511,7 @@ async fn test_http_post_json(
 }
 
 ///|
-async fn test_http_get_json(url : String, expected_code : Int) -> Json {
+async fn test_http_get_json(url : String, expected_code : Int32) -> Json {
   let (_, body) = test_http_get(url, expected_code)
   @json.parse(body) catch {
     _ => {
@@ -2538,7 +2538,7 @@ fn find_test_entry(
 fn find_test_entry_index(
   entries : Array[@desk.DeskFileEntry],
   path : String,
-) -> Int? {
+) -> Int32? {
   for index, entry in entries {
     if entry.path == path {
       return Some(index)

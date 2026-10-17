@@ -9,17 +9,17 @@ enum OfficeEditorKind {
 struct OfficeEditorItem {
   section : String
   reference : String
-  section_index : Int
-  item_index : Int
+  section_index : Int32
+  item_index : Int32
   text : String
   formula : String
   bold : Bool
   italic : Bool
   underline : Bool
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -33,7 +33,7 @@ struct OfficeEditorDocument {
 
 ///|
 struct OfficeEditorRequestIdentity {
-  generation : Int
+  generation : Int32
   workspace_id : String
   path : String
 } derive(Eq, Debug)
@@ -43,10 +43,10 @@ struct OfficeEditorState {
   workspace_id : String
   path_input : String
   path : String
-  request_generation : Int
+  request_generation : Int32
   document : OfficeEditorDocument?
   draft_items : Array[OfficeEditorItem]
-  selected : Int
+  selected : Int32
   loading : Bool
   saving : Bool
   status : String
@@ -64,16 +64,16 @@ enum OfficeEditorMsg {
     OfficeEditorRequestIdentity,
     Result[OfficeEditorDocument, String]
   )
-  OfficeSelect(Int)
+  OfficeSelect(Int32)
   OfficeEditText(String)
   OfficeEditFormula(String)
   OfficeToggleBold
   OfficeToggleItalic
   OfficeToggleUnderline
-  OfficeEditX(Int)
-  OfficeEditY(Int)
-  OfficeEditWidth(Int)
-  OfficeEditHeight(Int)
+  OfficeEditX(Int32)
+  OfficeEditY(Int32)
+  OfficeEditWidth(Int32)
+  OfficeEditHeight(Int32)
   OfficeDiscard
   OfficeSave
   OfficeSaved(OfficeEditorRequestIdentity, Result[OfficeEditorDocument, String])

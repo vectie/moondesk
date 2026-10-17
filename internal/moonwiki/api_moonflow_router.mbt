@@ -5,7 +5,7 @@ async fn route_moonflow_api(
   method_ : @http.RequestMethod,
   body : &@io.Reader,
   conn : @http.ServerConnection,
-  cookie? : String = "",
+  cookie~ : String = "",
 ) -> Bool {
   match segments {
     [

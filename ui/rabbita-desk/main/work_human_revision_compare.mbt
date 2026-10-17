@@ -2,15 +2,15 @@
 /// A read-only projection. Comparison never changes retained source text.
 struct WorkHumanLineChange {
   kind : String
-  line : Int
+  line : Int32
   text : String
 } derive(Debug, Eq)
 
 ///|
 struct WorkHumanComparison {
   rows : Array[WorkHumanLineChange]
-  removed : Int
-  added : Int
+  removed : Int32
+  added : Int32
   coarse : Bool
 } derive(Debug, Eq)
 

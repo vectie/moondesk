@@ -96,7 +96,7 @@ enum AgentImportOperation {
 
 ///|
 struct AgentImportPending {
-  request : Int
+  request : Int32
   operation : AgentImportOperation
 } derive(Eq, Debug)
 
@@ -105,8 +105,8 @@ struct AgentImportState {
   active : Bool
   library_changing : Bool
   context : String
-  generation : Int
-  request : Int
+  generation : Int32
+  request : Int32
   session : AgentImportSession
   suspended : Array[AgentImportSession]
   pending : AgentImportPending?
@@ -119,8 +119,8 @@ enum AgentImportMsg {
   ChoosePackage(String)
   ChooseExactPackage(String)
   ChooseBinding
-  PackagePicked(Int, Int, Result[Array[LocalImportFile], String])
-  BindingPicked(Int, Int, Result[Array[LocalImportFile], String])
+  PackagePicked(Int32, Int32, Result[Array[LocalImportFile], String])
+  BindingPicked(Int32, Int32, Result[Array[LocalImportFile], String])
   SetImportDestination(String)
   ImportInspectedPackage
   CheckImport
@@ -128,19 +128,19 @@ enum AgentImportMsg {
   KeepAttemptAndStartNew
   SelectSavedImport(String)
   OpenImportedPackage
-  ImportResponse(Int, Int, Result[Json, String])
-  ImportTimedOut(Int, Int)
+  ImportResponse(Int32, Int32, Result[Json, String])
+  ImportTimedOut(Int32, Int32)
 }
 
 ///|
 enum AgentImportEffect {
   NoAgentImportEffect
-  PickAgentPackage(Int, Int)
-  PickAgentBinding(Int, Int)
-  StageAgentPackage(Int, Int, LocalImportFile)
-  StageExactAgentPackage(Int, Int, LocalImportFile, Json)
-  WriteAgentImport(Int, Int)
-  ReadAgentImport(Int, Int)
+  PickAgentPackage(Int32, Int32)
+  PickAgentBinding(Int32, Int32)
+  StageAgentPackage(Int32, Int32, LocalImportFile)
+  StageExactAgentPackage(Int32, Int32, LocalImportFile, Json)
+  WriteAgentImport(Int32, Int32)
+  ReadAgentImport(Int32, Int32)
   OpenAgentImport(CreatedWorkspace)
 }
 
@@ -180,8 +180,8 @@ fn init_agent_import() -> AgentImportState {
 fn agent_import_destination_valid(value : String) -> Bool {
   value.length() > 0 &&
   value.length() <= 80 &&
-  value[0] is ('a'..='z' | 'A'..='Z' | '0'..='9') &&
-  value.iter().all(c => c is ('a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_'))
+  value[0] is ('a'..<='z' | 'A'..<='Z' | '0'..<='9') &&
+  value.iter().all(c => c is ('a'..<='z' | 'A'..<='Z' | '0'..<='9' | '-' | '_'))
 }
 
 ///|

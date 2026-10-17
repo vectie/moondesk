@@ -39,7 +39,7 @@ pub fn mooncode_session_url(session_id : String) -> String {
 ///|
 pub fn mooncode_session_chat_url(
   session_id : String,
-  since_revision : Int,
+  since_revision : Int32,
 ) -> String {
   if since_revision > 0 {
     desktop_api_url(["api", "mooncode", "sessions", session_id], query=[
@@ -129,7 +129,7 @@ fn percent_encoded_byte(byte : Byte) -> String {
 }
 
 ///|
-fn percent_hex_digit(value : Int) -> String {
+fn percent_hex_digit(value : Int32) -> String {
   match value {
     0 => "0"
     1 => "1"

@@ -1,5 +1,5 @@
 ///|
-const InboxImportAttachmentMaxBytes : Int = 25 * 1_024 * 1_024
+const InboxImportAttachmentMaxBytes : Int32 = 25 * 1_024 * 1_024
 
 ///|
 fn inbox_import_attachment_extension(content_type : String) -> String {
@@ -219,7 +219,7 @@ fn import_markdown(
   payload : Json,
   kind : String,
   title : String,
-  attachment_path? : String = "",
+  attachment_path~ : String = "",
 ) -> String {
   let url = json_string(payload, "url", default="")
   let filename = json_string(payload, "filename", default="")

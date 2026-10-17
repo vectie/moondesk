@@ -2,12 +2,12 @@
 /// Sanitized limits from the grant-bound execution profile. These values are
 /// evidence only: MoonDesk never turns them into a local process policy.
 pub(all) struct MoonCodeSandboxLimits {
-  wall_clock_ms : Int
-  cpu_seconds : Int
-  memory_mib : Int
-  disk_mib : Int
-  processes : Int
-  output_bytes : Int
+  wall_clock_ms : Int32
+  cpu_seconds : Int32
+  memory_mib : Int32
+  disk_mib : Int32
+  processes : Int32
+  output_bytes : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -43,7 +43,7 @@ pub(all) struct MoonCodeSandboxReceipt {
 } derive(Debug, Eq)
 
 ///|
-const SandboxEvidenceMaxEntries : Int = 1_024
+const SandboxEvidenceMaxEntries : Int32 = 1_024
 
 ///|
 fn sandbox_evidence_string(
@@ -75,7 +75,7 @@ fn sandbox_evidence_bool(json : Json, key : String, default : Bool) -> Bool {
 }
 
 ///|
-fn sandbox_evidence_int(json : Json, key : String, default : Int) -> Int {
+fn sandbox_evidence_int(json : Json, key : String, default : Int32) -> Int32 {
   match json {
     Object(fields) =>
       match fields.get(key) {

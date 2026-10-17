@@ -1,7 +1,7 @@
 ///|
 fn append_source(
   table : @jsontable.Table,
-  path? : String = "first.csv",
+  path~ : String = "first.csv",
   sheet? : String,
 ) -> WorkspaceTableSource {
   {

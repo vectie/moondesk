@@ -823,7 +823,7 @@ async fn import_copy_file(
 
 ///|
 fn workspace_create_error(
-  code : Int,
+  code : Int32,
   reason : String,
   message : String,
 ) -> Json {

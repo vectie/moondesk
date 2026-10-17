@@ -19,7 +19,7 @@ struct MoonCodeSession {
   updated_at : String?
   model : String
   status : String
-  queued_count : Int
+  queued_count : Int32
   last_message : String?
   mooncode_runtime_detail : String?
   mooncode_conversation : @mooncode_core.MoonCodeConversation?

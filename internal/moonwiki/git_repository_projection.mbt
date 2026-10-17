@@ -31,7 +31,7 @@ struct GitDiffProjection {
 ///|
 fn empty_git_projection(
   state : String,
-  error? : String = "",
+  error~ : String = "",
 ) -> GitRepositoryProjection {
   {
     state,
@@ -48,7 +48,7 @@ fn empty_git_projection(
 async fn git_projection_command(
   root : String,
   operation : @trusted_host.GitReadOperation,
-  limit_error? : String = "Repository change list exceeds the display limit",
+  limit_error~ : String = "Repository change list exceeds the display limit",
 ) -> Result[String, String] {
   let text = match @trusted_host.git_read(root, operation) {
     Ok(value) => value
@@ -64,7 +64,7 @@ async fn git_projection_command(
 fn empty_git_diff(
   state : String,
   path : String,
-  error? : String = "",
+  error~ : String = "",
 ) -> GitDiffProjection {
   { state, path, previous_path: "", head: "", body: "", digest: "", error, }
 }

@@ -39,7 +39,7 @@ async fn handle_workspace_reveal(
 }
 
 ///|
-async fn reveal_path(absolute : String) -> Int {
+async fn reveal_path(absolute : String) -> Int32 {
   let target = if is_directory(absolute) {
     absolute
   } else {

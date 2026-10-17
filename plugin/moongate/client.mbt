@@ -2,7 +2,7 @@
 /// Optional moongate client plugin for moondesk.
 ///
 /// Provides usage stats and provider management via moongate.
-pub const DEFAULT_PORT : Int = 15721
+pub const DEFAULT_PORT : Int32 = 15721
 
 ///|
 pub const DEFAULT_HOST : String = "127.0.0.1"
@@ -31,12 +31,12 @@ pub struct Client {
 pub struct MoonGateModel {
   id : String
   owner : String?
-  context_window : Int?
+  context_window : Int32?
 }
 
 ///|
 pub struct MoonGateUsageSummary {
-  total_requests : Int
+  total_requests : Int32
   total_cost : String
   total_input_tokens : Int64
   total_output_tokens : Int64
@@ -346,7 +346,7 @@ fn moongate_json_double_field(obj : Map[String, Json], key : String) -> Double? 
 }
 
 ///|
-fn moongate_json_int_field(obj : Map[String, Json], key : String) -> Int? {
+fn moongate_json_int_field(obj : Map[String, Json], key : String) -> Int32? {
   match moongate_json_double_field(obj, key) {
     Some(value) => Some(value.trunc().to_int())
     None => None

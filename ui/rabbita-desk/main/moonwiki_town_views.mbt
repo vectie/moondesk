@@ -322,7 +322,7 @@ fn render_user_request(record : RequestRecord) -> @rabbita.Html {
 }
 
 ///|
-fn request_record_material_count(record : RequestRecord) -> Int {
+fn request_record_material_count(record : RequestRecord) -> Int32 {
   json_field_string_array_items(record.request, "context_entries").length()
 }
 
@@ -369,7 +369,7 @@ fn render_user_run(
 }
 
 ///|
-fn wiki_request_limit(items : Array[RequestRecord]) -> Int {
+fn wiki_request_limit(items : Array[RequestRecord]) -> Int32 {
   if items.length() > 4 {
     4
   } else {
@@ -378,7 +378,7 @@ fn wiki_request_limit(items : Array[RequestRecord]) -> Int {
 }
 
 ///|
-fn wiki_run_limit(items : Array[@desk.DeskRunProjection]) -> Int {
+fn wiki_run_limit(items : Array[@desk.DeskRunProjection]) -> Int32 {
   if items.length() > 4 {
     4
   } else {

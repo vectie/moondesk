@@ -42,10 +42,10 @@ let lepusa_operation_timeout_ms = 600_000
 let release_operation_timeout_ms = 1_800_000
 
 ///|
-let fixed_tool_stream_limit_bytes : Int = 4 * 1024 * 1024
+let fixed_tool_stream_limit_bytes : Int32 = 4 * 1024 * 1024
 
 ///|
-fn safe_bounded_value(value : String, maximum : Int) -> Bool {
+fn safe_bounded_value(value : String, maximum : Int32) -> Bool {
   if value == "" || value.length() > maximum {
     return false
   }
@@ -464,7 +464,7 @@ async fn fixed_environment() -> Result[Map[String, String], String] {
 async fn stream_fixed_tool_output(
   reader : @process.ReadFromProcess,
   output : @stdio.Output,
-  limit : Int,
+  limit : Int32,
 ) -> Bool {
   defer reader.close()
   let mut written = 0
@@ -508,8 +508,8 @@ async fn fixed_tool_exit_code(
   executable : String,
   args : Array[String],
   cwd : String,
-  timeout_ms : Int,
-) -> Int {
+  timeout_ms : Int32,
+) -> Int32 {
   let environment = match fixed_environment() {
     Ok(environment) => environment
     Err(_) => return -1
@@ -561,7 +561,7 @@ async fn fixed_tool_exit_code(
 }
 
 ///|
-pub async fn build_lepusa_runtime(lepusa_root : String) -> Int {
+pub async fn build_lepusa_runtime(lepusa_root : String) -> Int32 {
   let root = match canonical_directory("Lepusa checkout", lepusa_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -579,7 +579,7 @@ pub async fn build_lepusa_runtime(lepusa_root : String) -> Int {
 }
 
 ///|
-pub async fn build_moondesk_sidecar(repo_root : String) -> Int {
+pub async fn build_moondesk_sidecar(repo_root : String) -> Int32 {
   let root = match canonical_directory("MoonDesk checkout", repo_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -600,7 +600,7 @@ pub async fn build_moondesk_sidecar(repo_root : String) -> Int {
 pub async fn run_lepusa_operation(
   lepusa_root : String,
   operation : LepusaOperation,
-) -> Int {
+) -> Int32 {
   let root = match canonical_directory("Lepusa checkout", lepusa_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -628,7 +628,7 @@ pub async fn run_lepusa_operation(
 }
 
 ///|
-pub async fn sign_app(identity : SigningIdentity, app_root : String) -> Int {
+pub async fn sign_app(identity : SigningIdentity, app_root : String) -> Int32 {
   let app = match canonical_directory("Application bundle", app_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -642,7 +642,7 @@ pub async fn sign_app(identity : SigningIdentity, app_root : String) -> Int {
 }
 
 ///|
-pub async fn verify_app_signature(app_root : String) -> Int {
+pub async fn verify_app_signature(app_root : String) -> Int32 {
   let app = match canonical_directory("Application bundle", app_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -656,7 +656,7 @@ pub async fn verify_app_signature(app_root : String) -> Int {
 }
 
 ///|
-pub async fn archive_app(app_root : String, archive_path : String) -> Int {
+pub async fn archive_app(app_root : String, archive_path : String) -> Int32 {
   let app = match canonical_directory("Application bundle", app_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -678,7 +678,7 @@ pub async fn archive_app(app_root : String, archive_path : String) -> Int {
 pub async fn notarize_archive(
   profile : NotaryProfile,
   archive_path : String,
-) -> Int {
+) -> Int32 {
   let archive = match
     canonical_regular_file("Application archive", archive_path) {
     Ok(path) => path
@@ -700,7 +700,7 @@ pub async fn notarize_archive(
 }
 
 ///|
-pub async fn staple_app(app_root : String) -> Int {
+pub async fn staple_app(app_root : String) -> Int32 {
   let app = match canonical_directory("Application bundle", app_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -714,7 +714,7 @@ pub async fn staple_app(app_root : String) -> Int {
 }
 
 ///|
-pub async fn copy_app(app_root : String, destination : String) -> Int {
+pub async fn copy_app(app_root : String, destination : String) -> Int32 {
   let app = match canonical_directory("Application bundle", app_root) {
     Ok(path) => path
     Err(_) => return -1
@@ -733,7 +733,7 @@ pub async fn copy_app(app_root : String, destination : String) -> Int {
 }
 
 ///|
-pub async fn create_dmg(staging_directory : String, dmg_path : String) -> Int {
+pub async fn create_dmg(staging_directory : String, dmg_path : String) -> Int32 {
   let staging = match
     canonical_directory("DMG staging directory", staging_directory) {
     Ok(path) => path

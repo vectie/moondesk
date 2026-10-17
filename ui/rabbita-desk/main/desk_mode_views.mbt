@@ -1790,7 +1790,7 @@ fn desk_entry_compare(
   left : @desk.DeskFileEntry,
   right : @desk.DeskFileEntry,
   model : Model,
-) -> Int {
+) -> Int32 {
   let left_directory = left.kind is Directory
   let right_directory = right.kind is Directory
   if left_directory && !right_directory {
@@ -1812,7 +1812,7 @@ fn desk_entry_sort_compare(
   left : @desk.DeskFileEntry,
   right : @desk.DeskFileEntry,
   key : DeskSortKey,
-) -> Int {
+) -> Int32 {
   let primary = match key {
     SortByName => desk_string_compare(left.display_name, right.display_name)
     SortByKind =>
@@ -1839,7 +1839,7 @@ fn desk_entry_sort_compare(
 }
 
 ///|
-fn desk_optional_string_compare(left : String?, right : String?) -> Int {
+fn desk_optional_string_compare(left : String?, right : String?) -> Int32 {
   match (left, right) {
     (Some(left), Some(right)) => desk_string_compare(left, right)
     (Some(_), None) => -1
@@ -1849,7 +1849,7 @@ fn desk_optional_string_compare(left : String?, right : String?) -> Int {
 }
 
 ///|
-fn desk_optional_int_compare(left : Int?, right : Int?) -> Int {
+fn desk_optional_int_compare(left : Int32?, right : Int32?) -> Int32 {
   match (left, right) {
     (Some(left), Some(right)) =>
       if left < right {
@@ -1866,7 +1866,7 @@ fn desk_optional_int_compare(left : Int?, right : Int?) -> Int {
 }
 
 ///|
-fn desk_string_compare(left : String, right : String) -> Int {
+fn desk_string_compare(left : String, right : String) -> Int32 {
   left.to_lower().lexical_compare(right.to_lower())
 }
 
@@ -2052,8 +2052,8 @@ fn desk_breadcrumbs(directory : String) -> Array[(String, String, Bool)] {
 fn desk_folder_outline(
   directory : String,
   entries : Array[@desk.DeskFileEntry],
-) -> Array[(String, String, Bool, Int)] {
-  let items : Array[(String, String, Bool, Int)] = [
+) -> Array[(String, String, Bool, Int32)] {
+  let items : Array[(String, String, Bool, Int32)] = [
     ("root", "", directory == "", 0),
   ]
   if directory != "" {
@@ -2091,7 +2091,7 @@ fn desk_folder_outline(
 }
 
 ///|
-fn desk_outline_child_depth(directory : String) -> Int {
+fn desk_outline_child_depth(directory : String) -> Int32 {
   if directory == "" {
     1
   } else {
@@ -2100,7 +2100,7 @@ fn desk_outline_child_depth(directory : String) -> Int {
 }
 
 ///|
-fn desk_folder_outline_row_class(active : Bool, depth : Int) -> String {
+fn desk_folder_outline_row_class(active : Bool, depth : Int32) -> String {
   let capped_depth = if depth > 4 { 4 } else { depth }
   if active {
     "desk-folder-row active depth-\{capped_depth}"
@@ -2676,7 +2676,9 @@ fn selected_desk_entry(model : Model) -> @desk.DeskFileEntry? {
 }
 
 ///|
-fn desk_entry_counts(entries : Array[@desk.DeskFileEntry]) -> (Int, Int, Int) {
+fn desk_entry_counts(
+  entries : Array[@desk.DeskFileEntry],
+) -> (Int32, Int32, Int32) {
   let mut directories = 0
   let mut files = 0
   for entry in entries {
@@ -2690,13 +2692,13 @@ fn desk_entry_counts(entries : Array[@desk.DeskFileEntry]) -> (Int, Int, Int) {
 }
 
 ///|
-fn desk_entry_count_label(counts : (Int, Int, Int)) -> String {
+fn desk_entry_count_label(counts : (Int32, Int32, Int32)) -> String {
   let (total, directories, files) = counts
   "\{count_noun(total, "item")}, \{count_noun(directories, "folder")}, \{count_noun(files, "file")}"
 }
 
 ///|
-fn count_noun(count : Int, noun : String) -> String {
+fn count_noun(count : Int32, noun : String) -> String {
   if count == 1 {
     "\{count} \{noun}"
   } else {
@@ -2707,8 +2709,8 @@ fn count_noun(count : Int, noun : String) -> String {
 ///|
 fn desk_entry_count_label_for_model(
   model : Model,
-  counts : (Int, Int, Int),
-  visible_count : Int,
+  counts : (Int32, Int32, Int32),
+  visible_count : Int32,
 ) -> String {
   match model.desk_entries_state {
     Some(FirstUseEmpty) => "No MoonBook selected"
@@ -2793,7 +2795,7 @@ fn optional_text(value : String?, fallback : String) -> String {
 }
 
 ///|
-fn size_label(value : Int?) -> String {
+fn size_label(value : Int32?) -> String {
   match value {
     Some(size) if size >= 1024 * 1024 => "\{size / (1024 * 1024)} MB"
     Some(size) if size >= 1024 => "\{size / 1024} KB"

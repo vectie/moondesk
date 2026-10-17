@@ -46,7 +46,7 @@ fn table_query(path : String, key : String) -> String {
 }
 
 ///|
-fn table_column(path : String, key : String, width : Int) -> Int? {
+fn table_column(path : String, key : String, width : Int32) -> Int32? {
   let text = table_query(path, key)
   for i in 0..<width {
     if text == i.to_string() {
@@ -94,7 +94,7 @@ fn explore_table(
     return Err("Minimum must not exceed maximum")
   }
   let text_rows = table.text_rows()
-  let mut indexes : Array[Int] = []
+  let mut indexes : Array[Int32] = []
   for i, row in text_rows {
     if text_column is Some(column) && !row[column].to_lower().contains(needle) {
       continue
@@ -169,7 +169,7 @@ fn table_select(
   key : String,
   label : String,
   path : String,
-  empty_label? : String = "None",
+  empty_label~ : String = "None",
 ) -> String {
   let out = StringBuilder()
   out.write_string(

@@ -2,8 +2,8 @@
 struct MoonFlowRetainedState {
   identity : Json
   reference : String
-  generation : Int
-  runs_generation : Int
+  generation : Int32
+  runs_generation : Int32
   response : Json?
   notice : String
   review : MoonFlowExactReviewState?
@@ -11,8 +11,8 @@ struct MoonFlowRetainedState {
 
 ///|
 enum MoonFlowRetainedMsg {
-  Inspect(String, String, Int)
-  Reply(Int, Json, Result[Json, String])
+  Inspect(String, String, Int32)
+  Reply(Int32, Json, Result[Json, String])
   Close
   Review(MoonFlowExactReviewMsg)
 }
@@ -22,7 +22,7 @@ fn moonflow_retained_identity(
   model : Model,
   run : MoonFlowRunProjection,
   item : MoonFlowItemProjection,
-  index : Int,
+  index : Int32,
 ) -> Json? {
   let actions = run.single_step_actions
     .unwrap_or([])

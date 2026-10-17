@@ -1,7 +1,7 @@
 ///|
 fn supervisor_model_route_fixture(
   default_model : String,
-  ready? : Bool = true,
+  ready~ : Bool = true,
 ) -> Json {
   {
     "contract": "moonclaw.moongate-route.v1",

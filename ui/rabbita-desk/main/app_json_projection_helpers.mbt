@@ -42,7 +42,7 @@ fn json_field_bool(json : Json, key : String, default~ : Bool) -> Bool {
 }
 
 ///|
-fn json_field_int(json : Json, key : String, default~ : Int) -> Int {
+fn json_field_int(json : Json, key : String, default~ : Int32) -> Int32 {
   match json {
     Object(object) =>
       match object.get(key) {
@@ -57,7 +57,7 @@ fn json_field_int(json : Json, key : String, default~ : Int) -> Int {
 fn json_field_string_array_summary(
   json : Json,
   key : String,
-  limit? : Int = 2,
+  limit~ : Int32 = 2,
 ) -> String {
   let items : Array[String] = []
   match json {

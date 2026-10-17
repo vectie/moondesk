@@ -33,7 +33,7 @@ pub async fn read_json_file_or_object(path : String) -> Json {
 ///|
 pub async fn read_directory_names(
   path : String,
-  include_hidden? : Bool = true,
+  include_hidden~ : Bool = true,
 ) -> Array[String] {
   let dir = @fs.opendir(path) catch { _ => return [] }
   defer dir.close()

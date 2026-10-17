@@ -50,7 +50,7 @@ priv enum MoonCodeLifecycleRouteStopReason {
 ///|
 #warnings("-unused_field")
 priv struct MoonCodeLifecycleRouteFailure {
-  code : Int
+  code : Int32
   title : String
   failure : MoonCodeLifecycleRouteFailureKind
   stop_reason : MoonCodeLifecycleRouteStopReason?
@@ -59,7 +59,7 @@ priv struct MoonCodeLifecycleRouteFailure {
 
 ///|
 fn mooncode_session_lifecycle_route_failure(
-  code : Int,
+  code : Int32,
   detail : String,
 ) -> MoonCodeLifecycleRouteFailure {
   match code {

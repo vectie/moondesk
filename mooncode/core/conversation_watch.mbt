@@ -54,7 +54,7 @@ fn watch_advance_cursor(
   current : MoonCodeWatchCursor,
   revision : String,
   sequence : String,
-  accept_revision? : Bool = true,
+  accept_revision~ : Bool = true,
 ) -> MoonCodeWatchCursor {
   {
     revision: if accept_revision &&
@@ -83,7 +83,7 @@ pub fn MoonCodeWatchCursor::advance_sequence(
 }
 
 ///|
-fn watch_sequence_compare(left : String, right : String) -> Int {
+fn watch_sequence_compare(left : String, right : String) -> Int32 {
   if left.length() < right.length() {
     -1
   } else if left.length() > right.length() {
@@ -104,7 +104,7 @@ pub(all) enum MoonCodeWatchResult {
   Heartbeat(
     cursor~ : MoonCodeWatchCursor,
     session_id~ : String,
-    retry_after_ms~ : Int,
+    retry_after_ms~ : Int32,
     terminal~ : Bool
   )
   Duplicate(cursor~ : MoonCodeWatchCursor, session_id~ : String)
@@ -147,7 +147,7 @@ fn watch_required_string(
 fn watch_required_nonnegative_int(
   fields : Map[String, Json],
   key : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match fields.get(key) {
     Some(Number(value, ..)) => {
       let parsed = value.to_int()
@@ -179,7 +179,7 @@ fn watch_required_bool(
 fn decode_mooncode_watch_result(
   payload : Json,
   current~ : MoonCodeWatchCursor,
-  expected_session_id? : String = "",
+  expected_session_id~ : String = "",
 ) -> MoonCodeWatchResult {
   guard payload is Object(fields) else {
     return Malformed(cursor=current, reason="watch response must be an object")
@@ -340,7 +340,7 @@ fn decode_mooncode_watch_result(
 pub fn decode_mooncode_watch_text(
   text : String,
   current~ : MoonCodeWatchCursor,
-  expected_session_id? : String = "",
+  expected_session_id~ : String = "",
 ) -> MoonCodeWatchResult {
   let payload = @json.parse(text) catch {
     error =>
@@ -404,7 +404,7 @@ pub fn conversation_watch_response_for_cursor(
   changed~ : Bool,
   heartbeat~ : Bool,
   terminal~ : Bool,
-  retry_after_ms~ : Int,
+  retry_after_ms~ : Int32,
   snapshot~ : Json,
 ) -> Json {
   let encoded = conversation_watch_response(
@@ -472,7 +472,7 @@ fn conversation_watch_response(
   changed~ : Bool,
   heartbeat~ : Bool,
   terminal~ : Bool,
-  retry_after_ms~ : Int,
+  retry_after_ms~ : Int32,
   snapshot~ : Json,
 ) -> Json {
   {

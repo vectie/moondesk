@@ -69,7 +69,7 @@ struct Model {
   entries : Array[@desk.DeskFileEntry]
   desk_entries_state : SurfaceState?
   desk_entries_error : String
-  desk_entries_request_generation : Int
+  desk_entries_request_generation : Int32
   desk_sort_key : DeskSortKey
   desk_sort_desc : Bool
   desk_density : DeskDensity
@@ -98,7 +98,7 @@ struct Model {
   preview_error : String
   preview_request_workspace_id : String
   preview_request_path : String
-  preview_request_generation : Int
+  preview_request_generation : Int32
   preview_status : String
   markdown_editor_path : String
   markdown_editor_content : String
@@ -117,7 +117,7 @@ struct Model {
   wiki_chat_file_query : String
   wiki_chat_file_results : Array[SearchHit]
   wiki_chat_file_search_status : String
-  wiki_chat_file_search_generation : Int
+  wiki_chat_file_search_generation : Int32
   wiki_chat_stream_task_id : String
   wiki_chat_stream_cursor : String
   requests : Array[RequestRecord]
@@ -164,9 +164,9 @@ struct Model {
   mooncode_prompt : String
   mooncode_images : Array[Json]
   mooncode_image_submit_pending : Bool
-  mooncode_image_submit_revision : Int
+  mooncode_image_submit_revision : Int32
   mooncode_image_submit_prompt : String
-  mooncode_draft_revision : Int
+  mooncode_draft_revision : Int32
   mooncode_model : String
   mooncode_models : Array[String]
   mooncode_image_models : Array[String]
@@ -194,13 +194,13 @@ struct Model {
   mooncode_schedules_error : String
   mooncode_schedules_status : String
   mooncode_schedules_workspace_id : String
-  mooncode_schedules_generation : Int
+  mooncode_schedules_generation : Int32
   mooncode_schedule_state : MoonCodeScheduleState?
   mooncode_schedule_id_draft : String
   mooncode_schedule_prompt_draft : String
   mooncode_schedule_interval_draft : String
   git_projection_workspace_id : String
-  git_projection_generation : Int
+  git_projection_generation : Int32
   git_projection : GitRepositoryProjection?
   git_projection_loading : Bool
   git_projection_error : String
@@ -211,9 +211,9 @@ struct Model {
   git_diff : GitDiffProjection?
   git_diff_loading : Bool
   git_diff_error : String
-  git_diff_hunk_index : Int
+  git_diff_hunk_index : Int32
   git_diff_selected_side : String
-  git_diff_selected_line : Int
+  git_diff_selected_line : Int32
   git_review : GitReviewProjection?
   git_review_progress : GitReviewProgress?
   git_review_note : String
@@ -225,13 +225,13 @@ struct Model {
   github_context_error : String
   github_checkout_workspace_id : String
   github_checkout_repository : String
-  github_checkout_number : Int
+  github_checkout_number : Int32
   github_checkout_head_oid : String
   github_checkout_pending : Bool
   github_checkout_status : String
   github_checkout_target_workspace_id : String
   github_comment_workspace_id : String
-  github_comment_number : Int
+  github_comment_number : Int32
   github_comment_head : String
   github_comment_draft : String
   github_comment_saved : Bool
@@ -240,16 +240,16 @@ struct Model {
   github_comment_error : String
   github_comment_published_url : String
   github_inline_workspace_id : String
-  github_inline_number : Int
+  github_inline_number : Int32
   github_inline_review : GitHubInlineReviewProjection?
   github_inline_loading : Bool
   github_inline_error : String
   github_inline_query : String
   github_inline_path : String
-  github_inline_hunk_index : Int
+  github_inline_hunk_index : Int32
   github_inline_hunk : String
   github_inline_side : String
-  github_inline_line : Int
+  github_inline_line : Int32
   github_inline_draft : String
   github_inline_record : GitHubInlineDraftProjection?
   github_inline_saved : Bool
@@ -257,17 +257,17 @@ struct Model {
   github_inline_saving : Bool
   github_inline_published_url : String
   mooncode_copied_item_id : String
-  mooncode_next_client_turn_index : Int
+  mooncode_next_client_turn_index : Int32
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
-  mooncode_metadata_generation : Int
-  mooncode_watch_generation : Int
+  mooncode_metadata_generation : Int32
+  mooncode_watch_generation : Int32
   mooncode_watch_cursor : @mooncode_core.MoonCodeWatchCursor
   mooncode_watch_status : String
-  mooncode_watch_failure_count : Int
+  mooncode_watch_failure_count : Int32
   mooncode_sandbox_review_key : String
   mooncode_sandbox_selected_paths : Array[String]
   mooncode_sandbox_promotion_pending : Bool
-  mooncode_sandbox_request_generation : Int
+  mooncode_sandbox_request_generation : Int32
   mooncode_sandbox_promotion_status : String
   mooncode_sandbox_locked_review_keys : Array[String]
   events : Array[DeskEvent]
@@ -282,7 +282,7 @@ struct Model {
   moonflow_runs : Array[MoonFlowRunProjection]
   moonflow_single_step : MoonFlowSingleStepState?
   moonflow_retained : MoonFlowRetainedState?
-  moonflow_runs_generation : Int
+  moonflow_runs_generation : Int32
   moonflow_status : String
   // Listing transport truth is owned separately from operation feedback.
   moonflow_runs_state : SurfaceState?
@@ -364,15 +364,20 @@ enum Msg {
   )
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   RequestEntries(String, String)
-  LoadedEntries(String, String, Int, Result[Array[@desk.DeskFileEntry], String])
+  LoadedEntries(
+    String,
+    String,
+    Int32,
+    Result[Array[@desk.DeskFileEntry], String]
+  )
   RequestPreview(String, String)
-  LoadedPreview(String, String, Int, Result[@desk.DeskPreview, String])
+  LoadedPreview(String, String, Int32, Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowCapability(Result[MoonFlowCapabilityEvidence, String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
   RequestMoonFlowRuns
   LoadedMoonFlowRunsAt(
-    Int,
+    Int32,
     String,
     Result[Array[MoonFlowRunProjection], String]
   )
@@ -418,8 +423,8 @@ enum Msg {
   LoadedWikiChatEvents(String, String, Result[Array[Json], String])
   SetWikiChatPrompt(String)
   SetWikiChatFileQuery(String)
-  RunWikiChatFileSearch(Int, String)
-  LoadedWikiChatFileSearch(Int, Result[PagesSearchResponse, String])
+  RunWikiChatFileSearch(Int32, String)
+  LoadedWikiChatFileSearch(Int32, Result[PagesSearchResponse, String])
   AttachWikiChatFile(String)
   WikiChatDropPath(String)
   WorkspaceFeature(String, String, String, String, String)
@@ -445,13 +450,13 @@ enum Msg {
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeSelectedSession(String, Result[MoonCodeSession, String])
   LoadedMoonCodeArchivedSessions(Result[Array[MoonCodeSession], String])
-  LoadedMoonCodeWatch(Int, String, @mooncode_core.MoonCodeWatchResult)
+  LoadedMoonCodeWatch(Int32, String, @mooncode_core.MoonCodeWatchResult)
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
   CompletedMoonCodeGuidance(
     String,
     String,
-    Int,
+    Int32,
     Result[MoonCodeSession, String]
   )
   ManagedMoonCodeSession(
@@ -483,10 +488,10 @@ enum Msg {
   SaveMoonFlowPlanDraft
   ReopenMoonFlowPlanDraft
   FlowCanvasWheel(Double)
-  FlowPanStart(Int, Int)
-  FlowPanMove(Int, Int)
+  FlowPanStart(Int32, Int32)
+  FlowPanMove(Int32, Int32)
   FlowPanEnd
-  FlowNodeDragStart(String, Int, Int)
+  FlowNodeDragStart(String, Int32, Int32)
   FlowNodeKeyDown(String, String, Bool)
   FlowCanvasFit
   FlowCanvasReset
@@ -506,7 +511,7 @@ enum Msg {
   SetMoonCodePrompt(String)
   PickMoonCodeImages(String)
   MoonCodeImagesPicked(Result[Array[Json], String])
-  RemoveMoonCodeImage(Int)
+  RemoveMoonCodeImage(Int32)
   SetMoonCodeModel(String)
   SetMoonCodeTaskIntent(String)
   SetMoonCodeReasoningEffort(String)
@@ -517,7 +522,7 @@ enum Msg {
   SetGitChangeFilter(String)
   LoadedGitRepositoryProjection(
     String,
-    Int,
+    Int32,
     Result[GitRepositoryProjection, String]
   )
   OpenGitChange(String)
@@ -525,12 +530,12 @@ enum Msg {
   RefreshGitDiff
   LoadedGitDiff(String, String, String, Result[GitDiffProjection, String])
   CloseGitDiff
-  SelectGitDiffHunk(Int)
-  SelectGitDiffLine(String, Int)
+  SelectGitDiffHunk(Int32)
+  SelectGitDiffLine(String, Int32)
   LoadedGitReview(String, String, String, Result[GitReviewProjection, String])
   LoadedGitReviewProgress(
     String,
-    Int,
+    Int32,
     String,
     Result[GitReviewProgress, String]
   )
@@ -543,14 +548,14 @@ enum Msg {
     String,
     Result[GitHubContextProjection, String]
   )
-  BeginGitHubComment(Int)
-  OpenGitHubSavedDraft(Int)
+  BeginGitHubComment(Int32)
+  OpenGitHubSavedDraft(Int32)
   SetGitHubCommentDraft(String)
   DiscardGitHubComment
   SaveGitHubCommentDraft
-  SavedGitHubCommentDraft(String, Int, String, Bool, Result[Unit, String])
+  SavedGitHubCommentDraft(String, Int32, String, Bool, Result[Unit, String])
   PublishGitHubComment
-  PublishedGitHubComment(String, Int, String, Result[String, String])
+  PublishedGitHubComment(String, Int32, String, Result[String, String])
   ToggleMoonCodeSkills
   RefreshMoonCodeSkills
   LoadedMoonCodeSkills(String, Result[MoonCodeSkillCatalogProjection, String])
@@ -559,19 +564,19 @@ enum Msg {
   LoadedMoonCodeJobs(String, Result[MoonCodeJobHistory, String])
   ToggleMoonCodeSchedules
   RefreshMoonCodeSchedules
-  LoadedMoonCodeSchedules(String, Int, Result[MoonCodeScheduleState, String])
-  MoonCodeSchedulesTimedOut(String, Int)
+  LoadedMoonCodeSchedules(String, Int32, Result[MoonCodeScheduleState, String])
+  MoonCodeSchedulesTimedOut(String, Int32)
   SetMoonCodeScheduleId(String)
   SetMoonCodeSchedulePrompt(String)
   SetMoonCodeScheduleInterval(String)
   CreateMoonCodeSchedule
   SetMoonCodeScheduleEnabled(String, Bool)
   SavedMoonCodeSchedule(String, Bool, Result[MoonCodeScheduleState, String])
-  OpenGitHubInlineReview(Int)
-  CheckoutGitHubPull(Int)
+  OpenGitHubInlineReview(Int32)
+  CheckoutGitHubPull(Int32)
   CheckedOutGitHubPull(
     String,
-    Int,
+    Int32,
     String,
     Result[GitHubCheckoutProjection, String]
   )
@@ -579,23 +584,23 @@ enum Msg {
   OpenGitHubSavedInlineDraft(GitHubInlineDraftProjection)
   LoadedGitHubInlineReview(
     String,
-    Int,
+    Int32,
     String,
     Result[GitHubInlineReviewProjection, String]
   )
   CloseGitHubInlineReview
   SetGitHubInlineQuery(String)
   SelectGitHubInlineFile(String)
-  SelectGitHubInlineHunk(Int)
-  SelectGitHubInlineLine(String, String, Int)
+  SelectGitHubInlineHunk(Int32)
+  SelectGitHubInlineLine(String, String, Int32)
   SetGitHubInlineDraft(String)
   DiscardGitHubInlineDraft
   SaveGitHubInlineDraft
-  SavedGitHubInlineDraft(String, Int, String, Bool, Result[Unit, String])
+  SavedGitHubInlineDraft(String, Int32, String, Bool, Result[Unit, String])
   PublishGitHubInlineComment
   PublishedGitHubInlineComment(
     String,
-    Int,
+    Int32,
     String,
     String,
     Result[String, String]
@@ -610,7 +615,7 @@ enum Msg {
   RecoverMoonCodeSandboxReceipt(@mooncode_core.MoonCodeSandboxReceipt)
   CompletedMoonCodeSandboxPromotion(
     String,
-    Int,
+    Int32,
     Result[@mooncode_core.MoonCodeSandboxPromotionResult, String]
   )
   ManageMoonClaw(String)
@@ -618,8 +623,8 @@ enum Msg {
   CheckMoonClawSetup
   SetMoonClawOpenRouterKey(String)
   SaveMoonClawOpenRouterKey
-  RefreshMoonCodeMetadata(Int)
-  ResumeMoonCodeWatch(Int, String)
+  RefreshMoonCodeMetadata(Int32)
+  ResumeMoonCodeWatch(Int32, String)
   SelectWorkspace(String)
   OpenMoonBook(String, MoonBookAction)
   OpenWorkFile(String)

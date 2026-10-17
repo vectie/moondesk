@@ -61,7 +61,7 @@ fn quick_access_test_model() -> Model {
 fn quick_access_test_preview(
   model : Model,
   path : String,
-  directory? : Bool = false,
+  directory~ : Bool = false,
 ) -> Model {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, selected) = update(dispatch, SelectPath(path), model)

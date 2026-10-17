@@ -89,7 +89,7 @@ async fn moontown_owner_post_json_with_status(
   workspace_root : String,
   path : String,
   body : Json,
-) -> Result[Json, (Int, String)] {
+) -> Result[Json, (Int32, String)] {
   let service_url = match verified_moontown_owner_service_url(workspace_root) {
     Ok(value) => value
     Err(error) => return Err((503, error))

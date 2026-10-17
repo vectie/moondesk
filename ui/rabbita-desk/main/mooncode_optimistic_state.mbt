@@ -3,7 +3,7 @@ fn mooncode_append_optimistic_user_prompt(
   rows : Array[MoonCodeOptimisticRow],
   session_id : String,
   content : String,
-  client_turn_id? : String = "",
+  client_turn_id~ : String = "",
 ) -> Array[MoonCodeOptimisticRow] {
   let next = mooncode_copy_optimistic_rows(rows)
   let row_key = if client_turn_id == "" {

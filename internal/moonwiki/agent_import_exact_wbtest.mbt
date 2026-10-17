@@ -19,7 +19,7 @@ fn receive_exact_binding(source : Json) -> Json {
 ///|
 fn receive_exact_runner(
   calls : Array[String],
-  outcome? : String = "complete",
+  outcome~ : String = "complete",
 ) -> AgentExportRun {
   let ordinary = receive_test_runner(calls, outcome~)
   (command, args) => {

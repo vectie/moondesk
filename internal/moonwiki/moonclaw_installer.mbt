@@ -118,7 +118,7 @@ async fn moonclaw_install_failure(
   workspace_root : String,
   status : String,
   message : String,
-  next_action? : String = "review_moonclaw_setup",
+  next_action~ : String = "review_moonclaw_setup",
 ) -> Json {
   let current = moonclaw_daemon_status(workspace_root)
   api_contract_response(

@@ -1,15 +1,15 @@
 ///|
 priv struct PivotReport {
   table : @jsontable.Table
-  source_rows : Int
-  numeric_rows : Int
+  source_rows : Int32
+  numeric_rows : Int32
 }
 
 ///|
 fn pivot_add(
-  previous : (Int, Int, Double),
+  previous : (Int32, Int32, Double),
   value : Double?,
-) -> (Int, Int, Double) {
+) -> (Int32, Int32, Double) {
   let (count, numeric, total) = previous
   match value {
     Some(number) => (count + 1, numeric + 1, total + number)
@@ -18,7 +18,10 @@ fn pivot_add(
 }
 
 ///|
-fn pivot_cell(stats : (Int, Int, Double), sum : Bool) -> @leafscene.CellValue {
+fn pivot_cell(
+  stats : (Int32, Int32, Double),
+  sum : Bool,
+) -> @leafscene.CellValue {
   let (count, numeric, total) = stats
   if !sum {
     Number(count.to_string())
@@ -39,7 +42,7 @@ fn pivot_report(
   aggregation : String,
   value_name : String,
 ) -> Result[PivotReport, String] {
-  let names : Map[String, Int] = Map([])
+  let names : Map[String, Int32] = Map([])
   for i, name in table.columns {
     if names.contains(name) {
       return Err(
@@ -75,9 +78,9 @@ fn pivot_report(
       value_name,
     )
   }
-  let cells : Map[String, Map[String, (Int, Int, Double)]] = Map([])
-  let row_totals : Map[String, (Int, Int, Double)] = Map([])
-  let column_totals : Map[String, (Int, Int, Double)] = Map([])
+  let cells : Map[String, Map[String, (Int32, Int32, Double)]] = Map([])
+  let row_totals : Map[String, (Int32, Int32, Double)] = Map([])
+  let column_totals : Map[String, (Int32, Int32, Double)] = Map([])
   let mut grand = (0, 0, 0.0)
   for row in table.text_rows() {
     let row_key = row[row_index]

@@ -241,7 +241,7 @@ async fn run_launch_agent_status(args : Array[String]) -> Unit {
 fn launch_agent_plist(
   repo_root : String,
   workspace_root : String,
-  port : Int,
+  port : Int32,
 ) -> String {
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -307,7 +307,7 @@ async fn town_daemon_launch_agent_plist(workspace_root : String) -> String? {
 async fn launch_agent_plist_for_service(
   repo_root : String,
   workspace_root : String,
-  port : Int,
+  port : Int32,
   service : String,
 ) -> String? {
   if service == "town" {
@@ -357,12 +357,12 @@ fn trusted_launch_agent(service : String) -> @trusted_host.ManagedLaunchAgent {
 }
 
 ///|
-async fn launchctl_load(service : String) -> Int {
+async fn launchctl_load(service : String) -> Int32 {
   @trusted_host.bootstrap_launch_agent(trusted_launch_agent(service))
 }
 
 ///|
-async fn launchctl_unload(service : String) -> Int {
+async fn launchctl_unload(service : String) -> Int32 {
   @trusted_host.bootout_launch_agent(trusted_launch_agent(service))
 }
 

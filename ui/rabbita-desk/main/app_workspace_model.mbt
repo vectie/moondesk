@@ -74,7 +74,7 @@ struct DeskEntryMoved {
   workspace_id : String
   path : String
   directory : String
-  moved_count : Int
+  moved_count : Int32
 } derive(FromJson)
 
 ///|
@@ -82,7 +82,7 @@ struct DeskEntryCopied {
   workspace_id : String
   path : String
   directory : String
-  copied_count : Int
+  copied_count : Int32
 } derive(FromJson)
 
 ///|
@@ -91,7 +91,7 @@ struct DeskEntryTrashed {
   path : String
   directory : String
   trash_path : String
-  trashed_count : Int
+  trashed_count : Int32
 } derive(FromJson)
 
 ///|
@@ -115,5 +115,5 @@ struct DeskFilesImported {
   workspace_id : String
   path : String
   directory : String
-  imported_count : Int
+  imported_count : Int32
 } derive(FromJson)

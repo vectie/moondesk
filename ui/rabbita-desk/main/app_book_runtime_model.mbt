@@ -15,7 +15,7 @@ struct BookPatternRecord {
   description : String
   output : String
   default_topic : String
-  default_cadence_minutes : Int
+  default_cadence_minutes : Int32
   default_source_policy : String
   standing_watch : Bool
   creation_backend : String

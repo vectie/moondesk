@@ -17,7 +17,7 @@ enum SourceSaveOutcome {
 
 ///|
 struct SourcePaneRequestIdentity {
-  generation : Int
+  generation : Int32
   workspace_id : String
   session_id : String
   path : String
@@ -25,7 +25,7 @@ struct SourcePaneRequestIdentity {
 
 ///|
 struct SourcePaneSaveRequest {
-  generation : Int
+  generation : Int32
   source : SourcePaneRequestIdentity
   baseline : String
   content : String
@@ -50,13 +50,13 @@ struct SourcePaneState {
   session_id : String
   path_input : String
   requested_path : String
-  request_generation : Int
+  request_generation : Int32
   content : SourcePaneContent
   baseline : String
   draft : String
   server_content : String?
   saving : Bool
-  save_generation : Int
+  save_generation : Int32
   pending_save : SourcePaneSaveRequest?
   status : String
   buffers : Array[SourcePaneBuffer]
@@ -91,8 +91,8 @@ enum SourcePaneMsg {
   ReplaceAll
   UndoEdit
   RedoEdit
-  SelectMarkdownSection(Int)
-  MoveMarkdownSection(Int, Bool)
+  SelectMarkdownSection(Int32)
+  MoveMarkdownSection(Int32, Bool)
   SetLineIndent(@edit.LineIndent)
   IndentLines(Bool)
   DuplicateLines
@@ -133,7 +133,7 @@ fn init_source_pane(
 fn source_pane_buffer_index(
   buffers : Array[SourcePaneBuffer],
   path : String,
-) -> Int? {
+) -> Int32? {
   for index, buffer in buffers {
     if buffer.path == path {
       return Some(index)
@@ -266,7 +266,7 @@ fn source_pane_editable(state : SourcePaneState) -> Bool {
 }
 
 ///|
-fn source_pane_line_count(state : SourcePaneState) -> Int {
+fn source_pane_line_count(state : SourcePaneState) -> Int32 {
   state.draft.split("\n").length()
 }
 

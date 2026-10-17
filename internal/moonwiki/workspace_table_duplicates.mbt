@@ -4,9 +4,9 @@
 fn table_duplicate_indexes(
   columns : Array[String],
   text_rows : Array[Array[String]],
-  indexes : Array[Int],
+  indexes : Array[Int32],
   path : String,
-) -> Result[Array[Int], String] {
+) -> Result[Array[Int32], String] {
   let mode = table_query(path, "duplicates")
   if mode == "" || mode == "all" {
     return Ok(indexes)
@@ -26,7 +26,7 @@ fn table_duplicate_indexes(
     )
   }
   let keys : Array[String] = []
-  let groups : Map[String, (Int, Int, Int)] = Map([])
+  let groups : Map[String, (Int32, Int32, Int32)] = Map([])
   for index in indexes {
     let row = text_rows[index]
     let values = match first {
@@ -42,7 +42,7 @@ fn table_duplicate_indexes(
     let (first_index, _, count) = groups.get(key).unwrap_or((index, index, 0))
     groups[key] = (first_index, index, count + 1)
   }
-  let selected : Array[Int] = []
+  let selected : Array[Int32] = []
   for position, index in indexes {
     let (first_index, last_index, count) = groups[keys[position]]
     let keep = match mode {

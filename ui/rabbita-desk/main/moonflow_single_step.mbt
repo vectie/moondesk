@@ -14,7 +14,7 @@ struct MoonFlowSingleStepState {
   request_id : String
   status : String
   message : String
-  generation : Int
+  generation : Int32
   pending : Bool
   result : Json?
 }
@@ -24,8 +24,8 @@ enum MoonFlowSingleStepMsg {
   Select(String, String)
   Execute
   Reconcile
-  Reply(String, String, String, String, Int, Result[Json, String])
-  Timeout(String, String, String, String, Int)
+  Reply(String, String, String, String, Int32, Result[Json, String])
+  Timeout(String, String, String, String, Int32)
 }
 
 ///|
@@ -199,7 +199,7 @@ fn moonflow_single_step_identity(
   run : String,
   item : String,
   request : String,
-  generation : Int,
+  generation : Int32,
 ) -> Bool {
   state.workspace_id == book &&
   state.run_id == run &&

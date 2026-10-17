@@ -1,5 +1,5 @@
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {
@@ -12,7 +12,7 @@ fn clamp_int(value : Int, min : Int, max : Int) -> Int {
 ///|
 fn standing_goal_record_from_payload(
   payload : Json,
-  daemon_tick~ : Int,
+  daemon_tick~ : Int32,
 ) -> Json {
   let title = json_string(payload, "title", default="MoonDesk standing watch")
   let id = json_string(payload, "id", default=@desk.stable_id("watch", title))
@@ -97,7 +97,7 @@ fn pdf_watch_websites_from_payload(payload : Json) -> Array[String] {
 }
 
 ///|
-fn pdf_watch_cadence_from_payload(payload : Json) -> Int {
+fn pdf_watch_cadence_from_payload(payload : Json) -> Int32 {
   let watch = json_object_field_or_empty(payload, "watch")
   let direct = json_int(payload, "cadence_minutes", default=-1)
   if direct > 0 {

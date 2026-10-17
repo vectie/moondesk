@@ -34,8 +34,8 @@ fn human_revision_request(fixture : WorkContinuationFixture) -> Json {
 async fn human_revision_call(
   fixture : WorkContinuationFixture,
   request? : Json,
-  capture? : async (String, String, String) -> Result[Unit, String] = mooncode_human_revision_capture,
-) -> (Int, Json) {
+  capture~ : async (String, String, String) -> Result[Unit, String] = mooncode_human_revision_capture,
+) -> (Int32, Json) {
   mooncode_edit_work_output(
     fixture.workspace.root_path,
     [fixture.workspace],

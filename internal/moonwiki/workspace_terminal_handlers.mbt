@@ -11,7 +11,7 @@ struct WorkspaceTerminal {
 let workspace_terminals : Map[String, WorkspaceTerminal] = {}
 
 ///|
-let workspace_terminal_sequence : Ref[Int] = { val: 0, }
+let workspace_terminal_sequence : Ref[Int32] = { val: 0, }
 
 ///|
 fn WorkspaceTerminal::to_json(self : WorkspaceTerminal) -> Json {

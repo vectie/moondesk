@@ -63,9 +63,9 @@ async fn github_repository_for_workspace(root : String) -> String? {
 ///|
 fn github_empty_projection(
   state : String,
-  repository? : String = "",
-  drafts? : Array[Json] = [],
-  inline_drafts? : Array[Json] = [],
+  repository~ : String = "",
+  drafts~ : Array[Json] = [],
+  inline_drafts~ : Array[Json] = [],
 ) -> Json {
   {
     "contract": "moondesk.github_context.v1",
@@ -365,7 +365,7 @@ fn github_comment_target_valid(
 fn github_comment_url_valid(
   url : String,
   repository : String,
-  number : Int,
+  number : Int32,
 ) -> Bool {
   let prefix = "https://github.com/" + repository
   let suffix = "/" + number.to_string() + "#issuecomment-"

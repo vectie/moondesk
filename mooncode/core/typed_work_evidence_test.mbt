@@ -114,8 +114,8 @@ fn typed_evidence_matrix_fixture(steps : Array[Json]) -> Json {
 fn typed_matrix_step(
   source_kind : String,
   raw_kind : String,
-  state? : String = "recorded",
-  exit_code? : Int = 0,
+  state~ : String = "recorded",
+  exit_code~ : Int32 = 0,
 ) -> Json {
   {
     "command_id": "command-matrix",

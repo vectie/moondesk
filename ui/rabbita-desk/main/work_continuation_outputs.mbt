@@ -3,7 +3,7 @@ fn work_continuation_output_url(
   target : WorkHandoffTarget,
   record : Json,
   output : Json,
-  allow_edit? : Bool = false,
+  allow_edit~ : Bool = false,
 ) -> String {
   let path = handoff_text(output, "path")
   if !handoff_json_array(record, "output_refs").contains(output) ||
@@ -51,7 +51,7 @@ extern "js" fn work_continuation_output_query(
 fn render_work_continuation_outputs(
   target : WorkHandoffTarget,
   record : Json,
-  allow_edit? : Bool = false,
+  allow_edit~ : Bool = false,
 ) -> @rabbita.Html {
   let outputs = handoff_json_array(record, "output_refs")
   div(class="work-continuation-outputs", [

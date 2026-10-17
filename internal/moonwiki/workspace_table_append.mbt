@@ -13,7 +13,7 @@ fn append_tables(
   second : WorkspaceTableSource,
 ) -> Result[TableAppend, String] {
   let names : Array[String] = []
-  let indexes : Map[String, Int] = Map([])
+  let indexes : Map[String, Int32] = Map([])
   let shared_columns : Array[String] = []
   let first_only : Array[String] = []
   let second_only : Array[String] = []

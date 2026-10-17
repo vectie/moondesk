@@ -1,7 +1,7 @@
 ///|
 /// Saved-view catalog presentation is deliberately independent from save-operation
 /// feedback. Ready rows use `None`, matching the shared SurfaceState convention.
-fn saved_views_state_after_success(row_count : Int) -> SurfaceState? {
+fn saved_views_state_after_success(row_count : Int32) -> SurfaceState? {
   if row_count == 0 {
     Some(LegitimateZero)
   } else {

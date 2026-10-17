@@ -15,7 +15,7 @@ pub(all) struct MoonCodeTurn {
   turn_id : String
   client_turn_id : String
   command_id : String
-  ordinal : Int
+  ordinal : Int32
   status : String
   started_at : String
   updated_at : String
@@ -34,10 +34,10 @@ pub(all) struct MoonCodeConversation {
   session_id : String
   workspace_id : String
   workspace_name : String
-  turn_count : Int
+  turn_count : Int32
   revision : String
   last_sequence : String
-  source_event_count : Int
+  source_event_count : Int32
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
 } derive(Debug, Eq)
@@ -80,7 +80,7 @@ fn canonical_decimal_is_valid(value : String) -> Bool {
 }
 
 ///|
-fn canonical_decimal_compare(left : String, right : String) -> Int {
+fn canonical_decimal_compare(left : String, right : String) -> Int32 {
   if left.length() < right.length() {
     -1
   } else if left.length() > right.length() {
@@ -94,8 +94,8 @@ fn canonical_decimal_compare(left : String, right : String) -> Int {
 fn conversation_optional_int(
   fields : Map[String, Json],
   key : String,
-  default : Int,
-) -> Int? {
+  default : Int32,
+) -> Int32? {
   match fields.get(key) {
     None => Some(default)
     Some(Number(value, ..)) => Some(value.to_int())
@@ -278,7 +278,7 @@ fn decode_conversation_turn(
 ///|
 pub fn decode_mooncode_conversation(
   payload : Json,
-  current_revision? : String = "0",
+  current_revision~ : String = "0",
 ) -> Result[MoonCodeConversation, MoonCodeFailure] {
   if payload is Null {
     return Err(Absent)
@@ -325,7 +325,7 @@ pub fn decode_mooncode_conversation(
     string_values.push(value)
   }
   let optional_ints = ["turn_count", "source_event_count"]
-  let int_values : Array[Int] = []
+  let int_values : Array[Int32] = []
   for key in optional_ints {
     guard conversation_optional_int(fields, key, 0) is Some(value) else {
       return Err(Malformed("conversation \{key} must be a number"))

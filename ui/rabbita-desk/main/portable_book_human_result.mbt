@@ -22,13 +22,13 @@ struct PortableBookHumanRevision {
 struct PortableBookHumanResult {
   filename : String
   raw_base64 : String
-  raw_size_bytes : Int
+  raw_size_bytes : Int32
   raw_sha256 : String
   task : PortableBookHumanRecord
   report : PortableBookHumanRecord
   revision : PortableBookHumanRevision
   content_text : String
-  content_size_bytes : Int
+  content_size_bytes : Int32
   content_sha256 : String
 } derive(FromJson, ToJson, Eq, Debug)
 

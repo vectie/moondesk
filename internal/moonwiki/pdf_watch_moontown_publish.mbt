@@ -5,7 +5,7 @@ async fn write_moontown_standing_goal_registration(
   book_id~ : String,
   pattern_id~ : String,
   goal~ : Json,
-  owner_receipt? : Json = Json::object({}),
+  owner_receipt~ : Json = Json::object({}),
 ) -> Json {
   ignore(root)
   let goal_id = json_string(
@@ -67,7 +67,7 @@ async fn write_moontown_book_template_publish(
   topic~ : String,
   pattern_id~ : String,
   purpose~ : String,
-  cadence~ : Int,
+  cadence~ : Int32,
   websites~ : Array[String],
   method_body~ : String,
   skill_pack~ : Array[String],
@@ -137,7 +137,7 @@ fn pdf_watch_moontown_install_config(
   pattern_id~ : String,
   purpose~ : String,
   book_root~ : String,
-  cadence~ : Int,
+  cadence~ : Int32,
   websites~ : Array[String],
   method_body~ : String,
   skill_pack~ : Array[String],

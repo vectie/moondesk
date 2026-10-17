@@ -280,8 +280,8 @@ fn office_editor_item_from_json(
   json : Json,
   section~ : String,
   reference~ : String,
-  section_index~ : Int,
-  item_index~ : Int,
+  section_index~ : Int32,
+  item_index~ : Int32,
 ) -> OfficeEditorItem {
   {
     section,

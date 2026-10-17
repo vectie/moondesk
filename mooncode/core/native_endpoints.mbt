@@ -119,7 +119,7 @@ fn native_endpoint_percent_encoded_byte(byte : Byte) -> String {
 }
 
 ///|
-fn native_endpoint_hex_digit(value : Int) -> String {
+fn native_endpoint_hex_digit(value : Int32) -> String {
   match value {
     0 => "0"
     1 => "1"
@@ -164,7 +164,7 @@ fn native_endpoint_query(query : Array[(String, String)]) -> String {
 ///|
 fn native_endpoint_url(
   segments : Array[String],
-  query? : Array[(String, String)] = [],
+  query~ : Array[(String, String)] = [],
 ) -> String {
   let path = native_endpoint_path(segments)
   if query.length() == 0 {
@@ -265,8 +265,8 @@ fn native_stream_endpoint_raw(
   book_root : String,
   format : String,
   since : String,
-  wait_ms? : Int = 0,
-  poll_ms? : Int = 100,
+  wait_ms~ : Int32 = 0,
+  poll_ms~ : Int32 = 100,
 ) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "stream"], query=[
     ("book_root", book_root),
@@ -284,8 +284,8 @@ fn native_stream_endpoint_for_cursor(
   book_root : String,
   format : String,
   cursor : MoonCodeWatchCursor,
-  wait_ms? : Int = 0,
-  poll_ms? : Int = 100,
+  wait_ms~ : Int32 = 0,
+  poll_ms~ : Int32 = 100,
 ) -> String {
   native_stream_endpoint_raw(
     session_id,

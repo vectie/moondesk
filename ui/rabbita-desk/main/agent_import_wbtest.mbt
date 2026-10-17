@@ -13,10 +13,10 @@ fn agent_import_test_file() -> LocalImportFile {
 ///|
 fn agent_import_test_reply(
   status : String,
-  destination? : String = "",
-  library? : String = "/library-a",
-  prepared? : PortableBookPrepared = portable_book_test_package(),
-  changed? : Array[String] = [],
+  destination~ : String = "",
+  library~ : String = "/library-a",
+  prepared~ : PortableBookPrepared = portable_book_test_package(),
+  changed~ : Array[String] = [],
 ) -> Json {
   {
     "operation_id": portable_book_test_id(),

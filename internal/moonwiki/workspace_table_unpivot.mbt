@@ -44,8 +44,8 @@ fn unpivot_table(
     }
     selected[name] = true
   }
-  let ids : Array[Int] = []
-  let values : Array[Int] = []
+  let ids : Array[Int32] = []
+  let values : Array[Int32] = []
   for i, name in source.table.columns {
     if selected.contains(name) {
       values.push(i)

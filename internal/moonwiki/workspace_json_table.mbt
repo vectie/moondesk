@@ -93,9 +93,9 @@ fn json_table_html(
   workspace_id : String,
   path : String,
   table : @jsontable.Table,
-  request_path? : String = "",
-  total_rows? : Int = table.rows.length(),
-  sheet_names? : Array[String] = [],
+  request_path~ : String = "",
+  total_rows~ : Int32 = table.rows.length(),
+  sheet_names~ : Array[String] = [],
 ) -> String {
   let output = StringBuilder()
   output.write_string(

@@ -1,5 +1,5 @@
 ///|
-fn export_group_fixture(id? : String = "group-1") -> Json {
+fn export_group_fixture(id~ : String = "group-1") -> Json {
   {
     "artifact_id": id,
     "label": "Demo app",
@@ -20,7 +20,7 @@ fn export_group_fixture(id? : String = "group-1") -> Json {
 ///|
 fn export_group_request(
   groups : Array[Json],
-  paths? : Array[String] = [],
+  paths~ : Array[String] = [],
   workspace? : @desk.DeskWorkspace,
 ) -> Result[AgentExportRequest, String] {
   agent_export_request({

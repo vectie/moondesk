@@ -54,7 +54,7 @@ async fn write_lepusa_integration_live_project(
 fn lepusa_integration_live_project_json(
   options : LepusaIntegrationOptions,
   repo_root : String,
-  workspace_build? : Bool = false,
+  workspace_build~ : Bool = false,
 ) -> Json {
   let host = "127.0.0.1"
   let sidecar = moondesk_sidecar_build_output(repo_root, workspace_build~)

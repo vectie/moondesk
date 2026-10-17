@@ -562,7 +562,7 @@ fn supervisor_bridge_message_payload(
 fn supervisor_bridge_execution_dispatch(
   handoff : Json,
   grant? : Json,
-  workspace_root? : String = "",
+  workspace_root~ : String = "",
 ) -> Result[SupervisorBridgeDispatch, String] {
   let supervisor_id = json_string(handoff, "supervisor_profile_id", default="")
   let action = json_string(handoff, "action", default="")
@@ -1222,7 +1222,7 @@ async fn supervisor_bridge_release_runtime(
   workspace_root : String,
   kind : String,
   target_id : String,
-  expected_cursor : Int,
+  expected_cursor : Int32,
 ) -> Unit {
   ignore(
     moontown_owner_post_json(
@@ -1241,7 +1241,7 @@ async fn supervisor_bridge_release_runtime(
 async fn supervisor_bridge_pump_activation(
   workspace_root : String,
   handoff : Json,
-  expected_cursor : Int,
+  expected_cursor : Int32,
   daemon : Json,
 ) -> Json {
   let target_id = json_string(handoff, "handoff_id", default="")
@@ -1459,7 +1459,7 @@ async fn supervisor_bridge_pump_activation(
 async fn supervisor_bridge_pump_execution(
   workspace_root : String,
   handoff : Json,
-  expected_cursor : Int,
+  expected_cursor : Int32,
   daemon : Json,
 ) -> Json {
   let target_id = json_string(handoff, "handoff_id", default="")
@@ -1925,7 +1925,7 @@ async fn supervisor_bridge_submit_bookkeeper(
 async fn supervisor_bridge_pump_bookkeeper(
   workspace_root : String,
   request : Json,
-  expected_cursor : Int,
+  expected_cursor : Int32,
 ) -> Json {
   let target_id = json_string(request, "request_id", default="")
   let preview_submission = json_object_field(
@@ -2153,8 +2153,8 @@ fn supervisor_bridge_observation_matches(
   status : Json,
   replay : Json,
   supervisor_id : String,
-  after_cursor : Int,
-) -> Int? {
+  after_cursor : Int32,
+) -> Int32? {
   let state = json_object_field(status, "state").unwrap_or(Json::null())
   let runtime_cursor = json_int(state, "cursor", default=-1)
   if json_string(status, "contract_id", default="") !=
@@ -2179,8 +2179,8 @@ fn supervisor_bridge_observation_matches(
 async fn supervisor_bridge_complete_replay(
   daemon : Json,
   supervisor_id : String,
-  after_cursor : Int,
-  target_cursor : Int,
+  after_cursor : Int32,
+  target_cursor : Int32,
 ) -> Result[Json, String] {
   let events : Array[Json] = []
   let mut page_after = after_cursor
@@ -2235,7 +2235,7 @@ async fn supervisor_bridge_reconcile_observation(
   workspace_root : String,
   supervisor_id : String,
   observation : Json,
-  expected_cursor : Int,
+  expected_cursor : Int32,
 ) -> Json {
   let runtime_cursor = json_int(observation, "runtime_cursor", default=-1)
   let observation_digest = json_string(
@@ -2306,7 +2306,7 @@ async fn supervisor_bridge_reconcile_observation(
 async fn supervisor_bridge_pump_observation(
   workspace_root : String,
   active : Json,
-  expected_cursor : Int,
+  expected_cursor : Int32,
   daemon : Json,
 ) -> Json {
   let supervisor_id = json_string(active, "supervisor_id", default="")

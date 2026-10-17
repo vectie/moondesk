@@ -1,8 +1,8 @@
 ///|
 fn work_human_revision_post(
   dispatch : Dispatch[Msg],
-  generation : Int,
-  request : Int,
+  generation : Int32,
+  request : Int32,
   operation : String,
   body : Json,
 ) -> @rabbita.Cmd {

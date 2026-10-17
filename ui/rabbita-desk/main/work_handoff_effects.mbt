@@ -2,9 +2,9 @@
 fn fetch_work_handoff_cmd(
   dispatch : Dispatch[Msg],
   target : WorkHandoffTarget,
-  generation : Int,
-  continuation_id? : String = "",
-  output? : Json = Json::null(),
+  generation : Int32,
+  continuation_id~ : String = "",
+  output~ : Json = Json::null(),
 ) -> @rabbita.Cmd {
   @http.get(
     work_output_read_url(
@@ -37,8 +37,8 @@ fn fetch_work_handoff_cmd(
 fn fetch_work_handoff_files_cmd(
   dispatch : Dispatch[Msg],
   canonical : WorkHandoffCanonical,
-  generation : Int,
-  request : Int,
+  generation : Int32,
+  request : Int32,
   directory : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.workspace_entries_url(canonical.workspace_id, directory)).expect_json(result => {

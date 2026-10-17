@@ -18,9 +18,9 @@ fn handoff_desk_model() -> Model {
 
 ///|
 fn handoff_desk_fixture(
-  session? : String = "S/书",
-  command? : String = "C?0",
-  root? : String = "/book",
+  session~ : String = "S/书",
+  command~ : String = "C?0",
+  root~ : String = "/book",
 ) -> Json {
   {
     "schema": "moondesk.work-handoff.v1",

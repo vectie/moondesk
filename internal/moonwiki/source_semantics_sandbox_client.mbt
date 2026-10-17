@@ -1,12 +1,12 @@
 ///|
-const SourceSemanticsSandboxConfigBytes : Int = 65_536
+const SourceSemanticsSandboxConfigBytes : Int32 = 65_536
 
 ///|
-const SourceSemanticsSandboxResponseBytes : Int = 200_000
+const SourceSemanticsSandboxResponseBytes : Int32 = 200_000
 
 ///|
 priv struct SourceSemanticsSandboxClientConfig {
-  protocol_version : Int
+  protocol_version : Int32
   instance_id : String
   auth_token : String
   workspace_id : String
@@ -21,7 +21,7 @@ priv enum SourceSemanticsSandboxClientError {
 }
 
 ///|
-fn source_semantics_safe_hex(value : String, length : Int) -> Bool {
+fn source_semantics_safe_hex(value : String, length : Int32) -> Bool {
   value.length() == length &&
   value.all(character => {
     character.is_ascii_digit() || (character >= 'a' && character <= 'f')
@@ -53,7 +53,7 @@ fn source_semantics_control_root(
 ///|
 async fn source_semantics_read_bounded_file(
   path : String,
-  limit : Int,
+  limit : Int32,
 ) -> String {
   let file = @fs.open(path, mode=ReadOnly)
   defer file.close()
@@ -163,7 +163,7 @@ fn source_semantics_validate_sandbox_response(
   payload : Json,
   config : SourceSemanticsSandboxClientConfig,
   request_id : String,
-  operation? : String = "moon_diagnostics",
+  operation~ : String = "moon_diagnostics",
 ) -> Result[Json, SourceSemanticsSandboxClientError] {
   guard json_int(payload, "protocol_version", default=0) == 1 &&
     json_string(payload, "instance_id", default="") == config.instance_id &&
@@ -202,8 +202,8 @@ async fn source_semantics_sandbox_ide(
   module_path : String,
   action : String,
   symbol : String,
-  line : Int,
-  column : Int,
+  line : Int32,
+  column : Int32,
 ) -> Result[Json, SourceSemanticsSandboxClientError] {
   let config = source_semantics_load_sandbox_client_config() catch {
     _ => return Err(Unavailable)

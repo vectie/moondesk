@@ -1,8 +1,8 @@
 ///|
 pub async fn make_directory(
   path : StringView,
-  recursive? : Bool = false,
-  exists_ok? : Bool = false,
+  recursive~ : Bool = false,
+  exists_ok~ : Bool = false,
 ) -> Unit {
   let dirs : Array[String] = []
   collect_missing_dirs(path.to_owned(), dirs, recursive)

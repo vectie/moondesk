@@ -18,7 +18,7 @@ fn work_handoff_test_workspace() -> @desk.DeskWorkspace {
 }
 
 ///|
-fn work_handoff_test_item(id : String, status? : String = "delivered") -> Json {
+fn work_handoff_test_item(id : String, status~ : String = "delivered") -> Json {
   {
     "command_id": id,
     "session_id": "S",

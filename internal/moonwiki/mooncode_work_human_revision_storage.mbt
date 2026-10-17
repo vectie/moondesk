@@ -5,10 +5,10 @@ fn mooncode_human_revision_path(id : String, name : String) -> String {
 
 ///|
 fn mooncode_human_revision_error(
-  status : Int,
+  status : Int32,
   state : String,
   message : String,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   (
     status,
     {

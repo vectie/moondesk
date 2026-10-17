@@ -1,7 +1,7 @@
 ///|
 pub struct Server {
   server : @http.Server
-  port : Int
+  port : Int32
 }
 
 ///|
@@ -12,7 +12,7 @@ priv struct RunRef {
 }
 
 ///|
-pub fn Server::port(self : Server) -> Int {
+pub fn Server::port(self : Server) -> Int32 {
   self.port
 }
 
@@ -45,9 +45,9 @@ fn moondesk_health_json(ui_root : String, workspace_root : String) -> Json {
 ///|
 pub async fn Server::new(
   host : String,
-  port : Int,
-  dual_stack? : Bool = true,
-  reuse_addr? : Bool = false,
+  port : Int32,
+  dual_stack~ : Bool = true,
+  reuse_addr~ : Bool = false,
 ) -> Server {
   let host = if host == "localhost" { "127.0.0.1" } else { host }
   let server = @http.Server::Server(
@@ -179,7 +179,7 @@ fn moondesk_browser_host_allowed(host : StringView) -> Bool {
 fn moondesk_browser_origin_allowed(
   origin : StringView,
   host : StringView,
-  method_? : @http.RequestMethod = Get,
+  method_~ : @http.RequestMethod = Get,
 ) -> Bool {
   let origin = origin.to_owned().trim().to_owned().to_lower()
   let host = host.to_owned().trim().to_owned().to_lower()

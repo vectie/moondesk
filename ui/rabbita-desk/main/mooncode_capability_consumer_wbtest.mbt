@@ -44,8 +44,8 @@ test "UI maps negotiated unsupported malformed and unavailable states" {
 #warnings("-alert_unstable")
 fn capability_setup_markup(
   state : MoonCodeCapabilityState,
-  running? : Bool = false,
-  not_installed? : Bool = false,
+  running~ : Bool = false,
+  not_installed~ : Bool = false,
 ) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let daemon = if running {

@@ -1,18 +1,18 @@
 ///|
 pub struct ReviewDiffSummary {
-  added : Int
-  removed : Int
+  added : Int32
+  removed : Int32
   changed : Bool
   body : String
 }
 
 ///|
-pub fn ReviewDiffSummary::added(self : ReviewDiffSummary) -> Int {
+pub fn ReviewDiffSummary::added(self : ReviewDiffSummary) -> Int32 {
   self.added
 }
 
 ///|
-pub fn ReviewDiffSummary::removed(self : ReviewDiffSummary) -> Int {
+pub fn ReviewDiffSummary::removed(self : ReviewDiffSummary) -> Int32 {
   self.removed
 }
 

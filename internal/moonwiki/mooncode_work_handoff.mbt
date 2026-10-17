@@ -69,10 +69,10 @@ fn mooncode_work_session_root(
 ///|
 fn mooncode_work_failure(
   target : MoonCodeWorkTarget,
-  status : Int,
+  status : Int32,
   state : String,
   message : String,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   (
     status,
     {
@@ -90,7 +90,7 @@ fn mooncode_work_failure(
 fn mooncode_work_workspace(
   target : MoonCodeWorkTarget,
   workspaces : Array[@desk.DeskWorkspace],
-) -> Result[@desk.DeskWorkspace, (Int, Json)] {
+) -> Result[@desk.DeskWorkspace, (Int32, Json)] {
   if target.session_id.is_empty() ||
     target.command_id.is_empty() ||
     !@pathx.is_absolute(target.book_root) {
@@ -125,7 +125,7 @@ fn mooncode_work_workspace(
 fn mooncode_work_scope_failure(
   target : MoonCodeWorkTarget,
   error : String,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   let (status, _) = mooncode_session_scope_error_status(error)
   let state = if status == 404 {
     "session_not_found"
@@ -144,7 +144,7 @@ fn mooncode_work_command_projection(
   target : MoonCodeWorkTarget,
   workspace : @desk.DeskWorkspace,
   claims : Json,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   if json_string(claims, "kind", default="") != "mooncode-runtime-claim-state" ||
     json_string(claims, "protocol", default="") != "mooncode.v1" {
     return mooncode_work_failure(
@@ -244,11 +244,11 @@ async fn mooncode_resolve_work_handoff(
   workspaces : Array[@desk.DeskWorkspace],
   target : MoonCodeWorkTarget,
   read : async (String) -> Result[Json, String],
-  include_session? : Bool = false,
-  include_context? : Bool = false,
-  include_continuations? : Bool = false,
-  continuation_id? : String = "",
-) -> (Int, Json) {
+  include_session~ : Bool = false,
+  include_context~ : Bool = false,
+  include_continuations~ : Bool = false,
+  continuation_id~ : String = "",
+) -> (Int32, Json) {
   let workspace = match mooncode_work_workspace(target, workspaces) {
     Ok(value) => value
     Err(result) => return result

@@ -1,5 +1,5 @@
 ///|
-fn parse_git_history(text : String, offset : Int) -> Json {
+fn parse_git_history(text : String, offset : Int32) -> Json {
   let fields = text.split("\u0000").to_array()
   let commits : Array[Json] = []
   let mut index = 0
@@ -30,7 +30,7 @@ fn parse_git_history(text : String, offset : Int) -> Json {
 ///|
 async fn read_git_review_threads(
   root : String,
-  number : Int,
+  number : Int32,
   cursor : String,
 ) -> Result[Json, String] {
   let repository = match github_repository_for_workspace(root) {

@@ -9,7 +9,7 @@ fn json_bool(json : Json, key : String, default~ : Bool) -> Bool {
 }
 
 ///|
-fn json_int(json : Json, key : String, default~ : Int) -> Int {
+fn json_int(json : Json, key : String, default~ : Int32) -> Int32 {
   @mooncore.json_int(json, key, default~)
 }
 

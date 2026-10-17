@@ -1,7 +1,7 @@
 ///|
 fn render_search_state_panel(
   state : SurfaceState,
-  error? : String = "",
+  error~ : String = "",
 ) -> @rabbita.Html {
   section(
     class="surface-state-panel",

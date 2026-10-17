@@ -5,14 +5,14 @@ struct MoonFlowRecoveryOperatorProjection {
   state : String?
   owner : String?
   claim_id : String?
-  epoch : Int?
-  fence : Int?
+  epoch : Int32?
+  fence : Int32?
   expires_at : String?
   next_due_at : String?
   deadline : String?
-  attempt_count : Int?
+  attempt_count : Int32?
   unknown_since : String?
-  reconciliation_age_seconds : Int?
+  reconciliation_age_seconds : Int32?
   last_provider_observation_digest : String?
   manual_intervention : Bool?
   blocker : String?
@@ -89,7 +89,7 @@ struct MoonFlowFinalDeliverableOperatorProjection {
 struct MoonFlowArtifactOperatorProjection {
   artifact_id : String?
   state : String?
-  revision : Int?
+  revision : Int32?
   media_type : String?
   locator : String?
   digest : String?

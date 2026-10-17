@@ -3,7 +3,7 @@ struct DaemonControlResult {
   id : String
   ok : Bool
   status : String
-  exit_code : Int
+  exit_code : Int32
   path : String
   stdout : String
   stderr : String
@@ -29,7 +29,7 @@ struct DaemonLifecycleResult {
   action : String
   status : String
   running : Bool
-  pid : Int
+  pid : Int32
   command : String
   cwd : String
   started_at : String
@@ -40,7 +40,7 @@ struct DaemonLifecycleResult {
   message : String
   supervision_enabled : Bool
   desired_state : String
-  restart_count : Int
+  restart_count : Int32
   last_health_check : String
   policy_file : String
   service_configured : Bool
@@ -61,7 +61,7 @@ struct LaunchAgentResult {
   plist_path : String
   command : String
   cwd : String
-  exit_code : Int
+  exit_code : Int32
   message : String
 } derive(FromJson)
 
@@ -69,7 +69,7 @@ struct LaunchAgentResult {
 struct RevealResult {
   ok : Bool
   status : String
-  exit_code : Int
+  exit_code : Int32
   workspace_id : String
   path : String
   absolute_path : String

@@ -72,7 +72,7 @@ pub(all) struct MoonCodeSessionSummary {
   updated_at : String?
   model : String
   status : MoonCodeSessionStatus
-  queued_count : Int
+  queued_count : Int32
   last_message : String?
   archived : Bool
   extensions : Map[String, Json]
@@ -87,7 +87,11 @@ fn listing_string(fields : Map[String, Json], key : String) -> String? {
 }
 
 ///|
-fn listing_int(fields : Map[String, Json], key : String, default : Int) -> Int? {
+fn listing_int(
+  fields : Map[String, Json],
+  key : String,
+  default : Int32,
+) -> Int32? {
   match fields.get(key) {
     None => Some(default)
     Some(Number(value, ..)) => Some(value.to_int())
@@ -110,7 +114,7 @@ fn listing_bool(
 }
 
 ///|
-fn listing_version(protocol : String) -> Int? {
+fn listing_version(protocol : String) -> Int32? {
   guard protocol.has_prefix("mooncode.v") else { return None }
   try @string.parse_int(protocol["mooncode.v".length():].to_owned()) catch {
     _ => None

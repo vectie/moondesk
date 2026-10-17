@@ -13,7 +13,7 @@ fn agent_human_result_hash(bytes : Bytes) -> String {
 }
 
 ///|
-fn agent_human_result_id(value : String, revision? : Bool = false) -> Bool {
+fn agent_human_result_id(value : String, revision~ : Bool = false) -> Bool {
   value.length() > 0 &&
   value.length() <= 128 &&
   value != "." &&
@@ -21,7 +21,7 @@ fn agent_human_result_id(value : String, revision? : Bool = false) -> Bool {
   value
   .iter()
   .all(c => {
-    c is ('0'..='9' | 'a'..='z' | 'A'..='Z' | '_' | '-') ||
+    c is ('0'..<='9' | 'a'..<='z' | 'A'..<='Z' | '_' | '-') ||
     (!revision && c is ('.' | ':'))
   })
 }
@@ -30,8 +30,8 @@ fn agent_human_result_id(value : String, revision? : Bool = false) -> Bool {
 fn agent_human_result_version(value : String) -> Bool {
   value.length() > 0 &&
   value.length() <= 10 &&
-  value[0] is ('1'..='9') &&
-  value.iter().all(c => c is ('0'..='9')) &&
+  value[0] is ('1'..<='9') &&
+  value.iter().all(c => c is ('0'..<='9')) &&
   (value.length() < 10 || value.compare("2147483647") <= 0)
 }
 
@@ -44,7 +44,7 @@ fn agent_human_result_evidence(value : String) -> Bool {
   !value.has_prefix("/") &&
   !value.to_lower().has_prefix("file:") &&
   !(value.length() >= 3 &&
-  value[0] is ('a'..='z' | 'A'..='Z') &&
+  value[0] is ('a'..<='z' | 'A'..<='Z') &&
   value[1] == ':' &&
   value[2] == '/')
 }
@@ -64,7 +64,7 @@ fn agent_human_result_record(value : Json) -> Bool {
 ///|
 // Every accepted object has a fixed key set. Counting structural colons after
 // JSON parsing also rejects duplicate keys that a map parser could overwrite.
-fn agent_human_result_key_count(text : String) -> Int {
+fn agent_human_result_key_count(text : String) -> Int32 {
   let mut quoted = false
   let mut escaped = false
   let mut count = 0

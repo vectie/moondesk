@@ -9,7 +9,7 @@ struct MoonCodeEvidenceRow {
   diff : String
   command : String
   output : String
-  exit_code : Int
+  exit_code : Int32
   truncated : Bool
   approval : @mooncode_core.MoonCodeApproval?
   sandbox_receipt : @mooncode_core.MoonCodeSandboxReceipt?

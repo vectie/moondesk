@@ -2,7 +2,7 @@
 struct GitHubCheckoutProjection {
   contract : String
   repository : String
-  number : Int
+  number : Int32
   head_oid : String
   workspace : @desk.DeskWorkspace
 } derive(FromJson)
@@ -20,7 +20,7 @@ fn checkout_github_pull_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   repository : String,
-  number : Int,
+  number : Int32,
   head_oid : String,
 ) -> @rabbita.Cmd {
   let url = @desk.desktop_api_url([

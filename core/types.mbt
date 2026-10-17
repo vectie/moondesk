@@ -89,7 +89,7 @@ pub struct DeskFileEntry {
   source_layer : SourceLayer
   readable : Bool
   writable : Bool
-  size_bytes : Int?
+  size_bytes : Int32?
   modified_at : String?
 } derive(Debug, Eq, ToJson, FromJson)
 

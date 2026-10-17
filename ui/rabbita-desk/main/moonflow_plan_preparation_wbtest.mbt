@@ -1,5 +1,5 @@
 ///|
-fn plan_ui_result(model : Model, applied? : Bool = false) -> Json {
+fn plan_ui_result(model : Model, applied~ : Bool = false) -> Json {
   let editor = model.moonflow_composition.unwrap().plan_editor.unwrap()
   {
     "contract_id": "moondesk.flow-plan-result.v1",

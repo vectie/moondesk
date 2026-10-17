@@ -12,7 +12,7 @@ async fn send_file(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
   path : String,
-  code : Int,
+  code : Int32,
   reason : String,
 ) -> Unit {
   conn.send_response(code, reason, extra_headers={
@@ -31,7 +31,7 @@ async fn send_isolated_preview_file(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
   path : String,
-  code : Int,
+  code : Int32,
   reason : String,
 ) -> Unit {
   conn.send_response(
@@ -208,7 +208,7 @@ fn isolated_preview_observer_bridge() -> String {
 ///|
 async fn send_status(
   conn : @http.ServerConnection,
-  code : Int,
+  code : Int32,
   reason : String,
   body : String,
 ) -> Unit {
@@ -265,7 +265,7 @@ async fn send_text(
 async fn send_api_error(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
-  code : Int,
+  code : Int32,
   reason : String,
   message : String,
 ) -> Unit {
@@ -291,7 +291,7 @@ async fn send_api_error(
 async fn send_api_json_error(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
-  code : Int,
+  code : Int32,
   reason : String,
   payload : Json,
 ) -> Unit {
@@ -302,7 +302,7 @@ async fn send_api_json_error(
 async fn send_api_json_error_with_headers(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
-  code : Int,
+  code : Int32,
   reason : String,
   payload : Json,
   extra_headers : Map[String, String],

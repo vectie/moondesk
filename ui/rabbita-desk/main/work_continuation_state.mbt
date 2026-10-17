@@ -12,7 +12,7 @@ struct WorkContinuationState {
   selected_return : String
   pending_guidance : Array[Json]
   guidance_state : String
-  request : Int
+  request : Int32
   admission_possible : Bool
   prior_uncertainty : Bool
 }
@@ -24,15 +24,15 @@ enum WorkContinuationMsg {
   DiscardDraft(String)
   CopyDraft(String)
   Submit
-  Stored(Int, Int, String, Bool)
-  ResumeStored(Int, Int, String, Bool)
-  Submitted(Int, Int, String, Result[Json, String])
+  Stored(Int32, Int32, String, Bool)
+  ResumeStored(Int32, Int32, String, Bool)
+  Submitted(Int32, Int32, String, Result[Json, String])
   Recover
   Resume
   New
   SelectReturn(String)
-  Poll(Int, String)
-  AdmissionTimeout(Int, Int, String)
+  Poll(Int32, String)
+  AdmissionTimeout(Int32, Int32, String)
 }
 
 ///|

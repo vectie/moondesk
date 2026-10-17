@@ -2,7 +2,7 @@
 const DocumentAutomationBindingContract : String = "moondesk.document_automation_binding.v1"
 
 ///|
-const DocumentAutomationMaxBindings : Int = 1_024
+const DocumentAutomationMaxBindings : Int32 = 1_024
 
 ///|
 let document_automation_binding_mutex : @async.Mutex = Mutex()

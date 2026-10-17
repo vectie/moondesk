@@ -8,7 +8,7 @@ fn mooncode_native_stream_cursor(
 
 ///|
 #warnings("-unused_value")
-fn mooncode_max_int(left : Int, right : Int) -> Int {
+fn mooncode_max_int(left : Int32, right : Int32) -> Int32 {
   if left > right {
     left
   } else {
@@ -22,8 +22,8 @@ async fn mooncode_native_stream_text(
   session_id : String,
   format : String,
   cursor : @mooncode_core.MoonCodeWatchCursor,
-  wait_ms~ : Int,
-  poll_ms~ : Int,
+  wait_ms~ : Int32,
+  poll_ms~ : Int32,
 ) -> Result[String, String] {
   let daemon = moonclaw_daemon_status(workspace_root)
   if !json_bool(daemon, "running", default=false) {

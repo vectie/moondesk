@@ -41,7 +41,7 @@ fn table_record_cell(value : @leafscene.CellValue) -> Result[String, String] {
 ///|
 fn table_export_records(
   table : @jsontable.Table,
-  jsonl? : Bool = false,
+  jsonl~ : Bool = false,
 ) -> Result[String, String] {
   match table_record_headers(table.columns) {
     Err(message) => return Err(message)

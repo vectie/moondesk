@@ -208,7 +208,7 @@ async fn handle_workspace_github_inline_draft(
 ///|
 async fn github_inline_review_snapshot(
   root : String,
-  number : Int,
+  number : Int32,
 ) -> Result[Json, String] {
   if number <= 0 || number > 1_000_000_000 {
     return Err("Invalid pull request number")
@@ -342,7 +342,7 @@ fn github_inline_comment_target_valid(payload : Json, snapshot : Json) -> Bool {
 fn github_inline_comment_url_valid(
   url : String,
   repository : String,
-  number : Int,
+  number : Int32,
 ) -> Bool {
   let prefix = "https://github.com/" +
     repository +

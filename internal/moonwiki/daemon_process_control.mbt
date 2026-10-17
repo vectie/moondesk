@@ -1,7 +1,7 @@
 ///|
 async fn start_managed_daemon(
   root : String,
-  action? : String = "start",
+  action~ : String = "start",
 ) -> Json {
   let descriptor = town_service_descriptor(root, "daemon")
   if json_bool(descriptor, "legacy_execution_rejected", default=false) {
@@ -43,7 +43,7 @@ async fn start_managed_daemon(
 ///|
 async fn stop_managed_daemon(
   root : String,
-  update_desired? : Bool = true,
+  update_desired~ : Bool = true,
 ) -> Json {
   if update_desired {
     set_daemon_desired_state(root, "stopped")
@@ -122,6 +122,6 @@ async fn stop_managed_daemon(
 }
 
 ///|
-async fn pid_is_running(pid : Int) -> Bool {
+async fn pid_is_running(pid : Int32) -> Bool {
   @trusted_host.pid_is_alive(pid)
 }

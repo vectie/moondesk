@@ -2,7 +2,7 @@
 fn moonedit_expect_document(
   result : Result[MoonEditDocument, MoonEditDocumentError],
   text : String,
-  byte_size : Int,
+  byte_size : Int32,
   revision : String,
 ) -> Unit raise {
   match result {

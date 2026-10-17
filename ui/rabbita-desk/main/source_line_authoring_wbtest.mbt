@@ -1,10 +1,10 @@
 ///|
 fn line_authoring_test_selected(
   state : SourcePaneState,
-  sl : Int,
-  sc : Int,
-  el : Int,
-  ec : Int,
+  sl : Int32,
+  sc : Int32,
+  el : Int32,
+  ec : Int32,
 ) -> SourcePaneState {
   {
     ..state,
@@ -152,8 +152,8 @@ test "line authoring no-op preserves redo and disabled source states do not muta
 ///|
 extern "js" fn line_authoring_mock_selection(
   text : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> @js.Value =
   #| (text, start, end) => {
   #|   const previous = globalThis.document;

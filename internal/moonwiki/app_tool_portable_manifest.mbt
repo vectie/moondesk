@@ -149,7 +149,7 @@ fn app_tool_preferred_html_entrypoint(
 }
 
 ///|
-fn app_tool_entrypoint_rank(entrypoint : String) -> Int {
+fn app_tool_entrypoint_rank(entrypoint : String) -> Int32 {
   let lower = entrypoint.to_lower()
   if lower == "app/index.html" || lower == "app/index.htm" {
     0

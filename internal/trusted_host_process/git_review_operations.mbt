@@ -1,5 +1,5 @@
 ///|
-pub fn git_history(offset : Int) -> GitReadOperation {
+pub fn git_history(offset : Int32) -> GitReadOperation {
   {
     args: [
       "log",
@@ -169,7 +169,7 @@ pub fn git_commit_diff(oid : String) -> GitReadOperation {
 ///|
 pub fn github_review_threads(
   repository : String,
-  number : Int,
+  number : Int32,
   cursor : String,
 ) -> GitHubOperation {
   let parts = repository.split("/").to_array()

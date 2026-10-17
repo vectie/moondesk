@@ -189,7 +189,7 @@ fn update_source_literal(
 extern "js" fn browser_source_selection_coordinate(
   end : Bool,
   column : Bool,
-) -> Int =
+) -> Int32 =
   #| (end, column) => {
   #|   if (typeof document === 'undefined') return -1;
   #|   const editor = document.querySelector('[data-testid="source-editor-input"]');
@@ -233,10 +233,10 @@ fn source_literal_capture_selection(state : SourcePaneState) -> SourcePaneState 
 
 ///|
 extern "js" fn browser_source_select_literal(
-  sl : Int,
-  sc : Int,
-  el : Int,
-  ec : Int,
+  sl : Int32,
+  sc : Int32,
+  el : Int32,
+  ec : Int32,
 ) =
   #| (sl, sc, el, ec) => {
   #|   if (typeof document === 'undefined') return;

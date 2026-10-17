@@ -11,7 +11,7 @@ pub struct OperatorRequestDraft {
   title : String
   prompt : String
   target_book_id : String
-  cadence_ticks : Int
+  cadence_ticks : Int32
   source_policy : @moondesk_core.SourcePolicy
   review_policy : String
   context_entries : Array[String]

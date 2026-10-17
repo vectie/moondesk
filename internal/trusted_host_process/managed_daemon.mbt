@@ -10,7 +10,7 @@ pub struct ManagedMoonClawBinding {
 /// Receipt for a trusted daemon launch. Output is deliberately discarded, so
 /// a daemon cannot grow an unbounded host log through this capability.
 pub(all) struct ManagedDaemonStart {
-  pid : Int
+  pid : Int32
   display : String
 }
 
@@ -90,9 +90,9 @@ fn moonclaw_daemon_environment_from_values(
   home : String,
   lunanexa_issuer : String,
   moongate_control_token : String,
-  allow_public_http? : Bool = false,
-  app_data_root? : String = "",
-  private_control_config? : String = "",
+  allow_public_http~ : Bool = false,
+  app_data_root~ : String = "",
+  private_control_config~ : String = "",
   moonfort_config? : String,
   moonfort_promotion_config? : String,
 ) -> Map[String, String] {

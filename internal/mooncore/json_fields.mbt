@@ -51,7 +51,7 @@ pub fn json_first_string(
 }
 
 ///|
-pub fn json_int(json : Json, key : String, default~ : Int) -> Int {
+pub fn json_int(json : Json, key : String, default~ : Int32) -> Int32 {
   match json_object_field(json, key) {
     Some(value) =>
       @json.from_json(value) catch {

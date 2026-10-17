@@ -75,7 +75,7 @@ fn mooncode_continuation_path(id : String, name : String) -> String {
 async fn mooncode_continuation_file(
   root : String,
   relative : String,
-  write? : Bool = false,
+  write~ : Bool = false,
 ) -> Result[String, String] {
   let canonical = @fs.realpath(root) catch {
     _ => return Err("MoonBook is unavailable")
@@ -366,8 +366,8 @@ async fn mooncode_continuation_load(
   root : String,
   id : String,
   target : MoonCodeWorkTarget,
-  repair_input? : Bool = false,
-  allow_missing_input? : Bool = false,
+  repair_input~ : Bool = false,
+  allow_missing_input~ : Bool = false,
 ) -> Result[Json?, String] {
   if !mooncode_continuation_valid_id(id) {
     return Err("Invalid continuation_id")

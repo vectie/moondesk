@@ -1,5 +1,5 @@
 ///|
-fn source_semantics_bounded_output(text : String, limit : Int) -> String {
+fn source_semantics_bounded_output(text : String, limit : Int32) -> String {
   if text.length() <= limit {
     text
   } else {
@@ -146,8 +146,8 @@ fn source_semantics_module_prefix(
 ///|
 priv enum SourceSemanticsSandboxAction {
   Diagnostics
-  Definition(symbol~ : String, line~ : Int, column~ : Int)
-  References(symbol~ : String, line~ : Int, column~ : Int)
+  Definition(symbol~ : String, line~ : Int32, column~ : Int32)
+  References(symbol~ : String, line~ : Int32, column~ : Int32)
 }
 
 ///|
@@ -171,8 +171,8 @@ fn source_semantics_sandbox_request(
   workspace_root : String,
   module_root : String,
   module_path : String,
-  line : Int,
-  column : Int,
+  line : Int32,
+  column : Int32,
 ) -> Result[SourceSemanticsSandboxRequest, String] {
   let sandbox_action = match action {
     "diagnostics" => SourceSemanticsSandboxAction::Diagnostics
@@ -249,8 +249,8 @@ fn source_semantics_ide_args(
   action : String,
   symbol : String,
   module_path : String,
-  line : Int,
-  column : Int,
+  line : Int32,
+  column : Int32,
 ) -> Result[Array[String], String] {
   if symbol.trim() == "" {
     return Err("Select a symbol before semantic navigation")

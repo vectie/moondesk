@@ -35,10 +35,10 @@ struct XlsxSheet {
 ///|
 struct PptxTextObject {
   text : String
-  x : Int?
-  y : Int?
-  width : Int?
-  height : Int?
+  x : Int32?
+  y : Int32?
+  width : Int32?
+  height : Int32?
 } derive(Eq, Debug)
 
 ///|
@@ -119,8 +119,8 @@ fn office_unescape_xml(text : String) -> String {
 fn office_tag_ranges(
   xml : String,
   tag_name : String,
-) -> Array[(Int, Int, String, String)] {
-  let ranges : Array[(Int, Int, String, String)] = []
+) -> Array[(Int32, Int32, String, String)] {
+  let ranges : Array[(Int32, Int32, String, String)] = []
   let open = "<" + tag_name
   let close = "</" + tag_name + ">"
   let mut offset = 0
@@ -234,7 +234,7 @@ fn office_attribute(xml : String, name : String) -> String? {
 }
 
 ///|
-fn office_parse_int(value : String) -> Int? {
+fn office_parse_int(value : String) -> Int32? {
   let mut result = 0
   let mut has_digit = false
   for char in value {
@@ -253,7 +253,7 @@ fn office_parse_int(value : String) -> Int? {
 }
 
 ///|
-fn office_int_attribute(xml : String, name : String) -> Int? {
+fn office_int_attribute(xml : String, name : String) -> Int32? {
   match office_attribute(xml, name) {
     Some(value) => office_parse_int(value)
     None => None
@@ -298,7 +298,7 @@ fn render_docx_paragraph(paragraph : DocxParagraph) -> String {
 ///|
 fn office_replace_ranges(
   xml : String,
-  ranges : Array[(Int, Int, String, String)],
+  ranges : Array[(Int32, Int32, String, String)],
   replacements : Array[String],
 ) -> String {
   let builder = StringBuilder()
@@ -768,8 +768,8 @@ fn office_document_set_docx_paragraphs(
 ///|
 fn office_document_set_docx_run(
   document : OfficeDocumentModel,
-  paragraph_index : Int,
-  run_index : Int,
+  paragraph_index : Int32,
+  run_index : Int32,
   replacement : DocxRun,
 ) -> Result[OfficeDocumentModel, String] {
   guard document.supported is Word(paragraphs) else {
@@ -916,7 +916,7 @@ fn office_document_set_xlsx_cell(
 fn office_document_set_pptx_object(
   document : OfficeDocumentModel,
   slide_part : String,
-  index : Int,
+  index : Int32,
   object : PptxTextObject,
 ) -> Result[OfficeDocumentModel, String] {
   guard document.supported is Presentation(slides) else {

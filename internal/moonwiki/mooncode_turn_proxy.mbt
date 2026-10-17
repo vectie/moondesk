@@ -1,6 +1,6 @@
 ///|
 fn mooncode_turn_proxy_error(
-  code : Int,
+  code : Int32,
   reason : String,
   message : String,
 ) -> Json {

@@ -1,8 +1,8 @@
 ///|
-const AgentPreferenceMaxRecords : Int = 256
+const AgentPreferenceMaxRecords : Int32 = 256
 
 ///|
-const AgentPreferenceMaxDetailChars : Int = 4000
+const AgentPreferenceMaxDetailChars : Int32 = 4000
 
 ///|
 let agent_preference_write_mutex : @async.Mutex = Mutex()

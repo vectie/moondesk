@@ -9,10 +9,10 @@ struct MoonFlowItemProjection {
   output_contracts : Array[String]
   required_claim : String
   input_artifacts : Array[String]
-  timeout_ms : Int
+  timeout_ms : Int32
   depends_on : Array[String]
   status : String
-  attempt_count : Int
+  attempt_count : Int32
   request_id : String
   result_id : String
   active_attempt_id : String
@@ -41,11 +41,11 @@ struct MoonFlowItemProjection {
 
 ///|
 struct MoonFlowBudget {
-  model_tokens : Int
-  tool_calls : Int
-  storage_bytes : Int
-  attempts : Int
-  concurrency : Int
+  model_tokens : Int32
+  tool_calls : Int32
+  storage_bytes : Int32
+  attempts : Int32
+  concurrency : Int32
 } derive(FromJson)
 
 ///|
@@ -73,9 +73,9 @@ struct MoonFlowAutonomyBinding {
 struct MoonFlowInterventionScorecard {
   contract_id : String
   run_id : String
-  required_intervention_count : Int
-  hidden_orchestration_count : Int
-  normal_path_manual_count : Int
+  required_intervention_count : Int32
+  hidden_orchestration_count : Int32
+  normal_path_manual_count : Int32
   unattended_qualified : Bool
   finalization_findings : Array[String]
   recorded_at : String
@@ -202,7 +202,7 @@ struct MoonFlowRunProjection {
   book_id : String
   declaration_revision : String
   source_digest : String
-  last_sequence : Int
+  last_sequence : Int32
   outcome : String
   runnable_item_ids : Array[String]
   items : Array[MoonFlowItemProjection]
@@ -223,7 +223,7 @@ struct MoonFlowOwnerSummary {
   book_id : String
   declaration_revision : String
   source_digest : String
-  last_sequence : Int
+  last_sequence : Int32
   last_event_id : String?
   recorded_at : String?
   outcome : String
@@ -273,7 +273,7 @@ struct MoonFlowCompositionItem {
   output_contracts : Array[String]
   required_claim : String
   input_artifacts : Array[String]
-  timeout_ms : Int
+  timeout_ms : Int32
   adapter_id : String?
   claim_ceiling : String?
   review_required : Bool?

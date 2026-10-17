@@ -35,7 +35,7 @@ fn comparison_key_select(
   key : String,
   label : String,
   request : String,
-  prompt? : String = "Choose a unique key",
+  prompt~ : String = "Choose a unique key",
 ) -> String {
   let out = StringBuilder()
   out.write_string(
@@ -61,7 +61,7 @@ fn comparison_key_index(
   source : WorkspaceTableSource,
   request : String,
   key : String,
-) -> Int? {
+) -> Int32? {
   let name = table_query(request, key)
   if name == "" {
     return None

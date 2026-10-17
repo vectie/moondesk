@@ -67,7 +67,7 @@ fn pdf_watch_book_json(
   topic~ : String,
   pattern_id~ : String,
   purpose~ : String,
-  cadence~ : Int,
+  cadence~ : Int32,
   websites~ : Array[String],
   source_policy~ : String,
   method_path~ : String,
@@ -196,9 +196,9 @@ fn pdf_watch_standing_goal(
   topic~ : String,
   pattern_id~ : String,
   purpose~ : String,
-  cadence~ : Int,
+  cadence~ : Int32,
   source_policy~ : String,
-  daemon_tick~ : Int,
+  daemon_tick~ : Int32,
 ) -> Json {
   ignore(pattern_id)
   let title = "Watch \{topic} PDFs"

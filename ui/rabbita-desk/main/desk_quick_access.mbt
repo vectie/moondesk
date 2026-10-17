@@ -70,7 +70,7 @@ fn desk_quick_directory_paths(model : Model) -> Array[String] {
 /// Central rebinding covers catalog changes and every Book-selection route.
 fn rebind_desk_quick_access(
   model : Model,
-  refresh_paths? : Bool = true,
+  refresh_paths~ : Bool = true,
 ) -> Model {
   let scope = desk_quick_access_scope(model)
   if scope == model.desk_quick_access_owner {

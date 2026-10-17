@@ -98,10 +98,10 @@ pub struct BrowserActionReceipt {
 pub fn opaque_local_browser_scope(
   session_id~ : String,
   workspace_id~ : String,
-  book_revision? : String = "uncommitted",
-  code_revision? : String = "uncommitted",
-  run_id? : String = "",
-  authority_envelope_id? : String = "local-preview",
+  book_revision~ : String = "uncommitted",
+  code_revision~ : String = "uncommitted",
+  run_id~ : String = "",
+  authority_envelope_id~ : String = "local-preview",
 ) -> BrowserSessionScope {
   {
     session_id,
@@ -129,11 +129,11 @@ pub fn browser_action(
   actor~ : BrowserActor,
   operation~ : BrowserOperation,
   target~ : String,
-  value_redacted? : String = "",
-  expected_observation? : String = "",
-  code_revision? : String = "uncommitted",
-  authority_envelope_id? : String = "local-preview",
-  created_at? : String = "",
+  value_redacted~ : String = "",
+  expected_observation~ : String = "",
+  code_revision~ : String = "uncommitted",
+  authority_envelope_id~ : String = "local-preview",
+  created_at~ : String = "",
 ) -> BrowserAction {
   {
     action_id,

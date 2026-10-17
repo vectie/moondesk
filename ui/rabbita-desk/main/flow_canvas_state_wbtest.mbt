@@ -203,7 +203,7 @@ test "Flow restores persisted node geometry without resetting the viewport" {
 
 ///|
 fn flow_canvas_large_graph_item(
-  index : Int,
+  index : Int32,
   depends_on : Array[String],
 ) -> MoonFlowCompositionItem {
   {

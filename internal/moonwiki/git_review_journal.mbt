@@ -20,7 +20,7 @@ fn git_review_has_hunk(body : String, hunk : String) -> Bool {
 }
 
 ///|
-fn git_review_hunk_start(header : String, side : String) -> Int? {
+fn git_review_hunk_start(header : String, side : String) -> Int32? {
   let parts = header.split(" ").to_array()
   if parts.length() < 3 || parts[0] != "@@" {
     return None
@@ -44,7 +44,7 @@ fn git_review_line_anchor_valid(
   body : String,
   hunk : String,
   side : String,
-  line : Int,
+  line : Int32,
 ) -> Bool {
   if line == 0 && side == "" {
     return git_review_has_hunk(body, hunk)

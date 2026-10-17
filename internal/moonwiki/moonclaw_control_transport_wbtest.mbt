@@ -29,7 +29,7 @@ test "daemon readiness probes retain authenticated workspace binding" {
 
 ///|
 fn moonclaw_control_test_config(
-  workspace_root? : String = "/registered/book",
+  workspace_root~ : String = "/registered/book",
 ) -> SourceSemanticsSandboxClientConfig {
   {
     protocol_version: 1,

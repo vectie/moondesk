@@ -4,7 +4,7 @@ struct PortableBookExport {
   path : String
   version : String
   package_sha256 : String
-  package_size_bytes : Int
+  package_size_bytes : Int32
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
@@ -21,7 +21,7 @@ struct PortableBookMember {
   path : String
   role : String
   digest : String
-  size_bytes : Int
+  size_bytes : Int32
   review_status : String
   sensitivity : String
 } derive(FromJson, ToJson, Eq, Debug)
@@ -39,8 +39,8 @@ struct PortableBookInspection {
   version : String
   book_revision : String
   bundle_digest : String
-  file_count : Int
-  total_bytes : Int
+  file_count : Int32
+  total_bytes : Int32
   files : Array[PortableBookMember]
   exclusions : Array[PortableBookExclusion]
   compatibility : Json
@@ -55,7 +55,7 @@ struct PortableBookVerification {
   agent_id : String
   version : String
   bundle_digest : String
-  checked_file_count : Int
+  checked_file_count : Int32
   issues : Array[String]
 } derive(FromJson, ToJson)
 
@@ -66,10 +66,10 @@ struct PortableBookSource {
   book_revision : String
   bundle_digest : String
   package_filename : String
-  package_size_bytes : Int
+  package_size_bytes : Int32
   package_sha256 : String
-  file_count : Int
-  total_decoded_bytes : Int
+  file_count : Int32
+  total_decoded_bytes : Int32
 } derive(FromJson, ToJson)
 
 ///|
@@ -94,7 +94,7 @@ enum PortableBookOperation {
 
 ///|
 struct PortableBookPending {
-  request : Int
+  request : Int32
   operation : PortableBookOperation
 } derive(Eq, Debug)
 
@@ -104,8 +104,8 @@ struct PortableBookState {
   library_changing : Bool
   library : String
   workspace : String
-  generation : Int
-  request : Int
+  generation : Int32
+  request : Int32
   available : Bool
   loaded : Bool
   capability_message : String
@@ -115,7 +115,7 @@ struct PortableBookState {
   output_groups : Array[PortableBookGroup]
   group_name : String
   selected_group : String
-  next_group_id : Int
+  next_group_id : Int32
   directory : String
   entries : Array[@desk.DeskFileEntry]
   entries_loaded : Bool
@@ -139,25 +139,29 @@ enum PortableBookMsg {
   OutputGroup(PortableGroupMsg)
   ChooseAcceptedHumanResult
   RemoveAcceptedHumanResult
-  AcceptedHumanResultPicked(Int, Int, Result[PortableBookHumanResult?, String])
+  AcceptedHumanResultPicked(
+    Int32,
+    Int32,
+    Result[PortableBookHumanResult?, String]
+  )
   Prepare(String)
   InspectSaved(String)
   CheckPreparation
   StartNewPreparation
-  Received(Int, Int, Result[Json, String])
-  FilesReceived(Int, Int, Result[Array[@desk.DeskFileEntry], String])
-  TimedOut(Int, Int)
+  Received(Int32, Int32, Result[Json, String])
+  FilesReceived(Int32, Int32, Result[Array[@desk.DeskFileEntry], String])
+  TimedOut(Int32, Int32)
 }
 
 ///|
 enum PortableBookEffect {
   NoPortableEffect
-  ReadPortableCatalog(Int, Int)
-  ReadPortableEntries(Int, Int, String)
-  PreparePortablePackage(Int, Int, String, String, Array[String])
+  ReadPortableCatalog(Int32, Int32)
+  ReadPortableEntries(Int32, Int32, String)
+  PreparePortablePackage(Int32, Int32, String, String, Array[String])
   PreparePortableGroupedPackage(
-    Int,
-    Int,
+    Int32,
+    Int32,
     String,
     String,
     Array[String],
@@ -165,15 +169,15 @@ enum PortableBookEffect {
     String?
   )
   PreparePortablePackageWithHumanResult(
-    Int,
-    Int,
+    Int32,
+    Int32,
     String,
     String,
     Array[String],
     String
   )
-  PickAcceptedHumanResult(Int, Int)
-  InspectPortablePackage(Int, Int, String)
+  PickAcceptedHumanResult(Int32, Int32)
+  InspectPortablePackage(Int32, Int32, String)
 } derive(Eq, Debug)
 
 ///|
@@ -210,7 +214,7 @@ fn init_portable_book() -> PortableBookState {
 
 ///|
 fn portable_book_id_valid(id : String) -> Bool {
-  id.length() == 32 && id.iter().all(c => c is ('0'..='9' | 'a'..='f'))
+  id.length() == 32 && id.iter().all(c => c is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|
@@ -225,7 +229,7 @@ fn portable_book_path_valid(path : String) -> Bool {
 fn portable_book_sha_valid(digest : String) -> Bool {
   digest.length() == 71 &&
   digest.has_prefix("sha256:") &&
-  digest[7:].to_owned().iter().all(c => c is ('0'..='9' | 'a'..='f'))
+  digest[7:].to_owned().iter().all(c => c is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|

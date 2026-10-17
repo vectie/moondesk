@@ -1,7 +1,7 @@
 ///|
 // Build real OOXML with workbook order different from ZIP entry order.
 fn worksheet_explorer_fixture(
-  names? : Array[String] = ["Overview", "Sales & 東京", "Empty"],
+  names~ : Array[String] = ["Overview", "Sales & 東京", "Empty"],
 ) -> FixedArray[Byte] raise {
   let content = StringBuilder()
   content.write_string(

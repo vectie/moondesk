@@ -38,7 +38,7 @@ fn trimmed_text(value : String, fallback~ : String) -> String {
 }
 
 ///|
-async fn read_watcher_records(root : String, limit : Int) -> Array[Json] {
+async fn read_watcher_records(root : String, limit : Int32) -> Array[Json] {
   let records : Array[Json] = []
   let watcher_root = @pathx.join(moontown_product_root(root), "watchers")
   for name in read_directory_names(watcher_root, include_hidden=false) {
@@ -64,7 +64,7 @@ async fn read_watcher_records(root : String, limit : Int) -> Array[Json] {
 }
 
 ///|
-fn count_watcher_decision(records : Array[Json], decision : String) -> Int {
+fn count_watcher_decision(records : Array[Json], decision : String) -> Int32 {
   let mut count = 0
   for record in records {
     if json_string(record, "decision", default="") == decision {
@@ -75,7 +75,7 @@ fn count_watcher_decision(records : Array[Json], decision : String) -> Int {
 }
 
 ///|
-fn count_due_goals(goals : Array[Json], daemon_tick : Int) -> Int {
+fn count_due_goals(goals : Array[Json], daemon_tick : Int32) -> Int32 {
   let mut count = 0
   for goal in goals {
     if json_bool(goal, "enabled", default=true) &&
@@ -87,7 +87,7 @@ fn count_due_goals(goals : Array[Json], daemon_tick : Int) -> Int {
 }
 
 ///|
-fn next_due_tick(goals : Array[Json]) -> Int {
+fn next_due_tick(goals : Array[Json]) -> Int32 {
   let mut found = false
   let mut next = 0
   for goal in goals {
@@ -108,7 +108,7 @@ fn next_due_tick(goals : Array[Json]) -> Int {
 }
 
 ///|
-async fn count_matching_files(root : String, suffix : String) -> Int {
+async fn count_matching_files(root : String, suffix : String) -> Int32 {
   let mut count = 0
   for name in read_directory_names(root, include_hidden=false) {
     if name.has_suffix(suffix) {
@@ -133,7 +133,7 @@ async fn latest_matching_name(root : String, suffix : String) -> String {
 }
 
 ///|
-async fn count_run_workspaces(workspace_root : String) -> Int {
+async fn count_run_workspaces(workspace_root : String) -> Int32 {
   let mut count = 0
   for workspace in discover_workspaces(workspace_root) {
     let run_root = moonclaw_jobs_root(workspace.root_path)

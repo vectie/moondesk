@@ -13,7 +13,7 @@ priv struct WorkContinuationFixture {
 
 ///|
 async fn work_continuation_fixture(
-  status? : String = "runtime-completed",
+  status~ : String = "runtime-completed",
   root? : String,
 ) -> WorkContinuationFixture {
   let root = match root {
@@ -229,8 +229,8 @@ async fn WorkContinuationFixture::post(
 async fn WorkContinuationFixture::submit(
   self : WorkContinuationFixture,
   request? : Json,
-  ready? : Bool = true,
-) -> (Int, Json) {
+  ready~ : Bool = true,
+) -> (Int32, Json) {
   mooncode_continue_work(
     self.workspace.root_path,
     [self.workspace],

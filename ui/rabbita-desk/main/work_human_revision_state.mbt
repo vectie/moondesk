@@ -8,7 +8,7 @@ struct WorkHumanRevisionState {
   current_content : String?
   operation : Json
   revision : Json
-  request : Int
+  request : Int32
   local_saved : Bool
   message : String
 }
@@ -20,12 +20,12 @@ enum WorkHumanRevisionMsg {
   RevisionSave
   RevisionRebase
   RevisionCopy
-  RevisionReplied(Int, Int, String, Result[Json, String])
-  RevisionTimedOut(Int, Int)
+  RevisionReplied(Int32, Int32, String, Result[Json, String])
+  RevisionTimedOut(Int32, Int32)
 }
 
 ///|
-fn empty_work_human_revision(enabled? : Bool = false) -> WorkHumanRevisionState {
+fn empty_work_human_revision(enabled~ : Bool = false) -> WorkHumanRevisionState {
   {
     enabled,
     phase: "idle",
@@ -237,7 +237,7 @@ extern "js" fn work_human_revision_write(key : String, value : String) -> Bool =
 
 ///|
 #cfg(target="js")
-extern "js" fn work_human_revision_utf8_length(value : String) -> Int =
+extern "js" fn work_human_revision_utf8_length(value : String) -> Int32 =
   #| value => new TextEncoder().encode(value).length
 
 ///|

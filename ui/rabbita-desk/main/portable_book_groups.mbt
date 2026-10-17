@@ -47,7 +47,7 @@ fn portable_book_group_relative(
 }
 
 ///|
-fn portable_book_group_count(state : PortableBookState) -> Int {
+fn portable_book_group_count(state : PortableBookState) -> Int32 {
   let mut count = state.paths.length()
   for group in state.output_groups {
     count += group.files.length()

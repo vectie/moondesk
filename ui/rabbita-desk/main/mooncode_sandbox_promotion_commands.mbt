@@ -29,8 +29,8 @@ fn mooncode_sandbox_promotion_cmd(
   dispatch : Dispatch[Msg],
   receipt : @mooncode_core.MoonCodeSandboxReceipt,
   selected_paths : Array[String],
-  read_receipt? : Bool = false,
-  generation? : Int = 0,
+  read_receipt~ : Bool = false,
+  generation~ : Int32 = 0,
 ) -> @rabbita.Cmd {
   let key = receipt.review_key()
   let request = match

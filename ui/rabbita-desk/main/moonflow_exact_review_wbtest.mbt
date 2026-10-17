@@ -1,8 +1,8 @@
 ///|
 fn exact_review_ui_response(
   retained : MoonFlowRetainedState,
-  state? : String = "requested",
-  authorized? : Bool = true,
+  state~ : String = "requested",
+  authorized~ : Bool = true,
 ) -> Json {
   let result = retained.response.unwrap()
   {

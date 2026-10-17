@@ -1,9 +1,9 @@
 ///|
-const ExecutionSandboxPromotionRequestBytes : Int = 65_536
+const ExecutionSandboxPromotionRequestBytes : Int32 = 65_536
 
 ///|
 priv struct MoonClawSandboxPromotionEvidence {
-  moonfort_protocol_version : Int
+  moonfort_protocol_version : Int32
   retention_id : String
   workspace_id : String
   approval_digest : String
@@ -18,7 +18,7 @@ priv struct MoonClawSandboxPromotionEvidence {
 
 ///|
 priv struct MoonClawSandboxPromotionResponse {
-  protocol_version : Int
+  protocol_version : Int32
   instance_id : String
   request_id : String
   workspace_id : String
@@ -144,7 +144,7 @@ async fn call_moonclaw_sandbox_promotion(
   request : @mooncode_core.MoonCodeSandboxPromotionRequest,
   config : SourceSemanticsSandboxClientConfig,
   request_id : String,
-  read_receipt? : Bool = false,
+  read_receipt~ : Bool = false,
 ) -> Result[@mooncode_core.MoonCodeSandboxPromotionResult, String] {
   let daemon = moonclaw_daemon_status(config.workspace_root)
   guard json_bool(daemon, "running", default=false) else {
@@ -199,7 +199,7 @@ async fn handle_execution_sandbox_promotion(
   body : &@io.Reader,
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
-  read_receipt? : Bool = false,
+  read_receipt~ : Bool = false,
 ) -> Unit {
   let request = match read_sandbox_promotion_body(body) {
     Ok(value) => value

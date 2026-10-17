@@ -1,11 +1,11 @@
 ///|
-const MoonClawGeneralMaxAttachedFiles : Int = 32
+const MoonClawGeneralMaxAttachedFiles : Int32 = 32
 
 ///|
-const MoonClawGeneralMaxAttachedPathChars : Int = 512
+const MoonClawGeneralMaxAttachedPathChars : Int32 = 512
 
 ///|
-const MoonClawGeneralMaxMessageChars : Int = 120_000
+const MoonClawGeneralMaxMessageChars : Int32 = 120_000
 
 ///|
 fn moonclaw_general_task_id_valid(task_id : String) -> Bool {
@@ -30,8 +30,8 @@ fn moonclaw_general_chat_prompt(
   document_path : String,
   file_paths : Array[String],
   message : String,
-  preference_context? : String = "",
-  context_items? : Array[Json] = [],
+  preference_context~ : String = "",
+  context_items~ : Array[Json] = [],
 ) -> String {
   let document_context = if document_path == "" {
     "No document is currently selected. Work with the MoonBook workspace as a whole."
@@ -105,10 +105,10 @@ fn moonclaw_general_chat_response(
   status : String,
   queued : Bool,
   automation_suggestion : Json,
-  preferences_used : Int,
+  preferences_used : Int32,
   preference_ids : Array[String],
-  events_cursor? : String = "start",
-  message_id? : String = "",
+  events_cursor~ : String = "start",
+  message_id~ : String = "",
 ) -> Json {
   {
     "task_id": task_id,
@@ -271,7 +271,7 @@ fn moonclaw_general_new_task_request(
   workspace_root : String,
   content : String,
   routed_model : String,
-  workspace_trust? : String = "unknown",
+  workspace_trust~ : String = "unknown",
 ) -> Json {
   {
     "name": "MoonDesk · " + @desk.display_name(workspace_root),

@@ -12,7 +12,7 @@ fn table_group_summary(
   if table_query(path, "sum") != "" && sum is None {
     return Err("Choose a valid Sum numeric column or select None")
   }
-  let groups : Map[String, (Int, Int, Double)] = Map([])
+  let groups : Map[String, (Int32, Int32, Double)] = Map([])
   for row in table.text_rows() {
     let key = row[group]
     let (count, numeric, total) = groups.get(key).unwrap_or((0, 0, 0.0))

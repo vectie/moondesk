@@ -3,8 +3,8 @@ fn mooncode_work_transcript_result(
   descriptor : Json,
   state : String,
   message : String,
-  session? : Json = Json::null(),
-) -> (Int, Json) {
+  session~ : Json = Json::null(),
+) -> (Int32, Json) {
   (
     200,
     descriptor
@@ -23,7 +23,7 @@ fn mooncode_work_transcript_projection(
   target : MoonCodeWorkTarget,
   descriptor : Json,
   record : Json,
-) -> (Int, Json) {
+) -> (Int32, Json) {
   if json_string(record, "kind", default="") != "mooncode-session-record" ||
     json_string(record, "protocol", default="") != @mooncode.protocol_version() {
     return mooncode_work_transcript_result(
@@ -82,7 +82,7 @@ async fn mooncode_work_read_transcript(
   target : MoonCodeWorkTarget,
   descriptor : Json,
   read : async (String) -> Result[Json, String],
-) -> (Int, Json) {
+) -> (Int32, Json) {
   match
     read(
       @mooncode.moonclaw_native_session_show_endpoint(

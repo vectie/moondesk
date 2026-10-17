@@ -52,7 +52,7 @@ pub(all) struct MoonCodeEvidence {
   diff : String
   command : String
   output : String
-  exit_code : Int
+  exit_code : Int32
   truncated : Bool
   approval : MoonCodeApproval?
   sandbox_receipt : MoonCodeSandboxReceipt?
@@ -88,7 +88,7 @@ fn work_string(
 }
 
 ///|
-fn work_int(fields : Map[String, Json], key : String, default : Int) -> Int {
+fn work_int(fields : Map[String, Json], key : String, default : Int32) -> Int32 {
   match fields.get(key) {
     Some(Number(value, ..)) => value.to_int()
     _ => default
@@ -188,7 +188,7 @@ fn evidence_kind(source_kind : String, raw_kind : String) -> EvidenceKind? {
 fn evidence_state(
   value : String,
   kind : EvidenceKind,
-  exit_code : Int,
+  exit_code : Int32,
 ) -> Result[EvidenceState, String] {
   if exit_code > 0 {
     return Ok(Failed)
@@ -363,7 +363,7 @@ fn project_package_review_evidence(
   command_id : String,
   evidence : Array[MoonCodeEvidence],
   assistant_present : Bool,
-  work_failed? : Bool = false,
+  work_failed~ : Bool = false,
 ) -> MoonCodePackageReview {
   let owned = evidence.filter(item => {
     command_id != "" && item.command_id == command_id

@@ -85,7 +85,7 @@ fn render_event_panel(model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn event_limit(events : Array[DeskEvent]) -> Int {
+fn event_limit(events : Array[DeskEvent]) -> Int32 {
   if events.length() > 8 {
     8
   } else {

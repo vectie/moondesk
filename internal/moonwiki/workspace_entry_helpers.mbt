@@ -14,7 +14,7 @@ fn is_writable_entry(path : String) -> Bool {
 }
 
 ///|
-fn is_binary_preview(kind : @desk.EntryKind, path? : String = "") -> Bool {
+fn is_binary_preview(kind : @desk.EntryKind, path~ : String = "") -> Bool {
   kind is Image || path.to_lower().has_suffix(".pdf")
 }
 
@@ -113,7 +113,7 @@ fn sort_workspace_entries(entries : Array[@desk.DeskFileEntry]) -> Unit {
 fn compare_workspace_entries(
   left : @desk.DeskFileEntry,
   right : @desk.DeskFileEntry,
-) -> Int {
+) -> Int32 {
   let left_directory = left.kind is Directory
   let right_directory = right.kind is Directory
   if left_directory && !right_directory {
@@ -178,7 +178,7 @@ fn root_path_segment(path : String) -> String {
 }
 
 ///|
-async fn file_size_bytes(path : String) -> Int? {
+async fn file_size_bytes(path : String) -> Int32? {
   let file = @fs.open(path, mode=ReadOnly) catch { _ => return None }
   defer file.close()
   let size = file.size() catch { _ => return None }

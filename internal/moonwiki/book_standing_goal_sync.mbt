@@ -250,7 +250,7 @@ async fn pdf_watch_standing_goal_from_book_state(
 }
 
 ///|
-fn positive_or_default(value : Int, default : Int) -> Int {
+fn positive_or_default(value : Int32, default : Int32) -> Int32 {
   if value > 0 {
     value
   } else {

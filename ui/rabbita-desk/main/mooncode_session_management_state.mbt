@@ -31,7 +31,7 @@ fn mooncode_session_storage_locked(session : MoonCodeSession) -> Bool {
 ///|
 fn mooncode_cancel_delete_session(
   model : Model,
-  session_active? : Bool = false,
+  session_active~ : Bool = false,
 ) -> (@rabbita.Cmd, Model) {
   if session_active {
     (

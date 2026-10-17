@@ -15,7 +15,7 @@ struct WorkAgendaItem {
 ///|
 fn work_agenda_state(
   goal : StandingGoalRecord,
-  current_tick : Int,
+  current_tick : Int32,
 ) -> WorkAgendaState {
   if !goal.enabled {
     AgendaPaused
@@ -38,7 +38,7 @@ fn work_agenda_relative_label(state : WorkAgendaState) -> String {
 ///|
 fn work_agenda_item(
   goal : StandingGoalRecord,
-  current_tick : Int,
+  current_tick : Int32,
 ) -> WorkAgendaItem {
   let state = work_agenda_state(goal, current_tick)
   { goal, state, relative_label: work_agenda_relative_label(state), }
@@ -47,7 +47,7 @@ fn work_agenda_item(
 ///|
 fn work_agenda_items(
   goals : Array[StandingGoalRecord],
-  current_tick : Int,
+  current_tick : Int32,
 ) -> Array[WorkAgendaItem] {
   let due : Array[WorkAgendaItem] = []
   let upcoming : Array[WorkAgendaItem] = []
@@ -64,7 +64,7 @@ fn work_agenda_items(
 }
 
 ///|
-fn work_agenda_current_tick(model : Model) -> Int {
+fn work_agenda_current_tick(model : Model) -> Int32 {
   match model.analytics {
     Some(analytics) => analytics.daemon_tick
     None =>

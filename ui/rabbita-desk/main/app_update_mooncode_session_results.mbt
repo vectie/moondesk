@@ -679,7 +679,7 @@ fn mooncode_session_from_watch_snapshot(
 ///|
 fn mooncode_edit_evidence_count(
   conversation : @mooncode_core.MoonCodeConversation,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for turn in conversation.turns {
     for item in turn.work.evidence {
@@ -798,7 +798,7 @@ fn mooncode_watch_succeeded(
 fn mooncode_watch_failed(
   dispatch : Dispatch[Msg],
   model : Model,
-  generation : Int,
+  generation : Int32,
   session_id : String,
   error : String,
 ) -> (@rabbita.Cmd, Model) {
@@ -823,7 +823,7 @@ fn mooncode_watch_failed(
 }
 
 ///|
-fn mooncode_watch_retry_delay_ms(failure_count : Int) -> Int {
+fn mooncode_watch_retry_delay_ms(failure_count : Int32) -> Int32 {
   if failure_count <= 1 {
     500
   } else if failure_count == 2 {
@@ -1052,7 +1052,7 @@ fn mooncode_decimal_normalize(value : String) -> String {
 }
 
 ///|
-fn mooncode_decimal_compare(left : String, right : String) -> Int {
+fn mooncode_decimal_compare(left : String, right : String) -> Int32 {
   let left = mooncode_decimal_normalize(left)
   let right = mooncode_decimal_normalize(right)
   if left.length() < right.length() {

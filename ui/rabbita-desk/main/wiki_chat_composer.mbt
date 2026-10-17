@@ -48,13 +48,13 @@ fn composer_trigger_query(text : String) -> String? {
 }
 
 ///|
-const WikiChatFileSearchDebounceMs : Int = 180
+const WikiChatFileSearchDebounceMs : Int32 = 180
 
 ///|
-const WikiChatFileSearchLimit : Int = 24
+const WikiChatFileSearchLimit : Int32 = 24
 
 ///|
-fn wiki_chat_file_search_status_for_count(count : Int) -> String {
+fn wiki_chat_file_search_status_for_count(count : Int32) -> String {
   if count == 0 {
     "No matching files"
   } else if count == 1 {

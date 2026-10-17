@@ -13,7 +13,7 @@ struct MoonCodeSkillCatalogProjection {
   owner : String
   book_root : String
   skills : Array[MoonCodeSkillProjection]
-  skill_count : Int
+  skill_count : Int32
   content_included : Bool
 } derive(FromJson)
 

@@ -50,7 +50,7 @@ pub fn conversation_watch_response_for_cursor(
   changed~ : Bool,
   heartbeat~ : Bool,
   terminal~ : Bool,
-  retry_after_ms~ : Int,
+  retry_after_ms~ : Int32,
   snapshot~ : Json,
 ) -> Json {
   @mooncode_core.conversation_watch_response_for_cursor(
@@ -130,7 +130,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
 }
 
 ///|
-fn adapter_hex_digit(value : Int) -> String {
+fn adapter_hex_digit(value : Int32) -> String {
   match value {
     0 => "0"
     1 => "1"
@@ -177,7 +177,7 @@ fn adapter_endpoint_component(value : String) -> String {
 ///|
 fn adapter_native_endpoint(
   segments : Array[String],
-  query? : Array[(String, String)] = [],
+  query~ : Array[(String, String)] = [],
 ) -> String {
   let encoded = segments.map(adapter_endpoint_component)
   let path = "/" + encoded.join("/")
@@ -199,7 +199,7 @@ pub fn moonclaw_native_turn_endpoint(session_id : String) -> String {
 ///|
 pub fn moonclaw_native_session_listing_endpoint(
   book_root : String,
-  include_books? : Bool = false,
+  include_books~ : Bool = false,
 ) -> String {
   let query = [("book_root", book_root), ("format", "listing")]
   if include_books {
@@ -218,7 +218,7 @@ pub fn moonclaw_native_skills_endpoint(book_root : String) -> String {
 ///|
 pub fn moonclaw_native_archived_session_listing_endpoint(
   book_root : String,
-  include_books? : Bool = false,
+  include_books~ : Bool = false,
 ) -> String {
   let query = [
     ("book_root", book_root),
@@ -287,8 +287,8 @@ pub fn moonclaw_native_stream_endpoint(
   book_root : String,
   format : String,
   cursor : @mooncode_core.MoonCodeWatchCursor,
-  wait_ms? : Int = 0,
-  poll_ms? : Int = 100,
+  wait_ms~ : Int32 = 0,
+  poll_ms~ : Int32 = 100,
 ) -> String {
   adapter_native_endpoint(["v1", "code", "sessions", session_id, "stream"], query=[
     ("book_root", book_root),

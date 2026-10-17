@@ -984,8 +984,8 @@ fn start_markdown_edit_action(model : Model) -> (@rabbita.Cmd, Model) {
 fn search_now_action(
   dispatch : Dispatch[Msg],
   model : Model,
-  mode? : String = "",
-  scope_workspace? : Bool = false,
+  mode~ : String = "",
+  scope_workspace~ : Bool = false,
 ) -> (@rabbita.Cmd, Model) {
   let query = model.pages_search.query.trim().to_owned()
   let pages_search = model.pages_search.begin_search()

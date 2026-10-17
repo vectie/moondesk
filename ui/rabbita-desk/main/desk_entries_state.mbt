@@ -81,7 +81,7 @@ fn desk_entries_response_is_current(
   model : Model,
   workspace_id : String,
   directory : String,
-  generation : Int,
+  generation : Int32,
 ) -> Bool {
   desk_entries_request_is_current(model, workspace_id, directory) &&
   generation == model.desk_entries_request_generation

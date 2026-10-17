@@ -275,7 +275,7 @@ fn decode_query_value(text : String) -> String {
 }
 
 ///|
-fn hex_value(ch : Char) -> Int {
+fn hex_value(ch : Char) -> Int32 {
   let code = ch.to_int()
   if ch >= '0' && ch <= '9' {
     code - '0'.to_int()
@@ -355,7 +355,7 @@ fn json_first_string(
 }
 
 ///|
-fn json_int(json : Json, key : String, default~ : Int) -> Int {
+fn json_int(json : Json, key : String, default~ : Int32) -> Int32 {
   @mooncore.json_int(json, key, default~)
 }
 
@@ -365,7 +365,7 @@ fn json_bool(json : Json, key : String, default~ : Bool) -> Bool {
 }
 
 ///|
-fn json_string_array_len(json : Json, key : String) -> Int {
+fn json_string_array_len(json : Json, key : String) -> Int32 {
   match json {
     Object(object) =>
       match object.get(key) {

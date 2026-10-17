@@ -54,11 +54,11 @@ test "surface state primary actions and technical detail stay separate" {
 ///|
 fn pages_search_test_response(
   hits : Array[SearchHit],
-  query? : String = "moonbit",
-  ok? : Bool = true,
-  status? : String = "ready",
-  message? : String = "Search completed",
-  workspace_id? : String = "",
+  query~ : String = "moonbit",
+  ok~ : Bool = true,
+  status~ : String = "ready",
+  message~ : String = "Search completed",
+  workspace_id~ : String = "",
 ) -> PagesSearchResponse {
   {
     contract: "pages-search.v1",

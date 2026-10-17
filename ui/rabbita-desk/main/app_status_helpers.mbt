@@ -82,14 +82,14 @@ fn text_lines(value : String) -> Array[String] {
 }
 
 ///|
-fn int_text(value : String, fallback : Int) -> Int {
+fn int_text(value : String, fallback : Int32) -> Int32 {
   @string.parse_int(value.trim().to_owned()) catch {
     _ => fallback
   }
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {

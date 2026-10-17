@@ -21,7 +21,7 @@ fn moondesk_operator_login_target(request_path : String) -> String {
 }
 
 ///|
-fn moondesk_operator_login_page(return_path? : String = "/") -> String {
+fn moondesk_operator_login_page(return_path~ : String = "/") -> String {
   let return_target = moondesk_operator_login_target(return_path)
   (
     $|<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>登录 MoonDesk</title>

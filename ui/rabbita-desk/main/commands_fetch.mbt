@@ -61,7 +61,7 @@ fn perform_fetch_entries_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   path : String,
-  generation : Int,
+  generation : Int32,
 ) -> @rabbita.Cmd {
   @http.get(workspace_entries_url(workspace_id, path)).expect_json(result => {
     dispatch(
@@ -89,7 +89,7 @@ fn perform_fetch_preview_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   path : String,
-  generation : Int,
+  generation : Int32,
 ) -> @rabbita.Cmd {
   @http.get(workspace_preview_url(workspace_id, path)).expect_json(result => {
     dispatch(
@@ -150,7 +150,7 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 ///|
 fn fetch_moonflow_runs_at_cmd(
   dispatch : Dispatch[Msg],
-  generation : Int,
+  generation : Int32,
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.desktop_api_url(["api", "moonflow", "runs"])).expect_json(result => {
@@ -395,8 +395,8 @@ fn fetch_launch_agent_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 fn fetch_search_cmd(
   dispatch : Dispatch[Msg],
   query : String,
-  workspace_id? : String = "",
-  mode? : String = "files",
+  workspace_id~ : String = "",
+  mode~ : String = "files",
 ) -> @rabbita.Cmd {
   let options : Array[(String, String)] = [
     ("contract", "pages-search.v1"),

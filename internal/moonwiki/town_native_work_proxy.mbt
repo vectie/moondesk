@@ -13,7 +13,7 @@ priv struct TownNativeWorkStatus {
   command_id : String
   engineering_status : String
   output : String
-  generation : Int
+  generation : Int32
   observed_at_ms : UInt64
   retry_after_ms : UInt64
 } derive(FromJson, ToJson)
@@ -31,7 +31,7 @@ fn town_native_work_schema() -> String {
 }
 
 ///|
-fn town_native_work_nonnegative_int(value : Json) -> Int? {
+fn town_native_work_nonnegative_int(value : Json) -> Int32? {
   guard value is Number(number, ..) && number >= 0 && number <= 2147483647.0 else {
     return None
   }
@@ -47,14 +47,14 @@ fn town_native_work_nonnegative_int(value : Json) -> Int? {
 fn town_native_work_id_valid(id : String) -> Bool {
   id.length() == 42 &&
   id.has_prefix("town-work-") &&
-  id[10:].iter().all(ch => ch is ('0'..='9' | 'a'..='f'))
+  id[10:].iter().all(ch => ch is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|
 /// Do not normalize separators or decode an owner-generated identifier.
 fn town_native_work_route(
   path : String,
-) -> Result[TownNativeWorkRoute, (Int, String)] {
+) -> Result[TownNativeWorkRoute, (Int32, String)] {
   match strip_query(path).split("/").to_array() {
     ["", "api", "town", "native-work"] => Ok(SavedList)
     ["", "api", "town", "native-work", id] =>
@@ -86,7 +86,9 @@ fn town_native_work_allowed_methods(
 }
 
 ///|
-fn town_native_work_revision_body(bytes : Bytes) -> Result[Json, (Int, String)] {
+fn town_native_work_revision_body(
+  bytes : Bytes,
+) -> Result[Json, (Int32, String)] {
   if bytes.length() > 4096 {
     return Err((413, "Town work request exceeds the 4 KiB limit"))
   }
@@ -163,7 +165,7 @@ fn town_native_work_project_item(payload : Json) -> TownNativeWorkStatus? {
 fn town_native_work_project(
   payload : Json,
   route : TownNativeWorkRoute,
-) -> Result[Json, (Int, String)] {
+) -> Result[Json, (Int32, String)] {
   let invalid = (
     503, "MoonTown returned invalid saved work status. Upgrade or restart its owner service, then reload saved status.",
   )
@@ -213,7 +215,7 @@ fn town_native_work_project(
 }
 
 ///|
-fn town_native_work_owner_error(code : Int) -> (Int, String) {
+fn town_native_work_owner_error(code : Int32) -> (Int32, String) {
   match code {
     400 =>
       (
@@ -239,8 +241,8 @@ async fn town_native_work_request_with(
   request_path : String,
   method_ : @http.RequestMethod,
   bytes : Bytes,
-  exchange : async (String, String, Json?) -> Result[(Int, Json), String],
-) -> Result[Json, (Int, String)] {
+  exchange : async (String, String, Json?) -> Result[(Int32, Json), String],
+) -> Result[Json, (Int32, String)] {
   let route = match town_native_work_route(request_path) {
     Ok(route) => route
     Err(error) => return Err(error)

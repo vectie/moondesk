@@ -22,7 +22,7 @@ fn source_save_action_send(
 }
 
 ///|
-fn source_save_request_count(fixture : @js.Value) -> Int {
+fn source_save_request_count(fixture : @js.Value) -> Int32 {
   let value = @json.parse(source_save_http_requests(fixture)) catch {
     _ => Json::null()
   }

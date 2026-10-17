@@ -1,5 +1,5 @@
 ///|
-const DocumentReviewThreadMaxRecords : Int = 1000
+const DocumentReviewThreadMaxRecords : Int32 = 1000
 
 ///|
 let document_review_write_mutex : @async.Mutex = Mutex()
@@ -93,7 +93,7 @@ fn document_review_thread_decision(
   record : Json,
   action : String,
   now : String,
-  revision : Int,
+  revision : Int32,
 ) -> Json {
   let decided = match action {
     "resolve" =>

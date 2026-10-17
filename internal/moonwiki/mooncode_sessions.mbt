@@ -120,7 +120,7 @@ async fn moonclaw_runtime_session_by_id(
 async fn moonclaw_runtime_session_book_root(
   workspace_root : String,
   session_id : String,
-  archived? : Bool = false,
+  archived~ : Bool = false,
 ) -> Result[String, String] {
   let rows = match
     moonclaw_runtime_session_listing_result(workspace_root, archived~) {
@@ -176,7 +176,7 @@ fn moonclaw_runtime_session_book_root_from_rows(
 }
 
 ///|
-fn mooncode_session_scope_error_status(error : String) -> (Int, String) {
+fn mooncode_session_scope_error_status(error : String) -> (Int32, String) {
   if error == "Unknown MoonCode session" {
     (404, "Not Found")
   } else if error == "MoonCode session identifier is ambiguous across MoonBooks" ||
@@ -207,7 +207,7 @@ async fn moonclaw_runtime_full_session(
 fn moonclaw_runtime_full_session_from_record(
   workspace_root : String,
   record : Json,
-  row? : Json = Json::object({}),
+  row~ : Json = Json::object({}),
 ) -> Json {
   let listing = if json_string(row, "id", default="") == "" {
     moonclaw_runtime_listing_row_from_record(workspace_root, record)
@@ -410,7 +410,7 @@ async fn moonclaw_runtime_session_listing_rows(
 ///|
 async fn moonclaw_runtime_session_listing_result(
   workspace_root : String,
-  archived? : Bool = false,
+  archived~ : Bool = false,
 ) -> Result[Array[Json], String] {
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,

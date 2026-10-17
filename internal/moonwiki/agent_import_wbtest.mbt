@@ -19,7 +19,7 @@ async test "receive JSON body bounds exact EOF and rejects overflow and invalid 
 ///|
 fn receive_test_stage(
   context : WorkspaceContext,
-  id? : String = receive_test_id(),
+  id~ : String = receive_test_id(),
 ) -> AgentImportStage {
   {
     operation_id: id,
@@ -33,7 +33,7 @@ fn receive_test_stage(
 ///|
 fn receive_test_request(
   context : WorkspaceContext,
-  folder? : String = "received",
+  folder~ : String = "received",
 ) -> AgentImportRequest {
   {
     operation_id: receive_test_id(),
@@ -54,7 +54,7 @@ async fn receive_test_context() -> WorkspaceContext {
 ///|
 fn receive_test_runner(
   calls : Array[String],
-  outcome? : String = "complete",
+  outcome~ : String = "complete",
 ) -> AgentExportRun {
   (command, args) => {
     calls.push(command)

@@ -96,7 +96,7 @@ fn work_learning_sources(model : Model) -> Array[Json] {
     return []
   }
   let sources : Array[Json] = []
-  let turn_counts : Map[String, Int] = Map([])
+  let turn_counts : Map[String, Int32] = Map([])
   for turn in conversation.turns {
     turn_counts[turn.turn_id] = turn_counts.get(turn.turn_id).unwrap_or(0) + 1
   }
@@ -144,7 +144,7 @@ fn work_learning_sources(model : Model) -> Array[Json] {
 ///|
 fn work_learning_payload(
   model : Model,
-  generation : Int,
+  generation : Int32,
   command : String,
   turn : String,
   item : String,

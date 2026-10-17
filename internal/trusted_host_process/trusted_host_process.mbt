@@ -31,7 +31,7 @@ fn safe_http_url(url : String) -> Bool {
 }
 
 ///|
-fn safe_pid(pid : Int) -> Bool {
+fn safe_pid(pid : Int32) -> Bool {
   pid > 1
 }
 
@@ -132,7 +132,7 @@ async fn launchctl_target(service : ManagedLaunchAgent) -> String {
 }
 
 ///|
-pub async fn bootstrap_launch_agent(service : ManagedLaunchAgent) -> Int {
+pub async fn bootstrap_launch_agent(service : ManagedLaunchAgent) -> Int32 {
   let plist_path = launch_agent_plist_path(service)
   if plist_path == "" {
     return -1
@@ -147,7 +147,7 @@ pub async fn bootstrap_launch_agent(service : ManagedLaunchAgent) -> Int {
 }
 
 ///|
-pub async fn bootout_launch_agent(service : ManagedLaunchAgent) -> Int {
+pub async fn bootout_launch_agent(service : ManagedLaunchAgent) -> Int32 {
   let target = launchctl_target(service)
   if target == "" {
     return -1
@@ -167,7 +167,7 @@ pub async fn launch_agent_is_loaded(service : ManagedLaunchAgent) -> Bool {
 }
 
 ///|
-pub async fn open_browser_url(url : String) -> Int {
+pub async fn open_browser_url(url : String) -> Int32 {
   if !safe_http_url(url) {
     return -1
   }
@@ -182,7 +182,7 @@ pub async fn open_browser_url(url : String) -> Int {
 }
 
 ///|
-pub async fn reveal_path(path : String, fallback_directory : String) -> Int {
+pub async fn reveal_path(path : String, fallback_directory : String) -> Int32 {
   if !safe_absolute_path(path) || !safe_absolute_path(fallback_directory) {
     return -1
   }
@@ -197,7 +197,7 @@ pub async fn reveal_path(path : String, fallback_directory : String) -> Int {
 }
 
 ///|
-pub async fn pid_is_alive(pid : Int) -> Bool {
+pub async fn pid_is_alive(pid : Int32) -> Bool {
   if !safe_pid(pid) {
     return false
   }
@@ -225,7 +225,7 @@ pub async fn pid_is_alive(pid : Int) -> Bool {
 }
 
 ///|
-pub async fn terminate_pid(pid : Int) -> Int {
+pub async fn terminate_pid(pid : Int32) -> Int32 {
   if !safe_pid(pid) {
     return -1
   }
@@ -235,7 +235,7 @@ pub async fn terminate_pid(pid : Int) -> Int {
 }
 
 ///|
-pub async fn force_kill_pid(pid : Int) -> Int {
+pub async fn force_kill_pid(pid : Int32) -> Int32 {
   if !safe_pid(pid) {
     return -1
   }

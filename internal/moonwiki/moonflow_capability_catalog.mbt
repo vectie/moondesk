@@ -36,7 +36,7 @@ fn moonflow_capability_catalog_evidence(
   evaluated_at : String,
   status : String,
   catalog? : Json,
-  digest? : String = "",
+  digest~ : String = "",
 ) -> Json {
   {
     "contract_id": moonflow_capability_catalog_status_contract(),

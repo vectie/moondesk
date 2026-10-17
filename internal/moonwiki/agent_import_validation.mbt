@@ -17,10 +17,10 @@ priv struct AgentImportRequest {
 } derive(Eq, ToJson)
 
 ///|
-let agent_import_package_limit : Int = 64 * 1024 * 1024
+let agent_import_package_limit : Int32 = 64 * 1024 * 1024
 
 ///|
-let agent_import_body_limit : Int = 90 * 1024 * 1024
+let agent_import_body_limit : Int32 = 90 * 1024 * 1024
 
 ///|
 fn agent_import_library_valid(path : String) -> Bool {
@@ -41,8 +41,8 @@ fn agent_import_library_valid(path : String) -> Bool {
 fn agent_import_folder_valid(value : String) -> Bool {
   value.length() > 0 &&
   value.length() <= 80 &&
-  value[0] is ('a'..='z' | 'A'..='Z' | '0'..='9') &&
-  value.iter().all(c => c is ('a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_'))
+  value[0] is ('a'..<='z' | 'A'..<='Z' | '0'..<='9') &&
+  value.iter().all(c => c is ('a'..<='z' | 'A'..<='Z' | '0'..<='9' | '-' | '_'))
 }
 
 ///|
@@ -173,7 +173,7 @@ async fn agent_import_canonical_directory(path : String) -> Unit {
 }
 
 ///|
-async fn agent_import_regular_file(path : String, maximum : Int) -> Unit {
+async fn agent_import_regular_file(path : String, maximum : Int32) -> Unit {
   guard agent_import_library_valid(path) &&
     @fs.kind(path, follow_symlink=false) == Regular &&
     @fs.realpath(path) == path else {

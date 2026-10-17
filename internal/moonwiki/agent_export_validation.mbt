@@ -24,7 +24,7 @@ async fn agent_export_existing_path(
 
 ///|
 fn agent_export_id_valid(value : String) -> Bool {
-  value.length() == 32 && value.iter().all(c => c is ('0'..='9' | 'a'..='f'))
+  value.length() == 32 && value.iter().all(c => c is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|
@@ -69,7 +69,7 @@ fn agent_export_request(payload : Json) -> Result[AgentExportRequest, String] {
     version.has_prefix("-") ||
     !version
     .iter()
-    .all(c => c is ('0'..='9' | 'a'..='z' | 'A'..='Z' | '.' | '-' | '_')) {
+    .all(c => c is ('0'..<='9' | 'a'..<='z' | 'A'..<='Z' | '.' | '-' | '_')) {
     return Err(
       "Version must contain 1–64 letters, numbers, dots, dashes, or underscores",
     )
@@ -142,7 +142,7 @@ fn agent_export_selection(request : AgentExportRequest) -> Json {
 fn agent_export_sha_valid(value : String) -> Bool {
   value.length() == 71 &&
   value.has_prefix("sha256:") &&
-  value[7:].iter().all(c => c is ('0'..='9' | 'a'..='f'))
+  value[7:].iter().all(c => c is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|
@@ -197,7 +197,7 @@ fn agent_export_metadata_valid(
 }
 
 ///|
-async fn agent_export_bounded_text(path : String, limit : Int) -> String {
+async fn agent_export_bounded_text(path : String, limit : Int32) -> String {
   guard @fs.kind(path, follow_symlink=false) == Regular else {
     fail("Export metadata is not a regular file")
   }

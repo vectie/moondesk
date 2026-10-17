@@ -114,7 +114,7 @@ fn desk_select_all_visible_entries(model : Model) -> (@rabbita.Cmd, Model) {
 fn desk_move_selection(
   dispatch : Dispatch[Msg],
   model : Model,
-  delta : Int,
+  delta : Int32,
   extend_selection : Bool,
 ) -> (@rabbita.Cmd, Model) {
   let entries = sorted_desk_entries(model)
@@ -292,7 +292,10 @@ fn desk_range_selection(
 }
 
 ///|
-fn desk_entry_index(entries : Array[@desk.DeskFileEntry], path : String) -> Int {
+fn desk_entry_index(
+  entries : Array[@desk.DeskFileEntry],
+  path : String,
+) -> Int32 {
   for index in 0..<entries.length() {
     if entries[index].path == path {
       return index

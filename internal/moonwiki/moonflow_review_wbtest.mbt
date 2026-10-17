@@ -1,5 +1,5 @@
 ///|
-fn review_test_principal(id : String, kind? : String = "human") -> Json {
+fn review_test_principal(id : String, kind~ : String = "human") -> Json {
   {
     "contract_id": "moonsuite.principal-ref.v1",
     "principal_id": id,

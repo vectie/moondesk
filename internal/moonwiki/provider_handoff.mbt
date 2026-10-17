@@ -1,5 +1,5 @@
 ///|
-const DesktopProviderHandoffMaximumBytes : Int = 2_048
+const DesktopProviderHandoffMaximumBytes : Int32 = 2_048
 
 ///|
 priv struct DesktopProviderHandoffRequest {

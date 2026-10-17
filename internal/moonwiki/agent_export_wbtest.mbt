@@ -1,8 +1,8 @@
 ///|
 fn export_test_request(
-  id? : String = "0123456789abcdef0123456789abcdef",
-  version? : String = "1.0.0",
-  paths? : Array[String] = [],
+  id~ : String = "0123456789abcdef0123456789abcdef",
+  version~ : String = "1.0.0",
+  paths~ : Array[String] = [],
   workspace? : @desk.DeskWorkspace,
 ) -> AgentExportRequest {
   agent_export_request({
@@ -30,7 +30,7 @@ fn export_test_expected_library(workspace : @desk.DeskWorkspace?) -> String {
 
 ///|
 async fn export_test_workspace(
-  library? : String = export_test_library(),
+  library~ : String = export_test_library(),
 ) -> @desk.DeskWorkspace {
   let temporary = @fs.realpath(@fs.tmpdir(prefix="moondesk-agent-export-"))
   @fsx.make_directory(library, recursive=true, exists_ok=true)

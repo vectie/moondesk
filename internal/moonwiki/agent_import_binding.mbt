@@ -8,7 +8,7 @@ fn agent_import_checked_binding(binding : Json, source : Json) -> Json raise {
     fields.get("source") is Some(Object(expected_fields)) &&
     fields.get("contract") ==
     Some("moontown.portable-listing-binding.v1".to_json()) &&
-    fields.get("binding_revision") == Some((1 : Int).to_json()) &&
+    fields.get("binding_revision") == Some((1 : Int32).to_json()) &&
     fields.get("reuse_mode") == Some("local_file_import".to_json()) &&
     fields.get("verification_scope") ==
     Some("publisher_declared_expected_source".to_json()) else {

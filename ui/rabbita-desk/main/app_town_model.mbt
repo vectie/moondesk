@@ -26,7 +26,7 @@ struct WikiChatSubmission {
   queued : Bool
   owner : String
   automation_suggestion : Json?
-  preferences_used : Int
+  preferences_used : Int32
   preference_ids : Array[String]
 } derive(FromJson, Eq, Debug)
 
@@ -44,8 +44,8 @@ struct StandingGoalRecord {
   title : String
   prompt : String
   target_book_id : String
-  cadence_ticks : Int
-  next_due_tick : Int
+  cadence_ticks : Int32
+  next_due_tick : Int32
   last_run_tick : Json
   enabled : Bool
   source_policy : String
@@ -54,52 +54,52 @@ struct StandingGoalRecord {
 
 ///|
 struct TownAnalytics {
-  daemon_tick : Int
-  standing_goal_count : Int
-  due_goal_count : Int
-  active_goal_count : Int
-  request_count : Int
-  message_count : Int
-  run_count : Int
-  watcher_run_count : Int
-  updates : Int
-  no_changes : Int
-  needs_review : Int
-  failures : Int
-  deferred : Int
-  event_count : Int
-  failure_event_count : Int
-  review_event_count : Int
+  daemon_tick : Int32
+  standing_goal_count : Int32
+  due_goal_count : Int32
+  active_goal_count : Int32
+  request_count : Int32
+  message_count : Int32
+  run_count : Int32
+  watcher_run_count : Int32
+  updates : Int32
+  no_changes : Int32
+  needs_review : Int32
+  failures : Int32
+  deferred : Int32
+  event_count : Int32
+  failure_event_count : Int32
+  review_event_count : Int32
   last_failure : String
-  review_item_count : Int
-  next_due_tick : Int
+  review_item_count : Int32
+  next_due_tick : Int32
 } derive(FromJson)
 
 ///|
 struct TownProgress {
-  daemon_tick : Int
+  daemon_tick : Int32
   daemon_running : Bool
   daemon_status : String
   supervision_enabled : Bool
-  due_goal_count : Int
-  next_due_tick : Int
-  request_count : Int
-  message_count : Int
-  dispatch_count : Int
-  run_count : Int
+  due_goal_count : Int32
+  next_due_tick : Int32
+  request_count : Int32
+  message_count : Int32
+  dispatch_count : Int32
+  run_count : Int32
   latest_request : String
   latest_message : String
   latest_dispatch : String
   latest_run : String
   latest_run_status : String
-  latest_run_artifacts : Int
+  latest_run_artifacts : Int32
 } derive(FromJson)
 
 ///|
 struct MoonclawProgress {
-  run_count : Int
-  ready_count : Int
-  artifact_count : Int
+  run_count : Int32
+  ready_count : Int32
+  artifact_count : Int32
   latest_run : String
   latest_status : String
 } derive(FromJson)
@@ -114,7 +114,7 @@ struct DeskEvent {
   detail : String
   path : String
   run_id : String
-  tick : Int
+  tick : Int32
   created_at : String
 } derive(FromJson)
 

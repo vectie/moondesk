@@ -21,7 +21,7 @@ fn native_work_test_item() -> NativeWorkStatus {
 
 ///|
 fn native_work_test_json(
-  revision : Int,
+  revision : Int32,
   items : Array[NativeWorkStatus],
 ) -> Json {
   let envelope : NativeWorkEnvelope = {

@@ -210,7 +210,7 @@ extern "js" fn return_http_requests() -> String =
 
 ///|
 extern "js" fn return_http_resolve(
-  index : Int,
+  index : Int32,
   payload : String,
 ) -> @js.Promise =
   #| (index, payload) => {

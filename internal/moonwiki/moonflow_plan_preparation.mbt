@@ -154,7 +154,7 @@ fn moonflow_plan_result(
   receipt : Json,
   changes : Array[Json],
   applied? : Json,
-  source_current? : Bool = true,
+  source_current~ : Bool = true,
 ) -> Json {
   {
     "contract_id": "moondesk.flow-plan-result.v1",

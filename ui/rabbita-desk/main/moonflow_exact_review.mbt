@@ -1,6 +1,6 @@
 ///|
 struct MoonFlowExactReviewState {
-  generation : Int
+  generation : Int32
   response : Json?
   selected_review : String
   notes : String
@@ -16,8 +16,8 @@ enum MoonFlowExactReviewMsg {
   Notes(String)
   Submit(String)
   Retry
-  Reply(Int, Int, Json, String, Result[Json, String])
-  Timeout(Int, Int, Json)
+  Reply(Int32, Int32, Json, String, Result[Json, String])
+  Timeout(Int32, Int32, Json)
 }
 
 ///|

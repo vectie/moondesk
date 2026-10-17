@@ -1,6 +1,6 @@
 ///|
 fn town_native_work_response_headers(
-  allowed? : Array[String] = [],
+  allowed~ : Array[String] = [],
 ) -> Map[String, String] {
   let headers = { "Cache-Control": "no-store" }
   if !allowed.is_empty() {
@@ -11,8 +11,8 @@ fn town_native_work_response_headers(
 
 ///|
 fn town_native_work_response_payload(
-  result : Result[Json, (Int, String)],
-) -> (Int, String, Json) {
+  result : Result[Json, (Int32, String)],
+) -> (Int32, String, Json) {
   match result {
     Ok(payload) => (200, "OK", payload)
     Err((code, message)) => {
@@ -43,8 +43,8 @@ fn town_native_work_response_payload(
 async fn send_town_native_work_response(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
-  result : Result[Json, (Int, String)],
-  allowed? : Array[String] = [],
+  result : Result[Json, (Int32, String)],
+  allowed~ : Array[String] = [],
 ) -> Unit {
   let (code, reason, payload) = town_native_work_response_payload(result)
   send_api_json_error_with_headers(
@@ -62,9 +62,9 @@ async fn send_town_native_work_response(
 /// browser's 30-second deadline. Cancellation closes the transport through its
 /// existing defer; a timed-out mutation is uncertain and must never be retried.
 async fn town_native_work_with_deadline(
-  operation : async () -> Result[Json, (Int, String)],
-  timeout_ms? : Int = 25000,
-) -> Result[Json, (Int, String)] {
+  operation : async () -> Result[Json, (Int32, String)],
+  timeout_ms~ : Int32 = 25000,
+) -> Result[Json, (Int32, String)] {
   @async.with_timeout(timeout_ms, operation) catch {
     _ => Err(town_native_work_owner_error(503))
   }
@@ -73,7 +73,7 @@ async fn town_native_work_with_deadline(
 ///|
 async fn town_native_work_read_body(
   body : &@io.Reader,
-) -> Result[Bytes, (Int, String)] {
+) -> Result[Bytes, (Int32, String)] {
   let output = @buffer.Buffer(size_hint=512)
   for ;; {
     let chunk = body.read_some(max_len=4097 - output.length()) catch {
@@ -94,7 +94,7 @@ async fn town_native_work_owner_exchange(
   method_ : String,
   path : String,
   body : Json?,
-) -> Result[(Int, Json), String] {
+) -> Result[(Int32, Json), String] {
   let client = @http.Client(service_url)
   defer client.close()
   let response = if method_ == "POST" {

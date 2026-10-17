@@ -6,15 +6,15 @@ enum MoonFlowPlanMsg {
   Inspect
   Close
   Open
-  Reply(String, String, String, Int, Result[Json, String])
-  Timeout(String, String, Int)
+  Reply(String, String, String, Int32, Result[Json, String])
+  Timeout(String, String, Int32)
 }
 
 ///|
-let moonflow_plan_generation_counter : Ref[Int] = Ref(0)
+let moonflow_plan_generation_counter : Ref[Int32] = Ref(0)
 
 ///|
-fn moonflow_plan_next_generation() -> Int {
+fn moonflow_plan_next_generation() -> Int32 {
   moonflow_plan_generation_counter.val += 1
   moonflow_plan_generation_counter.val
 }

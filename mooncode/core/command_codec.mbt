@@ -53,7 +53,7 @@ pub(all) struct MoonCodeCommand {
   model_workspace : String
   web_search : Bool
   task_intent : MoonCodeTaskIntent?
-  planner_max_steps : Int?
+  planner_max_steps : Int32?
   planner_reasoning_effort : String
   approval_id : String
   target_command_id : String
@@ -145,7 +145,7 @@ fn command_codec_task_intent(
 ///|
 fn command_codec_planner_max_steps(
   fields : Map[String, Json],
-) -> Result[Int?, String] {
+) -> Result[Int32?, String] {
   match fields.get("planner_max_steps") {
     None | Some(Null) => Ok(None)
     Some(Number(value, repr=_)) => {

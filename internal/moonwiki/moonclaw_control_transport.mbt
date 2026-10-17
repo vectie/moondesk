@@ -1,6 +1,6 @@
 ///|
 fn moonclaw_status_probe(
-  port : Int,
+  port : Int32,
   running : Bool,
   info_path : String,
 ) -> Json {
@@ -8,7 +8,7 @@ fn moonclaw_status_probe(
 }
 
 ///|
-const MoonClawControlResponseChars : Int = 2_000_000
+const MoonClawControlResponseChars : Int32 = 2_000_000
 
 ///|
 fn moonclaw_control_config_for_daemon(
@@ -40,7 +40,7 @@ async fn moonclaw_load_control_config(
 ///|
 fn moonclaw_control_headers(
   config : SourceSemanticsSandboxClientConfig,
-  content_type? : Bool = false,
+  content_type~ : Bool = false,
 ) -> @http.Headers {
   let headers : @http.Headers = {
     "X-MoonClaw-Execution-Token": config.auth_token,
@@ -58,7 +58,7 @@ fn moonclaw_control_response_text(
   data : &@io.Data,
   config : SourceSemanticsSandboxClientConfig,
   operation : String,
-  max_chars? : Int = MoonClawControlResponseChars,
+  max_chars~ : Int32 = MoonClawControlResponseChars,
 ) -> Result[String, String] {
   guard response.headers.get("x-moonclaw-instance-id") ==
     Some(config.instance_id) else {

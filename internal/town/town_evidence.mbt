@@ -44,8 +44,8 @@ pub fn installation_evidence_from_values(
 pub fn configuration_evidence_from_values(
   installed : Bool,
   configured : Bool,
-  configuration_valid? : Bool = true,
-  configuration_reason? : String = "",
+  configuration_valid~ : Bool = true,
+  configuration_reason~ : String = "",
 ) -> Json {
   {
     "configured": configured,

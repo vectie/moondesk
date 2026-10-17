@@ -1,5 +1,5 @@
 ///|
-fn moonflow_count_status(run : MoonFlowRunProjection, status : String) -> Int {
+fn moonflow_count_status(run : MoonFlowRunProjection, status : String) -> Int32 {
   run.items.filter(item => item.status == status).length()
 }
 
@@ -32,7 +32,7 @@ fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
 }
 
 ///|
-fn moonflow_budget_label(used : Int, limit : Int) -> String {
+fn moonflow_budget_label(used : Int32, limit : Int32) -> String {
   if limit <= 0 {
     "not granted"
   } else {

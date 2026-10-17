@@ -44,8 +44,8 @@ fn render_polite_state_announcement(
   test_id : String,
   title : String,
   detail : String,
-  title_i18n_key? : String = "",
-  detail_i18n_key? : String = "",
+  title_i18n_key~ : String = "",
+  detail_i18n_key~ : String = "",
 ) -> @rabbita.Html {
   div(
     class="surface-state-announcement visually-hidden",

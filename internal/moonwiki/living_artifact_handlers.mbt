@@ -2,10 +2,10 @@
 const LivingArtifactContract : String = "moondesk.living-artifact.v1"
 
 ///|
-const LivingArtifactMaxRecords : Int = 256
+const LivingArtifactMaxRecords : Int32 = 256
 
 ///|
-const LivingArtifactMaxItems : Int = 1_000
+const LivingArtifactMaxItems : Int32 = 1_000
 
 ///|
 let living_artifact_write_mutex : @async.Mutex = Mutex()
@@ -37,7 +37,7 @@ fn living_artifact_item(
   value : String,
   source : String,
   now : String,
-  ordinal : Int,
+  ordinal : Int32,
 ) -> Result[Json, String] {
   let label = label.trim().to_owned()
   let value = value.trim().to_owned()

@@ -47,7 +47,7 @@ fn agent_import_url(library : String, id : String) -> String {
 ///|
 fn choose_agent_package_click(
   dispatch : Dispatch[Msg],
-  exact? : Bool = false,
+  exact~ : Bool = false,
 ) -> @rabbita.Cmd {
   @cmd.custom_cmd(scheduler => {
     scheduler.add(

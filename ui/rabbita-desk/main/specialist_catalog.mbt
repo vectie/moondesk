@@ -13,17 +13,17 @@ struct AgentPassportRecord {
   source_kind : String
   capabilities : Array[String]
   example_tasks : Array[String]
-  knowledge_count : Int
-  skill_count : Int
-  schema_count : Int
-  tool_count : Int
-  app_count : Int
-  recurring_work_count : Int
+  knowledge_count : Int32
+  skill_count : Int32
+  schema_count : Int32
+  tool_count : Int32
+  app_count : Int32
+  recurring_work_count : Int32
 } derive(FromJson)
 
 ///|
 struct SpecialistAgentCatalog {
-  agent_count : Int
+  agent_count : Int32
   agents : Array[AgentPassportRecord]
 } derive(FromJson)
 

@@ -96,14 +96,14 @@ fn mooncode_session_command_cmd(
   model : Model,
   session : MoonCodeSession,
   action : String,
-  approval_id? : String = "",
-  context_path? : String = "",
-  message? : String = "",
-  force_preflight? : Bool = false,
-  target_command_id? : String = "",
-  tool_call_id? : String = "",
-  guidance? : Bool = false,
-  images? : Array[Json] = [],
+  approval_id~ : String = "",
+  context_path~ : String = "",
+  message~ : String = "",
+  force_preflight~ : Bool = false,
+  target_command_id~ : String = "",
+  tool_call_id~ : String = "",
+  guidance~ : Bool = false,
+  images~ : Array[Json] = [],
 ) -> @rabbita.Cmd {
   let target_path = if context_path == "" {
     mooncode_context_path(model)
@@ -374,7 +374,7 @@ fn mooncode_context_path(model : Model) -> String {
 ///|
 fn schedule_mooncode_metadata_refresh(
   dispatch : Dispatch[Msg],
-  generation : Int,
+  generation : Int32,
 ) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(RefreshMoonCodeMetadata(generation)), 5000)
 }

@@ -25,7 +25,7 @@ extern "js" fn continuation_draft_browser_allow() =
   #| () => { globalThis.__draftTest.allow=true; }
 
 ///|
-extern "js" fn continuation_draft_browser_asks() -> Int =
+extern "js" fn continuation_draft_browser_asks() -> Int32 =
   #| () => globalThis.__draftTest.asks
 
 ///|

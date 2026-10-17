@@ -132,7 +132,7 @@ async fn mooncode_watch_session_snapshot(
 fn mooncode_conversation_watch_response(
   session_id : String,
   snapshot : Json,
-  since_revision : Int,
+  since_revision : Int32,
   next_sequence : String,
 ) -> Result[Json, String] {
   let actual_revision = json_int(snapshot, "canonical_revision", default=0)
@@ -171,7 +171,7 @@ fn mooncode_conversation_watch_response(
 }
 
 ///|
-fn mooncode_watch_snapshot_sequence(snapshot : Json) -> Int {
+fn mooncode_watch_snapshot_sequence(snapshot : Json) -> Int32 {
   let conversation = json_object_field_or_empty(
     snapshot, "mooncode_conversation",
   )
@@ -187,8 +187,8 @@ fn mooncode_watch_status_is_terminal(status : String) -> Bool {
 fn mooncode_watch_query_nonnegative_int(
   request_path : String,
   key : String,
-  default~ : Int,
-) -> Result[Int, String] {
+  default~ : Int32,
+) -> Result[Int32, String] {
   let raw = query_value(request_path, key).unwrap_or(default.to_string())
   let value = @string.parse_int(raw) catch {
     _ => return Err("MoonCode watch \{key} must be a nonnegative integer")
@@ -224,8 +224,8 @@ fn mooncode_max_sequence(left : String, right : String) -> String raise {
 fn mooncode_watch_query_option_int(
   request_path : String,
   key : String,
-  default~ : Int,
-) -> Int {
+  default~ : Int32,
+) -> Int32 {
   @string.parse_int(
     query_value(request_path, key).unwrap_or(default.to_string()),
   ) catch {
@@ -234,7 +234,7 @@ fn mooncode_watch_query_option_int(
 }
 
 ///|
-fn mooncode_watch_wait_ms_value(value : Int) -> Int {
+fn mooncode_watch_wait_ms_value(value : Int32) -> Int32 {
   if value < 1000 {
     1000
   } else if value > 25000 {
@@ -245,7 +245,7 @@ fn mooncode_watch_wait_ms_value(value : Int) -> Int {
 }
 
 ///|
-fn mooncode_watch_poll_ms_value(value : Int) -> Int {
+fn mooncode_watch_poll_ms_value(value : Int32) -> Int32 {
   if value < 25 {
     25
   } else if value > 1000 {

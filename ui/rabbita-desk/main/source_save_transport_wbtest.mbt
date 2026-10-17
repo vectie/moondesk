@@ -21,8 +21,8 @@ extern "js" fn source_save_http_requests(fixture : @js.Value) -> String =
 ///|
 extern "js" fn source_save_http_resolve(
   fixture : @js.Value,
-  index : Int,
-  status : Int,
+  index : Int32,
+  status : Int32,
   payload : String,
 ) -> @js.Promise =
   #| (fixture, index, status, payload) => {
@@ -33,7 +33,7 @@ extern "js" fn source_save_http_resolve(
 ///|
 extern "js" fn source_save_http_reject(
   fixture : @js.Value,
-  index : Int,
+  index : Int32,
 ) -> @js.Promise =
   #| (fixture, index) => {
   #|   fixture.requests[index].reject(new Error('connection unavailable'));
@@ -41,7 +41,7 @@ extern "js" fn source_save_http_reject(
   #| }
 
 ///|
-fn source_save_test_state(draft? : String = "human edit") -> SourcePaneState {
+fn source_save_test_state(draft~ : String = "human edit") -> SourcePaneState {
   let loading = update_source_pane(
     init_source_pane("book-demo", "session"),
     RequestSource("src/main.mbt"),
@@ -89,7 +89,7 @@ fn source_save_test_success(content : String) -> Json {
 test "source save transport rejects host errors and preserves the retry draft" {
   @js.async_test(async fn() {
     let fixture = source_save_http_fixture()
-    let failures : Array[(Int, Json)] = [
+    let failures : Array[(Int32, Json)] = [
       (
         400,
         {

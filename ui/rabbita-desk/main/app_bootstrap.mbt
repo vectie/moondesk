@@ -1,5 +1,5 @@
 ///|
-const BootstrapRetryDelayMillis : Int = 5000
+const BootstrapRetryDelayMillis : Int32 = 5000
 
 ///|
 fn bootstrap_action(

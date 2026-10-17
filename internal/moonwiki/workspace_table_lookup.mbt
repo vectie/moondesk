@@ -1,15 +1,15 @@
 ///|
 priv struct TableLookup {
   table : @jsontable.Table
-  matched : Int
-  unmatched : Int
-  unused_lookup : Int
+  matched : Int32
+  unmatched : Int32
+  unused_lookup : Int32
 }
 
 ///|
 fn lookup_columns(
   table : @jsontable.Table,
-  key : Int,
+  key : Int32,
   side : String,
 ) -> Result[Unit, String] {
   if key < 0 || key >= table.columns.length() {
@@ -33,8 +33,8 @@ fn lookup_columns(
 fn enrich_table(
   source : @jsontable.Table,
   lookup : @jsontable.Table,
-  source_key : Int,
-  lookup_key : Int,
+  source_key : Int32,
+  lookup_key : Int32,
 ) -> Result[TableLookup, String] {
   for
     (table, key, side) in [
@@ -58,7 +58,7 @@ fn enrich_table(
     Ok(keys) => keys
     Err(message) => return Err(message)
   }
-  let used : Map[Int, Bool] = Map([])
+  let used : Map[Int32, Bool] = Map([])
   let columns = ["Match", "Source record", "Lookup record"] +
     source.columns.map(name => "Source: " + name) +
     lookup.columns.map(name => "Lookup: " + name)

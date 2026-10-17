@@ -15,7 +15,7 @@ struct MoonFlowPlanEditor {
   notice : String
   phase : String
   request_id : String
-  generation : Int
+  generation : Int32
   receipt : Json?
   closed : Bool
 } derive(FromJson)

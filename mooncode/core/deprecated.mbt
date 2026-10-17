@@ -67,9 +67,9 @@ fn native_stream_endpoint(
   session_id : String,
   book_root : String,
   format : String,
-  since : Int,
-  wait_ms? : Int = 0,
-  poll_ms? : Int = 100,
+  since : Int32,
+  wait_ms~ : Int32 = 0,
+  poll_ms~ : Int32 = 100,
 ) -> String {
   native_stream_endpoint_raw(
     session_id,

@@ -376,7 +376,7 @@ async test "native work injected failures preserve status hide private error and
 ///|
 async test "native work validation and missing capability cannot contact mutation transport" {
   let calls : Array[String] = []
-  let exchange : async (String, String, Json?) -> Result[(Int, Json), String] = (
+  let exchange : async (String, String, Json?) -> Result[(Int32, Json), String] = (
     _,
     path,
     _,
@@ -384,7 +384,7 @@ async test "native work validation and missing capability cannot contact mutatio
     calls.push(path)
     Ok((200, { "schema": "moontown.api.v1" }))
   }
-  let invalid : Array[(String, @http.RequestMethod, Bytes, Int)] = [
+  let invalid : Array[(String, @http.RequestMethod, Bytes, Int32)] = [
     ("/api/town/native-work", Post, b"{}", 405),
     ("/api/town/native-work", Head, b"", 405),
     ("/api/town/native-work/bad/cancel", Post, b"{}", 400),

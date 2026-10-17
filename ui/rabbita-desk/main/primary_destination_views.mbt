@@ -99,7 +99,7 @@ fn render_runs_workspace(
 }
 
 ///|
-fn publish_pending_review_count(items : Array[ReviewItem]) -> Int {
+fn publish_pending_review_count(items : Array[ReviewItem]) -> Int32 {
   items
   .filter(item => {
     let status = item.status.trim().to_lower()

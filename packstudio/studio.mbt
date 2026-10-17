@@ -362,7 +362,7 @@ pub async fn active_pack_catalog(workspace_root : String) -> Json {
 }
 
 ///|
-fn mailbox_entry_count(path : String) -> Int {
+fn mailbox_entry_count(path : String) -> Int32 {
   if !@sync_fs.path_exists(path) {
     return 0
   }

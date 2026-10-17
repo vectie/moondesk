@@ -17,7 +17,7 @@ fn moonflow_operator_text(value : String?, fallback : String) -> String {
 }
 
 ///|
-fn moonflow_operator_int(value : Int?, fallback : String) -> String {
+fn moonflow_operator_int(value : Int32?, fallback : String) -> String {
   match value {
     Some(number) => number.to_string()
     None => fallback
@@ -584,14 +584,14 @@ fn moonflow_adoption_operator_rows(
 ///|
 fn moonflow_operator_rows_total(
   groups : Array[Array[MoonFlowOperatorRowView]],
-) -> Int {
+) -> Int32 {
   groups.fold(init=0, fn(total, rows) { total + rows.length() })
 }
 
 ///|
 fn moonflow_operator_attention_total(
   groups : Array[Array[MoonFlowOperatorRowView]],
-) -> Int {
+) -> Int32 {
   groups.fold(init=0, fn(total, rows) {
     total + rows.filter(row => row.needs_attention).length()
   })
@@ -628,12 +628,12 @@ fn render_moonflow_lifecycle_stage(
 
 ///|
 fn render_moonflow_lifecycle(
-  execution_count : Int,
-  execution_attention : Int,
-  finalization_count : Int,
-  finalization_attention : Int,
-  learning_count : Int,
-  learning_attention : Int,
+  execution_count : Int32,
+  execution_attention : Int32,
+  finalization_count : Int32,
+  finalization_attention : Int32,
+  learning_count : Int32,
+  learning_attention : Int32,
 ) -> @rabbita.Html {
   div(class="flow-lifecycle", [
     render_moonflow_lifecycle_stage(

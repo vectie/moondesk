@@ -72,7 +72,7 @@ fn moonflow_collaboration_reply(
   status : String,
   message : String,
   next_action : String,
-  handover_catalog? : Json = Json::null(),
+  handover_catalog~ : Json = Json::null(),
 ) -> Json {
   let fields : Map[String, Json] = Map([])
   fields["workspace_id"] = workspace_id.to_json()

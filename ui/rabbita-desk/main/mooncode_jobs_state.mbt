@@ -5,8 +5,8 @@ struct MoonCodeJobRun {
   status : String
   started_at : String
   finished_at : String
-  ran_turn_count : Int
-  failed_turn_count : Int
+  ran_turn_count : Int32
+  failed_turn_count : Int32
   stopped_by : String
   detail : String
 } derive(FromJson)
@@ -16,7 +16,7 @@ struct MoonCodeJobHistory {
   kind : String
   owner : String
   session_id : String
-  job_count : Int
+  job_count : Int32
   truncated : Bool
   jobs : Array[MoonCodeJobRun]
 } derive(FromJson)

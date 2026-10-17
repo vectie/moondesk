@@ -9,7 +9,7 @@ priv struct LepusaIntegrationOptions {
   asset_url : String
   workspace_root : String
   ui_dir : String
-  serve_port : Int
+  serve_port : Int32
   strict : Bool
 }
 

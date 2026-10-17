@@ -40,7 +40,7 @@ async fn mooncode_human_revision_save_locked(
   workspace : @desk.DeskWorkspace,
   raw_request : Json,
   capture : async (String, String, String) -> Result[Unit, String],
-) -> (Int, Json) {
+) -> (Int32, Json) {
   let root = workspace.root_path
   let request = mooncode_human_revision_request(raw_request, root)
   let id = mooncode_output_text(request, "revision_id")
@@ -235,7 +235,7 @@ async fn mooncode_human_revision_save_locked(
 }
 
 ///|
-fn mooncode_human_revision_conflict(current : Json) -> (Int, Json) {
+fn mooncode_human_revision_conflict(current : Json) -> (Int32, Json) {
   (
     409,
     mooncode_session_with_field(

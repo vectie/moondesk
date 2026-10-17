@@ -2,13 +2,13 @@
 const DocumentFollowupContract : String = "moondesk.document_followup_queue.v1"
 
 ///|
-const DocumentFollowupMaxQueues : Int = 1_024
+const DocumentFollowupMaxQueues : Int32 = 1_024
 
 ///|
-const DocumentFollowupMaxItems : Int = 64
+const DocumentFollowupMaxItems : Int32 = 64
 
 ///|
-const DocumentFollowupMaxTextChars : Int = 120_000
+const DocumentFollowupMaxTextChars : Int32 = 120_000
 
 ///|
 let document_followup_write_mutex : @async.Mutex = Mutex()
@@ -79,7 +79,7 @@ fn document_followup_queue(
 fn empty_document_followup_queue(
   workspace_id : String,
   conversation_id : String,
-  task_id? : String = "",
+  task_id~ : String = "",
 ) -> Json {
   {
     "contract": DocumentFollowupContract,

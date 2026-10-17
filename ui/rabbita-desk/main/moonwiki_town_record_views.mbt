@@ -25,7 +25,7 @@ fn render_standing_goal_list(model : Model) -> @rabbita.Html {
 
 ///|
 fn last_run_label(goal : StandingGoalRecord) -> String {
-  let tick : Int = @json.from_json(goal.last_run_tick) catch {
+  let tick : Int32 = @json.from_json(goal.last_run_tick) catch {
     _ => return "never"
   }
   tick.to_string()

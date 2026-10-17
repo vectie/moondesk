@@ -5,7 +5,7 @@ fn moonflow_capability_evidence_from_values(
   root_configured : Bool,
   root_valid : Bool,
   root : String,
-  execution_sandbox_available? : Bool = true,
+  execution_sandbox_available~ : Bool = true,
 ) -> Json {
   let platform_supported = json_bool(
     platform_evidence,

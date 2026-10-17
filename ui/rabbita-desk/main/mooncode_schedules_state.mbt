@@ -6,7 +6,7 @@ struct MoonCodeSchedule {
   session_id : String
   prompt : String
   model : String
-  interval_seconds : Int
+  interval_seconds : Int32
   enabled : Bool
   next_due_at : Int64
   pending_command_id : String
@@ -18,7 +18,7 @@ struct MoonCodeSchedule {
 ///|
 struct MoonCodeScheduleState {
   schema : String
-  revision : Int
+  revision : Int32
   schedules : Array[MoonCodeSchedule]
 } derive(FromJson)
 
@@ -117,7 +117,7 @@ fn mooncode_schedule_error_key(error : String) -> String {
 fn fetch_mooncode_schedules_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
-  generation : Int,
+  generation : Int32,
 ) -> @rabbita.Cmd {
   @http.get(@desk.desktop_api_url(["api", "mooncode", "schedules"])).expect_text(result => {
       let decoded : Result[MoonCodeScheduleState, String] = match result {

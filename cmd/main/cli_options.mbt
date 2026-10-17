@@ -3,7 +3,7 @@ struct ServeOptions {
   workspace_root : String
   ui_dir : String
   host : String
-  port : Int
+  port : Int32
   open_browser : Bool
 }
 
@@ -13,7 +13,7 @@ priv struct BundleOptions {
   ui_dir : String
   out_dir : String
   host : String
-  port : Int
+  port : Int32
   sign_identity : String
   version : String
   channel : String

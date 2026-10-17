@@ -108,21 +108,21 @@ struct PackAppRecord {
   primary_action_label : String?
   launch_url : String
   status : String
-  entrypoint_count : Int
-  workflow_count : Int
-  tool_count : Int
+  entrypoint_count : Int32
+  workflow_count : Int32
+  tool_count : Int32
   configuration_message : String
   bridge_ready : Bool?
   intake_operation_ids : Array[String]?
-  template_count : Int?
+  template_count : Int32?
   templates : Array[PackTemplateRecord]?
 } derive(FromJson)
 
 ///|
 #warnings("-unused_field")
 struct PackAppCatalog {
-  app_count : Int
-  configured_count : Int
-  template_count : Int?
+  app_count : Int32
+  configured_count : Int32
+  template_count : Int32?
   apps : Array[PackAppRecord]
 } derive(FromJson)

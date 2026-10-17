@@ -1,8 +1,8 @@
 ///|
 fn lifecycle_result_fixture(
   action : String,
-  archived? : Bool = false,
-  deleted? : Bool = false,
+  archived~ : Bool = false,
+  deleted~ : Bool = false,
 ) -> Json {
   {
     "kind": "mooncode-session-lifecycle-result",

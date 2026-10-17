@@ -1,8 +1,8 @@
 ///|
-const TaskRecipeInstanceMaxRecords : Int = 512
+const TaskRecipeInstanceMaxRecords : Int32 = 512
 
 ///|
-const TaskRecipeInputMaxChars : Int = 2_000
+const TaskRecipeInputMaxChars : Int32 = 2_000
 
 ///|
 let task_recipe_write_mutex : @async.Mutex = Mutex()

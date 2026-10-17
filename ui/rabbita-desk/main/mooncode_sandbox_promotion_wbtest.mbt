@@ -1,8 +1,8 @@
 ///|
 fn sandbox_ui_test_receipt(
-  retention_id? : String = "retention-1",
-  enforcement? : String = "Enforced",
-  cleanup_verified? : Bool = true,
+  retention_id~ : String = "retention-1",
+  enforcement~ : String = "Enforced",
+  cleanup_verified~ : Bool = true,
 ) -> @mooncode_core.MoonCodeSandboxReceipt {
   {
     backend: "MicroVm",

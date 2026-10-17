@@ -1,8 +1,8 @@
 ///|
 extern "js" fn inline_mock_backward(
   text : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> @js.Value =
   #| (text, start, end) => {
   #|   const previous = globalThis.document;

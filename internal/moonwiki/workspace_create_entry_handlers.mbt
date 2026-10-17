@@ -875,7 +875,7 @@ fn decode_base64_bytes(payload : String) -> Result[Bytes, String] {
 }
 
 ///|
-fn base64_value(code : UInt16) -> Int? {
+fn base64_value(code : UInt16) -> Int32? {
   if code >= 'A' && code <= 'Z' {
     Some(code.to_int() - ('A' : UInt16).to_int())
   } else if code >= 'a' && code <= 'z' {
@@ -1293,7 +1293,7 @@ fn markdown_title_from_path(path : String) -> String {
 
 ///|
 fn workspace_entry_create_error(
-  code : Int,
+  code : Int32,
   reason : String,
   message : String,
 ) -> Json {

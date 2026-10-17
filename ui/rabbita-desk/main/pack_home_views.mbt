@@ -43,7 +43,7 @@ fn pack_inspect_button(
   inspection : PackInspection,
   label : String,
   icon : String,
-  state_class? : String = "",
+  state_class~ : String = "",
 ) -> @rabbita.Html {
   let active = model.pack_inspection == Some(inspection)
   button(

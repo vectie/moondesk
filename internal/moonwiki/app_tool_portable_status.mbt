@@ -153,7 +153,7 @@ async fn app_tool_portable_status(
 ///|
 fn app_tool_portable_standalone_blockers(
   status : String,
-  api_warning_count : Int,
+  api_warning_count : Int32,
 ) -> Array[String] {
   let blockers : Array[String] = []
   match status {

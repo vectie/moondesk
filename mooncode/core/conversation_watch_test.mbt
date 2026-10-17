@@ -1,5 +1,5 @@
 ///|
-fn watch_test_snapshot(revision : Int, next_sequence : Json) -> Json {
+fn watch_test_snapshot(revision : Int32, next_sequence : Json) -> Json {
   {
     "kind": "moonsuite-conversation-watch",
     "contract_id": "moonsuite-conversation-watch.v1",

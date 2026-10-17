@@ -4,8 +4,8 @@ pub fn workspace(
   name~ : String,
   root_path~ : String,
   kind~ : WorkspaceKind,
-  status? : WorkspaceStatus = Ready,
-  last_seen_at? : String? = None,
+  status~ : WorkspaceStatus = Ready,
+  last_seen_at~ : String? = None,
 ) -> DeskWorkspace {
   { id, name, root_path, kind, status, last_seen_at, }
 }
@@ -14,11 +14,11 @@ pub fn workspace(
 pub fn file_entry(
   workspace_id~ : String,
   path~ : String,
-  is_directory? : Bool = false,
-  writable? : Bool = false,
-  readable? : Bool = true,
-  size_bytes? : Int? = None,
-  modified_at? : String? = None,
+  is_directory~ : Bool = false,
+  writable~ : Bool = false,
+  readable~ : Bool = true,
+  size_bytes~ : Int32? = None,
+  modified_at~ : String? = None,
 ) -> DeskFileEntry {
   let kind = infer_entry_kind(path, is_directory~)
   {
@@ -42,10 +42,10 @@ pub fn file_entry_detail(
   display_name~ : String,
   kind~ : EntryKind,
   source_layer~ : SourceLayer,
-  readable? : Bool = true,
-  writable? : Bool = false,
-  size_bytes? : Int? = None,
-  modified_at? : String? = None,
+  readable~ : Bool = true,
+  writable~ : Bool = false,
+  size_bytes~ : Int32? = None,
+  modified_at~ : String? = None,
 ) -> DeskFileEntry {
   {
     id: stable_id(workspace_id, path),
@@ -76,8 +76,8 @@ pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry {
 pub fn preview(
   entry : DeskFileEntry,
   body~ : String,
-  warnings? : Array[String] = [],
-  metadata? : Map[String, String] = {},
+  warnings~ : Array[String] = [],
+  metadata~ : Map[String, String] = {},
 ) -> DeskPreview {
   {
     entry_id: entry.id,
@@ -103,8 +103,8 @@ pub fn normalize_review_policy(value : String) -> String {
 pub fn run_artifact(
   id~ : String,
   path~ : String,
-  title? : String = display_name(path),
-  kind? : EntryKind = infer_entry_kind(path),
+  title~ : String = display_name(path),
+  kind~ : EntryKind = infer_entry_kind(path),
 ) -> DeskRunArtifact {
   { id, path, title, kind, }
 }
@@ -117,9 +117,9 @@ pub fn run_projection(
   phase~ : String,
   summary~ : String,
   artifacts~ : Array[DeskRunArtifact],
-  goal_id? : String? = None,
-  started_at? : String? = None,
-  updated_at? : String? = None,
+  goal_id~ : String? = None,
+  started_at~ : String? = None,
+  updated_at~ : String? = None,
 ) -> DeskRunProjection {
   {
     run_id,

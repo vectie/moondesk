@@ -131,9 +131,9 @@ test "canonical work evidence preserves public strings and approval fallback" {
 ///|
 fn code_mode_test_session(
   id : String,
-  workspace_id? : String = "book-demo",
-  status? : String = "idle",
-  queued_count? : Int = 0,
+  workspace_id~ : String = "book-demo",
+  status~ : String = "idle",
+  queued_count~ : Int32 = 0,
 ) -> MoonCodeSession {
   {
     id,
@@ -198,9 +198,9 @@ fn code_mode_test_watch_snapshot(
 fn code_mode_test_lifecycle_result(
   action : String,
   session_id : String,
-  title? : String = "",
-  archived? : Bool = false,
-  deleted? : Bool = false,
+  title~ : String = "",
+  archived~ : Bool = false,
+  deleted~ : Bool = false,
 ) -> (
   @mooncode_core.MoonCodeLifecycleAction,
   @mooncode_core.MoonCodeSessionId,
@@ -324,10 +324,10 @@ fn code_mode_test_conversation(
 fn code_mode_test_turn(
   id : String,
   user : String,
-  client_turn_id? : String = "",
-  assistant? : String = "",
-  steps? : Array[Json] = [],
-  status? : String = "done",
+  client_turn_id~ : String = "",
+  assistant~ : String = "",
+  steps~ : Array[Json] = [],
+  status~ : String = "done",
 ) -> @mooncode_core.MoonCodeTurn {
   let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
   let payload : Json = {

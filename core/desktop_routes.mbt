@@ -1,7 +1,7 @@
 ///|
 pub fn desktop_api_url(
   segments : Array[String],
-  query? : Array[(String, String)] = [],
+  query~ : Array[(String, String)] = [],
 ) -> String {
   let path = desktop_api_path(segments)
   if query.length() == 0 {
@@ -50,7 +50,7 @@ pub(all) struct DesktopApiRouteContract {
 pub(all) struct DesktopApiCapabilities {
   component : String
   kind : String
-  version : Int
+  version : Int32
   route_contract_endpoint : String
   required_endpoints : Array[String]
   desktop_route_contracts : Array[DesktopApiRouteContract]
@@ -204,7 +204,7 @@ pub fn workspace_preview_url(workspace_id : String, path : String) -> String {
 pub fn workspace_json_table_url(
   workspace_id : String,
   path : String,
-  format? : String = "html",
+  format~ : String = "html",
 ) -> String {
   desktop_api_url(["api", "workspaces", workspace_id, "json-table"], query=[
     ("path", path),
@@ -283,7 +283,7 @@ pub fn moonclaw_run_artifacts_route() -> String {
 /// credential never leaves the native MoonDesk host.
 pub fn moonclaw_task_events_url(
   task_id : String,
-  cursor? : String = "start",
+  cursor~ : String = "start",
 ) -> String {
   moonclaw_endpoint_url("tasks/" + task_id + "/events") + "?cursor=" + cursor
 }
@@ -321,7 +321,7 @@ pub fn moonclaw_supervisor_endpoint_url(
 }
 
 ///|
-pub fn moonclaw_supervisor_bridge_route(endpoint? : String = "") -> String {
+pub fn moonclaw_supervisor_bridge_route(endpoint~ : String = "") -> String {
   let root = moonclaw_route("supervisor-bridge")
   if endpoint == "" {
     root

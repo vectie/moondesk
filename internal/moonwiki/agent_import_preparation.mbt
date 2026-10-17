@@ -4,7 +4,7 @@
 let agent_import_mutex : @async.Mutex = Mutex()
 
 ///|
-async fn agent_import_read_json(path : String, maximum : Int) -> Json {
+async fn agent_import_read_json(path : String, maximum : Int32) -> Json {
   agent_import_regular_file(path, maximum)
   @json.parse(agent_export_bounded_text(path, maximum))
 }
@@ -13,7 +13,7 @@ async fn agent_import_read_json(path : String, maximum : Int) -> Json {
 async fn agent_import_workspace_identity_count(
   context : WorkspaceContext,
   workspace_id : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for folder in read_directory_names(context.books_root, include_hidden=false) {
     if @desk.stable_id("book", folder) == workspace_id &&
@@ -237,7 +237,7 @@ async fn agent_import_stage_with(
   context : WorkspaceContext,
   request : AgentImportStage,
   run : AgentExportRun,
-  is_current? : () -> Bool = () => true,
+  is_current~ : () -> Bool = () => true,
 ) -> Json {
   agent_import_mutex.acquire()
   defer agent_import_mutex.release()
@@ -306,7 +306,7 @@ async fn agent_import_apply_with(
   context : WorkspaceContext,
   request : AgentImportRequest,
   run : AgentExportRun,
-  is_current? : () -> Bool = () => true,
+  is_current~ : () -> Bool = () => true,
 ) -> Json {
   agent_import_mutex.acquire()
   defer agent_import_mutex.release()

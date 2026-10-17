@@ -138,12 +138,12 @@ async fn export_all_app_tool_portable_bundles_for_context(
 
 ///|
 fn app_tool_portable_all_status_label(
-  book_count : Int,
-  portable_ready_count : Int,
-  api_warning_count : Int,
-  export_required_count : Int,
-  missing_entrypoint_count : Int,
-  unsupported_entrypoint_count : Int,
+  book_count : Int32,
+  portable_ready_count : Int32,
+  api_warning_count : Int32,
+  export_required_count : Int32,
+  missing_entrypoint_count : Int32,
+  unsupported_entrypoint_count : Int32,
 ) -> String {
   if book_count == 0 {
     "no_app_tool_books"
@@ -164,9 +164,9 @@ fn app_tool_portable_all_status_label(
 
 ///|
 fn app_tool_portable_all_export_status_label(
-  book_count : Int,
-  failure_count : Int,
-  api_warning_count : Int,
+  book_count : Int32,
+  failure_count : Int32,
+  api_warning_count : Int32,
 ) -> String {
   if book_count == 0 {
     "no_app_tool_books"

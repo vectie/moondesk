@@ -68,7 +68,7 @@ fn exact_import_test_staging() -> AgentImportState raise {
 ///|
 fn exact_import_test_reply(
   status : String,
-  destination? : String = "",
+  destination~ : String = "",
 ) -> Json raise {
   guard agent_import_test_reply(status, destination~) is Object(fields) else {
     fail("fixture")

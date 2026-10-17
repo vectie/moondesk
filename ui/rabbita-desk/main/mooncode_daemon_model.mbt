@@ -38,7 +38,7 @@ struct MoonClawDaemonStatus {
   model_readiness : MoonClawModelReadiness?
   repair_available : Bool?
   running : Bool
-  port : Int
+  port : Int32
   message : String
   service_configured : Bool
   managed_install : Bool?
@@ -90,8 +90,8 @@ struct MoonClawCopilotAuthFlow {
   model_ready : Bool?
   user_code : String?
   verification_uri : String?
-  expires_in : Int?
-  interval : Int?
+  expires_in : Int32?
+  interval : Int32?
 } derive(FromJson)
 
 ///|

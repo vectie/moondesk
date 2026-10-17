@@ -2,13 +2,13 @@
 const SourceSubscriptionContract : String = "moondesk.source-subscription.v1"
 
 ///|
-const SourceSubscriptionMaxRecords : Int = 512
+const SourceSubscriptionMaxRecords : Int32 = 512
 
 ///|
-const SourceSubscriptionMaxSourceChars : Int = 4_096
+const SourceSubscriptionMaxSourceChars : Int32 = 4_096
 
 ///|
-const SourceSubscriptionMaxRuleChars : Int = 2_000
+const SourceSubscriptionMaxRuleChars : Int32 = 2_000
 
 ///|
 let source_subscription_write_mutex : @async.Mutex = Mutex()
@@ -26,7 +26,7 @@ fn source_subscription_kind_valid(kind : String) -> Bool {
 }
 
 ///|
-fn source_subscription_cadence_ticks(cadence : String) -> Int {
+fn source_subscription_cadence_ticks(cadence : String) -> Int32 {
   match cadence {
     "daily" => 1_440
     "weekly" => 10_080

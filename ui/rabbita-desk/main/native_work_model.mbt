@@ -13,7 +13,7 @@ struct NativeWorkStatus {
   command_id : String
   engineering_status : String
   output : String
-  generation : Int
+  generation : Int32
   observed_at_ms : UInt64
   retry_after_ms : UInt64
 } derive(FromJson, ToJson, Eq, Debug)
@@ -21,7 +21,7 @@ struct NativeWorkStatus {
 ///|
 struct NativeWorkEnvelope {
   schema : String
-  revision : Int
+  revision : Int32
   items : Array[NativeWorkStatus]
 } derive(FromJson, ToJson)
 
@@ -40,7 +40,7 @@ enum NativeWorkOperation {
 
 ///|
 struct NativeWorkPending {
-  request : Int
+  request : Int32
   operation : NativeWorkOperation
 } derive(Eq, Debug)
 
@@ -49,9 +49,9 @@ struct NativeWorkState {
   active : Bool
   library : String
   book : String
-  generation : Int
-  request : Int
-  revision : Int?
+  generation : Int32
+  request : Int32
+  revision : Int32?
   items : Array[NativeWorkStatus]
   pending : NativeWorkPending?
   loaded : Bool
@@ -64,15 +64,15 @@ enum NativeWorkMsg {
   BindNative(Bool, String, String)
   ReloadSavedNative
   ActOnNative(String, NativeWorkAction)
-  NativeReceived(Int, Int, Result[Json, String])
-  NativeTimedOut(Int, Int)
+  NativeReceived(Int32, Int32, Result[Json, String])
+  NativeTimedOut(Int32, Int32)
 }
 
 ///|
 enum NativeWorkEffect {
   NoNativeEffect
-  ReadNativeSaved(Int, Int)
-  PostNativeControl(Int, Int, String, NativeWorkAction, Int)
+  ReadNativeSaved(Int32, Int32)
+  PostNativeControl(Int32, Int32, String, NativeWorkAction, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -96,7 +96,7 @@ fn init_native_work() -> NativeWorkState {
 fn native_work_id_valid(id : String) -> Bool {
   id.length() == 42 &&
   id.has_prefix("town-work-") &&
-  id[10:].to_owned().iter().all(c => c is ('0'..='9' | 'a'..='f'))
+  id[10:].to_owned().iter().all(c => c is ('0'..<='9' | 'a'..<='f'))
 }
 
 ///|
@@ -132,7 +132,7 @@ fn native_work_decode(json : Json) -> NativeWorkEnvelope? {
 
 ///|
 /// FromJson[Int] permits truncation, so validate raw numbers before decoding.
-fn native_work_nonnegative_int(value : Json) -> Int? {
+fn native_work_nonnegative_int(value : Json) -> Int32? {
   guard value is Number(number, ..) && number >= 0 && number <= 2147483647.0 else {
     return None
   }
@@ -187,6 +187,6 @@ fn native_work_action_disabled(state : NativeWorkState, id : String) -> Bool {
 }
 
 ///|
-fn native_work_mutation_body(revision : Int) -> Json {
+fn native_work_mutation_body(revision : Int32) -> Json {
   { "expected_revision": revision }
 }

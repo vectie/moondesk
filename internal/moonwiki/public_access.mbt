@@ -87,7 +87,7 @@ fn moondesk_identity_authority_matches(
 ///|
 async fn moondesk_bounded_identity_text(
   reader : &@io.Reader,
-  limit : Int,
+  limit : Int32,
 ) -> String? {
   let bytes = FixedArray::make(limit + 1, b'\x00')
   let mut length = 0

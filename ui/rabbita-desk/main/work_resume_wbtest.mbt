@@ -13,7 +13,7 @@ fn resume_test_response() -> Json {
 ///|
 fn resume_test_resolve(
   model : Model,
-  response? : Json = resume_test_response(),
+  response~ : Json = resume_test_response(),
 ) -> Model {
   let (_, pending) = update(
     code_mode_test_dispatch,

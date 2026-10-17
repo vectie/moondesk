@@ -2,13 +2,13 @@
 const LearningProposalContract : String = "moondesk.learning-proposal.v1"
 
 ///|
-const LearningProposalMaxRecords : Int = 512
+const LearningProposalMaxRecords : Int32 = 512
 
 ///|
-const LearningProposalMaxDetailChars : Int = 4_000
+const LearningProposalMaxDetailChars : Int32 = 4_000
 
 ///|
-const LearningProposalMaxSourceChars : Int = 8_000
+const LearningProposalMaxSourceChars : Int32 = 8_000
 
 ///|
 let learning_proposal_write_mutex : @async.Mutex = Mutex()
@@ -140,7 +140,7 @@ async fn apply_learning_proposal(
   workspace_root : String,
   payload : Json,
   now : String,
-  save? : async (String, Array[Json], Json) -> Bool = save_learning_record,
+  save~ : async (String, Array[Json], Json) -> Bool = save_learning_record,
 ) -> Result[Json, String] {
   let workspace_id = json_string(payload, "workspace_id", default="")
     .trim()

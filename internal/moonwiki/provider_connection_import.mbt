@@ -5,7 +5,7 @@ priv struct OpenAiConnectionImport {
   base_url : String
   api_key : String
   model : String
-  max_output_tokens : Int
+  max_output_tokens : Int32
 } derive(FromJson)
 
 ///|

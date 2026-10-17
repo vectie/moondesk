@@ -1,10 +1,10 @@
 ///|
 priv struct TableComparison {
   differences : @jsontable.Table
-  added : Int
-  removed : Int
-  changed : Int
-  unchanged : Int
+  added : Int32
+  removed : Int32
+  changed : Int32
+  unchanged : Int32
   added_columns : Array[String]
   removed_columns : Array[String]
 }
@@ -12,13 +12,13 @@ priv struct TableComparison {
 ///|
 fn comparison_columns(
   table : @jsontable.Table,
-  key : Int,
+  key : Int32,
   side : String,
-) -> Result[Map[String, Int], String] {
+) -> Result[Map[String, Int32], String] {
   if key < 0 || key >= table.columns.length() {
     return Err("Choose a valid \{side} key column")
   }
-  let columns : Map[String, Int] = Map([])
+  let columns : Map[String, Int32] = Map([])
   for i, name in table.columns {
     if columns.contains(name) {
       return Err(
@@ -34,10 +34,10 @@ fn comparison_columns(
 ///|
 fn comparison_keys(
   rows : Array[Array[String]],
-  key : Int,
+  key : Int32,
   side : String,
-) -> Result[Map[String, Int], String] {
-  let keys : Map[String, Int] = Map([])
+) -> Result[Map[String, Int32], String] {
+  let keys : Map[String, Int32] = Map([])
   for i, row in rows {
     let value = row[key]
     if value.trim().is_empty() {
@@ -61,8 +61,8 @@ fn comparison_keys(
 fn compare_tables(
   before : @jsontable.Table,
   after : @jsontable.Table,
-  before_key : Int,
-  after_key : Int,
+  before_key : Int32,
+  after_key : Int32,
 ) -> Result[TableComparison, String] {
   let left_columns = match comparison_columns(before, before_key, "Before") {
     Ok(columns) => columns

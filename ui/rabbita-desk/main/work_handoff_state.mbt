@@ -24,7 +24,7 @@ struct WorkHandoffCanonical {
 ///|
 struct WorkHandoffState {
   target : WorkHandoffTarget?
-  generation : Int
+  generation : Int32
   phase : String
   message : String
   canonical : WorkHandoffCanonical?
@@ -35,7 +35,7 @@ struct WorkHandoffState {
   session : MoonCodeSession?
   session_error : String
   directory : String
-  files_generation : Int
+  files_generation : Int32
   files_loading : Bool
   files_error : String
   entries : Array[@desk.DeskFileEntry]
@@ -46,15 +46,15 @@ struct WorkHandoffState {
 ///|
 enum WorkHandoffMsg {
   Resolve
-  Resolved(Int, Result[Json, String])
-  LookupTimedOut(Int)
+  Resolved(Int32, Result[Json, String])
+  LookupTimedOut(Int32)
   Browse(String)
-  FilesLoaded(Int, Int, String, Result[Array[@desk.DeskFileEntry], String])
+  FilesLoaded(Int32, Int32, String, Result[Array[@desk.DeskFileEntry], String])
   Exit
   FollowUp(WorkContinuationMsg)
   HumanRevision(WorkHumanRevisionMsg)
-  TeachLearning(Int, String, String, String)
-  ReviewLearning(Int)
+  TeachLearning(Int32, String, String, String)
+  ReviewLearning(Int32)
 }
 
 ///|

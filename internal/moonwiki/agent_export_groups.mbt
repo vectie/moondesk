@@ -26,7 +26,7 @@ fn agent_export_group_path(path : String) -> Bool {
 ///|
 fn agent_export_groups(
   value : Json?,
-  flat_count : Int,
+  flat_count : Int32,
 ) -> Result[Array[AgentExportGroup], String] {
   guard value is Some(value) else { return Ok([]) }
   guard value is Array(values) && values.length() <= 16 else {
@@ -60,7 +60,7 @@ fn agent_export_groups(
     if !group.artifact_id.has_prefix("group-") ||
       group.artifact_id.length() <= 6 ||
       group.artifact_id.length() > 64 ||
-      !group.artifact_id.iter().all(c => c is ('a'..='z' | '0'..='9' | '-')) ||
+      !group.artifact_id.iter().all(c => c is ('a'..<='z' | '0'..<='9' | '-')) ||
       groups.any(other => other.artifact_id == group.artifact_id) {
       return Err("Deliverable IDs must be unique group-prefixed identifiers")
     }

@@ -284,7 +284,7 @@ fn render_office_supported_preview(
   kind : OfficeEditorKind,
   item : OfficeEditorItem,
   items : Array[OfficeEditorItem],
-  selected : Int,
+  selected : Int32,
 ) -> @rabbita.Html {
   section(
     class="office-supported-preview",
@@ -447,7 +447,7 @@ fn office_docx_run_class(item : OfficeEditorItem, selected~ : Bool) -> String {
 }
 
 ///|
-fn office_pptx_extent(items : Array[OfficeEditorItem]) -> (Int, Int) {
+fn office_pptx_extent(items : Array[OfficeEditorItem]) -> (Int32, Int32) {
   let mut right = 1
   let mut bottom = 1
   for item in items {
@@ -462,7 +462,7 @@ fn office_pptx_extent(items : Array[OfficeEditorItem]) -> (Int, Int) {
 }
 
 ///|
-fn office_percent(value : Int, extent : Int) -> String {
+fn office_percent(value : Int32, extent : Int32) -> String {
   let bounded = if value < 0 { 0 } else { value }
   "\{bounded * 100 / extent}%"
 }
@@ -484,8 +484,8 @@ fn office_pptx_shape_attrs(
 fn office_geometry_input(
   dispatch : Dispatch[Msg],
   label_text : String,
-  value : Int,
-  message : (Int) -> OfficeEditorMsg,
+  value : Int32,
+  message : (Int32) -> OfficeEditorMsg,
 ) -> @rabbita.Html {
   @html.label([
     span(label_text),

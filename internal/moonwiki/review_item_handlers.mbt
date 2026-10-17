@@ -93,7 +93,7 @@ async fn write_review_item_decision(
 }
 
 ///|
-async fn count_review_items(root : String) -> Int {
+async fn count_review_items(root : String) -> Int32 {
   collect_review_items(root, None, 10000).length()
 }
 
@@ -101,7 +101,7 @@ async fn count_review_items(root : String) -> Int {
 async fn collect_review_items(
   workspace_root : String,
   requested_workspace : String?,
-  limit : Int,
+  limit : Int32,
 ) -> Array[Json] {
   let items : Array[Json] = []
   for workspace in discover_workspaces(workspace_root) {
@@ -157,7 +157,7 @@ async fn collect_review_directory(
   relative : String,
   decided_paths : Array[String],
   items : Array[Json],
-  limit : Int,
+  limit : Int32,
 ) -> Unit {
   if items.length() >= limit {
     return

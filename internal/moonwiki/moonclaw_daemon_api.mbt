@@ -107,7 +107,7 @@ async fn moonclaw_model_route_daemon_candidate(workspace_root : String) -> Json 
 ///|
 fn moonclaw_model_readiness_unknown(
   reason : String,
-  error? : String = "",
+  error~ : String = "",
 ) -> Json {
   {
     "known": false,
@@ -164,7 +164,7 @@ fn moonclaw_provider_auth_readiness(payload : Json, provider : String) -> Json {
 ///|
 fn moonclaw_auth_readiness_unknown(
   reason : String,
-  error? : String = "",
+  error~ : String = "",
 ) -> Json {
   {
     "known": false,
@@ -761,7 +761,7 @@ fn moonclaw_installation_evidence_from_values(
   managed_install : Bool,
   service_configured : Bool,
   daemon_observed : Bool,
-  repair_available? : Bool = false,
+  repair_available~ : Bool = false,
 ) -> Json {
   if managed_install {
     {
@@ -800,9 +800,9 @@ fn moonclaw_installation_evidence_from_values(
 fn moonclaw_configuration_evidence_from_values(
   installed : Bool,
   service_configured : Bool,
-  configuration_valid? : Bool = true,
-  configuration_reason? : String = "",
-  repair_available? : Bool = false,
+  configuration_valid~ : Bool = true,
+  configuration_reason~ : String = "",
+  repair_available~ : Bool = false,
 ) -> Json {
   {
     "configured": service_configured,
@@ -1085,7 +1085,7 @@ async fn moonclaw_daemon_status_with_platform(
 ///|
 async fn ensure_moonclaw_daemon_running(
   workspace_root : String,
-  action? : String = "start",
+  action~ : String = "start",
 ) -> Json {
   let status = moonclaw_daemon_status(workspace_root)
   if json_bool(status, "running", default=false) {
@@ -1105,7 +1105,7 @@ async fn ensure_moonclaw_daemon_running(
 ///|
 async fn start_moonclaw_daemon(
   root : String,
-  action? : String = "start",
+  action~ : String = "start",
 ) -> Json {
   let descriptor = moonclaw_service_descriptor(root, "daemon")
   if json_bool(descriptor, "legacy_execution_rejected", default=false) {
@@ -1228,12 +1228,12 @@ fn moonclaw_daemon_lifecycle_result(
   ok~ : Bool,
   status~ : String,
   message~ : String,
-  running? : Bool = false,
-  pid? : Int = 0,
-  command? : String = "",
-  info_path? : String = "",
-  stdout_path? : String = "",
-  stderr_path? : String = "",
+  running~ : Bool = false,
+  pid~ : Int32 = 0,
+  command~ : String = "",
+  info_path~ : String = "",
+  stdout_path~ : String = "",
+  stderr_path~ : String = "",
 ) -> Json {
   api_contract_response(
     {
@@ -1259,7 +1259,7 @@ fn moonclaw_daemon_lifecycle_result(
 ///|
 fn moonclaw_existing_daemon_reachable(
   alive : Bool,
-  port : Int,
+  port : Int32,
   port_reachable : Bool,
   existing_allowed : Bool,
 ) -> Bool {
@@ -1278,12 +1278,12 @@ fn moonclaw_allows_unconfigured_existing_daemon(
 }
 
 ///|
-async fn process_is_alive(pid : Int) -> Bool {
+async fn process_is_alive(pid : Int32) -> Bool {
   @trusted_host.pid_is_alive(pid)
 }
 
 ///|
-async fn moonclaw_port_reachable(port : Int) -> Bool {
+async fn moonclaw_port_reachable(port : Int32) -> Bool {
   let (response, body) = @http.get("http://127.0.0.1:\{port}/v1/health") catch {
     _ => return false
   }

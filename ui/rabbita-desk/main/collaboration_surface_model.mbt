@@ -54,7 +54,7 @@ struct CollaborationBudgetCeilings {
   max_cost_micros : Int64?
   max_runtime_ms : Int64?
   max_tokens : Int64?
-  max_artifacts : Int?
+  max_artifacts : Int32?
 } derive(FromJson)
 
 ///|

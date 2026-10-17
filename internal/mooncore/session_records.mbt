@@ -75,7 +75,7 @@ pub fn append_transcript_message(
   role~ : String,
   content~ : String,
   status~ : String,
-  created_at? : String = @async.now().to_string(),
+  created_at~ : String = @async.now().to_string(),
 ) -> Json {
   let messages = json_array_items(session, "transcript")
   messages.push(

@@ -1,9 +1,9 @@
 ///|
 priv struct ArchiveImportLimits {
-  max_archive_bytes : Int
-  max_entries : Int
-  max_file_bytes : Int
-  max_total_bytes : Int
+  max_archive_bytes : Int32
+  max_entries : Int32
+  max_file_bytes : Int32
+  max_total_bytes : Int32
 }
 
 ///|

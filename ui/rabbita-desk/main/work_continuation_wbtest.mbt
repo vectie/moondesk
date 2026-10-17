@@ -18,8 +18,8 @@ fn continuation_desk_ready() -> Model {
 ///|
 fn continuation_desk_record(
   operation : Json,
-  command? : String = "C1",
-  state? : String = "completed",
+  command~ : String = "C1",
+  state~ : String = "completed",
 ) -> Json {
   {
     "schema": "moondesk.work-continuation.v1",

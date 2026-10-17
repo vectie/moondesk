@@ -13,7 +13,7 @@ fn document_room_snapshot(
   records : Array[Json],
   workspace_id : String,
   channel : String,
-  now : Int,
+  now : Int32,
 ) -> Json {
   let matching = records.filter(record => {
     json_string(record, "workspace_id", default="") == workspace_id

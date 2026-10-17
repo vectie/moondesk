@@ -25,7 +25,10 @@ async fn handle_moonclaw_events(
 }
 
 ///|
-async fn collect_town_event_records(root : String, limit : Int) -> Array[Json] {
+async fn collect_town_event_records(
+  root : String,
+  limit : Int32,
+) -> Array[Json] {
   let events : Array[Json] = []
   for record in read_watcher_records(root, limit) {
     let decision = json_string(record, "decision", default="Watcher")
@@ -79,7 +82,7 @@ async fn collect_town_event_records(root : String, limit : Int) -> Array[Json] {
 async fn collect_moonclaw_event_records(
   workspace_root : String,
   requested_workspace : String?,
-  limit : Int,
+  limit : Int32,
 ) -> Array[Json] {
   let events : Array[Json] = []
   for workspace in discover_workspaces(workspace_root) {
@@ -152,7 +155,7 @@ async fn collect_file_events(
   kind : String,
   source : String,
   events : Array[Json],
-  limit : Int,
+  limit : Int32,
 ) -> Unit {
   let names = read_directory_names(dir, include_hidden=false)
   let mut index = names.length()
@@ -192,7 +195,7 @@ fn event_record(
   detail~ : String,
   path~ : String,
   run_id~ : String,
-  tick~ : Int,
+  tick~ : Int32,
   created_at~ : String,
 ) -> Json {
   {
@@ -235,7 +238,7 @@ fn severity_for_text(text : String) -> String {
 }
 
 ///|
-fn count_event_severity(events : Array[Json], severity : String) -> Int {
+fn count_event_severity(events : Array[Json], severity : String) -> Int32 {
   let mut count = 0
   for event in events {
     if json_string(event, "severity", default="") == severity {
@@ -256,7 +259,7 @@ fn latest_event_title(events : Array[Json], severity : String) -> String {
 }
 
 ///|
-async fn read_jsonl_file(path : String, limit : Int) -> Array[Json] {
+async fn read_jsonl_file(path : String, limit : Int32) -> Array[Json] {
   if limit <= 0 || !@fsx.exists(path) {
     return []
   }

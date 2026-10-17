@@ -1,7 +1,7 @@
 ///|
 fn work_agenda_test_goal(
   id : String,
-  next_due_tick : Int,
+  next_due_tick : Int32,
   enabled : Bool,
 ) -> StandingGoalRecord {
   {

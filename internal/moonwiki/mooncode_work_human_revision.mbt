@@ -6,8 +6,8 @@ async fn mooncode_edit_work_output(
   workspaces : Array[@desk.DeskWorkspace],
   request : Json,
   read : async (String) -> Result[Json, String],
-  capture? : async (String, String, String) -> Result[Unit, String] = mooncode_human_revision_capture,
-) -> (Int, Json) {
+  capture~ : async (String, String, String) -> Result[Unit, String] = mooncode_human_revision_capture,
+) -> (Int32, Json) {
   let operation = mooncode_output_text(request, "operation")
   let source = mooncode_output_field(request, "source")
   let output = mooncode_output_field(request, "output")

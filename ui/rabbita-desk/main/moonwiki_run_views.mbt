@@ -216,7 +216,7 @@ fn render_user_review_item(
 }
 
 ///|
-fn review_limit(items : Array[ReviewItem]) -> Int {
+fn review_limit(items : Array[ReviewItem]) -> Int32 {
   if items.length() > 12 {
     12
   } else {

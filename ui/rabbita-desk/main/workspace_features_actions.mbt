@@ -332,7 +332,7 @@ fn update_workspace_features(
 }
 
 ///|
-const AlternativeVersionContextMaxChars : Int = 48_000
+const AlternativeVersionContextMaxChars : Int32 = 48_000
 
 ///|
 fn alternative_version_prompt(previous : String) -> String {
@@ -379,7 +379,7 @@ fn restore_wiki_chat_thread(
   task_id : String,
   document_path : String,
   entries_text : String,
-  position_text? : String = "",
+  position_text~ : String = "",
 ) -> (@rabbita.Cmd, Model) {
   if markdown_navigation_needs_confirmation(model, true) {
     return queue_markdown_navigation(
