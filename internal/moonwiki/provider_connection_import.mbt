@@ -97,44 +97,6 @@ async fn read_openai_connection_import(
 }
 
 ///|
-/// Bounded transport deliberately discards upstream error bodies, which may
-/// reflect credentials. Neither request nor response bodies are logged.
-async fn connection_request_json(
-  origin : String,
-  path : String,
-  headers : @http.Headers,
-  payload : Json?,
-) -> Json {
-  @async.with_timeout(30000, () => {
-    let client = @http.Client(origin, headers~)
-    defer client.close()
-    let response = match payload {
-      Some(value) => client.post(path, value)
-      None => client.get(path)
-    }
-    if response.code < 200 || response.code >= 300 {
-      raise Failure("Connection service rejected the request")
-    }
-    let body = @buffer.Buffer(size_hint=1024)
-    for ;; {
-      guard client.read_some(max_len=(65537 - body.length()).min(8192))
-        is Some(chunk) else {
-        break
-      }
-      body.write_bytes(chunk)
-      if body.length() > 65536 {
-        raise Failure("Connection service response exceeded its limit")
-      }
-    }
-    if body.length() == 0 {
-      Json::empty_object()
-    } else {
-      @json.parse(@encoding/utf8.decode(body.to_bytes()))
-    }
-  })
-}
-
-///|
 fn imported_connection_provider_id(value : OpenAiConnectionImport) -> String {
   let hash = @crypto.bytes_to_hex_string(
     @crypto.sha256(
@@ -145,29 +107,68 @@ fn imported_connection_provider_id(value : OpenAiConnectionImport) -> String {
 }
 
 ///|
-fn imported_connection_provider(value : OpenAiConnectionImport) -> Json {
+fn openai_connection_import_json(value : OpenAiConnectionImport) -> Json {
   {
-    "appType": "openclaw",
-    "id": imported_connection_provider_id(value),
-    "name": "Imported " + value.model,
-    "enabled": true,
-    "providerType": "openai-compatible",
-    "apiFormat": "openai_chat",
-    "baseUrl": value.base_url,
-    "apiKey": value.api_key,
-    "defaultModel": value.model,
-    "notes": "Imported from a reviewed OpenAI connection descriptor",
+    "version": value.version,
+    "api": value.api,
+    "base_url": value.base_url,
+    "api_key": value.api_key,
+    "model": value.model,
+    "max_output_tokens": value.max_output_tokens,
   }
 }
 
 ///|
-fn connection_provider_exists(value : Json, id : String) -> Bool {
-  match value {
-    Array(values) => values.any(value => connection_provider_exists(value, id))
-    Object(fields) =>
-      fields.get("id") == Some(Json::string(id)) ||
-      fields.values().any(value => connection_provider_exists(value, id))
-    _ => false
+fn imported_connection_response(
+  value : OpenAiConnectionImport,
+  response : Json,
+) -> Result[Unit, String] {
+  guard response
+    is {
+      "ok": true,
+      "status": "connected",
+      "model": String(model),
+      "provider_id": String(provider_id),
+      ..
+    } &&
+    model == value.model &&
+    provider_id == imported_connection_provider_id(value) else {
+    return Err("MoonClaw did not confirm the imported connection")
+  }
+  Ok(())
+}
+
+///|
+/// Claw owns transient validation and all subsequent MoonGate mutations.
+/// Only a bound control response can confirm the existing import result.
+async fn install_openai_connection_import_with_control_config(
+  daemon : Json,
+  value : OpenAiConnectionImport,
+  config : SourceSemanticsSandboxClientConfig,
+) -> Result[Unit, String] {
+  guard valid_openai_connection_import(value) else {
+    return Err("Invalid OpenAI connection settings")
+  }
+  // Let Claw's 30-second operation deadline return its sanitized response.
+  @async.with_timeout(35000, () => {
+    match
+      moonclaw_post_json_with_control_config(
+        daemon,
+        "/v1/provider-connections/import",
+        openai_connection_import_json(value),
+        config,
+      ) {
+      Ok(response) => imported_connection_response(value, response)
+      Err(_) =>
+        Err(
+          "Could not import the provider connection through MoonClaw. Check service readiness and connection access.",
+        )
+    }
+  }) catch {
+    _ =>
+      Err(
+        "Could not import the provider connection through MoonClaw. Check service readiness and connection access.",
+      )
   }
 }
 
@@ -176,166 +177,19 @@ async fn install_openai_connection_import(
   workspace_root : String,
   value : OpenAiConnectionImport,
 ) -> Result[Unit, String] {
-  let mut stage = "model discovery"
-  try {
-    guard connection_url_parts(value.base_url) is Some((origin, prefix)) else {
-      return Err("Invalid provider URL")
-    }
-    let models = connection_request_json(
-      origin,
-      prefix + "/models",
-      {
-        "Authorization": "Bearer " + value.api_key,
-        "Accept": "application/json",
-      },
-      None,
-    )
-    guard models is { "data": Array(rows), .. } &&
-      rows.any(row => row is { "id": String(model), .. } && model == value.model) else {
-      return Err("The key cannot access the selected model")
-    }
-    stage = "MoonGate discovery"
-    let status = read_json_file_or_object(
-      @pathx.join(
-        workspace_context(workspace_root).state_dir,
-        "suite-status.json",
-      ),
-    )
-    guard status
-      is {
-        "contract": "moon.suite.status.v2",
-        "service": "moongate",
-        "manifest": {
-          "contract": "moon.suite.service.v1",
-          "service": "moongate",
-          "baseUrl": String(url),
-          ..
-        },
-        ..
-      } &&
-      connection_url_parts(url) is Some((gate_origin, gate_prefix)) else {
-      return Err("MoonGate service is not configured")
-    }
-    let headers : @http.Headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    }
-    stage = "local MoonGate authentication"
-    let configured_token = match @env.get_env_var("MOONGATE_CONTROL_TOKEN") {
-      Some(token) if !token.trim().is_empty() => token
-      _ =>
-        @fs.read_file(
-          moonsuite_product_artifact_for_workspace_root(
-            workspace_context(workspace_root).suite_root,
-            "moongate",
-            "control-token",
-          ),
-        ).text() catch {
-          _ => ""
-        }
-    }
-    let control_token = if configured_token.trim().is_empty() {
-      connection_local_control_token(gate_origin, gate_prefix)
-    } else {
-      configured_token.trim().to_owned()
-    }
-    if !control_token.is_empty() {
-      headers["x-moongate-control-token"] = control_token.trim().to_owned()
-    }
-    configure_imported_connection(gate_origin, gate_prefix, headers, value)
-  } catch {
-    _ =>
-      Err(
-        "Could not complete " +
-        stage +
-        ". Check service readiness and connection access.",
-      )
+  guard valid_openai_connection_import(value) else {
+    return Err("Invalid OpenAI connection settings")
   }
-}
-
-///|
-async fn configure_imported_connection(
-  gate_origin : String,
-  gate_prefix : String,
-  headers : @http.Headers,
-  value : OpenAiConnectionImport,
-) -> Result[Unit, String] {
-  let mut stage = "MoonGate provider listing"
-  try {
-    let listed = connection_request_json(
-      gate_origin,
-      gate_prefix + "/providers?appType=openclaw",
-      headers,
-      None,
-    )
-    let id = imported_connection_provider_id(value)
-    let path = if connection_provider_exists(listed, id) {
-      "/providers/update"
-    } else {
-      "/providers"
-    }
-    stage = "provider configuration"
-    let _ = connection_request_json(
-      gate_origin,
-      gate_prefix + path,
-      headers,
-      Some(imported_connection_provider(value)),
-    )
-    stage = "provider activation"
-    let _ = connection_request_json(
-      gate_origin,
-      gate_prefix + "/providers/switch",
-      headers,
-      Some({ "appType": "openclaw", "id": id }),
-    )
-    stage = "runtime binding"
-    let _ = connection_request_json(
-      gate_origin,
-      gate_prefix + "/bindings",
-      headers,
-      Some({ "appType": "moondesk", "providerId": id }),
-    )
-    Ok(())
-  } catch {
-    _ =>
-      Err(
-        "Could not complete " +
-        stage +
-        ". Check service readiness and connection access.",
-      )
+  let daemon = moonclaw_model_route_daemon_candidate(workspace_root)
+  guard json_bool(daemon, "running", default=false) else {
+    return Err("MoonClaw is unavailable for provider connection import")
   }
-}
-
-///|
-/// MoonGate's published bootstrap is restricted to a trusted local origin.
-/// Hosted workspaces may supply the token to the gateway process only.
-/// Keep the resolved token request-local and never proxy it to the browser.
-async fn connection_local_control_token(
-  origin : String,
-  prefix : String,
-) -> String {
-  guard origin.has_prefix("http://127.0.0.1:") ||
-    origin.has_prefix("http://localhost:") ||
-    origin.has_prefix("http://[::1]:") else {
-    raise Failure("Configure remote MoonGate control access")
+  let config = match moonclaw_load_control_config(daemon) {
+    Ok(config) => config
+    Err(_) =>
+      return Err("MoonClaw private control authentication is unavailable")
   }
-  let response = connection_request_json(
-    origin,
-    prefix + "/control/bootstrap",
-    {
-      "Origin": origin,
-      "Sec-Fetch-Site": "same-origin",
-      "Accept": "application/json",
-    },
-    None,
-  )
-  guard response is { "token": String(token), .. } &&
-    !token.is_empty() &&
-    token.length() <= 4096 &&
-    token.all(c => c > ' ' && c <= '~') else {
-    raise Failure("Local MoonGate control is unavailable")
-  }
-  token
+  install_openai_connection_import_with_control_config(daemon, value, config)
 }
 
 ///|

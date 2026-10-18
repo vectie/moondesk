@@ -82,7 +82,7 @@ async fn handle_mooncode_setup_test_integration(
     )
     return
   }
-  let result = moonclaw_post_json(daemon, "/v1/mooncode/mcp", {
+  let result = moonclaw_post_json(daemon, "/v1/code/mcp", {
     "book_root": book_root,
     "server": json_string(payload, "server", default=""),
   })

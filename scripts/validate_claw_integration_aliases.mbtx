@@ -1,0 +1,153 @@
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+  "moonbitlang/async@0.22.4/shell",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+fn compact_source(source : String) -> String {
+  let mut result = source
+  for separator in [" ", "\t", "\r", "\n"] {
+    result = result.split(separator).map(part => part.to_owned()).collect().join("")
+  }
+  result
+}
+
+// Only the two explicit HTTP fixture requests exercising the approved alias
+// may contain the old URL spelling. The rest of each file is still scanned.
+fn supported_alias_fixture_line(path : String, line : String) -> Bool {
+  path == "cmd/daemon/mooncode_integration_http_wbtest.mbt" &&
+  [
+    "integration_fixture_post(cold, \"/v1/mooncode/mcp\", {",
+    "integration_fixture_post(fixture, \"/v1/mooncode/mcp\", {",
+  ].contains(line.trim().to_owned())
+}
+
+fn alias_contract_errors(router : String, auth : String, tests : String) -> Array[String] {
+  let router = compact_source(router)
+  let auth = compact_source(auth)
+  let tests = compact_source(tests)
+  let errors : Array[String] = []
+  let aliases = [
+    ("mcp", "mooncode_mcp_inspect"),
+    ("knowledge", "mooncode_knowledge_service"),
+    ("realtime-session", "mooncode_realtime_session"),
+  ]
+  if router.split("\"mooncode\"").count() - 1 != aliases.length() ||
+    auth.split("\"mooncode\"").count() - 1 != aliases.length() {
+    errors.push("Only the explicitly supported integration aliases may be registered")
+  }
+  let authenticate = "Some(self.require_moondesk_control_auth(r,w))"
+  let dispatch = "match(r.method_,paths)"
+  if !(router.find(authenticate) is Some(before) &&
+      router.find(dispatch) is Some(after) && before < after) {
+    errors.push("The shared dispatcher must authenticate before selecting a handler")
+  }
+  if !auth.contains("(_,[\"\",\"v1\",\"code\",..])=>true") {
+    errors.push("Canonical coding routes must retain control authentication")
+  }
+  for (endpoint, handler) in aliases {
+    let route = "(Post,[\"\",\"v1\",\"code\"|\"mooncode\",\"" + endpoint +
+      "\"])=>self." + handler + "(control_config.unwrap(),r,w)"
+    if !router.contains(route) {
+      errors.push("Both route families must select the same authenticated " + endpoint + " handler")
+    }
+    if !auth.contains("(_,[\"\",\"v1\",\"mooncode\",\"" + endpoint + "\"])=>true") {
+      errors.push("Legacy " + endpoint + " must retain control authentication")
+    }
+  }
+  for proof in [
+    "forfamilyin[\"code\",\"mooncode\"]",
+    "forendpointin[\"mcp\",\"knowledge\",\"realtime-session\"]",
+    "assert_eq(missing.code,401)",
+    "\"X-MoonClaw-Execution-Token\"",
+    "\"X-MoonClaw-Instance-ID\"",
+  ] {
+    if !tests.contains(proof) {
+      errors.push("The actual HTTP fixture must continue testing both authenticated route families")
+    }
+  }
+  errors
+}
+
+async fn main {
+  let args = @env.args()
+  guard args.length() == 2 else { fail("Expected the MoonClaw source root") }
+  let root = args[1]
+  let errors = alias_contract_errors(
+    @fs.read_file(root + "/cmd/daemon/daemon_serve.mbt").text(),
+    @fs.read_file(root + "/cmd/daemon/moondesk_control_auth.mbt").text(),
+    @fs.read_file(root + "/cmd/daemon/mooncode_integration_http_wbtest.mbt").text(),
+  )
+  let result = @shell.Cmd("rg",[
+    "--json", "--hidden", "--glob", "!**/_build/**", "--glob", "!**/.git/**",
+    "/v1/mooncode", "docs", "cmd/daemon", "job",
+  ],cwd=root).output(max_output_bytes=4000000)
+  if result.exit_code() != 0 && result.exit_code() != 1 { result.check() }
+  for line in result.stdout().split("\n") {
+    if line.trim() == "" { continue }
+    let row = @json.parse(line.to_owned())
+    if row is {
+      "type": "match",
+      "data": {"path": {"text": String(path),..},"lines": {"text": String(text),..},..},..
+    } && !supported_alias_fixture_line(path,text) {
+      errors.push("Unclassified legacy route spelling in " + path + ": " + text.trim().to_owned())
+    }
+  }
+  for error in errors { println(error) }
+  assert_eq(errors.length(),0,msg="MoonClaw compatibility registrations must stay explicit and authenticated")
+  println("MoonClaw bounded authenticated integration aliases passed")
+}
+
+test "only explicit supported HTTP fixture call sites may spell the legacy URL" {
+  let path = "cmd/daemon/mooncode_integration_http_wbtest.mbt"
+  assert_true(supported_alias_fixture_line(path,"  integration_fixture_post(fixture, \"/v1/mooncode/mcp\", {"))
+  assert_true(supported_alias_fixture_line(path,"integration_fixture_post(cold, \"/v1/mooncode/mcp\", {"))
+  assert_false(supported_alias_fixture_line("docs/MOONCODE.md","integration_fixture_post(cold, \"/v1/mooncode/mcp\", {"))
+  assert_false(supported_alias_fixture_line(path,"integration_fixture_post(fixture, \"/v1/mooncode/other\", {"))
+  assert_false(supported_alias_fixture_line(path,"let route = \"/v1/mooncode/mcp\""))
+}
+
+test "alias contract rejects extra routes wrong handlers missing authentication and missing HTTP proof" {
+  let router =
+    #|let control_config = Some(self.require_moondesk_control_auth(r, w))
+    #|match (r.method_, paths) {
+    #|  (Post, ["", "v1", "code" | "mooncode", "mcp"]) => self.mooncode_mcp_inspect(control_config.unwrap(), r, w)
+    #|  (Post, ["", "v1", "code" | "mooncode", "knowledge"]) => self.mooncode_knowledge_service(control_config.unwrap(), r, w)
+    #|  (Post, ["", "v1", "code" | "mooncode", "realtime-session"]) => self.mooncode_realtime_session(control_config.unwrap(), r, w)
+    #|}
+  let auth =
+    #|(_, ["", "v1", "code", ..]) => true
+    #|(_, ["", "v1", "mooncode", "mcp"]) => true
+    #|(_, ["", "v1", "mooncode", "knowledge"]) => true
+    #|(_, ["", "v1", "mooncode", "realtime-session"]) => true
+  let tests =
+    #|for family in ["code", "mooncode"] {
+    #|  for endpoint in ["mcp", "knowledge", "realtime-session"] {
+    #|    assert_eq(missing.code, 401)
+    #|    "X-MoonClaw-Execution-Token"
+    #|    "X-MoonClaw-Instance-ID"
+    #|  }
+    #|}
+  assert_true(alias_contract_errors(router,auth,tests).is_empty())
+  assert_false(alias_contract_errors(
+    router + "(Post,[\"\",\"v1\",\"mooncode\",\"extra\"])=>extra()",
+    auth,tests,
+  ).is_empty())
+  assert_false(alias_contract_errors(
+    router.replace(old="self.mooncode_knowledge_service",new="self.other_handler"),
+    auth,tests,
+  ).is_empty())
+  assert_false(alias_contract_errors(
+    router.replace(old="Some(self.require_moondesk_control_auth(r, w))",new="None"),
+    auth,tests,
+  ).is_empty())
+  assert_false(alias_contract_errors(router,
+    auth.replace(old="(_, [\"\", \"v1\", \"mooncode\", \"knowledge\"]) => true",new=""),
+    tests,
+  ).is_empty())
+  assert_false(alias_contract_errors(router,auth,
+    tests.replace(old="assert_eq(missing.code, 401)",new=""),
+  ).is_empty())
+}

@@ -2,8 +2,11 @@
 
 Open **Settings → Scan connection QR** (also in Code assistance).
 Use the camera, choose a QR image, or expand **Paste connection settings**.
-Review the service URL and model, then choose **Connect**. MoonDesk checks
-model discovery before saving and activating the provider through MoonGate.
+Review the service URL and model, then choose **Connect**. MoonDesk sends the
+descriptor through authenticated MoonClaw control. MoonClaw asks MoonGate to
+validate the unsaved connection before saving and activating the provider.
+Failed validation saves nothing and leaves the current provider and binding
+unchanged. Validation does not run inference.
 QR images are decoded locally. The key is masked in the review and cleared
 from the dialog on close; MoonGate stores it as provider configuration.
 
@@ -41,12 +44,18 @@ It includes the dynamically loaded OpenSSL libraries and system CA bundle;
 Certificate verification remains enabled. Preserve the base image's DNS
 libraries, gateway/runtime executables, entrypoint and user configuration.
 
-MoonDesk uses a configured MoonGate control token or local token file. In an
-isolated hosted workspace where only MoonGate receives the token, it resolves
-the existing credential through MoonGate's published, same-origin loopback
-bootstrap. It never bootstraps a remote service or returns that token to the UI.
-The import activates the provider in MoonGate's `openclaw` routing group and
-binds the `moondesk` application. It does not require MoonClaw onboarding.
+MoonClaw must be running with its private control configuration available to
+MoonDesk. The import uses `POST /v1/provider-connections/import` with the same
+descriptor, execution token and instance binding as other private control
+operations. MoonDesk does not contact the provider or bootstrap MoonGate.
+MoonClaw uses the configured MoonGate control credential and its existing
+same-origin loopback bootstrap when needed; it never bootstraps a remote
+service or returns the token to the UI.
+After successful transient validation, the import creates or updates the
+provider in MoonGate's `openclaw` routing group, activates it and binds the
+`moondesk` application. The public import response remains
+`{ok:true,status:"connected",model,provider_id}`. Candidate keys and upstream
+error bodies are not returned in errors.
 
 An isolated workspace also needs operator approval for the model endpoint's
 exact destination address and TCP port. Keep that approval in a narrowly

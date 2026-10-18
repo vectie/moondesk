@@ -34,6 +34,10 @@ moontown_root="$(required_repo_root MOONTOWN_ROOT MoonTown)"
 run_moon() {
   local root="$1"
   shift
+  # Bound cross-repository native compile/link concurrency on local validators.
+  case "${1:-}" in
+    test|check) set -- "$@" -j 2 ;;
+  esac
   echo "+ (cd ${root} && ${moon_bin} $*)"
   (
     cd "${root}"
@@ -259,7 +263,7 @@ validate_provider_runtime_boundary() {
 
 validate_moonclaw_code_boundary() {
   local root="$1"
-  local forbidden='OpenSeek|openseek|wire compatibility|/v1/mooncode|serve-scheduler|serve_scheduler|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|bridge_mode|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands'
+  local forbidden='OpenSeek|openseek|wire compatibility|serve-scheduler|serve_scheduler|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|bridge_mode|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands'
   local scan_paths=(
     docs
     cmd/daemon
@@ -274,6 +278,7 @@ validate_moonclaw_code_boundary() {
     echo "Use standalone MoonCode runtime wording and the /v1/code/* route family." >&2
     exit 1
   fi
+  run_moon "${moondesk_root}" run scripts/validate_claw_integration_aliases.mbtx -- "${root}"
   if ! rg -q 'MoonCode should not be implemented as generic task chat' "${boundary_doc}"; then
     echo "MoonClaw executable-book boundary must state that MoonCode is not generic task chat." >&2
     exit 1

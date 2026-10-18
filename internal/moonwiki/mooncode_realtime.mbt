@@ -33,7 +33,7 @@ async fn handle_mooncode_realtime_session(
   match
     moonclaw_post_json(
       daemon,
-      "/v1/mooncode/realtime-session",
+      "/v1/code/realtime-session",
       Json::object(payload),
     ) {
     Ok(result) => send_json(conn, method_, result)

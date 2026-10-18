@@ -237,7 +237,7 @@ fn render_mooncode_ordered_user_content(
           index < 12 {
           children.push(
             img(
-              src="/api/mooncode/sessions/\{session_id}/media/\{command_id}/\{index}",
+              src=@desk.mooncode_session_media_url(session_id, command_id, index),
               alt=if name == "" { "Attached image" } else { name },
               attrs=@html.Attrs::build().data_set(
                 "testid", "mooncode-user-image",

@@ -7,7 +7,7 @@ fn work_continuation_post(
   body : Json,
 ) -> @rabbita.Cmd {
   @rabbita.batch([
-    @http.post("/api/mooncode/work-handoff/continuations")
+    @http.post(@desk.mooncode_work_continuations_url())
     .with_json(body)
     .expect_json(result => {
       dispatch(

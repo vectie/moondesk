@@ -59,13 +59,13 @@ fn fetch_work_handoff_files_cmd(
 }
 
 ///|
-#cfg(target="js")
-extern "js" fn work_handoff_read_url(
+fn work_handoff_read_url(
   session : String,
   command : String,
   root : String,
-) -> String =
-  #| (session, command, root) => '/api/mooncode/work-handoff?' + new URLSearchParams({session_id:session, command_id:command, book_root:root, include_session:'true', include_context:'true'}).toString()
+) -> String {
+  @desk.mooncode_work_handoff_url(session, command, root)
+}
 
 ///|
 #cfg(target="js")

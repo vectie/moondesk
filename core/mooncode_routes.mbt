@@ -37,6 +37,76 @@ pub fn mooncode_session_url(session_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_session_media_url(
+  session_id : String,
+  command_id : String,
+  image_index : Int32,
+) -> String {
+  desktop_api_url([
+    "api",
+    "mooncode",
+    "sessions",
+    session_id,
+    "media",
+    command_id,
+    image_index.to_string(),
+  ])
+}
+
+///|
+pub fn mooncode_work_continuations_url() -> String {
+  desktop_api_url(["api", "mooncode", "work-handoff", "continuations"])
+}
+
+///|
+pub fn mooncode_work_human_revisions_url() -> String {
+  desktop_api_url(["api", "mooncode", "work-handoff", "human-revisions"])
+}
+
+///|
+/// Keep the established URLSearchParams form encoding for exact handoff links.
+pub fn mooncode_work_handoff_url(
+  session_id : String,
+  command_id : String,
+  book_root : String,
+) -> String {
+  let fields = [
+    ("session_id", session_id),
+    ("command_id", command_id),
+    ("book_root", book_root),
+    ("include_session", "true"),
+    ("include_context", "true"),
+  ]
+  desktop_api_url(["api", "mooncode", "work-handoff"]) +
+  "?" +
+  fields
+  .map(field => {
+    mooncode_handoff_query_component(field.0) +
+    "=" +
+    mooncode_handoff_query_component(field.1)
+  })
+  .join("&")
+}
+
+///|
+fn mooncode_handoff_query_component(value : String) -> String {
+  let encoded : Array[String] = []
+  for byte in @encoding/utf8.encode(value) {
+    if byte == b' ' {
+      encoded.push("+")
+    } else if (byte >= b'A' && byte <= b'Z') ||
+      (byte >= b'a' && byte <= b'z') ||
+      (byte >= b'0' && byte <= b'9') ||
+      [b'*', b'-', b'.', b'_'].contains(byte) {
+      encoded.push(byte.to_char().to_string())
+    } else {
+      encoded.push(percent_encoded_byte(byte))
+    }
+  }
+  encoded.join("")
+}
+
+///|
 pub fn mooncode_session_chat_url(
   session_id : String,
   since_revision : Int32,

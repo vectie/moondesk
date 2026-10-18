@@ -57,3 +57,31 @@ test "url component encoding matches browser route expectations" {
   assert_eq(@core.url_component("safe-_.!~*'()"), "safe-_.!~*'()")
   assert_eq(@core.url_component("中文"), "%E4%B8%AD%E6%96%87")
 }
+
+///|
+test "media and work handoff URLs retain route identity and browser query encoding" {
+  assert_eq(
+    @core.mooncode_session_media_url("session-one", "command-two", 3),
+    "/api/mooncode/sessions/session-one/media/command-two/3",
+  )
+  assert_eq(
+    @core.mooncode_session_media_url("session/书", "command?two", 3),
+    "/api/mooncode/sessions/session%2F%E4%B9%A6/media/command%3Ftwo/3",
+  )
+  assert_eq(
+    @core.mooncode_work_continuations_url(),
+    "/api/mooncode/work-handoff/continuations",
+  )
+  assert_eq(
+    @core.mooncode_work_human_revisions_url(),
+    "/api/mooncode/work-handoff/human-revisions",
+  )
+  assert_eq(
+    @core.mooncode_work_handoff_url("S/书", "C?0", "/book with space/"),
+    "/api/mooncode/work-handoff?session_id=S%2F%E4%B9%A6&command_id=C%3F0&book_root=%2Fbook+with+space%2F&include_session=true&include_context=true",
+  )
+  assert_eq(
+    @core.mooncode_work_handoff_url("!~'()+*", "", ""),
+    "/api/mooncode/work-handoff?session_id=%21%7E%27%28%29%2B*&command_id=&book_root=&include_session=true&include_context=true",
+  )
+}

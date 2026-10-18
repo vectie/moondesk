@@ -129,6 +129,8 @@ pub fn mooncode_session_lifecycle_url(String) -> String
 
 pub fn mooncode_session_listing_url(String) -> String
 
+pub fn mooncode_session_media_url(String, String, Int) -> String
+
 pub fn mooncode_session_runtime_service_url(String) -> String
 
 pub fn mooncode_session_url(String) -> String
@@ -136,6 +138,12 @@ pub fn mooncode_session_url(String) -> String
 pub fn mooncode_session_watch_url(String, String, String) -> String
 
 pub fn mooncode_sessions_url(String) -> String
+
+pub fn mooncode_work_continuations_url() -> String
+
+pub fn mooncode_work_handoff_url(String, String, String) -> String
+
+pub fn mooncode_work_human_revisions_url() -> String
 
 pub fn moonsuite_books_root(String) -> String
 

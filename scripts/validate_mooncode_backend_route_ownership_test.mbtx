@@ -1,0 +1,36 @@
+import { "moonbitlang/async@0.22.4", "moonbitlang/async@0.22.4/fs", "moonbitlang/async@0.22.4/shell" }
+
+fn main {}
+
+async test "route ownership derives the authoritative helper set and rejects mismatches duplicates or empty mirrors" {
+  let made = @shell.Cmd("mktemp",["-d","/tmp/moondesk-route-ownership.XXXXXX"]).output()
+  made.check()
+  let root = made.stdout().trim().to_owned()
+  let directories = @shell.Cmd("mkdir",["-p",root + "/scripts",root + "/internal/mooncode",root + "/internal/moonwiki"]).output()
+  directories.check()
+  let validator = if @fs.exists("scripts/validate_mooncode_backend_route_ownership.mjs") {
+    "scripts/validate_mooncode_backend_route_ownership.mjs"
+  } else {
+    // Standalone script tests run with their source directory as cwd.
+    "validate_mooncode_backend_route_ownership.mjs"
+  }
+  @fs.write_file(root + "/scripts/validate_mooncode_backend_route_ownership.mjs",@fs.read_file(validator))
+  @fs.write_file(root + "/internal/moonwiki/mooncode_backend_route_contract_wbtest.mbt","")
+  let helpers = ["status","capabilities","skills","sessions","work_handoff","session","session_watch","session_commands","session_lifecycle"]
+  let contracts = helpers.map(name => "desktop_route_contract(desktop_" + name + "_endpoint(), [\"GET\"])").join("\n")
+  let router = helpers.map(name => "let endpoint = @mooncode.desktop_" + name + "_endpoint()").join("\n")
+  for (label,owner,consumer,expected) in [
+    ("actual-nine",contracts,router,0),
+    ("additional-owned-route",contracts + "\ndesktop_route_contract(desktop_extra_endpoint(), [\"GET\"])",router + "\nlet endpoint = @mooncode.desktop_extra_endpoint()",0),
+    ("missing-consumer",contracts,router.replace(old="let endpoint = @mooncode.desktop_session_watch_endpoint()",new=""),1),
+    ("missing-owner",contracts.replace(old="desktop_route_contract(desktop_work_handoff_endpoint(), [\"GET\"])",new=""),router,1),
+    ("duplicate-owner",contracts + "\ndesktop_route_contract(desktop_status_endpoint(), [\"GET\"])",router,1),
+    ("empty-mirrors","","",1),
+  ] {
+    @fs.write_file(root + "/internal/mooncode/adapter_protocol.mbt",owner)
+    @fs.write_file(root + "/internal/moonwiki/api_mooncode_router.mbt",consumer)
+    let result = @shell.Cmd("node",["scripts/validate_mooncode_backend_route_ownership.mjs"],cwd=root).output()
+    assert_eq(result.exit_code(),expected,msg=label + ": " + result.stderr())
+  }
+  println("Route ownership mutation fixtures retained at " + root)
+}
