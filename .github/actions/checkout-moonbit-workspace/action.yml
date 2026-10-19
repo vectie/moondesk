@@ -1,5 +1,9 @@
 name: Checkout pinned MoonBit workspace sources
 description: Use the accepted local dependency graph without registry or branch substitutions
+inputs:
+  moonedit-token:
+    description: Read-only credential for vectie/moonedit
+    required: true
 runs:
   using: composite
   steps:
@@ -20,6 +24,7 @@ runs:
         repository: vectie/moonedit
         ref: 0b3bf97e4c1905e282a635bbda7392fa9bf12b1d
         path: _integration/moonedit
+        token: ${{ inputs.moonedit-token }}
         persist-credentials: false
     - name: Link sibling workspace members
       shell: bash

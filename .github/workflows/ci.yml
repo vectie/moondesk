@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Checkout pinned MoonBit workspace sources
         uses: ./.github/actions/checkout-moonbit-workspace
+        with:
+          moonedit-token: ${{ secrets.MOONEDIT_CONTENTS_READ_TOKEN }}
       - name: Checkout MoonClaw integration revision
         uses: actions/checkout@v5
         with:
