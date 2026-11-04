@@ -55,6 +55,21 @@ into another completion gate, graph database or user-authored wiring workflow.
   applies top-down decomposition until executable, then implementation and
   verification. This adds no desktop phase, state machine or plan approval.
 
+## Tool boundary cleanup 2026-11-05
+
+- The design synthesis now contains a completed ten-item cleanup checklist
+  and evidence. MoonClaw owns pure tool semantics in `internal/mooncode_tools`;
+  MoonDesk continues to project canonical runtime facts, with no new UI phase.
+- Guardian shadow qualification and the command-wide post-commit seal were
+  removed. The same authorized command can commit, repair, verify and finish;
+  changed verification inputs still prevent stale completion.
+- MoonClaw native 1917/1917 and pure module 17/17 passed; two sandbox/runtime
+  commit tests and the real cross-repo capability probe passed. Existing
+  interfaces are unchanged. Production MoonBit net -623 lines; tests net -498.
+- All 32 local design links resolve; November 4 archive hashes remain unchanged.
+  No desktop runtime/UI code changed, installed-app update or live-model
+  quality qualification was performed. Existing release warning debt remains.
+
 ## Validation 2026-11-04
 
 - Last MoonDesk code validation (`5f6174bc`): native 1734/1734, UI 2293/2293,

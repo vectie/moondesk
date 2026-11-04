@@ -146,7 +146,7 @@ UI 会话和图是派生视图，可按已有事实重建。摘要是有损派�
 | DSH | Session 为身份；AgentHandle 管生命周期；turn/step、持久 inbox、projection 与能力 provider 分工。 | 规范结果、模型内容和 UI 展示分离；输出 schema、并发屏障、取消收敛、append/flush 契约明确。 | 实际 profile 决定启用能力；base 的 Native executor 开启、PTC 默认关闭，read-before-write observation policy 默认关闭。借服务与结果契约，控制插件组合成本。 |
 | Pi coding-agent 与 agent-core | Agent 循环、AgentMessage 转换边界、带 parentId 的会话树。 | 嵌入接口简洁；context transform 与协议转换分开；同文件修改有进程内队列。 | 默认继承启动进程权限；历史恢复不能直接获得任意工具的持久续跑。借最小循环、消息接口和局部同步。 |
 | pi-durable | 实验性的 Conversation、Entry、Document、Task、Commit；generation 拥有 tool tasks。 | 执行前 intent、明确的安全重放、任务所有权、有序提交和发布；CodeMode 可借记录结果恢复。 | 与普通 coding-agent 是不同路径。内部事务不覆盖外部副作用；持久性依 backend 而定。借恢复语义收紧现有 continuation，不整体替换 runtime。 |
-| MoonCode | 任务修订、command/claim、主循环、journal、continuation 和 finish。 | 单主 Agent 路径已收敛；已有结果引用、未知效果反馈和必要检查关联。 | 内部契约仍有分散的 JSON、工具名单与状态组合。逐步统一现有边界，不以通过单测替代真实交付效果。 |
+| MoonCode | 任务修订、command/claim、主循环、journal、continuation 和 finish。 | 单主 Agent 路径已收敛；已有结果引用、未知效果反馈和必要检查关联。 | 该基线内部契约仍有分散的 JSON、工具名单与状态组合；下方 checklist 记录后续工具语义收敛。不以通过单测替代真实交付效果。 |
 
 DSH Super-agent 文章针对交互连续性、人的注意力、多信道和多任务并发。计算、状态与环境分离，以及明确归属的事件直送，有参考价值；常驻 Router/Worker 是其场景选择。文章及原型不等于当前 checkout 的默认产品能力，其耗时工具调度实验也不能证明真实编码质量提升。
 
@@ -247,7 +247,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 | 尚未实现的方向 | 动态执行图展示、系统化的数据/资源依赖引用，以及覆盖更多内部边界的明确类型。 |
 | 不应推导的能力 | 完整依赖分析、跨工作区事务、任意外部效果 exactly-once、代码或检查通过即用户接受，以及真实模型交付质量已经改善。 |
 
-后续改动以能完整交付的纵向任务为单位。先统一工具效果、并发、重试与结果语义；收紧已有 continuation 的合法状态；明确任务、调用、产物版本和检查的必要引用。图展示可以独立渐进加入，不阻塞现有任务执行，也不作为新增完成门槛。
+后续改动以能完整交付的纵向任务为单位。本轮工具执行属性已集中到纯逻辑模块，具体见下方 checklist。结果契约、continuation 合法状态、任务/调用/产物版本/检查的必要引用继续沿现有边界收敛。图展示可以独立渐进加入，不阻塞现有任务执行，也不作为新增完成门槛。
 
 ## 质量与成本的检验
 
@@ -257,13 +257,43 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 性能成本进入设计：复用结果引用，按需读完整输出，避免每轮复制全量历史；图随新事件增量更新，历史按需展开；并发受依赖与资源约束。重试和压缩要服务有意义的下一步，不能把持续运行本身算成进展。
 
-本次综合记录只修改文档。既有代码验证及发布限制留在两仓 HANDOFF 中；没有新增动态图运行或真实模型质量试验结果。
+综合记录初稿只修改文档。后续精简改动及验证见下方 checklist 与两仓 HANDOFF；没有新增动态图运行或真实模型质量试验结果。
+
+## 精简实施 checklist（2026-11-05）
+
+本轮把执行原语落到现有代码，完成工具边界模块化并删除阻断自主修复的重复机制。勾选代表下面列出的具体代码与行为已验证，不代表完整 Agent 系统或动态图产品已经完成。
+
+- [x] **一个主执行路径**：保留 task → loop → journal/continuation → finish；不增加 Agent、状态机或确认阶段。
+- [x] **模块有明确所有权**：纯工具语义与 shell 分析归 `internal/mooncode_tools`；daemon 组合执行、授权、持久化与 provider，不在新模块引入 IO。
+- [x] **原语语义分开**：并发资格、技能消费顺序、安全重放、本地操作和本地验证分别声明；`read_skill` 不再伪装成 mutation。
+- [x] **删除重复分类**：并发、技能屏障、审批和恢复消费同一契约；删除旧 effect 枚举、字符串 key 和各处重复工具列表。
+- [x] **提交之后继续修复**：删除 command 级 post-commit seal 与 terminal-commit 限制；同一命令能够 commit → 修复 → 验证 → finish，无需新用户指令。
+- [x] **完成仍针对当前结果**：保留 commit 身份、实际变更路径、任务修订和输入指纹；修复后旧检查失效，检查后文件变化不能宣布完成。
+- [x] **删除伪质量流程**：删除只重复审批结论的 Guardian shadow trial、专属事件、测试和过时文档；保留真实授权、沙箱及不确定效果处理。
+- [x] **删除无生产用途的辅助实现**：删除 shell 文件观察旧实现及只测试它的用例、旧 seal 执行包装；纯语义测试移到所属模块，执行行为测试保留在 daemon。
+- [x] **控制计算成本**：去掉每次 post-commit 工具调用前的重复 Git 快照；不增加模型调用、日志副本、数据库或新服务；总生产代码净减少。
+- [x] **验证与记录闭环**：相关行为测试、全量 native suite、真实两仓协议 probe、接口和格式检查通过；记录证据、剩余限制并同步两仓文档。
+
+本轮证据：
+
+| 检查 | 结果 |
+| --- | --- |
+| 模块检查与测试 | `internal/mooncode_tools` 检查无警告；17/17 测试通过。 |
+| Commit 后修复 | 两项实际 sandbox/runtime 测试通过：保留提交路径事实；同一命令继续修复和验证，检查后的输入变化仍阻止完成。 |
+| Native 回归 | 1917/1917 通过，包含既有授权、取消、恢复、压缩和完成修复用例。 |
+| 真实协议 | 使用两仓当前源码，MoonDesk 解码 MoonClaw capability producer 成功。 |
+| 接口与文档 | `moon info`、`moon fmt`、diff 检查通过；只新增内部模块接口，既有 `.mbti` 不变。32 个本地链接有效，旧归档 11 个文件哈希未变。 |
+| 净变化 | MoonBit 生产代码净减 623 行，测试净减 498 行；移动代码不算删除收益。 |
+
+全量仓库仍有既有编译警告；本轮没有安装应用、执行 live-provider 质量评测或测量真实任务延迟，不能据此宣称发布门槛或模型交付质量已经达标。
+
+动态图仍按前文作为 journal 的可重建视图演进。本轮不把图编辑器、图数据库或完整依赖分析塞入执行内核，也不据此点亮尚未交付的图能力。
 
 ## 源码与参考资料
 
 ### 当前源码入口
 
-- MoonClaw：[主 Agent 与模型边界](../../moonclaw/cmd/daemon/mooncode_runtime_model_planner.mbt)、[任务上下文](../../moonclaw/cmd/daemon/mooncode_runtime_horizon.mbt)、[工具效果](../../moonclaw/cmd/daemon/mooncode_tool_effects.mbt)、[continuation](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[调用恢复](../../moonclaw/cmd/daemon/mooncode_runtime_operations.mbt)、[完成检查](../../moonclaw/cmd/daemon/mooncode_runtime_completion.mbt)。
+- MoonClaw：[主 Agent 与模型边界](../../moonclaw/cmd/daemon/mooncode_runtime_model_planner.mbt)、[任务上下文](../../moonclaw/cmd/daemon/mooncode_runtime_horizon.mbt)、[工具语义模块](../../moonclaw/internal/mooncode_tools/policy.mbt)、[continuation](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[调用恢复](../../moonclaw/cmd/daemon/mooncode_runtime_operations.mbt)、[完成检查](../../moonclaw/cmd/daemon/mooncode_runtime_completion.mbt)。
 - OpenSeek：[工具与控制类型](../../openseek/agent_tool/agent_tool.mbt)、[Session 数据](../../openseek/agent_session/types.mbt)、[消息投影](../../openseek/agent_session/projection.mbt)、[存储](../../openseek/agent_session/store/store.mbt)。
 - DSH：[工具契约](../../dsh/packages/core/tools/src/contracts.ts)、[批次执行](../../dsh/packages/core/tools/src/batch.ts)、[恢复](../../dsh/packages/core/session/src/repair.ts)、[存储接口](../../dsh/packages/session/session-persistence/src/handle.ts)、[派生状态](../../dsh/packages/session/session-projection/README.md)、[文件接口](../../dsh/packages/fs/fs/src/types.ts)、[默认组合](../../dsh/packages/bundle/base/cordis.patch.yml)。
 - Pi：[轻量循环](../../pia/packages/agent/src/agent-loop.ts)、[类型边界](../../pia/packages/agent/src/types.ts)、[会话树](../../pia/packages/coding-agent/src/core/session-manager.ts)、[文件修改队列](../../pia/packages/coding-agent/src/core/tools/file-mutation-queue.ts)、[实验性 Durable](../../pia/packages/durable/README.md)、[Durable 工具恢复](../../pia/packages/durable/src/harness/tool.ts)。

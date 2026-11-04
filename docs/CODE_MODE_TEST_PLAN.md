@@ -48,7 +48,9 @@ isolated snapshots, or human acceptance for every ordinary task.
 - `internal/moonwiki`: HTTP/session/watch boundaries using temporary workspaces.
 - `ui/rabbita-desk/main`: selection, drafts, optimistic input, stale responses,
   controls, and rendering.
-- MoonClaw tests: tool execution, completion, persistence, and crash recovery.
+- MoonClaw `internal/mooncode_tools`: pure execution properties and shell analysis.
+- MoonClaw daemon tests: tool execution, completion, persistence, crash recovery,
+  and commit followed by repair/checks in the same command.
 
 Reuse existing fixtures and harnesses. Build temporary paths through MoonLib
 contracts. Do not recreate a MoonDesk session store, event replay engine, or
