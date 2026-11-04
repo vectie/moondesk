@@ -8,6 +8,9 @@ in MoonClaw's `docs/executable_book_runtime_boundary.md`.
 The legacy nine-step lifecycle report is also removed from capabilities and
 session listings. MoonDesk uses the canonical conversation and runtime receipts;
 ordinary work does not become blocked because it has no review or package.
+The runtime's [agent machine model](../../moonclaw/docs/executable_book_runtime_boundary.md#agent-machine)
+maps existing commands, context, files and tools to process/thread, memory,
+filesystem and IO, with explicit synchronization and recovery limits.
 The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
 original comparisons, revisions, and decisions.
 
@@ -277,6 +280,12 @@ the last accepted state. The focused scenarios and validation entry points
 are in [Code mode test plan](CODE_MODE_TEST_PLAN.md).
 
 ## Current Implementation
+
+MoonCode's shared primary-agent instruction works top down: identify an
+observable result, locate the existing implementation, decompose until the next
+change and its verification are clear, then act. Planning, implementation and
+verification alternate within the current loop. Progress describes useful
+results; ordinary work does not require a plan approval or additional phase.
 
 The [discussion plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md) is the
 historical design baseline. Its main consolidation is implemented through the

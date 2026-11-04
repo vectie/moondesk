@@ -25,6 +25,7 @@ restart should lead to automatic repair or recovery where possible.
 | Task changes | New instructions remain durable and supersede affected assumptions. A previous task revision cannot settle the revised task. |
 | No change | Investigation and already-satisfied requests can finish with evidence without manufacturing a file modification. Explicit mutation requirements still apply. |
 | Tool calls | Unknown tools, invalid arguments, and truncated calls do not execute. Errors return to the model for correction. |
+| Working method | Check a real feature from request through change and verification. Test observable behavior, context continuity and recovery; matching prompt phrases cannot establish delivery quality. |
 | Authority | Execution stays within the current grant. Rejected or pending approval does not become permission; changing an action cannot reuse unrelated authorization. |
 | Recovery | Completed results are reused after restart. Uncertain side effects are reconciled before replay; unresolved outcomes remain explicit. |
 | Empty model follow-up | The same claim can resume without milestones, including after rejected completion or restart. Progress state does not grant or deny completion. |

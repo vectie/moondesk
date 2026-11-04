@@ -43,13 +43,17 @@ checks or treat dated test reports as current readiness.
   milestone prerequisite. Progress notes neither permit retries nor grant
   completion. MoonClaw preserves rejected-finish state across repeated empty
   responses; MoonDesk continues to display its canonical runtime facts.
+- The runtime now documents its process/thread, memory, filesystem, IO,
+  synchronization and fault-tolerance mapping. One shared model instruction
+  applies top-down decomposition until executable, then implementation and
+  verification. This adds no desktop phase, state machine or plan approval.
 
 ## Validation 2026-11-04
 
 - Last MoonDesk code validation (`5f6174bc`): native 1734/1734, UI 2293/2293,
   JavaScript 514 with one skipped. Later rounds change MoonDesk docs only.
-- MoonClaw's progress/recovery cleanup passed its full native suite 1929/1929,
-  including repeated empty follow-ups and restart without mandatory milestones.
+- MoonClaw's shared-program cleanup passed its full native suite 1927/1927,
+  including generic and Kimi-identified local transport/restart fixtures.
   Public interfaces are unchanged; the real producer/consumer probe passed again.
 - The strict release gate still stops at existing warnings: unused Flow
   sandbox declarations, an unused UI pack helper, and four unnecessary
