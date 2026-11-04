@@ -1,4 +1,4 @@
-// Presentation only. Task, queue, goal and fork state belongs to MoonClaw.
+// Presentation only. Task, queue and fork state belongs to MoonClaw.
 import { iconMarkup, statusIconName, setIconButton } from './ui-icons.js'
 
 export function installMoonCodeTaskControls() {
@@ -141,22 +141,7 @@ export function installMoonCodeTaskControls() {
         queue.append(card)
       })
 
-      const task = section('Goal and plan', Boolean(state.goal || state.plan))
-      const goal = state.goal?.genesis
-      if (goal) {
-        task.append(element('p', goal.objective, 'mooncode-task-objective'))
-        const criteria = element('ul')
-        for (const criterion of goal.criteria || []) criteria.append(element('li', criterion.criterion))
-        task.append(criteria, element('small', `Goal: ${state.goal.status?.terminal ? state.goal.status.outcome : state.goal.status?.phase || 'active'}`))
-      } else {
-        const [objectiveLabel, objective] = field('What should this task achieve?', '', 2)
-        const [criteriaLabel, criteria] = field('Done when · one outcome per line', '', 3)
-        task.append(objectiveLabel, criteriaLabel, button('Set goal', () => {
-          const outcomes = criteria.value.split('\n').map(line => line.trim()).filter(Boolean)
-          if (!objective.value.trim() || !outcomes.length) { status.textContent = 'Add an objective and at least one outcome.'; return }
-          request({ action: 'set_goal', objective: objective.value.trim(), criteria: outcomes.map((criterion, index) => ({ id: `outcome-${index + 1}`, criterion })) }, 'Goal saved. It will guide the next agent turn.')
-        }))
-      }
+      const task = section('Working plan', Boolean(state.plan))
       const [planLabel, plan] = field('Working plan', state.plan, 5)
       task.append(planLabel, button('Save plan', () => request({ action: 'set_plan', plan: plan.value }, 'Plan saved for the next agent turn.')), button('Implement this plan', async () => {
         await request({ action: 'set_plan', plan: plan.value }, 'Plan saved.')
@@ -222,8 +207,7 @@ export function installMoonCodeTaskControls() {
         images.append(card)
       }
 
-      const team = section(`Agent team${state.workers.length ? ` · ${state.workers.length}` : ''}`, state.workers.length > 0)
-      if (!state.workers.length) team.append(element('p', 'No delegated agents yet.'))
+      const team = state.workers.length ? section('Agent team', true) : null
       for (const worker of state.workers) {
         const card = element('div', null, 'mooncode-task-queue-item')
         card.append(element('strong', worker.worker_id), stateLabel(worker.status))

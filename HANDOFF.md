@@ -3,6 +3,8 @@
 Read this with `AGENTS.md` before starting work. Record concrete pitfalls and
 their resolution here; keep task-specific evidence in `docs/`.
 
+Work directly on `main`; do not create a branch unless the user requests one.
+
 ## Pre-refactor checkpoint 2026-11-04
 
 - Existing desktop/Flow integration, localized UI, generated frontend, evidence,
@@ -28,6 +30,23 @@ combine all historical plans into implementation requirements. Active references
 are `docs/MOONCODE.md` and `docs/CODE_MODE_TEST_PLAN.md`; the old MoonCode phase
 plans and execution diary were removed. Do not restore document-phrase closure
 checks or treat dated test reports as current readiness.
+
+## Single-agent consolidation 2026-11-04
+
+- The runtime change is in the `main` working tree in MoonClaw and MoonDesk.
+  Goal APIs, separate quality/no-change policy and desktop
+  package-review/proof-gate inference were removed; ordinary completion uses
+  `finish` and the existing canonical runtime projection.
+- The task-controls surface keeps the editable working plan, removes the Goal
+  form and hides an empty agent team. Do not recreate a desktop task state
+  machine. A DOM interaction test verifies plan saving without a Goal form.
+- The full discussion archive is historical and unchanged. Active runtime
+  behavior is documented in MoonClaw's executable-book boundary.
+- Final validation: native 1736/1736, UI 2295/2295, JavaScript 514 passed and
+  one skipped. `moon info`, `moon fmt`, execution-boundary audit and maturity
+  checks passed. The full release command stops at the existing strict warning
+  gate (unused Flow declarations/UI helper and external MoonLeaf annotations).
+  No installed-app update or live-model quality trial was performed.
 
 ## UI preview and packaged application
 

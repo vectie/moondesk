@@ -1,8 +1,10 @@
 # MoonCode Workspace
 
 This document describes the current desktop/runtime ownership boundary. The
-approved simplification plan is [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md);
-its runtime changes are planned, not implemented by this documentation cleanup.
+discussion baseline is [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md).
+The single-agent consolidation removes the separate Goal panel and desktop
+package-review/proof-gate inference. The runtime completion boundary is described
+in MoonClaw's `docs/executable_book_runtime_boundary.md`.
 The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
 original comparisons, revisions, and decisions.
 

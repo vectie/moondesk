@@ -12,7 +12,7 @@ priv enum EvidenceKind {
   Approval
   Tool
   Skill
-} derive(Debug, Eq)
+}
 
 ///|
 #warnings("-unused_value")
@@ -333,114 +333,4 @@ fn decode_work_codec(
 ///|
 fn encode_mooncode_work(work : MoonCodeWork) -> Json {
   work.raw
-}
-
-///|
-priv enum MoonCodePackageReviewStatus {
-  WaitingForManifest
-  WaitingForReview
-  WaitingForTests
-  WaitingForReadiness
-  WaitingForAssistant
-  Accepted
-  Rejected
-  Failed
-  Stale
-} derive(Debug, Eq)
-
-///|
-#warnings("-unused_value")
-priv struct MoonCodePackageReview {
-  command_id : String
-  status : MoonCodePackageReviewStatus
-  missing_proof : Array[EvidenceKind]
-  failed_proof : MoonCodeEvidence?
-  evidence : Array[MoonCodeEvidence]
-} derive(Debug, Eq)
-
-///|
-fn project_package_review_evidence(
-  command_id : String,
-  evidence : Array[MoonCodeEvidence],
-  assistant_present : Bool,
-  work_failed~ : Bool = false,
-) -> MoonCodePackageReview {
-  let owned = evidence.filter(item => {
-    command_id != "" && item.command_id == command_id
-  })
-  let mut failed : MoonCodeEvidence? = None
-  for item in owned {
-    if failed is None && (item.state == "failed" || item.exit_code > 0) {
-      failed = Some(item)
-    }
-  }
-  let rejected = owned.any(item => item.kind == ReviewReject.canonical())
-  let manifest = owned.any(item => item.kind == PackageManifest.canonical())
-  let tested = owned.any(item => {
-    item.kind == Test.canonical() &&
-    item.state != "failed" &&
-    item.exit_code == 0
-  })
-  let accepted = owned.any(item => item.kind == ReviewAccept.canonical())
-  let verified = owned.any(item => item.kind == PackageVerified.canonical())
-  let assistant = assistant_present ||
-    owned.any(item => item.kind == AssistantSummary.canonical())
-  let missing : Array[EvidenceKind] = []
-  if !manifest {
-    missing.push(PackageManifest)
-  }
-  if !tested {
-    missing.push(Test)
-  }
-  if !accepted && !rejected {
-    missing.push(ReviewAccept)
-  }
-  if !verified {
-    missing.push(PackageVerified)
-  }
-  if !assistant {
-    missing.push(AssistantSummary)
-  }
-  let status = if command_id == "" ||
-    (evidence.length() > 0 && owned.length() == 0) {
-    MoonCodePackageReviewStatus::Stale
-  } else if work_failed || failed is Some(_) {
-    Failed
-  } else if rejected {
-    Rejected
-  } else if !manifest {
-    WaitingForManifest
-  } else if !tested {
-    WaitingForTests
-  } else if !accepted {
-    WaitingForReview
-  } else if !verified {
-    WaitingForReadiness
-  } else if !assistant {
-    WaitingForAssistant
-  } else {
-    Accepted
-  }
-  {
-    command_id,
-    status,
-    missing_proof: missing,
-    failed_proof: failed,
-    evidence: owned,
-  }
-}
-
-///|
-#warnings("-unused_value")
-fn project_package_review(turn : MoonCodeTurn) -> MoonCodePackageReview {
-  let assistant_present = match turn.assistant {
-    Some(message) => message.content.trim() != ""
-    None => false
-  }
-  project_package_review_evidence(
-    turn.command_id,
-    turn.work.evidence,
-    assistant_present,
-    work_failed=turn.work.status == "failed",
-  )
 }
