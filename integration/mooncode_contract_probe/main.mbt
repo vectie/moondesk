@@ -7,8 +7,6 @@ fn moonclaw_capability_payload() -> Json {
     "capability_contract_id": @claw_core.native_capability_contract_id(),
     "capability_surface_fingerprint": @claw_core.native_capability_surface_fingerprint(),
     "capability_surface": @claw_core.native_capability_surface_json(),
-    "executable_book_lifecycle_contract_id": @claw_core.executable_book_lifecycle_contract_id(),
-    "executable_book_lifecycle_contract": @claw_core.executable_book_lifecycle_contract_json(),
     "native_runtime_ready": true,
     "runtime_owner": "moonclaw",
     "session_owner": "moonclaw",

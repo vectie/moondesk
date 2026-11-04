@@ -33,7 +33,8 @@ checks or treat dated test reports as current readiness.
 
 ## Single-agent consolidation 2026-11-04
 
-- The runtime change is in the `main` working tree in MoonClaw and MoonDesk.
+- The first consolidation was committed on `main` and pushed to all configured
+  remotes: MoonDesk `033f245d`, MoonClaw `c79404d9`.
   Goal APIs, separate quality/no-change policy and desktop
   package-review/proof-gate inference were removed; ordinary completion uses
   `finish` and the existing canonical runtime projection.
@@ -47,6 +48,20 @@ checks or treat dated test reports as current readiness.
   checks passed. The full release command stops at the existing strict warning
   gate (unused Flow declarations/UI helper and external MoonLeaf annotations).
   No installed-app update or live-model quality trial was performed.
+
+## Continued runtime cleanup
+
+- Capabilities and listings no longer require or project the nine-step
+  executable-book lifecycle report. The canonical conversation and actual
+  runtime owner/session/watch contracts remain authoritative. Update producer
+  and consumer together; no old-protocol compatibility is required.
+- `integration/mooncode_contract_probe` runs the real MoonClaw producer against
+  the MoonDesk decoder using explicit local workspace dependencies. Keep this
+  behavioral check instead of document phrases or duplicated readiness rules.
+- Current cleanup validation passed: native 1734/1734, UI 2293/2293, JavaScript
+  514 with one skipped, and the producer/consumer probe. Strict release still
+  stops at the existing warning gate. No installed-app or live-model
+  qualification was performed.
 
 ## UI preview and packaged application
 

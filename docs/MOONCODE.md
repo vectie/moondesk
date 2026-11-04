@@ -5,6 +5,9 @@ discussion baseline is [Current MoonCode plan](mooncode-discussion-2026-11-04/CU
 The single-agent consolidation removes the separate Goal panel and desktop
 package-review/proof-gate inference. The runtime completion boundary is described
 in MoonClaw's `docs/executable_book_runtime_boundary.md`.
+The legacy nine-step lifecycle report is also removed from capabilities and
+session listings. MoonDesk uses the canonical conversation and runtime receipts;
+ordinary work does not become blocked because it has no review or package.
 The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
 original comparisons, revisions, and decisions.
 

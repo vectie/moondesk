@@ -42,14 +42,6 @@ pub fn mooncode_capability() -> MoonCodeCapability {
         "capability_surface_fingerprint",
         ToJson::to_json(native_capability_surface_fingerprint()),
       ),
-      (
-        "executable_book_lifecycle_contract_id",
-        ToJson::to_json(executable_book_lifecycle_contract_id()),
-      ),
-      (
-        "executable_book_lifecycle_contract",
-        executable_book_lifecycle_contract_json(),
-      ),
     ]),
     ownership_extensions: Map([]),
   }
@@ -158,16 +150,6 @@ fn validate_nested_capability_contracts(fields : Map[String, Json]) -> String? {
     sessions.get("record") is Some(String("mooncode-session-record.v2")) &&
     sessions.get("listing") is Some(String("mooncode-session-listing.v2")) else {
     return Some("session contracts are invalid")
-  }
-  guard fields.get("executable_book_lifecycle_contract_id")
-    is Some(String("mooncode-executable-book-lifecycle.v2")) &&
-    fields.get("executable_book_lifecycle_contract") is Some(Object(lifecycle)) &&
-    lifecycle.get("contract_id")
-    is Some(String("mooncode-executable-book-lifecycle.v2")) &&
-    lifecycle.get("runtime_owner") is Some(String("moonclaw")) &&
-    lifecycle.get("artifact_owner") is Some(String("moonbook")) &&
-    lifecycle.get("acceptance_owner") is Some(String("bookkeeper")) else {
-    return Some("executable book lifecycle contract is invalid")
   }
   None
 }

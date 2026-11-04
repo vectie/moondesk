@@ -29,13 +29,6 @@ fn supported_capability_codec_fixture(protocol : String) -> Json {
       },
       "commands": ["session.create"],
     },
-    "executable_book_lifecycle_contract_id": "mooncode-executable-book-lifecycle.v2",
-    "executable_book_lifecycle_contract": {
-      "contract_id": "mooncode-executable-book-lifecycle.v2",
-      "runtime_owner": "moonclaw",
-      "artifact_owner": "moonbook",
-      "acceptance_owner": "bookkeeper",
-    },
     "native_runtime_ready": true,
     "runtime_mode": "native",
     "runtime_owner": "moonclaw",
@@ -52,17 +45,6 @@ test "capability codec rejects an incomplete capability surface contract" {
   fields["capability_surface"] = {
     "capability_contract_id": "mooncode-native-capability-surface.v2",
   }
-  assert_true(@core.decode_mooncode_capability(payload) is Err(Malformed(_)))
-}
-
-///|
-test "capability codec rejects a non-moonclaw lifecycle runtime owner" {
-  let payload = supported_capability_codec_fixture("mooncode.v1")
-  guard payload is Object(fields) else { fail("fixture") }
-  guard fields["executable_book_lifecycle_contract"] is Object(contract) else {
-    fail("fixture")
-  }
-  contract["runtime_owner"] = "moondesk"
   assert_true(@core.decode_mooncode_capability(payload) is Err(Malformed(_)))
 }
 

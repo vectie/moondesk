@@ -1,9 +1,10 @@
 # Code Mode Test Plan
 
 Use [MoonCode Workspace](MOONCODE.md) for the current ownership boundary and
-the [current plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md) for the
-approved simplification. This plan replaces the retired migration inventory;
-it does not claim that every scenario below is already implemented or passing.
+the [discussion plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md) for the
+historical design decisions. Goal, Goal Runtime, independent quality/no-change
+protocols and desktop acceptance inference have been removed. Current execution
+and evidence limits are documented in MoonClaw's executable-book runtime boundary.
 
 ## Scope
 
@@ -69,9 +70,16 @@ Full validation includes the production build and can update generated
 artifacts. Run it for the finished implementation or release, after focused
 checks. Documentation-only maintenance checks references and whitespace.
 
-Existing tool, authority, and runtime-evidence checks remain in the validation
-chain until their implementation is replaced. A document containing prescribed
-phase headings or success phrases is not behavioral evidence.
+Keep behavioral tool, authority and recovery checks. Remove assertions for
+retired protocols and prompt phrases with their implementations; preserve the
+user-facing behavior in the remaining execution-path tests.
+
+The published consolidation baseline is MoonDesk `033f245d` and MoonClaw
+`c79404d9`, on `main` across all configured remotes. It passed MoonDesk native
+1736/1736, UI 2295/2295 and JavaScript 514 tests (one skipped), plus MoonClaw
+native 1953/1953. These counts describe that revision. The strict release gate
+remained blocked by existing warning debt; no live-model or installed-app
+qualification was performed.
 
 ## Interactive And Model Evaluation
 
