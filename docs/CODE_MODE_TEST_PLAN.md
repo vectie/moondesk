@@ -74,12 +74,15 @@ Keep behavioral tool, authority and recovery checks. Remove assertions for
 retired protocols and prompt phrases with their implementations; preserve the
 user-facing behavior in the remaining execution-path tests.
 
-The published consolidation baseline is MoonDesk `033f245d` and MoonClaw
-`c79404d9`, on `main` across all configured remotes. It passed MoonDesk native
-1736/1736, UI 2295/2295 and JavaScript 514 tests (one skipped), plus MoonClaw
-native 1953/1953. These counts describe that revision. The strict release gate
-remained blocked by existing warning debt; no live-model or installed-app
-qualification was performed.
+The preceding cleanup baseline is MoonDesk `5f6174bc` and MoonClaw `cb1c5228`, on
+`main` across all configured remotes. It passed MoonDesk native 1734/1734,
+UI 2293/2293 and JavaScript 514 tests (one skipped), plus MoonClaw native
+1950/1950 and the real producer/consumer contract probe. Subsequent native
+catalog cleanup passed MoonClaw 1931/1931; MoonDesk changes in that round are
+documentation-only, and the real producer/consumer probe passed again. These
+counts describe their respective revisions. The
+strict release gate remains blocked by existing warning debt; no live-model
+or installed-app qualification was performed.
 
 ## Interactive And Model Evaluation
 

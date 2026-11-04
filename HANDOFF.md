@@ -5,19 +5,6 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
-## Pre-refactor checkpoint 2026-11-04
-
-- Existing desktop/Flow integration, localized UI, generated frontend, evidence,
-  and the full MoonCode discussion archive are preserved before consolidation.
-- Native tests passed 1741/1741; UI tests passed 2300/2300; JavaScript tests
-  passed 513 with one skipped. Stale history/Flow-copy test fixtures were updated
-  to the existing production contract. Interfaces and formatting were refreshed.
-- The strict warning-budget gate is not green: unused Flow sandbox declarations,
-  an unused pack description helper, and four unnecessary annotations in the
-  external MoonLeaf PDF package remain. Do not call this a warning-clean release.
-- Native Flow crossing requires its separately configured fixture; ordinary
-  suite success does not establish that external integration.
-
 ## MoonCode design discussion
 
 MoonCode design discussion is archived in
@@ -31,11 +18,9 @@ are `docs/MOONCODE.md` and `docs/CODE_MODE_TEST_PLAN.md`; the old MoonCode phase
 plans and execution diary were removed. Do not restore document-phrase closure
 checks or treat dated test reports as current readiness.
 
-## Single-agent consolidation 2026-11-04
+## Current single-agent implementation
 
-- The first consolidation was committed on `main` and pushed to all configured
-  remotes: MoonDesk `033f245d`, MoonClaw `c79404d9`.
-  Goal APIs, separate quality/no-change policy and desktop
+- Goal APIs, separate quality/no-change policy and desktop
   package-review/proof-gate inference were removed; ordinary completion uses
   `finish` and the existing canonical runtime projection.
 - The task-controls surface keeps the editable working plan, removes the Goal
@@ -43,14 +28,6 @@ checks or treat dated test reports as current readiness.
   machine. A DOM interaction test verifies plan saving without a Goal form.
 - The full discussion archive is historical and unchanged. Active runtime
   behavior is documented in MoonClaw's executable-book boundary.
-- Final validation: native 1736/1736, UI 2295/2295, JavaScript 514 passed and
-  one skipped. `moon info`, `moon fmt`, execution-boundary audit and maturity
-  checks passed. The full release command stops at the existing strict warning
-  gate (unused Flow declarations/UI helper and external MoonLeaf annotations).
-  No installed-app update or live-model quality trial was performed.
-
-## Continued runtime cleanup
-
 - Capabilities and listings no longer require or project the nine-step
   executable-book lifecycle report. The canonical conversation and actual
   runtime owner/session/watch contracts remain authoritative. Update producer
@@ -58,10 +35,25 @@ checks or treat dated test reports as current readiness.
 - `integration/mooncode_contract_probe` runs the real MoonClaw producer against
   the MoonDesk decoder using explicit local workspace dependencies. Keep this
   behavioral check instead of document phrases or duplicated readiness rules.
-- Current cleanup validation passed: native 1734/1734, UI 2293/2293, JavaScript
-  514 with one skipped, and the producer/consumer probe. Strict release still
-  stops at the existing warning gate. No installed-app or live-model
-  qualification was performed.
+- MoonClaw now uses one native catalog for initial and follow-up requests.
+  Keyword bundles, native tool search/loading and their trial tests were
+  removed. Read-only subsets, explicit selection and MCP remain; no extra
+  framework or approval step was added.
+
+## Validation 2026-11-04
+
+- Preceding baseline: MoonDesk `5f6174bc`, MoonClaw `cb1c5228`, on `main`
+  across all configured remotes. It passed native 1734/1734, UI 2293/2293,
+  JavaScript 514 with one skipped, and the real producer/consumer probe.
+- This round changes MoonDesk documentation only. MoonClaw's full native suite
+  passed 1931/1931 after native catalog cleanup; public interfaces are unchanged.
+  The real producer/consumer probe was rerun successfully against that change.
+- The strict release gate still stops at existing warnings: unused Flow
+  sandbox declarations, an unused UI pack helper, and four unnecessary
+  annotations in external MoonLeaf. No installed-app update or live-model
+  quality qualification was performed.
+- Native Flow crossing requires its separately configured fixture; ordinary
+  suite success does not establish that external integration.
 
 ## UI preview and packaged application
 

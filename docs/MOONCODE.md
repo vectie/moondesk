@@ -243,7 +243,8 @@ Each MoonClaw session has one authoritative journal:
 ```
 
 `journal.jsonl` uses the MoonLib
-`moonsuite-conversation-journal.v1` envelope and owns total order.
+`moonsuite-conversation-journal.v2` envelope with exact decimal sequences and
+owns total order. Existing v1 journal reads remain a shared storage concern.
 `session.json` is a replaceable checkpoint. MoonDesk may display the journal
 path and sequence for diagnostics, but it cannot read storage artifacts to
 rebuild a conversation.
@@ -275,20 +276,20 @@ multiple turns, reload, reconnect, and cancellation. Verify stable
 the last accepted state. The focused scenarios and validation entry points
 are in [Code mode test plan](CODE_MODE_TEST_PLAN.md).
 
-## Approved Next Work
+## Current Implementation
 
-The [current implementation plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md)
-replaces earlier MoonCode upgrade, alignment, and phase plans. Implement it
-through the existing MoonClaw runtime:
+The [discussion plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md) is the
+historical design baseline. Its main consolidation is implemented through the
+existing MoonClaw runtime:
 
-1. Remove the legacy Goal implementation and dual-authority branches.
-2. Merge task definitions and completion checks; keep `finish` and return
-   repairable gaps to the same agent.
-3. Bind verification to actual results and relevant versions; reuse the
-   journal and continuation for recovery.
-4. Remove forced-mutation heuristics, permissive tool-call repair, and
-   duplicated prompt rules.
-5. Remove MoonDesk's independent acceptance inference and render runtime state.
+1. Goal state machines and dual authority are removed.
+2. `finish` owns completion; repairable gaps return to the same primary agent.
+3. Native verification receipts and tracked input versions support completion;
+   journal checkpoints retain execution intent and completed-result references.
+4. Forced-mutation rules, permissive tool-call repair and duplicate acceptance
+   projections are removed.
+5. Native tools use one catalog. Read-only subsets and explicit tool selection
+   remain; keyword bundles and native search-to-load trial state are removed.
 
 Default to one primary agent and autonomous completion. Do not introduce a
 permanent Router/Worker agent pair, a new runtime framework, a universal
@@ -296,6 +297,6 @@ checker registry, or mandatory human review. Existing authorization and
 sandbox boundaries remain enforced. No old-protocol compatibility or
 dual-write implementation is required.
 
-This is an implementation direction, not a claim that the runtime
-consolidation has already shipped. Dated test reports remain historical
-evidence; current readiness requires current checks.
+This describes source behavior. It does not claim installed-app deployment or
+live-model delivery quality. Dated test reports remain historical evidence;
+current readiness requires current checks.
