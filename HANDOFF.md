@@ -39,15 +39,18 @@ checks or treat dated test reports as current readiness.
   Keyword bundles, native tool search/loading and their trial tests were
   removed. Read-only subsets, explicit selection and MCP remain; no extra
   framework or approval step was added.
+- Empty follow-ups resume through existing claims and results without a
+  milestone prerequisite. Progress notes neither permit retries nor grant
+  completion. MoonClaw preserves rejected-finish state across repeated empty
+  responses; MoonDesk continues to display its canonical runtime facts.
 
 ## Validation 2026-11-04
 
-- Preceding baseline: MoonDesk `5f6174bc`, MoonClaw `cb1c5228`, on `main`
-  across all configured remotes. It passed native 1734/1734, UI 2293/2293,
-  JavaScript 514 with one skipped, and the real producer/consumer probe.
-- This round changes MoonDesk documentation only. MoonClaw's full native suite
-  passed 1931/1931 after native catalog cleanup; public interfaces are unchanged.
-  The real producer/consumer probe was rerun successfully against that change.
+- Last MoonDesk code validation (`5f6174bc`): native 1734/1734, UI 2293/2293,
+  JavaScript 514 with one skipped. Later rounds change MoonDesk docs only.
+- MoonClaw's progress/recovery cleanup passed its full native suite 1929/1929,
+  including repeated empty follow-ups and restart without mandatory milestones.
+  Public interfaces are unchanged; the real producer/consumer probe passed again.
 - The strict release gate still stops at existing warnings: unused Flow
   sandbox declarations, an unused UI pack helper, and four unnecessary
   annotations in external MoonLeaf. No installed-app update or live-model

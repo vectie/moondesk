@@ -291,6 +291,12 @@ existing MoonClaw runtime:
 5. Native tools use one catalog. Read-only subsets and explicit tool selection
    remain; keyword bundles and native search-to-load trial state are removed.
 
+Progress checkpoints remain advisory throughout execution. Empty model
+follow-ups retain the existing claim and completed results for automatic
+continuation, without requiring milestones to be present or marked done.
+MoonDesk displays those runtime facts rather than deciding whether a plan
+permits recovery or completion.
+
 Default to one primary agent and autonomous completion. Do not introduce a
 permanent Router/Worker agent pair, a new runtime framework, a universal
 checker registry, or mandatory human review. Existing authorization and
