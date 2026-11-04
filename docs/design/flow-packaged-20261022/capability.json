@@ -1,0 +1,49 @@
+{
+  "available": true,
+  "reason": "capability-ready",
+  "root": "/Applications/MoonDesk.app/Contents/MacOS/moonflow",
+  "execution_boundary": {
+    "kind": "trusted-native-flow-service.v1",
+    "available": true,
+    "operations": [
+      "validate-graph",
+      "import-graph",
+      "control",
+      "inspect-collaboration",
+      "list-handovers"
+    ],
+    "dispatch_allowed": false
+  },
+  "platform_evidence": {
+    "supported": true,
+    "platform": "macos",
+    "architecture": "arm64"
+  },
+  "installation_evidence": {
+    "installed": true,
+    "source": "native-executable",
+    "reason": "runtime-command-available"
+  },
+  "configuration_evidence": {
+    "configured": true,
+    "valid": true,
+    "reason": "configuration-valid"
+  },
+  "runtime_message": "Flow is ready",
+  "planning_available": true,
+  "planning_boundary": {
+    "kind": "trusted-native-flow-planning.v1",
+    "available": true,
+    "operations": [
+      "prepare-form",
+      "apply-prepared"
+    ],
+    "dispatch_allowed": false,
+    "message": "Local plan preparation and import are available"
+  },
+  "ok": true,
+  "status": "ready",
+  "message": "Flow preparation is available",
+  "api_contract": "moonsuite.phase6.v1",
+  "next_action": "prepare_flow"
+}

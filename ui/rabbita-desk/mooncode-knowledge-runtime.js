@@ -20,18 +20,26 @@ export function renderKnowledge(state) {
   const records = state.data.knowledge || [], draft = state.knowledgeDraft || {}
   const raw = draft.path ? `/api/workspaces/${encodeURIComponent(state.workspaceId)}/raw?path=${encodeURIComponent(draft.path)}` : ''
   const retrieval = state.knowledgeRetrieval === 'hybrid' ? 'Last search combined semantic similarity and text matches.' : state.data.embeddings?.configured ? 'Embedding provider configured. Sources need a saved semantic index before hybrid search is available.' : 'Ranked text retrieval · Embeddings are not configured.'
-  return `<p>Build a reference library for coding work. Text and Office documents are extracted into searchable passages. Relevant passages are included with source citations in subsequent coding turns.</p>
-    <div class="coding-setup-skill-grid"><aside aria-label="Knowledge sources"><button type="button" data-action="knowledge-new">Add source</button>
-    ${records.map((record, index) => `<button type="button" class="coding-setup-skill" data-action="knowledge-select" data-index="${index}">${escape(record.title)}<small>${record.chunks?.length || 0} passages${record.embedding_key ? ' · Semantic index' : ''}${record.enabled ? '' : ' · Paused'}</small></button>`).join('')}</aside>
+  return `<div class="coding-setup-skill-grid${records.length ? '' : ' knowledge-empty'}"><aside aria-label="Knowledge sources"><button type="button" data-action="knowledge-new">Add source</button>
+    ${records.map((record, index) => `<button type="button" class="coding-setup-skill" data-action="knowledge-select" data-index="${index}"><span data-i18n-scope="content">${escape(record.title)}</span><small><span>${record.chunks?.length || 0} passages</span>${record.embedding_key ? ' · <span>Semantic index</span>' : ''}${record.enabled ? '' : ' · <span>Paused</span>'}</small></button>`).join('')}</aside>
     <div><label>Source title<input name="knowledge-title" value="${escape(draft.title || '')}" placeholder="Architecture notes"></label>
     <label>File in this book<input name="knowledge-path" value="${escape(draft.path || '')}" placeholder="docs/architecture.md"></label>
     <div class="coding-setup-actions"><button type="button" data-action="knowledge-index">Extract from file</button>${raw ? `<a href="${escape(raw)}" target="_blank" rel="noopener">Open original</a>` : ''}</div>
-    <label>Searchable text<textarea name="knowledge-text" rows="12">${escape(draft.extracted_text || '')}</textarea></label>
+    <label>Searchable text<textarea name="knowledge-text" rows="7">${escape(draft.extracted_text || '')}</textarea></label>
     <div class="coding-setup-actions"><button type="button" data-action="knowledge-save">Save searchable text</button>${draft.id ? '<button type="button" data-action="knowledge-remove">Remove from library</button>' : ''}</div>
-    <p class="coding-setup-hint">Editing searchable text does not change the original file. Re-extract after the original changes.</p></div></div>
+    <details class="coding-setup-help"><summary>About this source</summary><p>Editing searchable text does not change the original file. Re-extract after the original changes.</p></details></div></div>
     <hr><label>Find a passage<input name="knowledge-query" value="${escape(state.knowledgeQuery || '')}" placeholder="How does authentication work?"></label>
-    <button type="button" data-action="knowledge-search">Search library</button><p class="coding-setup-hint">${escape(retrieval)}</p>
+    <button type="button" data-action="knowledge-search">Search library</button><details class="coding-setup-help"><summary>Search method</summary><p>${escape(retrieval)}</p></details>
     <div>${(state.knowledgeHits || []).map((hit, index) => `<article class="coding-setup-knowledge-hit"><strong>${escape(hit.citation)}</strong><p>${escape(hit.path)}</p><pre>${escape(hit.text)}</pre><button type="button" data-action="knowledge-context" data-index="${index}">Add passage to conversation</button></article>`).join('')}</div>`
+}
+
+// Keep empty operations unavailable while preserving the draft and focus.
+export function syncKnowledgeActions(root) {
+  for (const [action, field] of [['knowledge-index', 'knowledge-path'], ['knowledge-save', 'knowledge-text'], ['knowledge-search', 'knowledge-query']]) {
+    const button = root.querySelector(`[data-action="${action}"]`)
+    const input = root.querySelector(`[name="${field}"]`)
+    if (button && input) button.disabled = !input.value.trim()
+  }
 }
 
 export async function knowledgeAction(state, button) {

@@ -1,9 +1,13 @@
 import { workPanelItems, renderTaskDraft, installPackWorkspace, mergeTaskThreads, taskPosition, taskResultPackage, taskArtifacts, taskSources, downloadTaskFile } from './work-journey-runtime.js'
+import { uiText, uiLocale, userContent } from './ui-locale.js'
+import { iconMarkup } from './ui-icons.js'
 let specialistBuilderPromise = null
 const rootSelector = '[data-testid="workspace-feature-overlays"]'
 const taskDrafts = new Map()
 const recipeDrafts = new Map()
 const bookPanels = new Map()
+const preferenceDrafts = new Map()
+const learningDrafts = new Map()
 const bookWorkOrigins = new Map()
 const seenTaskOutputs = new Map()
 let resultInboxRuntime = null
@@ -14,6 +18,24 @@ let workspaceRoomRuntime = null
 let workspaceRoomPromise = null
 let bookCalendarRuntime = null
 let bookCalendarPromise = null
+let localToolView = null
+
+function renderLocalTool(state, tab, create) {
+  const key = JSON.stringify([state.workspace_id, tab, state.selected_document || ''])
+  if (localToolView?.key !== key) localToolView = { key, body: create() }
+  return localToolView.body
+}
+
+function localToolPosition() {
+  const body = localToolView?.body
+  return body?.isConnected ? { body, top: body.scrollTop, focused: body.contains(document.activeElement) ? document.activeElement : null } : null
+}
+
+function restoreLocalToolPosition(position) {
+  if (!position || !position.body.isConnected || position.body !== localToolView?.body) return
+  if (position.focused?.isConnected) position.focused.focus({ preventScroll: true })
+  position.body.scrollTop = position.top
+}
 let documentTableRuntime = null
 let documentTablePromise = null
 let serverState = {}
@@ -41,7 +63,7 @@ const featureState = {
   mode: 'files',
   query: '',
   synthesis_open: false,
-  synthesis_title: 'New synthesis',
+  synthesis_title: uiText('New synthesis'),
   synthesis_status: '',
   synthesis: [],
   export_status: '',
@@ -927,7 +949,9 @@ function flushServerFollowupSave() {
 function loadAgentPreferences() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   if (!workspaceId || featureState.preferences_loaded_for === workspaceId) return
+  featureState.preference_draft = preferenceDrafts.get(workspaceId) || null
   featureState.preferences_loaded_for = workspaceId
+  featureState.preferences_status = 'Loading preferences…'
   fetch(`/api/preferences/agent-memory?workspace_id=${encodeURIComponent(workspaceId)}`)
     .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
     .then(payload => {
@@ -936,13 +960,13 @@ function loadAgentPreferences() {
       render()
     })
     .catch(() => {
-      featureState.preferences_loaded_for = ''
       featureState.preferences_status = 'Preferences could not be loaded'
       render()
     })
 }
 
 function saveAgentPreference(record) {
+  const workspaceId = serverState.workspace_id
   featureState.preferences_status = 'Saving…'
   const existing = featureState.preferences.find(item => item.id && item.id === record.id)
   fetch('/api/preferences/agent-memory', {
@@ -971,6 +995,8 @@ function saveAgentPreference(record) {
     })
     .then(saved => {
       if (!saved) return
+      preferenceDrafts.delete(workspaceId)
+      if (serverState.workspace_id !== workspaceId) return
       if (saved.forgotten) {
         featureState.preferences = featureState.preferences.filter(item => item.id !== saved.id)
       } else {
@@ -981,6 +1007,7 @@ function saveAgentPreference(record) {
       render()
     })
     .catch(() => {
+      if (serverState.workspace_id !== workspaceId) return
       featureState.preferences_status = 'Preference could not be saved'
       render()
     })
@@ -995,6 +1022,7 @@ function loadLearningProposals() {
     return
   }
   if (featureState.learning_loaded_for === workspaceId) return
+  featureState.learning_draft = learningDrafts.get(workspaceId) || null
   featureState.learning_proposals = []
   featureState.learning_loaded_for = workspaceId
   featureState.learning_status = 'Loading learning…'
@@ -1027,6 +1055,7 @@ function saveLearningProposal(record) {
     .then(saved => {
       if (!learningRequestMatches(request, serverState.workspace_id, learningRequestGeneration)) return
       featureState.learning_proposals = learningProposalTransition(featureState.learning_proposals, saved)
+      learningDrafts.delete(workspaceId)
       featureState.learning_draft = null
       featureState.learning_status = learningBookState(saved).message
       featureState.learning_loaded_for = ''
@@ -1642,6 +1671,11 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       if (item) saveAgentPreference({ ...item, enabled: !item.enabled })
       return
     }
+    case 'preferences-reload':
+      featureState.preferences_loaded_for = ''
+      loadAgentPreferences()
+      render()
+      return
     case 'preference-edit': {
       const item = featureState.preferences.find(entry => entry.id === first)
       if (item) featureState.preference_draft = { ...item }
@@ -1650,6 +1684,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
     }
     case 'preference-cancel':
       featureState.preference_draft = null
+      preferenceDrafts.delete(serverState.workspace_id)
       render()
       return
     case 'preference-forget':
@@ -1661,6 +1696,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
         detail: '',
         source: boundedText(decodeURIComponent(first), 8000),
       }
+      learningDrafts.set(serverState.workspace_id, featureState.learning_draft)
       featureState.toolbox_open = true
       featureState.toolbox_tab = 'learning'
       loadLearningProposals()
@@ -1668,10 +1704,12 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       return
     case 'learning-new':
       featureState.learning_draft = { kind: 'preference', detail: '', source: '' }
+      learningDrafts.set(serverState.workspace_id, featureState.learning_draft)
       render()
       return
     case 'learning-cancel':
       featureState.learning_draft = null
+      learningDrafts.delete(serverState.workspace_id)
       render()
       return
     case 'learning-accept':
@@ -2112,6 +2150,12 @@ function button(className, text, action, args = [], options = {}) {
   return value
 }
 
+function utilityButton(icon, label, action, args = []) {
+  const control = button('moon-icon-button', '', action, args, { label, title: label })
+  control.innerHTML = iconMarkup(icon)
+  return control
+}
+
 function heading(eyebrow, title) {
   const copy = element('div')
   copy.append(element('p', 'eyebrow', eyebrow), element('h2', '', title))
@@ -2153,7 +2197,8 @@ function renderEmpty(state) {
   announcement.setAttribute('role', 'status')
   announcement.setAttribute('aria-live', 'polite')
   announcement.setAttribute('aria-atomic', 'true')
-  announcement.append(element('strong', '', copy[0]), element('p', '', copy[1]))
+  announcement.append(element('strong', '', copy[0]))
+  if (!['idle', 'first-use-empty', 'loading', 'legitimate-zero'].includes(stateKey) && copy[1]) announcement.append(element('p', '', copy[1]))
   empty.append(announcement)
   if (['stale', 'disconnected', 'capability-limited', 'recoverable-error', 'terminal-error'].includes(stateKey)) {
     const technical = element('details', 'technical-details')
@@ -2166,7 +2211,7 @@ function renderEmpty(state) {
   if (!state.query && state.recent_paths?.length) {
     const recent = element('div', 'universal-recent-paths')
     for (const path of state.recent_paths) {
-      recent.append(button('universal-recent-path', path, 'open-path', [path]))
+      recent.append(userContent(button('universal-recent-path', path, 'open-path', [path])))
     }
     empty.append(recent)
   }
@@ -2193,12 +2238,12 @@ function renderFileResults(state) {
         : [hit.workspace_id, hit.path],
     )
     main.append(
-      element('strong', '', hit.title),
-      element('small', '', `${hit.path} · ${hit.kind} · ${hit.workspace_name}`),
+      userContent(element('strong', '', hit.title)),
+      userContent(element('small', '', `${hit.path} · ${hit.kind} · ${hit.workspace_name}`)),
     )
-    if (hit.snippet) main.append(element('p', '', hit.snippet))
+    if (hit.snippet) main.append(userContent(element('p', '', hit.snippet)))
     row.append(main)
-    if (state.purpose !== 'document' && state.purpose !== 'pin') {
+    if (!['document', 'workflow', 'pin'].includes(state.purpose)) {
       row.append(button(
         'universal-result-pin',
         'Pin',
@@ -2274,12 +2319,13 @@ function renderSearch(state) {
 
   const header = element('header', 'universal-search-header')
   header.append(
-    heading('Find & Add', purposeTitle(state.purpose)),
-    button('icon-button', '×', 'close-search', [], { label: 'Close Find and Add' }),
+    element('h2', '', purposeTitle(state.purpose)),
+    utilityButton('close', 'Close Find and Add', 'close-search'),
   )
   panel.append(header)
 
-  if (state.purpose !== 'document') {
+  const focusedPicker = ['document', 'workflow'].includes(state.purpose)
+  if (!focusedPicker) {
     const modes = element('div', 'universal-search-modes')
     for (const mode of ['files', 'semantic', 'structure', 'code', 'issues', 'work']) {
       modes.append(button(
@@ -2317,9 +2363,8 @@ function renderSearch(state) {
   })
   queryRow.append(input)
   if (state.mode !== 'work') {
-    const search = button(
-      'primary-button', 'Search', 'search', [], { disabled: !String(state.query || '').trim() },
-    )
+    const search = utilityButton('search', 'Search', 'search')
+    search.disabled = !String(state.query || '').trim()
     search.dataset.testid = 'pages-search-state-action'
     queryRow.append(search)
   }
@@ -2358,9 +2403,7 @@ function renderSearch(state) {
   results.append(state.mode === 'work' ? renderWorkResults(state) : renderFileResults(state))
   panel.append(results)
 
-  const drop = element('div', 'universal-intake-dropzone')
-  drop.setAttribute('role', 'region')
-  drop.setAttribute('aria-label', 'Drop a workspace item to open or reference it')
+  const drop = panel
   drop.addEventListener('dragover', event => {
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
@@ -2371,32 +2414,27 @@ function renderSearch(state) {
       || event.dataTransfer?.getData('text/plain') || ''
     if (path) emit('open-path', path)
   })
-  drop.append(
-    element('strong', '', 'Drop a workspace item here'),
-    element('small', '', 'Or paste a workspace-relative path above and choose Open path.'),
-    button(
-      'secondary-button', 'Open path', 'open-path', [state.query || ''],
-      { disabled: !String(state.query || '').trim() },
-    ),
-  )
-  panel.append(drop)
-
   const footer = element('div', 'universal-search-footer')
-  footer.append(element(
-    'span', '', state.purpose === 'document'
-      ? 'References stay in this workspace; nothing is copied.'
-      : 'Open or reference existing work. Importing a copy is always explicit.',
+  footer.append(button(
+    'secondary-button universal-open-path', 'Open path', 'open-path', [state.query || ''],
+    { disabled: !String(state.query || '').trim(), title: 'Or paste a workspace-relative path above and choose Open path.' },
   ))
-  const actions = element('div')
+  const actions = element('div', 'universal-search-secondary-actions')
   actions.append(
     ...(state.purpose === 'attach'
       ? []
       : [button('secondary-button', 'Import copies…', 'import-files')]),
     button('secondary-button', 'Import folder…', 'import-folder'),
-    button('secondary-button', 'New folder or book…', 'desk-intake'),
-    button('secondary-button', 'Synthesis board', 'open-synthesis'),
+    button('secondary-button', 'Organize files in Desk…', 'desk-intake'),
+    ...(!focusedPicker ? [button('secondary-button', 'Synthesis board', 'open-synthesis')] : []),
   )
-  footer.append(actions)
+  const more = element('details', 'universal-search-more')
+  const moreToggle = element('summary', 'moon-icon-button')
+  moreToggle.setAttribute('aria-label', 'More file actions')
+  moreToggle.title = 'More file actions'
+  moreToggle.innerHTML = iconMarkup('more')
+  more.append(moreToggle, actions)
+  footer.append(more)
   panel.append(footer)
   backdrop.append(panel)
   return backdrop
@@ -2655,20 +2693,17 @@ function renderReviewTab(state) {
   const open = markers.filter(marker => !marker.reviewed)
   const intro = element('div', 'document-tool-intro with-action')
   const introCopy = element('div')
-  introCopy.append(
-    element('h3', '', 'Review room'),
+  if (featureState.review_counts.open || open.length) introCopy.append(
     element('p', '', featureState.review_counts.open
-      ? `${featureState.review_counts.open} open discussion${featureState.review_counts.open === 1 ? '' : 's'}${featureState.review_counts.required ? ` · ${featureState.review_counts.required} assigned` : ''}${featureState.review_counts.pinned ? ` · ${featureState.review_counts.pinned} pinned` : ''}${featureState.review_counts.unread ? ` · ${featureState.review_counts.unread} unread` : ''}.`
-      : open.length
-        ? `${open.length} open item${open.length === 1 ? '' : 's'} across this document.`
-      : 'No open review items. MoonDesk will interrupt only for a material warning.'),
+      ? [uiText(`${featureState.review_counts.open} open discussions`), featureState.review_counts.required && uiText(`${featureState.review_counts.required} assigned`), featureState.review_counts.pinned && uiText(`${featureState.review_counts.pinned} pinned`), featureState.review_counts.unread && uiText(`${featureState.review_counts.unread} unread`)].filter(Boolean).join(' · ')
+      : `${open.length} open items across this document.`),
   )
   const introActions = element('div', 'review-room-header-actions')
   if (featureState.review_counts.unread) {
-    introActions.append(button('secondary-button', 'Mark read', 'review-mark-read'))
+    introActions.append(utilityButton('check', 'Mark read', 'review-mark-read'))
   }
-  introActions.append(button('secondary-button', 'Prepare review package', 'review-package'))
-  introActions.append(button('secondary-button', 'Refresh discussions', 'review-refresh'))
+  introActions.append(utilityButton('download', 'Prepare review package', 'review-package'))
+  introActions.append(utilityButton('refresh', 'Refresh discussions', 'review-refresh'))
   intro.append(introCopy, introActions)
   content.append(intro)
   const room = reviewRoomProjection(
@@ -2689,7 +2724,7 @@ function renderReviewTab(state) {
     const anchorLabel = anchor
       ? `${anchor.section || 'Selection'}${anchor.reference ? ` · ${anchor.reference}` : ''}`
       : 'Whole document'
-    form.append(element('small', '', `Comment on ${anchorLabel}`))
+    introCopy.append(element('small', '', `Comment on ${anchorLabel}`))
     const detail = element('textarea')
     const draftKey = `${documentKey()}:new`
     const draft = featureState.review_drafts.get(draftKey) || {}
@@ -2706,7 +2741,9 @@ function renderReviewTab(state) {
     assignee.placeholder = 'Assign to a person or agent (optional)'
     const submit = element('button', 'primary-button', 'Start discussion')
     submit.type = 'submit'
-    form.append(detail, assignee, submit)
+    const actions = element('div', 'document-review-compose-actions')
+    actions.append(assignee, submit)
+    form.append(detail, actions)
     form.addEventListener('submit', event => {
       event.preventDefault()
       if (!detail.value.trim()) return
@@ -2721,9 +2758,7 @@ function renderReviewTab(state) {
     })
     content.append(form)
   }
-  if (!markers.length) {
-    content.append(element('div', 'document-tool-empty', 'Warnings, proposed edits, and evidence will appear here.'))
-  } else {
+  if (markers.length) {
     const list = element('div', 'document-review-list')
     for (const marker of markers) {
       const row = element('article', `document-review-row ${marker.type}${marker.reviewed ? ' reviewed' : ''}`)
@@ -2744,10 +2779,10 @@ function renderReviewTab(state) {
     content.append(list)
   }
   const filters = element('div', 'review-room-thread-actions')
-  for (const [id, label] of [['all', 'All'], ['open', 'Open'], ['resolved', 'Resolved'], ['assigned', 'Assigned']]) {
+  for (const [id, label] of [['all', 'All'], ['open', 'Open discussions'], ['resolved', 'Resolved'], ['assigned', 'Assigned']]) {
     filters.append(button('secondary-button', label, 'review-filter', [id], { pressed: featureState.review_filter === id }))
   }
-  content.append(filters)
+  if (room.threads.length) content.append(filters)
   const threadRecords = room.threads.filter(thread =>
     featureState.review_filter === 'all' ||
     (featureState.review_filter === 'assigned' ? Boolean(thread.assigned_to) && thread.status !== 'resolved' :
@@ -2813,6 +2848,8 @@ function renderReviewTab(state) {
       discussions.append(row)
     }
     content.append(discussions)
+  } else if (!markers.length && !featureState.review_thread_status) {
+    content.append(element('p', 'document-tool-empty', room.threads.length ? 'No discussions match this filter.' : 'No discussions yet.'))
   }
   content.append(element('p', 'status-line', featureState.review_thread_status))
   return content
@@ -2842,7 +2879,7 @@ function renderThreadsTab() {
     title.value = thread.title || 'Document conversation'
     title.setAttribute('aria-label', 'Conversation title')
     title.addEventListener('change', () => emit('rename-thread', thread.id, title.value))
-    const meta = element('small', '', `${thread.draft ? 'Draft · ' : ''}${thread.position?.document || thread.document || 'Book'} · ${new Date(thread.position?.updated_at || thread.updated_at).toLocaleString()}`)
+    const meta = userContent(element('small', '', `${thread.draft ? `${uiText('Draft')} · ` : ''}${thread.position?.document || thread.document || uiText('Book')} · ${new Date(thread.position?.updated_at || thread.updated_at).toLocaleString(uiLocale())}`))
     const actions = element('div', 'document-thread-actions')
     actions.append(
       button('primary-button', 'Resume', 'restore-thread', [thread.id]),
@@ -2863,13 +2900,10 @@ function renderSourcesTab(state) {
   loadSourceSubscriptions()
   content.append(element('div', 'document-tool-intro with-action'))
   const sourceIntro = element('div')
-  sourceIntro.append(
-    element('h3', '', 'Keep sources current'),
-    element('p', '', 'Save a source once and receive an update only when a meaningful change affects this book.'),
-  )
+  sourceIntro.append(element('h3', '', 'Keep sources current'))
   content.firstChild.append(
     sourceIntro,
-    button('primary-button', 'Keep a source current', 'source-subscription-new'),
+    utilityButton('plus', 'Keep a source current', 'source-subscription-new'),
   )
   if (featureState.source_subscription_draft) {
     const form = element('form', 'source-subscription-form')
@@ -2939,7 +2973,7 @@ function renderSourcesTab(state) {
       const row = element('article', `source-subscription-row ${item.status || 'needs_setup'}`)
       const heading = element('div', 'source-subscription-heading')
       heading.append(
-        element('strong', '', item.title || 'Saved source'),
+        item.title ? userContent(element('strong', '', item.title)) : element('strong', '', 'Saved source'),
         element('span', 'source-subscription-state', item.status === 'active' ? 'Active' : 'Needs setup'),
       )
       const actions = element('div', 'source-subscription-actions')
@@ -2949,9 +2983,9 @@ function renderSourcesTab(state) {
       }
       row.append(
         heading,
-        element('small', '', `${item.source_kind || 'source'} · ${item.cadence || 'weekly'}`),
-        element('p', '', item.source || ''),
-        element('p', 'source-subscription-rule', item.change_rule || 'Report only a material change that affects this book.'),
+        element('small', '', `${uiText(({ website: 'Website', feed: 'Feed', folder: 'Workspace folder', repository: 'Repository' })[item.source_kind] || 'Source')} · ${uiText(({ daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' })[item.cadence] || 'Weekly')}`),
+        userContent(element('p', '', item.source || '')),
+        item.change_rule ? userContent(element('p', 'source-subscription-rule', item.change_rule)) : element('p', 'source-subscription-rule', 'Report only a material change that affects this book.'),
         actions,
       )
       subscriptions.append(row)
@@ -2962,21 +2996,18 @@ function renderSourcesTab(state) {
     content.append(element('p', 'status-line', featureState.source_subscription_status))
   }
   const evidenceIntro = element('div', 'document-tool-intro source-evidence-intro')
-  evidenceIntro.append(
-    element('h3', '', 'Evidence'),
-    element('p', '', 'Sources referenced by visible answers and pinned synthesis material.'),
-  )
+  evidenceIntro.append(element('h3', '', 'Evidence'))
   content.append(evidenceIntro)
   const sources = sourceEntries(state)
   if (!sources.length) {
-    content.append(element('div', 'document-tool-empty', 'Citation chips appear after MoonDesk references workspace or web evidence.'))
+    content.append(element('p', 'document-tool-empty', 'No cited sources yet.'))
     return content
   }
   const list = element('div', 'evidence-list')
   for (const source of sources) {
     const row = element('article', 'evidence-row')
     const copy = element('div')
-    copy.append(element('strong', '', source.label), element('small', '', source.value))
+    copy.append(userContent(element('strong', '', source.label)), userContent(element('small', '', source.value)))
     row.append(copy)
     if (source.type === 'web') {
       const link = element('a', 'secondary-button', 'Open source')
@@ -3001,12 +3032,6 @@ function renderSourcesTab(state) {
 function renderHistoryTab() {
   const content = element('div', 'document-tool-content')
   const versions = currentHistory()
-  const intro = element('div', 'document-tool-intro')
-  intro.append(
-    element('h3', '', 'History & compare'),
-    element('p', '', 'Compare saved and proposed document states for this workspace.'),
-  )
-  content.append(intro)
   if (versions.length < 2) {
     content.append(element('div', 'document-tool-empty', 'A second version will appear after the document changes or is saved.'))
     return content
@@ -3065,23 +3090,14 @@ function renderHistoryTab() {
 
 function renderPacksTab() {
   const content = element('div', 'document-tool-content')
-  const intro = element('div', 'document-tool-intro')
-  intro.append(
-    element('h3', '', 'Check packs'),
-    element('p', '', 'Focused checks for normal document work. MoonDesk keeps their prompts and internal stages out of view.'),
-  )
-  content.append(intro)
   const enabled = enabledPackIds()
   const list = element('div', 'check-pack-list')
   for (const pack of checkPacks) {
     const card = element('article', `check-pack-card${enabled.has(pack.id) ? ' enabled' : ''}`)
-    const header = element('div', 'check-pack-heading')
-    header.append(
-      element('strong', '', pack.title),
-      element('span', 'check-pack-state', enabled.has(pack.id) ? 'Enabled' : 'Available'),
-    )
-    const details = element('details')
-    details.append(element('summary', '', 'What it reads and when it warns'))
+    const details = element('details', 'check-pack-details')
+    const title = element('summary')
+    title.append(element('strong', '', pack.title))
+    details.append(title, element('p', '', pack.description))
     const facts = element('dl')
     facts.append(
       element('dt', '', 'Reads'), element('dd', '', pack.reads),
@@ -3089,11 +3105,12 @@ function renderPacksTab() {
     )
     details.append(facts)
     const actions = element('div', 'check-pack-actions')
-    actions.append(
-      button('secondary-button', enabled.has(pack.id) ? 'Disable' : 'Enable', 'toggle-pack', [pack.id]),
-      button('primary-button', 'Run now', 'run-pack', [pack.id]),
-    )
-    card.append(header, element('p', '', pack.description), details, actions)
+    const toggle = utilityButton(enabled.has(pack.id) ? 'plug' : 'unplug', enabled.has(pack.id) ? 'Disable' : 'Enable', 'toggle-pack', [pack.id])
+    toggle.setAttribute('aria-pressed', String(enabled.has(pack.id)))
+    const run = utilityButton('play', 'Run now', 'run-pack', [pack.id])
+    run.disabled = !serverState.selected_document
+    actions.append(toggle, run)
+    card.append(details, actions)
     list.append(card)
   }
   content.append(list)
@@ -3102,39 +3119,32 @@ function renderPacksTab() {
 
 function renderInboxTab(state) {
   const content = element('div', 'document-tool-content')
-  const intro = element('div', 'document-tool-intro')
-  intro.append(
-    element('h3', '', 'MoonDesk Inbox'),
-    element('p', '', 'A familiar folder for work you want MoonDesk to index and quietly check.'),
-  )
   const path = state.workspace_path && state.workspace_path !== 'not connected'
     ? `${state.workspace_path.replace(/\/$/, '')}/inbox`
     : 'Select a MoonBook to see its Inbox'
   const pathBox = element('div', 'inbox-path')
-  pathBox.append(element('code', '', path))
+  pathBox.append(element(state.workspace_id ? 'code' : 'p', '', path))
   const actions = element('div', 'inbox-actions')
   actions.append(
-    button('primary-button', 'Open Inbox in Finder', 'reveal-inbox', [], { disabled: !state.workspace_id }),
+    utilityButton('folder', 'Open Inbox in Finder', 'reveal-inbox'),
     button('secondary-button', 'Import files…', 'import-files', [], { disabled: !state.workspace_id }),
     button('secondary-button', 'Import a folder…', 'import-folder', [], { disabled: !state.workspace_id }),
   )
-  const note = element('div', 'inbox-behavior')
+  actions.firstChild.disabled = !state.workspace_id
+  const note = element('details', 'inbox-behavior')
   note.append(
-    element('strong', '', 'What happens after you add work'),
+    element('summary', '', 'What happens after you add work'),
     element('p', '', 'MoonDesk indexes it with the book, makes it available to Find & Add, and keeps checks in the background. Only actionable warnings interrupt you.'),
   )
-  content.append(intro, pathBox, actions, note)
+  content.append(pathBox, actions, note)
   return content
 }
 
 function renderPreferencesTab() {
   loadAgentPreferences()
   const content = element('div', 'document-tool-content')
-  const intro = element('div', 'document-tool-intro')
-  intro.append(
-    element('h3', '', 'Preferences & glossary'),
-    element('p', '', 'Control terminology, names, tone, and document conventions MoonDesk may remember.'),
-  )
+  const intro = element('div', 'document-tool-intro secondary-tools')
+  intro.append(utilityButton('refresh', 'Refresh', 'preferences-reload'))
   const form = element('form', 'agent-preference-form')
   const draft = featureState.preference_draft
   const kind = element('select')
@@ -3143,9 +3153,9 @@ function renderPreferencesTab() {
     option.value = value
     kind.append(option)
   }
+  kind.setAttribute('aria-label', 'Preference type')
   kind.value = draft?.kind || 'preference'
   const label = element('input')
-  label.placeholder = 'Short label or term'
   label.required = true
   label.value = draft?.label || ''
   const detail = element('textarea')
@@ -3153,16 +3163,33 @@ function renderPreferencesTab() {
   detail.required = true
   detail.value = draft?.detail || ''
   const scope = element('select')
+  scope.setAttribute('aria-label', 'Apply to')
   for (const [value, copy] of [['workspace', 'This workspace'], ['global', 'All workspaces']]) {
     const option = element('option', '', copy)
     option.value = value
     scope.append(option)
   }
   scope.value = draft?.scope || 'workspace'
-  const save = element('button', 'primary-button', draft ? 'Save changes' : 'Save preference')
+  const save = element('button', 'primary-button', draft?.id ? 'Save changes' : 'Save preference')
   save.type = 'submit'
-  form.append(kind, label, detail, scope, save)
-  if (draft) form.append(button('secondary-button', 'Cancel', 'preference-cancel'))
+  const field = (text, input, className = '') => { const wrapper = element('label', className); wrapper.append(element('span', '', text), input); return wrapper }
+  const actions = element('div', 'agent-preference-form-actions')
+  actions.append(save)
+  const cancel = button('secondary-button', 'Cancel', 'preference-cancel')
+  cancel.hidden = !draft
+  actions.prepend(cancel)
+  form.append(field('Preference type', kind), field('Short label or term', label), field('Guidance', detail, 'preference-full-field'), field('Apply to', scope), actions)
+  const sync = () => { save.disabled = !label.value.trim() || !detail.value.trim() }
+  const workspaceId = serverState.workspace_id
+  const capture = () => {
+    featureState.preference_draft = { ...draft, kind: kind.value, label: label.value, detail: detail.value, scope: scope.value }
+    preferenceDrafts.set(workspaceId, featureState.preference_draft)
+    cancel.hidden = false
+    sync()
+  }
+  form.addEventListener('input', capture)
+  form.addEventListener('change', capture)
+  sync()
   form.addEventListener('submit', event => {
     event.preventDefault()
     if (!label.value.trim() || !detail.value.trim()) return
@@ -3174,8 +3201,6 @@ function renderPreferencesTab() {
       scope: scope.value,
       enabled: draft?.enabled !== false,
     })
-    label.value = ''
-    detail.value = ''
   })
   content.append(intro, form)
   const list = element('div', 'agent-preference-list')
@@ -3183,15 +3208,15 @@ function renderPreferencesTab() {
     const row = element('article', `agent-preference-row${item.enabled === false ? ' disabled' : ''}`)
     const copy = element('div')
     copy.append(
-      element('strong', '', item.label),
-      element('p', '', item.detail),
-      element('small', '', `${item.kind} · ${item.scope === 'global' ? 'All workspaces' : 'This workspace'}`),
+      userContent(element('strong', '', item.label)),
+      userContent(element('p', '', item.detail)),
+      element('small', '', `${uiText(({ preference: 'Preference', glossary: 'Glossary', name: 'Name & spelling', convention: 'Document convention' })[item.kind] || item.kind)} · ${uiText(item.scope === 'global' ? 'All workspaces' : 'This workspace')}`),
     )
     const actions = element('div', 'agent-preference-actions')
     actions.append(
-      button('secondary-button', 'Edit', 'preference-edit', [item.id]),
-      button('secondary-button', item.enabled === false ? 'Enable' : 'Disable', 'preference-toggle', [item.id]),
-      button('secondary-button', 'Forget', 'preference-forget', [item.id]),
+      utilityButton('edit', 'Edit', 'preference-edit', [item.id]),
+      utilityButton(item.enabled === false ? 'play' : 'paused', item.enabled === false ? 'Enable' : 'Disable', 'preference-toggle', [item.id]),
+      utilityButton('trash', 'Forget', 'preference-forget', [item.id]),
     )
     row.append(copy, actions)
     list.append(row)
@@ -3214,14 +3239,15 @@ function renderLearningTab(captured = null) {
   )
   const content = element('div', 'document-tool-content learning-review')
   const intro = element('div', 'document-tool-intro with-action')
-  const copy = element('div')
-  copy.append(
-    element('h3', '', 'Learning Review'),
-    element('p', '', 'Teach this book deliberately. Nothing becomes future guidance until you accept it.'),
-  )
-  intro.append(copy,
-    learningButton('secondary-button', 'Reload', 'learning-reload'),
-    learningButton('secondary-button', 'Add learning', 'learning-new'))
+  const reload = learningButton('moon-icon-button', 'Reload', 'learning-reload')
+  reload.setAttribute('aria-label', 'Reload'); reload.title = 'Reload'; reload.innerHTML = iconMarkup('refresh')
+  intro.className = 'document-tool-intro with-action secondary-tools'
+  const help = element('details', 'secondary-help')
+  const helpToggle = element('summary', 'moon-icon-button')
+  helpToggle.setAttribute('aria-label', 'About learning'); helpToggle.title = 'About learning'; helpToggle.innerHTML = iconMarkup('info')
+  help.append(helpToggle, element('p', '', 'Teach this book deliberately. Nothing becomes future guidance until you accept it.'))
+  intro.append(help, reload)
+  if (!learning.learning_draft) intro.append(learningButton('secondary-button', 'Add learning', 'learning-new'))
   content.append(intro)
   const draft = learning.learning_draft
   if (draft) {
@@ -3240,6 +3266,7 @@ function renderLearningTab(captured = null) {
       option.value = value
       kind.append(option)
     }
+    kind.setAttribute('aria-label', 'Learning type')
     kind.value = draft.kind || 'knowledge'
     const detail = element('textarea')
     detail.placeholder = 'What should this book know or do next time?'
@@ -3258,15 +3285,23 @@ function renderLearningTab(captured = null) {
     }
     if (draft.source) {
       const source = element('details', 'learning-source')
-      source.append(element('summary', '', 'Answer that prompted this'), element('p', '', draft.source))
+      source.append(element('summary', '', 'Answer that prompted this'), userContent(element('p', '', draft.source)))
       form.append(source)
     }
     const actions = element('div', 'learning-proposal-actions')
     const submit = element('button', 'primary-button', 'Save for review')
     submit.type = 'submit'
-    if (captured) submit.disabled = Boolean(blocked)
+    const sync = () => { submit.disabled = Boolean(blocked) || !detail.value.trim() }
+    form.addEventListener('input', () => {
+      if (!captured) { draft.detail = detail.value; learningDrafts.set(serverState.workspace_id, draft) }
+      sync()
+    })
+    if (!captured) kind.addEventListener('change', () => { draft.kind = kind.value })
+    sync()
     actions.append(learningButton('secondary-button', 'Cancel', 'learning-cancel'), submit)
-    form.append(kind, detail, actions)
+    const kindField = element('label'); kindField.append(element('span', '', 'Learning type'), kind)
+    const detailField = element('label'); detailField.append(element('span', '', 'Guidance'), detail)
+    form.append(kindField, detailField, actions)
     form.addEventListener('submit', event => {
       event.preventDefault()
       if (!detail.value.trim()) return
@@ -3287,23 +3322,23 @@ function renderLearningTab(captured = null) {
     element('span', '', `${counts.proposed} to review`),
     element('span', '', `${counts.accepted} accepted`),
   )
-  content.append(summary)
+  if (counts.proposed || counts.accepted) content.append(summary)
   const list = element('div', 'learning-proposal-list')
   for (const item of learning.learning_proposals) {
     const bookState = learningBookState(item)
     const row = element('article', `learning-proposal-row ${item.status || 'proposed'}`)
     const heading = element('div', 'learning-proposal-heading')
     heading.append(
-      element('strong', '', item.detail),
+      userContent(element('strong', '', item.detail)),
       element('span', 'learning-proposal-state', bookState.label),
     )
     row.append(
       heading,
-      element('small', '', item.kind === 'procedure' ? 'Way of working' : item.kind),
+      element('small', '', ({ procedure: 'Way of working', knowledge: 'Knowledge', preference: 'Preference', capability: 'Capability idea' })[item.kind] || item.kind),
     )
     if (item.source) {
       const source = element('details', 'learning-source')
-      source.append(element('summary', '', 'Original answer'), element('p', '', item.source))
+      source.append(element('summary', '', 'Original answer'), userContent(element('p', '', item.source)))
       row.append(source)
     }
     if (item.status === 'proposed') {
@@ -3324,11 +3359,11 @@ function renderLearningTab(captured = null) {
     }
     list.append(row)
   }
-  if (!learning.learning_proposals.length) {
+  if (!learning.learning_proposals.length && !draft && !learning.learning_status) {
     list.append(element(
       'p',
       'document-tool-empty',
-      'No learning proposals yet. Use “Teach this book” on an answer, or add one directly.',
+      'No learning proposals yet.',
     ))
   }
   content.append(list, element('p', 'status-line', learning.learning_status))
@@ -3382,6 +3417,10 @@ function renderTaskRecipesTab() {
         Object.assign(draft, { kind: 'code', prompt: preset.prompt, title: preset.title }); render()
         requestAnimationFrame(() => document.querySelector('.task-start-form textarea')?.focus())
       },
+      onKindChange: () => {
+        render()
+        document.querySelector('.task-start-controls select')?.focus({ preventScroll: true })
+      },
     }))
     const list = element('div', 'task-recipe-list task-start-recipes')
     for (const recipe of featureState.task_recipes) {
@@ -3392,7 +3431,7 @@ function renderTaskRecipesTab() {
     if (!featureState.task_recipes.length && !featureState.task_recipe_status) {
       list.append(element('p', 'document-tool-empty', 'No task recipes are available.'))
     }
-    content.append(list, element('p', 'status-line', featureState.task_recipe_status))
+    if (draft.kind !== 'code') content.append(list, element('p', 'status-line', featureState.task_recipe_status))
     return content
   }
   const intro = element('div', 'document-tool-intro with-action')
@@ -3493,12 +3532,12 @@ function renderLivingArtifactsTab() {
       const card = element('article', 'living-artifact-card')
       const heading = element('div', 'living-artifact-heading')
       heading.append(
-        element('strong', '', artifact.title || 'Living artifact'),
-        element('span', 'living-artifact-kind', String(artifact.kind || 'artifact').replace('-', ' ')),
+        artifact.title ? userContent(element('strong', '', artifact.title)) : element('strong', '', 'Living artifact'),
+        element('span', 'living-artifact-kind', ({ checklist: 'Checklist', tracker: 'Tracker', 'evidence-table': 'Evidence table' })[artifact.kind] || 'Living artifact'),
       )
       card.append(
         heading,
-        element('p', '', artifact.purpose || 'An editable artifact for this book.'),
+        artifact.purpose ? userContent(element('p', '', artifact.purpose)) : element('p', '', 'An editable artifact for this book.'),
         element('small', '', `${Array.isArray(artifact.items) ? artifact.items.length : 0} items · revision ${Number(artifact.revision) || 1}`),
         button('secondary-button', 'Open beside chat', 'living-artifact-open', [artifact.path || '']),
         button('secondary-button', 'Reuse as template', 'living-artifact-duplicate', [artifact.id]),
@@ -3527,9 +3566,11 @@ function renderToolbox(state) {
   panel.setAttribute('aria-label', title)
   panel.addEventListener('click', event => event.stopPropagation())
   const header = element('header', 'document-toolbox-header')
+  const identity = element('div', 'work-panel-title')
+  identity.append(element('h2', '', title), userContent(element('span', '', serverState.workspace || 'MoonBook')))
   header.append(
-    heading(serverState.workspace || 'Current work', title),
-    button('icon-button', '×', 'close-toolbox', [], { label: 'Close document tools' }),
+    identity,
+    utilityButton('close', 'Close document tools', 'close-toolbox'),
   )
   const tabs = element('div', 'document-toolbox-tabs')
   tabs.setAttribute('role', 'tablist')
@@ -3585,7 +3626,7 @@ function renderResultsTab(state) {
     for (const file of bundle.artifacts) {
       const open = element('button', 'secondary-button', file.title || file.path)
       open.addEventListener('click', () => openTaskResult(file.path, bundle))
-      panel.append(open)
+      panel.append(userContent(open))
     }
     if (!bundle.artifacts.length) panel.append(element('p', 'document-tool-empty', 'This work has no output files.'))
     return panel
@@ -3636,6 +3677,7 @@ function renderTaskSchedulesTab(state) {
   return taskScheduleRuntime.renderTaskSchedules({ workspaceId: state.workspace_id, conversationId: state.task_id || draftTaskId || '' }, {
     el: element,
     onChanged: render,
+    onChooseResult: () => { featureState.toolbox_tab = 'results'; render() },
     onOpenRun: id => { featureState.toolbox_open = false; forward('resume-code-task', id) },
     onEdit: (schedule, binding) => {
       featureState.schedule_origin = {
@@ -3667,9 +3709,9 @@ function renderRoomTab(state) {
     }).catch(() => { workspaceRoomPromise = null })
     return element('p', 'status-line', 'Loading book room…')
   }
-  return workspaceRoomRuntime.renderWorkspaceRoom(state, {
+  return renderLocalTool(state, 'room', () => workspaceRoomRuntime.renderWorkspaceRoom(state, {
     openFile: path => forward('open-path', path),
-  })
+  }))
 }
 
 function renderBookCalendarTab(state) {
@@ -3680,9 +3722,9 @@ function renderBookCalendarTab(state) {
     }).catch(() => { bookCalendarPromise = null })
     return element('p', 'status-line', 'Loading calendar…')
   }
-  return bookCalendarRuntime.renderBookCalendar(state, {
+  return renderLocalTool(state, 'calendar', () => bookCalendarRuntime.renderBookCalendar(state, {
     openFile: path => forward('open-path', path),
-  })
+  }))
 }
 
 function officeReviewValue(kind, item) {
@@ -4180,11 +4222,13 @@ function render() {
   if (state.purpose === 'workflow') {
     state.hits = (state.hits || []).filter(hit => /\.(json|yaml|yml|mbt|mbtx)$/i.test(hit.path))
   }
+  const localPosition = localToolPosition()
   root.replaceChildren()
   if (state.search_open) root.append(renderSearch(state))
   if (state.synthesis_open) root.append(renderSynthesis(state))
   if (capturedLearning?.open) root.append(renderCapturedLearning(capturedLearning))
   else if (state.toolbox_open) root.append(renderToolbox(state))
+  restoreLocalToolPosition(localPosition)
   const selectionToolbar = renderSelectionToolbar()
   if (selectionToolbar) root.append(selectionToolbar)
   if (state.export_status) {

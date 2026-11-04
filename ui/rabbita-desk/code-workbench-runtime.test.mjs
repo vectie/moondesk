@@ -1,11 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { JSDOM } from 'jsdom'
 import { contextKey, normalizeCodeContext, composeCodeContext, addContextToList, navigateTabList, initialWorkbenchLayout } from './code-workbench-runtime.js'
 
 test('new workspaces start with chat while explicitly opened tools are remembered', () => {
   assert.deepEqual(initialWorkbenchLayout(), { view: 'source', focus: 'chat' })
   assert.deepEqual(initialWorkbenchLayout({ view: 'terminal', focus: 'split' }), { view: 'terminal', focus: 'split' })
   assert.deepEqual(initialWorkbenchLayout({ view: 'stale-pane', focus: 'invalid' }), { view: 'source', focus: 'chat' })
+})
+
+test('cross-view context opens Code using its identity in a localized shell', () => {
+  const dom = new JSDOM('<button data-testid="mode-code" title="打开代码">代码</button>', { runScripts: 'outside-only', pretendToBeVisual: true, url: 'http://localhost/' })
+  try {
+    let opened = 0
+    dom.window.document.querySelector('button').onclick = () => opened++
+    dom.window.eval(readFileSync(new URL('./code-workbench-runtime.js', import.meta.url), 'utf8').replaceAll('export ', ''))
+    dom.window.dispatchEvent(new dom.window.CustomEvent('moondesk:add-context', { detail: { kind: 'code', label: 'Skills', path: 'Skills', text: 'Keep this exact content' } }))
+    assert.equal(opened, 1)
+  } finally { dom.window.close() }
 })
 
 test('context is attached once with an inspectable source and exact selected text', () => {

@@ -95,7 +95,7 @@ export async function downloadTaskFile(workspaceId, file) {
   setTimeout(() => { link.remove(); URL.revokeObjectURL(url) }, 1000)
 }
 
-export function renderTaskDraft({ draft, workspace, onContinue, onPreset, el }) {
+export function renderTaskDraft({ draft, workspace, onContinue, onPreset, onKindChange, el }) {
   const form = el('form', 'task-start-form')
   const label = el('label', '', 'What do you want to produce?')
   const input = el('textarea')
@@ -112,7 +112,7 @@ export function renderTaskDraft({ draft, workspace, onContinue, onPreset, el }) 
   const next = el('button', 'primary-button', 'Continue')
   next.type = 'submit'; next.disabled = !workspace || !input.value.trim()
   input.addEventListener('input', () => { draft.prompt = input.value; next.disabled = !workspace || !input.value.trim() })
-  mode.addEventListener('change', () => { draft.kind = mode.value })
+  mode.addEventListener('change', () => { draft.kind = mode.value; onKindChange?.() })
   tools.append(mode, next)
   form.append(label, tools)
   form.addEventListener('submit', event => {
@@ -126,7 +126,8 @@ export function renderTaskDraft({ draft, workspace, onContinue, onPreset, el }) 
     presets.append(button)
   }
   const root = el('div', 'task-start-draft')
-  root.append(form, presets)
+  root.append(form)
+  if (draft.kind === 'code') root.append(presets)
   return root
 }
 
@@ -148,7 +149,7 @@ export function installPackWorkspace({ onResults, onAttach, getOrigin, onReturn,
     close(); opener = link
     const origin = getOrigin?.()
     const book = document.querySelector('.work-book-switcher summary > span:not(.moon-icon)')?.textContent || 'MoonBook'
-    const title = link.getAttribute('aria-label')?.replace(/^Open /, '') || link.closest('article')?.querySelector('h2,h3')?.textContent || 'App'
+    const title = link.closest('article')?.querySelector('h2,h3')?.textContent || link.getAttribute('aria-label')?.replace(/^(Open |打开 )/, '') || 'App'
     const el = (tag, text = '') => { const node = document.createElement(tag); node.textContent = text; return node }
     surface = el('section'); surface.className = 'pack-app-workspace'; surface.setAttribute('aria-label', title)
     const header = el('header')

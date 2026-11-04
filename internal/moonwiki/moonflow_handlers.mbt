@@ -95,7 +95,6 @@ async fn handle_moonflow_import_selected(
     )
     return
   }
-  let moonflow_root = json_string(capability_evidence, "root", default="")
   let suite_root = workspace_context(workspace_root).suite_root
   let evaluated_at = moonflow_server_utc_timestamp()
   let catalog = moonflow_resolve_capability_catalog(
@@ -185,23 +184,18 @@ async fn handle_moonflow_import_selected(
       return
     }
   }
-  let validation = execution_sandbox_client_submit({
-    operation: MoonFlowValidateGraph,
-    input: {
-      "moonflow_root": moonflow_root,
-      "graph_path": compiled_graph_path,
-      "catalog_path": catalog_path,
-      "evaluated_at": evaluated_at,
-    },
-  })
+  let validation = moonflow_native_service(
+    suite_root,
+    ValidateGraph(graph_path=compiled_graph_path, catalog_path~, evaluated_at~),
+  )
   guard validation is Ok(validation_report) else {
     let receipt = moonflow_import_receipt(
       graph,
       catalog.evidence,
       evaluated_at,
-      "sandbox_unavailable",
+      "runtime_error",
       "",
-      execution_sandbox_unavailable_message(),
+      moonflow_native_error(validation),
     )
     let receipt_ref = moonflow_persist_import_receipt(
       suite_root, evidence_root, receipt,
@@ -217,9 +211,9 @@ async fn handle_moonflow_import_selected(
           "import_receipt_ref": receipt_ref,
         },
         ok=false,
-        status="sandbox_unavailable",
-        message=execution_sandbox_unavailable_message(),
-        next_action="configure_execution_sandbox",
+        status="runtime_error",
+        message=moonflow_native_error(validation),
+        next_action="review_work_graph",
       ),
     )
     return
@@ -294,24 +288,18 @@ async fn handle_moonflow_import_selected(
     )
     return
   }
-  let imported = execution_sandbox_client_submit({
-    operation: MoonFlowImportGraph,
-    input: {
-      "moonflow_root": moonflow_root,
-      "suite_root": suite_root,
-      "graph_path": compiled_graph_path,
-      "catalog_path": catalog_path,
-      "evaluated_at": evaluated_at,
-    },
-  })
+  let imported = moonflow_native_service(
+    suite_root,
+    ImportGraph(graph_path=compiled_graph_path, catalog_path~, evaluated_at~),
+  )
   guard imported is Ok(projection) else {
     let receipt = moonflow_import_receipt(
       graph,
       catalog.evidence,
       evaluated_at,
-      "sandbox_unavailable",
+      "runtime_error",
       validation_report_ref,
-      execution_sandbox_unavailable_message(),
+      moonflow_native_error(imported),
     )
     let receipt_ref = moonflow_persist_import_receipt(
       suite_root, evidence_root, receipt,
@@ -328,9 +316,9 @@ async fn handle_moonflow_import_selected(
           "import_receipt_ref": receipt_ref,
         },
         ok=false,
-        status="sandbox_unavailable",
-        message=execution_sandbox_unavailable_message(),
-        next_action="configure_execution_sandbox",
+        status="runtime_error",
+        message=moonflow_native_error(imported),
+        next_action="review_work_graph",
       ),
     )
     return
@@ -483,7 +471,7 @@ async fn moonflow_enriched_projection(
   fields["single_step_actions"] = ToJson::to_json(
     moonflow_single_step_actions(run_root, projection),
   )
-  fields["single_step_setup"] = moonflow_single_step_setup()
+  fields["single_step_setup"] = moonflow_single_step_setup(run_root)
   fields["owner_summary_observation"] = ToJson::to_json(
     moonflow_owner_summary_observation(
       projection,
@@ -542,18 +530,10 @@ async fn handle_moonflow_control(
     return
   }
   let evaluated_at = moonflow_server_utc_timestamp()
-  let moonflow_root = json_string(capability_evidence, "root", default="")
-  let result = execution_sandbox_client_submit({
-    operation: MoonFlowControl,
-    input: {
-      "moonflow_root": moonflow_root,
-      "suite_root": workspace_context(workspace_root).suite_root,
-      "run_id": run_id,
-      "action": action,
-      "evaluated_at": evaluated_at,
-      "detail": detail,
-    },
-  })
+  let result = moonflow_native_service(
+    workspace_context(workspace_root).suite_root,
+    Control(run_id~, action~, evaluated_at~, detail~),
+  )
   guard result is Ok(control) else {
     send_json(
       conn,
@@ -561,9 +541,9 @@ async fn handle_moonflow_control(
       api_contract_response(
         { "run_id": run_id, "evaluated_at": evaluated_at },
         ok=false,
-        status="sandbox_unavailable",
-        message=execution_sandbox_unavailable_message(),
-        next_action="configure_execution_sandbox",
+        status="runtime_error",
+        message=moonflow_native_error(result),
+        next_action="review_run_state",
       ),
     )
     return

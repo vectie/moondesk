@@ -1,0 +1,97 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/shell",
+  "moonbitlang/core/json",
+}
+
+async fn output(program : String, args : Array[String]) -> String {
+  let result = @shell.Cmd(program, args).output()
+  result.check()
+  result.stdout().trim().to_owned()
+}
+
+async fn save(path : String, value : Json) -> Unit {
+  @fs.write_file(path, value.stringify(indent=2) + "\n", create_mode=CreateOrTruncate)
+}
+
+async fn digest(path : String) -> String {
+  "sha256:" + output("shasum", ["-a", "256", path]).split(" ").next().unwrap().to_owned()
+}
+
+async fn main {
+  let root = "/Users/kq/moonsuite/qualification/desktop-flow-20261022/workspace"
+  let book = root + "/books/flow-desktop-check"
+  let flow = "/Applications/MoonDesk.app/Contents/MacOS/moonflow"
+  let mold = "/Users/kq/moonsuite/qualification/desktop-flow-20261022/build-mold/native/release/build/cmd/moonflow_adapter/moonflow_adapter.exe"
+  let gate = "/Users/kq/Workspace/moongate/_build/native/release/build/cmd/main/main.exe"
+  let at = output("date", ["-u", "+%Y-%m-%dT%H:%M:%SZ"])
+  let until = output("date", ["-u", "-v+1d", "+%Y-%m-%dT%H:%M:%SZ"])
+  let trusted = ".moonsuite/products/moondesk/flow-runtime"
+  for path in [book + "/flow", book + "/requests", root + "/" + trusted] {
+    if !@fs.exists(path) { @fs.mkdir(path, recursive=true) }
+  }
+  guard !@fs.exists(book + "/book.json") else { fail("Verification book already exists; preserve its evidence") }
+  save(book + "/book.json", { "id": "flow-desktop-check", "name": "Flow verification", "version": "1.0.0", "summary": "Isolated packaged-app verification; native reference model only" })
+  let request : Json = {
+    "contract_id": "moonmold.spatial-operation-request.v1",
+    "request_id": "desktop-flow-model", "idempotency_key": "desktop-flow-model-once",
+    "project_id": "desktop-flow-check", "model_id": "desktop-flow-model",
+    "expected_parent_digest": "mm1-empty-scene", "authority": "WorkspaceMutation",
+    "intent": "Verify packaged Flow creates one local reference model and retains its receipt.",
+    "reference_artifacts": [], "constraints": ["local verification only", "no physical effects"],
+    "backend_preference": "mock-reference",
+    "operation": { "method": "scene.create-model", "params": { "name": "desktop-flow-model", "units": "mm", "coordinateFrame": "z-up-right-handed" } },
+  }
+  save(book + "/requests/create-model.json", request)
+  let source_digest = digest(book + "/requests/create-model.json")
+  let graph : Json = {
+    "contract_id": "moonsuite.work-model.v1", "graph_id": "desktop-flow-check-r1",
+    "book_id": "flow-desktop-check", "declaration_revision": "r1",
+    "source_digest": source_digest, "recorded_at": at,
+    "items": [{
+      "work_item_id": "create-model", "declaration_id": "create-model",
+      "product_id": "moonmold", "requested_authority": "workspace-mutation",
+      "acceptance_criteria": ["A retained native model receipt is available for review"],
+      "operation": "moonmold/spatial.operation.execute@0.2.0",
+      "input_contracts": ["moonmold/spatial-operation-request@1.0.0"],
+      "output_contracts": ["moonmold/spatial-operation-receipt@1.0.0"],
+      "required_claim": "digital-artifact", "input_artifacts": ["books/flow-desktop-check/requests/create-model.json"],
+      "timeout_ms": 60000, "depends_on": [],
+    }],
+  }
+  save(book + "/flow/work-graph.json", graph)
+  let source = @json.parse(output(mold, ["source-bundle", "/Users/kq/Workspace/moonmold/pack.json", root, at, until]))
+  save(root + "/" + trusted + "/source-bundle.json", source)
+  let catalog = @json.parse(output(flow, ["compile-capability-catalog", root + "/" + trusted + "/source-bundle.json"]))
+  save(book + "/flow/capability-catalog.json", catalog)
+  save(root + "/" + trusted + "/catalog.json", catalog)
+  save(root + "/" + trusted + "/usage.json", { "model_tokens": 0, "tool_calls": 0, "storage_bytes": 0, "attempts": 0, "concurrency": 0 })
+  save(root + "/" + trusted + "/envelope.json", {
+    "contract_id": "moongate.autonomy-envelope.v1", "envelope_id": "desktop-flow-verification-only",
+    "mode": "unattended-digital", "goal_ref": "books/flow-desktop-check/requests/create-model.json",
+    "workspace_root": root, "source_digest": source_digest,
+    "grants": [{ "product_id": "moonmold", "operations": ["moonmold/spatial.operation.execute@0.2.0"],
+      "authority_ceiling": "workspace-mutation", "claim_ceiling": "digital-artifact",
+      "artifact_prefixes": [".moonsuite/products/moonmold/adapter-attempts", ".moonsuite/products/moonmold/runtime/semantic-journal.json"] }],
+    "budget": { "model_tokens": 1, "tool_calls": 4, "storage_bytes": 8388608, "attempts": 1, "concurrency": 1 },
+    "external_effects_allowed": false, "physical_effects_allowed": false,
+    "granted_by": "user-requested-isolated-packaged-app-verification", "recorded_at": at, "expires_at": until, "revoked": false,
+  })
+  save(root + "/" + trusted + "/single-step.json", {
+    "contract_id": "moonflow.single-step-config.v2", "capability_ref": trusted + "/catalog.json",
+    "envelope_ref": trusted + "/envelope.json", "usage_ref": trusted + "/usage.json",
+    "gate_executable": gate, "gate_sha256": digest(gate), "adapter_executable": mold, "adapter_sha256": digest(mold),
+  })
+  let principal : Json = { "contract_id": "moonsuite.principal-ref.v1", "principal_id": "verification-owner", "kind": "human", "issuer": "local-verification", "subject": "verification-owner" }
+  save(root + "/" + trusted + "/collaboration-start.json", {
+    "contract_id": "moonflow.collaboration-operator-mutation.v1", "workspace_id": "book-flow-desktop-check",
+    "action": "start", "mutation_id": "desktop-verification-start", "actor": principal, "recorded_at": at,
+    "workspace_ref": { "contract_id": "moonsuite.workspace-ref.v1", "workspace_id": "book-flow-desktop-check", "revision": "r1", "digest": source_digest },
+    "payload": { "owner_membership_id": "verification-owner" },
+  })
+  let collaboration = @json.parse(output(flow, ["collaboration", "apply", book, "book-flow-desktop-check", root + "/" + trusted + "/collaboration-start.json"]))
+  save(root + "/" + trusted + "/collaboration-start-result.json", collaboration)
+  println("Prepared isolated verification library: " + root)
+  println("No Flow run or model attempt has been started; use the packaged app.")
+}

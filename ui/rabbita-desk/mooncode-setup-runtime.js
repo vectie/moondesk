@@ -1,5 +1,6 @@
-import { captureKnowledgeDraft, renderKnowledge, renderKnowledgeEmbeddingSettings, knowledgeAction } from './mooncode-knowledge-runtime.js'
-import { iconMarkup } from './ui-icons.js'
+import { captureKnowledgeDraft, renderKnowledge, renderKnowledgeEmbeddingSettings, knowledgeAction, syncKnowledgeActions } from './mooncode-knowledge-runtime.js'
+import { iconMarkup, setIconButton } from './ui-icons.js'
+import { uiText } from './ui-locale.js'
 
 const panels = new WeakMap()
 const retainedDrafts = new Map()
@@ -67,7 +68,7 @@ async function request(state, payload) {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   } : undefined)
   const result = await response.json()
-  if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : result.message || 'Could not save coding setup.')
+  if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : result.message || (payload ? 'Could not save coding setup.' : 'Coding setup could not be loaded. Try Refresh.'))
   return result
 }
 
@@ -99,54 +100,73 @@ export function retainCodingSetupDraft(state) {
 
 export function restoreCodingSetupDraft(root) {
   const saved = retainedDrafts.get(root.dataset.workspaceId)
-  return saved ? { ...structuredClone(saved), root } : { root, workspaceId: root.dataset.workspaceId, tab: 'skills', fileIndex: 0, draft: null, data: null, instructions: '', message: '', fieldDrafts: {} }
+  return saved ? { ...structuredClone(saved), loading: false, root } : { root, workspaceId: root.dataset.workspaceId, tab: 'skills', fileIndex: 0, draft: null, data: null, instructions: '', message: '', fieldDrafts: {} }
 }
 
 function clearFieldDrafts(state, prefix) {
   for (const name of Object.keys(state.fieldDrafts || {})) if (name.startsWith(prefix)) delete state.fieldDrafts[name]
 }
 
+export function syncSetupActions(root) {
+  syncKnowledgeActions(root)
+  for (const [action, fields] of [
+    ['save-template', ['prompt-name', 'prompt-text']],
+    ['save-preset', ['preset-name', 'preset-model']],
+    ['save-integration', ['integration-id', 'integration-url']],
+    ['add-file', ['new-file-path']], ['save-skill', ['skill-id']],
+  ]) {
+    const control = root.querySelector(`[data-action="${action}"]`)
+    if (control) control.disabled = fields.some(name => !root.querySelector(`[name="${name}"]`)?.value.trim())
+  }
+}
+
 function skillEditor(state) {
   const draft = state.draft
   const records = state.data.skills || []
-  return `<div class="coding-setup-skill-grid"><aside aria-label="Skill library"><button type="button" data-action="new-skill">${iconMarkup('plus')}New skill</button>
+  return `<div class="coding-setup-skill-grid${!draft && !records.length ? ' is-empty' : ''}"><aside aria-label="Skill library"><button type="button" data-action="new-skill">${iconMarkup('plus')}New skill</button>
     <details class="coding-setup-import-options"><summary>Import skill</summary><label class="coding-setup-import">File<input type="file" data-import accept=".md,.json" aria-label="Import skill file"></label>
     <label class="coding-setup-import">Folder<input type="file" data-import-folder webkitdirectory multiple aria-label="Import skill folder"></label></details>
-    ${records.map((item, index) => `<button type="button" class="coding-setup-skill${draft?.id === item.id ? ' selected' : ''}" data-action="select-skill" data-index="${index}">${escape(item.id)}<small>${item.files.length} files</small></button>`).join('')}
-    ${!records.length ? '<p>Create or import your first reusable coding skill.</p>' : ''}</aside>
+    ${records.map((item, index) => `<button type="button" class="coding-setup-skill${draft?.id === item.id ? ' selected' : ''}" data-action="select-skill" data-index="${index}"><span data-i18n-scope="content">${escape(item.id)}</span><small>${item.files.length} files</small></button>`).join('')}
+    </aside>
     <div>${draft ? `<label>Skill folder<input name="skill-id" value="${escape(draft.id)}" autocomplete="off"></label>
       <div class="coding-setup-filebar"><label>File<select name="skill-file">${draft.files.map((file, index) => `<option value="${index}"${index === state.fileIndex ? ' selected' : ''}>${escape(file.path)}</option>`).join('')}</select></label>
       <label>New file path<input name="new-file-path" placeholder="references/examples.md"></label><button type="button" data-action="add-file">Add file</button><button type="button" data-action="remove-file"${draft.files[state.fileIndex]?.path === 'SKILL.md' ? ' disabled' : ''}>Remove file</button></div>
       <label>${escape(draft.files[state.fileIndex]?.path || 'File contents')}<textarea name="skill-content" spellcheck="false" rows="16">${escape(draft.files[state.fileIndex]?.content || '')}</textarea></label>
       <div class="coding-setup-actions"><button type="button" data-action="save-skill">Save and install</button><button type="button" data-action="export-skill">Export bundle</button>${records.some(item => item.id === draft.id) ? '<button type="button" data-action="remove-skill">Uninstall skill</button>' : ''}</div>
-      <p class="coding-setup-hint">Available from the next coding turn.</p>` : '<p>Select a skill to edit its files.</p>'}</div></div>`
+      <p class="coding-setup-hint">Available from the next coding turn.</p>` : records.length ? '<p>Select a skill to edit its files.</p>' : ''}</div></div>`
 }
 
 function presetEditor(state) {
   const controls = document.querySelector('[data-runtime="mooncode-composer-controls-v1"]')
   const models = (controls?.dataset.models || '').split('\n').filter(Boolean)
-  return `<p class="coding-setup-hint">Save a model and reasoning level for repeated work.</p>
+  return `
     <div class="coding-setup-preset-form"><label>Preset name<input name="preset-name" placeholder="Careful review"></label>
-    <label>Connected model<select name="preset-model">${models.map(model => `<option${model === controls?.dataset.selectedModel ? ' selected' : ''}>${escape(model)}</option>`).join('')}</select></label>
-    <label>Reasoning<select name="preset-reasoning">${['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].map(value => `<option${value === controls?.dataset.reasoning ? ' selected' : ''}>${value}</option>`).join('')}</select></label>
+    <label>Connected model<select name="preset-model">${models.map(model => `<option translate="no"${model === controls?.dataset.selectedModel ? ' selected' : ''}>${escape(model)}</option>`).join('')}</select></label>
+    <label>Reasoning<select name="preset-reasoning">${['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].map(value => `<option value="${value}"${value === controls?.dataset.reasoning ? ' selected' : ''}>${uiText(value)}</option>`).join('')}</select></label>
     <label>Task purpose<select name="preset-intent"><option value="auto">Automatic</option><option value="read_only">Review only</option><option value="workspace_change">Make changes</option></select></label>
-    <button type="button" data-action="save-preset"${models.length ? '' : ' disabled'}>Save preset</button></div>
+    <div class="coding-setup-form-actions"><button type="button" data-action="save-preset"${models.length ? '' : ' disabled'}>Save preset</button></div></div>
     ${!models.length ? '<p>No models are connected. Connect a provider from the Code setup controls, then refresh this panel.</p>' : ''}
-    <div class="coding-setup-presets">${(state.data.presets || []).map((preset, index) => `<article><div><strong>${escape(preset.name)}${preset.default ? ' · Book default' : ''}</strong><p>${escape(preset.model)} · ${escape(preset.reasoning)} · ${escape(preset.task_intent)}</p></div><button type="button" data-action="apply-preset" data-index="${index}">Use preset</button><button type="button" data-action="default-preset" data-index="${index}">${preset.default ? 'Clear default' : 'Use for new chats'}</button><button type="button" data-action="delete-preset" data-index="${index}">Remove</button></article>`).join('')}</div>`
+    <div class="coding-setup-presets">${(state.data.presets || []).map((preset, index) => `<article><div><strong>${escape(preset.name)}</strong>${preset.default ? ' · <span>Book default</span>' : ''}<p>${escape(preset.model)} · ${escape(uiText(preset.reasoning))} · ${escape(uiText(({ auto: 'Automatic', read_only: 'Review only', workspace_change: 'Make changes' })[preset.task_intent] || preset.task_intent))}</p></div><button type="button" data-action="apply-preset" data-index="${index}">Use preset</button><button type="button" data-action="default-preset" data-index="${index}">${preset.default ? 'Clear default' : 'Use for new chats'}</button><button type="button" data-action="delete-preset" data-index="${index}">Remove</button></article>`).join('')}</div>`
 }
 
 function promptEditor(state) {
-  return `<p class="coding-setup-hint">Add saved requests to your conversation before sending.</p><label>Prompt name<input name="prompt-name" value="${escape(state.promptDraft?.name || '')}" placeholder="Review before merge"></label><label>Instructions<textarea name="prompt-text" rows="8">${escape(state.promptDraft?.text || '')}</textarea></label><button type="button" data-action="save-template">Save prompt</button><div class="coding-setup-presets">${(state.data.templates || []).map((item, index) => `<article><div><strong>${escape(item.name)}</strong><p>${escape(item.text.slice(0, 180))}</p></div><button type="button" data-action="use-template" data-index="${index}">Add to conversation</button><button type="button" data-action="edit-template" data-index="${index}">Edit</button><button type="button" data-action="delete-template" data-index="${index}">Remove</button></article>`).join('')}</div>`
+  return `<label>Prompt name<input name="prompt-name" value="${escape(state.promptDraft?.name || '')}" placeholder="Review before merge"></label><label>Instructions<textarea name="prompt-text" rows="8">${escape(state.promptDraft?.text || '')}</textarea></label><div class="coding-setup-form-actions"><button type="button" data-action="save-template">Save prompt</button></div><div class="coding-setup-presets">${(state.data.templates || []).map((item, index) => `<article><div><strong>${escape(item.name)}</strong><p>${escape(item.text.slice(0, 180))}</p></div><button type="button" data-action="use-template" data-index="${index}">Add to conversation</button><button type="button" data-action="edit-template" data-index="${index}">Edit</button><button type="button" data-action="delete-template" data-index="${index}">Remove</button></article>`).join('')}</div>`
 }
 
 function integrationsEditor(state) {
   const draft = state.integrationDraft || {}
-  return `<p class="coding-setup-hint">Connect external tools for coding work.</p><details class="coding-setup-help"><summary>Supported connections</summary><p>MCP HTTP endpoints with JSON or server-sent-event responses (2025-11-25 protocol). Save, then test to discover tools.</p></details><div class="coding-setup-preset-form"><label>Connection name<input name="integration-id" value="${escape(draft.id || '')}" placeholder="project-tools"></label><label>MCP endpoint<input type="url" name="integration-url" value="${escape(draft.url || '')}" placeholder="https://example.com/mcp"></label><label>Bearer token (optional)<input type="password" name="integration-token" autocomplete="new-password" placeholder="${draft.has_token ? 'Saved token — leave blank to keep' : 'Optional access token'}"></label><button type="button" data-action="save-integration">Save connection</button></div><div class="coding-setup-presets">${(state.data.integrations || []).map((item, index) => `<article><div><strong>${escape(item.id)}</strong><p>${escape(item.url)}</p><span class="coding-setup-connection-state">${iconMarkup(item.enabled ? 'plug' : 'paused')}${item.enabled ? 'Enabled' : 'Paused'}${item.has_token ? ' · Token saved' : ''}</span></div><button type="button" data-action="test-integration" data-index="${index}"${item.enabled ? '' : ' disabled'}>Test tools</button><button type="button" data-action="edit-integration" data-index="${index}">Edit</button><button type="button" data-action="toggle-integration" data-index="${index}">${item.enabled ? 'Pause' : 'Enable'}</button><button type="button" data-action="remove-integration" data-index="${index}">Remove</button></article>`).join('')}</div>${state.integrationResult ? `<pre class="coding-setup-tool-result">${escape(state.integrationResult)}</pre>` : ''}`
+  return `<div class="coding-setup-preset-form">
+    <label>Connection name<input name="integration-id" value="${escape(draft.id || '')}" placeholder="project-tools"></label>
+    <label>MCP endpoint<input type="url" name="integration-url" value="${escape(draft.url || '')}" placeholder="https://example.com/mcp"></label>
+    <label class="coding-setup-full-field">Bearer token (optional)<input type="password" name="integration-token" autocomplete="new-password" placeholder="${draft.has_token ? 'Saved token — leave blank to keep' : 'Optional access token'}"></label>
+    <div class="coding-setup-form-actions"><button type="button" data-action="save-integration">Save connection</button></div></div>
+    <details class="coding-setup-help"><summary>Supported connections</summary><p>MCP HTTP endpoints with JSON or server-sent-event responses (2025-11-25 protocol). Save, then test to discover tools.</p></details>
+    <div class="coding-setup-presets">${(state.data.integrations || []).map((item, index) => `<article><div><strong>${escape(item.id)}</strong><p>${escape(item.url)}</p><span class="coding-setup-connection-state">${iconMarkup(item.enabled ? 'plug' : 'paused')}${item.enabled ? 'Enabled' : 'Paused'}${item.has_token ? ' · Token saved' : ''}</span></div><button type="button" data-action="test-integration" data-index="${index}"${item.enabled ? '' : ' disabled'}>Test tools</button><button type="button" data-action="edit-integration" data-index="${index}">Edit</button><button type="button" data-action="toggle-integration" data-index="${index}">${item.enabled ? 'Pause' : 'Enable'}</button><button type="button" data-action="remove-integration" data-index="${index}">Remove</button></article>`).join('')}</div>${state.integrationResult ? `<pre class="coding-setup-tool-result">${escape(state.integrationResult)}</pre>` : ''}`
 }
 
 function historyView(state) {
   const history = state.data.history || []
-  return `<p class="coding-setup-hint">Compare saved versions. Skills and instructions reopen as drafts; other settings restore immediately.</p><details class="coding-setup-help"><summary>About restoration</summary><p>Restoring settings creates a new version. Connection tokens are kept separately and are not included in history.</p></details>${history.map((entry, index) => {
+  return `<details class="coding-setup-help"><summary>About restoration</summary><p>Compare saved versions. Skills and instructions reopen as drafts; other settings restore immediately.</p><p>Restoring settings creates a new version. Connection tokens are kept separately and are not included in history.</p></details>${history.map((entry, index) => {
     const fileDraft = ['skill', 'instructions'].includes(entry.kind)
     const key = entry.kind === 'integrations' ? 'servers' : entry.kind === 'embeddings' ? 'configuration' : entry.kind
     const before = entry.kind === 'skill' ? entry.previous_files : entry.kind === 'instructions' ? entry.previous_content : entry.previous
@@ -165,6 +185,7 @@ function render(state) {
     host.classList.add('coding-setup-drawer')
     host.dataset.popup = 'coding-setup'
     host.dataset.popupTrigger = '.mooncode-skill-toggle'
+    host.dataset.popupFocusDismiss = 'false'
     host.dataset.setupTab = state.tab
     host.dataset.setupCatalogOpen = String(Boolean(state.catalogOpen))
     host.setAttribute('role', 'dialog')
@@ -172,19 +193,26 @@ function render(state) {
     host.removeAttribute('data-i18n-aria-label')
   }
   const prefix = `coding-setup-${encodeURIComponent(state.workspaceId)}`
+  const scope = ['skills', 'integrations'].includes(state.tab) ? 'Shared across books in this MoonSuite' : 'Applies to this book'
   const counts = { skills: state.data?.skills?.length, knowledge: state.data?.knowledge?.length, presets: state.data?.presets?.length, prompts: state.data?.templates?.length, integrations: state.data?.integrations?.length, history: state.data?.history?.length }
-  state.root.innerHTML = `<section class="coding-setup" aria-label="Coding setup"><header><h3>${iconMarkup('settings')}Coding setup</h3><div class="coding-setup-header-actions"><button type="button" class="moon-icon-button" data-action="refresh" title="Refresh setup" aria-label="Refresh setup">${iconMarkup('refresh')}</button><button type="button" class="moon-icon-button" data-action="close" data-popup-dismiss title="Close coding setup" aria-label="Close coding setup">${iconMarkup('close')}</button></div></header>
+  state.root.innerHTML = `<section class="coding-setup" aria-label="Coding setup"><header><h3>${iconMarkup('settings')}Coding setup</h3><div class="coding-setup-header-actions"><details class="coding-setup-context"><summary class="moon-icon-button" title="${scope}" aria-label="${scope}">${iconMarkup('info')}</summary><p>${scope}</p></details><button type="button" class="moon-icon-button" data-action="refresh" title="Refresh setup" aria-label="Refresh setup">${iconMarkup('refresh')}</button><button type="button" class="moon-icon-button" data-action="close" data-popup-dismiss title="Close coding setup" aria-label="Close coding setup">${iconMarkup('close')}</button></div></header>
     <div class="coding-setup-tabs" role="tablist" aria-label="Coding setup sections">${sections.map(([id, label, icon]) => `<button type="button" id="${prefix}-${id}-tab" data-tab="${id}" role="tab" aria-selected="${id === state.tab}" aria-controls="${prefix}-panel" tabindex="${id === state.tab ? '0' : '-1'}">${iconMarkup(icon)}<span>${label}</span>${counts[id] ? `<small>${counts[id]}</small>` : ''}</button>`).join('')}</div>
     <div class="coding-setup-content" id="${prefix}-panel" role="tabpanel" aria-labelledby="${prefix}-${state.tab}-tab" tabindex="0">
     <p data-setup-status data-error="${Boolean(state.error)}" role="status" aria-live="polite">${escape(state.message || '')}</p>
     ${state.data && state.tab === 'knowledge' ? renderKnowledgeEmbeddingSettings(state) : ''}
-    ${['skills', 'integrations'].includes(state.tab) ? `<p class="coding-setup-scope">${iconMarkup('info')}Shared across books in this MoonSuite</p>` : '<p class="coding-setup-scope">Applies to this book</p>'}
-    ${!state.data ? '<p>Loading setup…</p>' : state.tab === 'skills' ? skillEditor(state) : state.tab === 'knowledge' ? renderKnowledge(state) : state.tab === 'presets' ? presetEditor(state) : state.tab === 'prompts' ? promptEditor(state) : state.tab === 'integrations' ? integrationsEditor(state) : state.tab === 'history' ? historyView(state) : `<label>Book instructions<textarea name="instructions" rows="18" spellcheck="false">${escape(state.instructions)}</textarea></label><div class="coding-setup-actions"><button type="button" data-action="save-instructions">Save instructions</button><span class="coding-setup-hint">AGENTS.md · Used from the next turn</span></div>`}
-    ${state.tab === 'skills' ? `<button type="button" class="coding-setup-catalog-toggle" data-action="toggle-catalog" aria-expanded="${Boolean(state.catalogOpen)}">${iconMarkup(state.catalogOpen ? 'chevron-down' : 'chevron-right')}Discovered skills</button>` : ''}</div></section>`
+    ${!state.data ? (state.loading ? '<p role="status">Loading setup…</p>' : '') : state.tab === 'skills' ? skillEditor(state) : state.tab === 'knowledge' ? renderKnowledge(state) : state.tab === 'presets' ? presetEditor(state) : state.tab === 'prompts' ? promptEditor(state) : state.tab === 'integrations' ? integrationsEditor(state) : state.tab === 'history' ? historyView(state) : `<label>Book instructions<textarea name="instructions" rows="18" spellcheck="false">${escape(state.instructions)}</textarea></label><div class="coding-setup-actions"><button type="button" data-action="save-instructions">Save instructions</button><span class="coding-setup-hint">AGENTS.md · Used from the next turn</span></div>`}
+    ${state.data && state.tab === 'skills' ? `<button type="button" class="coding-setup-catalog-toggle" data-action="toggle-catalog" aria-expanded="${Boolean(state.catalogOpen)}">${iconMarkup(state.catalogOpen ? 'chevron-down' : 'chevron-right')}Discovered skills</button>` : ''}</div></section>`
+  state.root.querySelector('[data-action="refresh"]').disabled = Boolean(state.loading)
+  const actionIcons = { 'edit-template': 'edit', 'delete-template': 'trash', 'use-template': 'chat', 'delete-preset': 'trash', 'apply-preset': 'check', 'edit-integration': 'edit', 'remove-integration': 'trash', 'test-integration': 'play', 'toggle-integration': 'paused' }
+  for (const control of state.root.querySelectorAll('.coding-setup-presets button[data-action]')) {
+    const action = control.dataset.action
+    if (actionIcons[action]) setIconButton(control, action === 'toggle-integration' && control.textContent === 'Enable' ? 'play' : actionIcons[action], control.textContent)
+  }
   for (const [name, value] of Object.entries(state.fieldDrafts || {})) {
     const input = state.root.querySelector(`[name="${name}"]`)
     if (input) input.value = value
   }
+  syncSetupActions(state.root)
   if (focusTarget) state.root.querySelector(focusTarget)?.focus({ preventScroll: true })
 }
 
@@ -215,9 +243,7 @@ async function action(state, button) {
     case 'close': closeSetup(state, button.dataset.popupRestoreFocus !== 'false'); return
     case 'toggle-catalog': state.catalogOpen = !state.catalogOpen; break
     case 'refresh': {
-      const workspaceId = state.workspaceId, data = await request(state)
-      if (workspaceId !== state.workspaceId) return
-      state.data = data; state.message = 'Coding setup refreshed'; break
+      await load(state); return
     }
     case 'new-skill': state.draft = { id: 'review-changes', files: [{ path: 'SKILL.md', content: template }] }; state.fileIndex = 0; break
     case 'select-skill': state.draft = structuredClone(state.data.skills[index]); state.fileIndex = Math.max(0, state.draft.files.findIndex(file => file.path === 'SKILL.md')); break
@@ -289,19 +315,25 @@ async function action(state, button) {
   render(state)
 }
 
-function load(state) {
+async function load(state) {
+  if (state.loading) return
   const workspaceId = state.workspaceId
-  void request(state).then(data => {
+  state.loading = true; state.error = false; state.message = ''; render(state)
+  try {
+    const data = await request(state)
     if (workspaceId !== state.workspaceId) return
     const firstLoad = !state.data
-    state.data = data; if (firstLoad) state.instructions = data.instructions; render(state)
-  }).catch(error => { if (workspaceId === state.workspaceId) notify(state, error.message, true) })
+    state.data = data; if (firstLoad) state.instructions = data.instructions
+  } catch (error) { state.error = true; state.message = error.message }
+  finally { state.loading = false; render(state) }
 }
 
 function mount(root) {
   const state = restoreCodingSetupDraft(root)
   panels.set(root, state)
   render(state)
+  root.addEventListener('input', () => syncSetupActions(root))
+  root.addEventListener('change', () => syncSetupActions(root))
   root.addEventListener('click', event => {
     const state = panels.get(root)
     const button = event.target.closest('button')

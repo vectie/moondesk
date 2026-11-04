@@ -397,51 +397,39 @@ fn render_pack_studio() -> @rabbita.Html {
       .data_set("testid", "pack-studio")
       .aria_label("Pack Studio lifecycle"),
     [
-      header(class="pack-section-heading", [
-        div([
-          p(class="eyebrow", "Common lifecycle tooling"),
-          h2("Pack Studio"),
-          p(
-            "Create or adopt a domain pack through one contract, then validate, install, activate, project, and observe it without moving domain rules into MoonDesk or MoonTown.",
-          ),
-        ]),
-        span("reviewed operations"),
-      ]),
       @html.node("ol", @html.Attrs::build().class("pack-studio-lifecycle"), [
         li([
-          strong("1 · Author"),
-          span(
-            "Scaffold or adopt the bridge schemas, provider port, and reviewed intake.",
-          ),
-          code("moondesk pack create …"),
+          details([
+            summary([ui_icon("plus"), span("Create a pack")]),
+            p("Start a new app or adapt an existing one."),
+            code("moondesk pack create …"),
+          ]),
         ]),
         li([
-          strong("2 · Qualify"),
-          span(
-            "Inspect source-tree validity, authorities, runtime dependencies, and bridge readiness.",
-          ),
-          code("moondesk pack inspect …"),
+          details([
+            summary([ui_icon("review"), span("Check compatibility")]),
+            p("Inspect the pack and its required services."),
+            code("moondesk pack inspect …"),
+          ]),
         ]),
         li([
-          strong("3 · Activate"),
-          span(
-            "Install an immutable version, verify its receipt, and move the active pointer explicitly.",
-          ),
-          code("moondesk pack install …"),
+          details([
+            summary([ui_icon("download"), span("Install a version")]),
+            p("Install the checked version, then activate it."),
+            code("moondesk pack install …"),
+          ]),
         ]),
         li([
-          strong("4 · Operate"),
-          span(
-            "MoonTown reconciles read-only projections and routes emergent candidates to review.",
-          ),
-          code("draft → active → projecting"),
+          details([
+            summary([ui_icon("plug"), span("Connect to MoonTown")]),
+            p("View shared activity and review proposed work."),
+            code("draft → active → projecting"),
+          ]),
         ]),
       ]),
       details(class="pack-studio-details", [
-        summary("Lifecycle commands and safety boundary"),
-        p(
-          "Pack Studio lifecycle mutations are explicit native commands. Browser views remain inspection and planning surfaces; candidate intake never authorizes downstream external or physical effects.",
-        ),
+        summary("Command reference"),
+        p("Run these commands in Terminal to manage installed packs."),
         code(
           "inspect · create · adopt-bridge · install · activate · deactivate · catalog",
         ),
@@ -459,6 +447,11 @@ fn render_pack_primary_action(pack : PackAppRecord) -> @rabbita.Html {
       attrs=@html.Attrs::build()
         .data_set("testid", "pack-open")
         .data_set("pack-id", pack.pack_id)
+        .data_set("i18n-aria-label", "pack.open_app")
+        .data_set(
+          "i18n-params",
+          ({ "name": pack.display_name } : Json).stringify(),
+        )
         .aria_label("Open " + pack.display_name),
       [ui_icon("chevron-right")],
     )
@@ -498,14 +491,14 @@ fn render_pack_card(
     [
       header(class="pack-card-header", [
         div(class="pack-card-identity", [
-          span(
-            class="pack-mark",
-            if pack_presentation_value(pack.presentation_icon) == "" {
-              pack.pack_id
+          span(class="pack-mark", [
+            if pack_presentation_value(pack.presentation_icon) == "" ||
+              pack_presentation_value(pack.presentation_icon).length() > 4 {
+              ui_icon("package")
             } else {
-              pack_presentation_value(pack.presentation_icon)
+              span(pack_presentation_value(pack.presentation_icon))
             },
-          ),
+          ]),
           div([h2(pack.display_name), render_pack_area(pack)]),
         ]),
       ]),
@@ -564,17 +557,15 @@ fn render_pack_inspector(
                 pack_status_label(pack.status),
               ),
               small("v" + pack.version + " · " + pack.kind),
-              p(class="pack-description", pack_default_description(pack)),
-              div(class="pack-bridge-line", [
-                render_pack_bridge_status(pack),
-                small(
-                  if pack_bridge_ready(pack) {
-                    "Intake: " + pack_intake_operation_ids(pack).join(", ")
-                  } else {
-                    "Use Pack Studio to add the common projection and candidate lifecycle."
-                  },
-                ),
-              ]),
+              if pack.description.trim() != "" {
+                p(
+                  class="pack-description",
+                  attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+                  pack.description,
+                )
+              } else {
+                @html.nothing
+              },
               ul(class="pack-capability-counts", [
                 li([strong(pack.workflow_count.to_string()), span("workflows")]),
                 li([strong(pack.tool_count.to_string()), span("tools")]),
@@ -583,19 +574,29 @@ fn render_pack_inspector(
                   span("app surfaces"),
                 ]),
               ]),
-              button(
-                class="secondary-button",
-                disabled=model.selected_workspace_id == "",
-                on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
-                "Inspect current composition",
-              ),
-              small(
-                if model.selected_workspace_id == "" {
-                  "Select a MoonBook before inspecting an executable composition."
-                } else {
-                  "Composition belongs to the selected MoonBook; this pack keeps its domain contracts."
-                },
-              ),
+              div(class="pack-detail-actions", [
+                render_pack_primary_action(pack),
+                button(
+                  class="moon-icon-button",
+                  title="Pack setup",
+                  attrs=@html.Attrs::build().aria_label("Pack setup"),
+                  on_click=dispatch(SetPackInspection(Some(Studio))),
+                  [ui_icon("settings")],
+                ),
+              ]),
+              details(class="pack-studio-details", [
+                summary("Technical details"),
+                div(class="pack-bridge-line", [
+                  render_pack_bridge_status(pack),
+                  if pack_bridge_ready(pack) {
+                    code(pack_intake_operation_ids(pack).join(", "))
+                  } else {
+                    small(
+                      "MoonTown integration is not configured for this pack.",
+                    )
+                  },
+                ]),
+              ]),
             ]),
           )
       }
@@ -621,10 +622,20 @@ fn render_pack_inspector(
       .id("pack-inspector")
       .aria_label(title)
       .data_set("popup", "pack-inspector")
+      .data_set("popup-focus-dismiss", "false")
       .data_set("popup-trigger", "[data-pack-inspector-trigger=\"true\"]"),
     [
       header(class="pack-inspector-heading", [
-        h2(title),
+        h2(
+          attrs=@html.Attrs::build().data_set(
+            "i18n-scope",
+            match model.pack_inspection {
+              Some(Application(_)) => "content"
+              _ => "interface"
+            },
+          ),
+          title,
+        ),
         button(
           class="moon-icon-button",
           attrs=@html.Attrs::build()
@@ -648,7 +659,11 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       section(class="pack-home-hero", [
         div([h1("Packs")]),
         div(class="pack-home-summary", [
-          span(model.pack_apps_status),
+          if model.pack_apps.is_empty() {
+            span(class="pack-load-status", model.pack_apps_status)
+          } else {
+            @html.nothing
+          },
           render_specialist_builder_action(dispatch),
           pack_inspect_button(dispatch, model, Studio, "Pack Studio", "package"),
           pack_inspect_button(

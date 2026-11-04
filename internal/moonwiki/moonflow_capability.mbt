@@ -68,19 +68,42 @@ fn moonflow_capability_evidence_from_values(
 
 ///|
 async fn moonflow_capability_evidence() -> Json {
-  let root = @env.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  let runtime = @trusted_host.moonflow_service_runtime()
+  let executable = @trusted_host.moonflow_executable().unwrap_or("")
+  let available = runtime is Ok(_)
   let platform = town_platform_evidence()
   let evidence = moonflow_capability_evidence_from_values(
     platform,
-    false,
-    root != "",
-    root != "" &&
-    is_directory(root) &&
-    @fsx.exists(@pathx.join(root, "moon.mod")),
-    root,
-    execution_sandbox_available=execution_sandbox_client_available(),
+    available,
+    executable != "",
+    available,
+    executable,
+    execution_sandbox_available=true,
   )
   guard evidence is Object(fields) else { return evidence }
+  fields["execution_boundary"] = {
+    "kind": "trusted-native-flow-service.v1",
+    "available": available,
+    "operations": [
+      "validate-graph", "import-graph", "control", "inspect-collaboration", "list-handovers",
+    ],
+    "dispatch_allowed": false,
+  }
+  fields["installation_evidence"] = {
+    "installed": available,
+    "source": "native-executable",
+    "reason": if available {
+      "runtime-command-available"
+    } else {
+      "runtime-command-unavailable"
+    },
+  }
+  fields["runtime_message"] = ToJson::to_json(
+    match runtime {
+      Ok(_) => "Flow is ready"
+      Err(message) => message
+    },
+  )
   let planning = @trusted_host.moonflow_planning_runtime()
   fields["planning_available"] = ToJson::to_json(planning is Ok(_))
   fields["planning_boundary"] = {
@@ -113,7 +136,7 @@ async fn handle_moonflow_capability(
       message=if available {
         "Flow preparation is available"
       } else {
-        "Flow execution controls are unavailable; local plan preparation uses its separate bounded route"
+        "The native Flow runtime is unavailable"
       },
       next_action=if available { "prepare_flow" } else { "review_flow_setup" },
     ),

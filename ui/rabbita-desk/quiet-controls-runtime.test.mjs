@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFileSync } from 'node:fs'
+import { JSDOM } from 'jsdom'
 import { tooltipPosition, dismissPopup } from './quiet-controls-runtime.js'
 
 test('tooltips stay inside narrow viewports and flip above a bottom control', () => {
@@ -42,4 +44,31 @@ test('outside dismissal tells typed close handlers to keep focus at the clicked 
   dismissPopup(panel, { document: {} })
   assert.equal(toggles, 1)
   assert.equal(close.dataset.popupRestoreFocus, undefined)
+})
+
+test('switching controls for the same drawer does not dismiss it before activation', async () => {
+  const dom = new JSDOM(`<button id="first" aria-controls="inspector">First</button><button id="second" aria-controls="inspector">Second</button><button id="outside">Outside</button>
+    <aside id="inspector" data-popup="inspector" data-popup-focus-dismiss="false" data-popup-trigger="#first"><button data-popup-dismiss>Close</button><h2>First</h2></aside>`, { runScripts: 'outside-only', pretendToBeVisual: true })
+  try {
+    const { window } = dom
+    const doc = window.document
+    window.HTMLElement.prototype.getClientRects = () => [{ width: 100, height: 40 }]
+    let dismissed = 0
+    doc.querySelector('[data-popup-dismiss]').onclick = () => { dismissed++; doc.querySelector('aside').remove() }
+    doc.getElementById('second').onclick = () => { doc.querySelector('h2').textContent = 'Second' }
+    window.eval(readFileSync(new URL('./quiet-controls-runtime.js', import.meta.url), 'utf8').replaceAll('export ', ''))
+    const second = doc.getElementById('second')
+    second.dispatchEvent(new window.Event('pointerdown', { bubbles: true }))
+    second.focus()
+    second.click()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    assert.equal(dismissed, 0)
+    assert.equal(doc.querySelector('h2').textContent, 'Second')
+    // A reconciled view may briefly restore focus to its main container.
+    // An attached inspector stays open until an explicit outside click/Escape.
+    doc.getElementById('outside').focus()
+    assert.equal(dismissed, 0)
+    doc.getElementById('outside').dispatchEvent(new window.Event('pointerdown', { bubbles: true }))
+    assert.equal(dismissed, 1)
+  } finally { dom.window.close() }
 })

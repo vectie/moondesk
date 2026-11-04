@@ -7,6 +7,10 @@ fn render_command_palette(
     if !model.command_open {
       @html.nothing
     } else {
+      let commands = filtered_palette_commands_for_mode(
+        model.workspace_mode,
+        model.command_query,
+      )
       div(class="palette-backdrop", [
         div(
           class="command-palette",
@@ -23,28 +27,35 @@ fn render_command_palette(
                   .aria_label("Search commands")
                   .data_set("testid", "command-palette-input"),
                 value=model.command_query,
-                placeholder="Open Book, Import Files, Search, Submit...",
+                placeholder="Search commands…",
                 on_input=fn(value) { dispatch(SetCommandQuery(value)) },
               ),
               button(
-                class="icon-button palette-close",
+                class="moon-icon-button palette-close",
                 title="Close command palette",
                 attrs=@html.Attrs::build()
                   .aria_label("Close command palette")
                   .data_set("testid", "command-palette-close"),
                 on_click=dispatch(ToggleCommand),
-                span(attrs=@html.Attrs::build().aria_hidden("true"), "X"),
+                [ui_icon("close")],
               ),
             ]),
             div(
               class="palette-list",
-              filtered_palette_commands_for_mode(
-                model.workspace_mode,
-                model.command_query,
-              ).map(command => {
-                let (title, detail, msg) = command
-                palette_command(dispatch, title, detail, msg)
-              }),
+              if commands.is_empty() {
+                [
+                  p(
+                    class="status-line palette-empty",
+                    attrs=@html.Attrs::build().role("status"),
+                    "No matching commands",
+                  ),
+                ]
+              } else {
+                commands.map(command => {
+                  let (title, detail, msg) = command
+                  palette_command(dispatch, title, detail, msg)
+                })
+              },
             ),
           ],
         ),
@@ -66,10 +77,29 @@ fn filtered_palette_commands_for_mode(
     let needle = trimmed.to_lower()
     palette_commands_for_mode(mode).filter(command => {
       let (title, detail, _) = command
-      title.to_lower().contains(needle) ||
-      palette_detail_matches(detail, needle)
+      palette_text_matches(
+        title,
+        detail,
+        flow_system_text(title),
+        flow_system_text(detail),
+        needle,
+      )
     })
   }
+}
+
+///|
+fn palette_text_matches(
+  title : String,
+  detail : String,
+  shown_title : String,
+  shown_detail : String,
+  needle : String,
+) -> Bool {
+  title.to_lower().contains(needle) ||
+  palette_detail_matches(detail, needle) ||
+  shown_title.to_lower().contains(needle) ||
+  (shown_detail != detail && shown_detail.to_lower().contains(needle))
 }
 
 ///|
@@ -237,12 +267,7 @@ fn secondary_palette_commands_for_mode(
         (
           "Search Books",
           "Find pages, notes, and sources",
-          SelectActivity(Search),
-        ),
-        (
-          "New Inbox Note",
-          "Capture a note in the current book",
-          SelectActivity(Inbox),
+          workspace_feature_msg("open-search", first="open"),
         ),
         ("Open Requests", "See tasks and their results", SelectActivity(Town)),
         (
@@ -252,8 +277,8 @@ fn secondary_palette_commands_for_mode(
         ),
         (
           "Open Settings",
-          "Open automations, saved views, and diagnostics",
-          SelectActivity(Settings),
+          "Preferences & glossary",
+          workspace_feature_msg("open-toolbox", first="preferences"),
         ),
         (
           "Open Code",
@@ -348,14 +373,12 @@ fn palette_command(
   detail : String,
   msg : Msg,
 ) -> @rabbita.Html {
-  button(class="palette-command", on_click=dispatch(msg), [
-    span(
-      class="command-icon",
-      attrs=@html.Attrs::build().aria_hidden("true"),
-      ">",
-    ),
-    div([h3(title), p(detail)]),
-  ])
+  button(
+    class="palette-command",
+    title=flow_system_text(detail),
+    on_click=dispatch(msg),
+    [ui_icon("chevron-right"), h3(title)],
+  )
 }
 
 ///|
@@ -384,11 +407,15 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           attrs=@html.Attrs::build()
             .data_set("testid", "primary-nav-summary")
             .aria_label(
-              "Current destination: " +
-              workspace_mode_label(
-                primary_navigation_mode(model.workspace_mode),
+              flow_system_text("Current destination") +
+              ": " +
+              flow_system_text(
+                workspace_mode_label(
+                  primary_navigation_mode(model.workspace_mode),
+                ),
               ) +
-              ". Choose a destination",
+              ". " +
+              flow_system_text("Choose a destination"),
             ),
           [
             ui_icon(

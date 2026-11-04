@@ -94,6 +94,84 @@ test "wiki capture and task composers start without accidental content" {
 }
 
 ///|
+test "empty Book has one document picker and no empty export action" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let empty = init_model()
+  let markup = render_test_dom(
+    @rabbita.static_cell(render_wiki_focus_workspace(dispatch, empty)),
+  )
+  assert_false(markup.contains("aria-label=\"Export work\""))
+  assert_eq(markup.split("Choose document</span>").count(), 2)
+  assert_false(markup.contains("aria-label=\"Choose document\""))
+  let chat = render_test_dom(
+    @rabbita.static_cell(
+      render_wiki_chat(dispatch, {
+        ..empty,
+        wiki_chat_entries: [{ role: "assistant", content: "A report draft", }],
+      }),
+    ),
+  )
+  assert_true(chat.contains("aria-label=\"Export work\""))
+  let markdown = render_test_dom(
+    @rabbita.static_cell(
+      render_wiki_chat(dispatch, { ..empty, selected_path: "wiki/report.md", }),
+    ),
+  )
+  assert_true(markdown.contains("aria-label=\"Export work\""))
+}
+
+///|
+test "Book file failures expose retry instead of indefinite loading" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let base = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/missing.md",
+    preview_state: Some(RecoverableError),
+    preview_error: "file not found",
+  }
+  let failed = render_test_dom(
+    @rabbita.static_cell(render_wiki_office_document(dispatch, base)),
+  )
+  assert_true(failed.contains("Preview couldn’t be opened"))
+  assert_true(failed.contains(">Retry</button>"))
+  assert_true(failed.contains("file not found"))
+  assert_false(failed.contains("Opening file"))
+  let loading = render_test_dom(
+    @rabbita.static_cell(
+      render_wiki_office_document(dispatch, {
+        ..base,
+        preview_state: Some(Loading),
+        preview_error: "",
+      }),
+    ),
+  )
+  assert_true(loading.contains("Opening preview"))
+  assert_false(loading.contains(">Retry</button>"))
+  assert_false(loading.contains("file not found"))
+  let failed_viewer = render_test_dom(
+    @rabbita.static_cell(render_wiki_document_viewer(dispatch, base)),
+  )
+  assert_false(failed_viewer.contains("aria-label=\"Edit document\""))
+  let office = {
+    ..base,
+    selected_path: "documents/missing.docx",
+    office_editor: {
+      ..init_office_editor("book-demo"),
+      path: "documents/missing.docx",
+      request_generation: 1,
+      status: "file not found",
+    },
+  }
+  let office_failed = render_test_dom(
+    @rabbita.static_cell(render_wiki_office_document(dispatch, office)),
+  )
+  assert_true(office_failed.contains("Preview couldn’t be opened"))
+  assert_true(office_failed.contains(">Retry</button>"))
+  assert_false(office_failed.contains("Ready to open"))
+}
+
+///|
 fn wiki_focus_test_model(warnings : Array[String]) -> Model {
   let item : OfficeEditorItem = {
     section: "paragraph 0",

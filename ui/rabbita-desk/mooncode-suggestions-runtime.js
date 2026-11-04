@@ -1,4 +1,6 @@
 import { conversationSuggestions, suggestionSignature } from './mooncode-suggestions-model.js'
+import { uiText } from './ui-locale.js'
+import { setIconButton } from './ui-icons.js'
 import './styles/mooncode-suggestions.css'
 
 const records = new Map()
@@ -70,16 +72,14 @@ export function installMoonCodeSuggestions() {
   shell.setAttribute('aria-label', 'Suggested next steps based on this conversation')
   const heading = document.createElement('div')
   heading.className = 'mooncode-suggestions-heading'
-  const title = document.createElement('span')
-  title.textContent = 'Suggested next steps'
-  title.title = 'Contextual shortcuts from this conversation. Choosing one adds it to your draft; it never sends automatically.'
   const toggle = makeButton(record.hidden ? 'Show' : 'Hide', () => {
     record.hidden = !record.hidden
     persist(key, record)
     installMoonCodeSuggestions()
   })
   toggle.setAttribute('aria-expanded', String(!record.hidden))
-  heading.append(title, toggle)
+  setIconButton(toggle, record.hidden ? 'chevron-down' : 'chevron-up', uiText(record.hidden ? 'Show suggestions' : 'Hide suggestions'))
+  heading.append(toggle)
   shell.append(heading)
   if (!record.hidden) {
     const items = document.createElement('div')
@@ -100,7 +100,7 @@ export function installMoonCodeSuggestions() {
         installMoonCodeSuggestions()
       })
       dismiss.className = 'mooncode-suggestion-dismiss'
-      dismiss.setAttribute('aria-label', `Dismiss ${suggestion.label}`)
+      dismiss.setAttribute('aria-label', uiText(`Dismiss ${uiText(suggestion.label)}`))
       group.append(choose, dismiss)
       items.append(group)
     }

@@ -190,7 +190,7 @@ test "lepusa integration launcher exposes bundled services on PATH" {
   ).unwrap()
   assert_true(
     configured.contains(
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nPATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\ncd \"$APP_DIR/Resources\" || exit 1\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nPATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\nexport MOONDESK_MOONFLOW_BIN=\"$APP_DIR/MacOS/moonflow\"\ncd \"$APP_DIR/Resources\" || exit 1\n",
     ),
   )
   assert_eq(
@@ -287,6 +287,7 @@ async test "lepusa integration live project uses localhost sidecar service" {
   assert_false(manifest.contains("\"/tmp/moondesk-suite\""))
   assert_false(manifest.contains("\"/repo/moondesk\",\"--ui\""))
   assert_true(manifest.contains("\"serve\""))
+  assert_true(manifest.contains("\"path\":\"moonflow\",\"executable\":true"))
   assert_true(manifest.contains("\"lepusa/assets/main\""))
   assert_true(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
   assert_true(manifest.contains("\"/repo/moondesk/assets/moondesk.icns\""))

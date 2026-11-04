@@ -66,7 +66,7 @@ async fn copy_moondesk_sidecar(
       return false
     }
   }
-  true
+  copy_moondesk_flow_runtime(repo_root, target, out_dir)
 }
 
 ///|
@@ -129,11 +129,11 @@ fn moondesk_launcher_with_bundled_service_path(
 ) -> String? {
   let (marker, path_export) = if target == "macos" {
     (
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\n", "PATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\ncd \"$APP_DIR/Resources\" || exit 1\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\n", "PATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\nexport MOONDESK_MOONFLOW_BIN=\"$APP_DIR/MacOS/moonflow\"\ncd \"$APP_DIR/Resources\" || exit 1\n",
     )
   } else if target == "linux" {
     (
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n", "PATH=\"$APP_DIR:$PATH\"\nexport PATH\ncd \"$APP_DIR\" || exit 1\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n", "PATH=\"$APP_DIR:$PATH\"\nexport PATH\nexport MOONDESK_MOONFLOW_BIN=\"$APP_DIR/moonflow\"\ncd \"$APP_DIR\" || exit 1\n",
     )
   } else {
     return Some(launcher)

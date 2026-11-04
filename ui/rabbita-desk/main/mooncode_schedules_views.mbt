@@ -230,6 +230,7 @@ fn render_mooncode_schedules(
       .data_set("testid", "mooncode-schedules")
       .data_set("popup", "code-schedules")
       .data_set("popup-trigger", ".mooncode-schedules-toggle")
+      .data_set("popup-focus-dismiss", "false")
       .aria_label("Scheduled Code work")
       .data_set("i18n-aria-label", "code.schedules_title"),
     [

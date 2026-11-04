@@ -1,0 +1,101 @@
+# MoonDesk handoff notes
+
+Read this with `AGENTS.md` before starting work. Record concrete pitfalls and
+their resolution here; keep task-specific evidence in `docs/`.
+
+## Pre-refactor checkpoint 2026-11-04
+
+- Existing desktop/Flow integration, localized UI, generated frontend, evidence,
+  and the full MoonCode discussion archive are preserved before consolidation.
+- Native tests passed 1741/1741; UI tests passed 2300/2300; JavaScript tests
+  passed 513 with one skipped. Stale history/Flow-copy test fixtures were updated
+  to the existing production contract. Interfaces and formatting were refreshed.
+- The strict warning-budget gate is not green: unused Flow sandbox declarations,
+  an unused pack description helper, and four unnecessary annotations in the
+  external MoonLeaf PDF package remain. Do not call this a warning-clean release.
+- Native Flow crossing requires its separately configured fixture; ordinary
+  suite success does not establish that external integration.
+
+## MoonCode design discussion
+
+MoonCode design discussion is archived in
+`docs/mooncode-discussion-2026-11-04/README.md`, including all four projects'
+16-question answers and the full conversation. Use `CURRENT_PLAN.md` there as
+the implementation baseline: automation first, one primary agent, deletion of
+duplicate mechanisms, and no compatibility requirement. Earlier proposals for
+a new runtime framework and universal acceptance gates were superseded; do not
+combine all historical plans into implementation requirements. Active references
+are `docs/MOONCODE.md` and `docs/CODE_MODE_TEST_PLAN.md`; the old MoonCode phase
+plans and execution diary were removed. Do not restore document-phrase closure
+checks or treat dated test reports as current readiness.
+
+## UI preview and packaged application
+
+- The installed Lepusa app serves its frontend and API on port 4201. A separate
+  development backend may be running on 4199. Inspect the actual app URL rather
+  than assuming that a browser preview uses the installed backend.
+- For UI iteration, run the existing Vite development command with
+  `MOONDESK_API_ORIGIN=http://127.0.0.1:4201`. The default proxy target is 4321.
+  Inspect the development preview before doing the production frontend build.
+- UI-only edits need a frontend build, resource installation and app signature
+  verification. They do not require relinking the native executables. Native
+  backend changes require the corresponding native build and packaging path.
+- Canonical Desk section aliases may be localized; authored names and real
+  paths must remain content. `app` and `apps` are separate section identities
+  and must remain distinguishable in Chinese.
+- File selection accepts workspace drops on the whole dialog. Preserve this
+  interaction when removing the old instructional dropzone. Keep loading,
+  empty results and failures distinct.
+- Attached editors that replace their form DOM must set
+  `data-popup-focus-dismiss="false"`. Native WebKit can briefly restore focus
+  to the main workspace during reconciliation; treating that as an outside
+  dismissal closes the editor immediately. Outside pointer/Escape dismissal
+  remains handled by `quiet-controls-runtime.js`.
+
+Latest inspection: `docs/UI_UX_AUDIT_2026-11-04.md`.
+
+Secondary-surface continuation: `docs/UI_SECONDARY_AUDIT_2026-11-04.md`.
+
+- Legacy activity selections can close the command palette without opening a
+  modern focus-view tool. Route settings/search to their actual local tool
+  messages and verify the destination, not only palette dismissal.
+- Drawer redraws must preserve unsaved preference/learning drafts per book.
+  Input availability updates should not rebuild the form or lose focus.
+- Icon-only utilities need localized accessible labels. DOM tests should find
+  them through those labels rather than visible text.
+- Native WebKit can render selects shorter than the shared minimum height.
+  Single-select controls in secondary surfaces use explicit height/appearance
+  and the shared chevron; verify them in the native app, not only Chromium.
+
+State/narrow-window continuation: `docs/UI_STATES_AUDIT_2026-11-04.md`.
+
+- Book's Markdown/image/source viewer must consume `preview_state`, not infer
+  loading from `preview == None`. A failed request can legitimately have no
+  preview; show its failure and retry the selected path locally.
+- Markdown uses the generic preview path, while
+  `wiki_document_path_supported` identifies Office/PDF/artifact handling.
+  Do not reuse that predicate to decide whether a normal Markdown file exists.
+- Loaded setup drafts must not retain an in-flight `loading` flag after their
+  old DOM is detached. Refresh success must clear stale errors even when data
+  has not changed; apply the same rule to room polling.
+- Shell `data-state` updates also occur while Code is polling. Recreating
+  calendar/room runtime roots on each update resets scroll, focus and pending
+  requests. Retain the local view for the current book/document, and restore
+  its position when the shell reattaches it.
+
+Code/Flow continuation: `docs/UI_CODE_FLOW_AUDIT_2026-11-04.md`.
+
+- Translate changing typed status text before rendering it. Automatic
+  localization can replace a text node retained by the virtual DOM; the next
+  state can otherwise leave a stale translated loading message on screen.
+- A non-Git MoonBook needs an explicit Changes state with refresh. An unloaded
+  source editor must not claim Saved or clean diagnostics.
+- Code's working-panel controls use stable button roles and pressed/expanded
+  state, and explicitly restore their enabled state. Opening a local panel
+  never requires a selected file, chat or PTY. Preserve direct click handlers
+  and keyboard switching when changing the runtime-managed controls.
+- Flow composition retrieval failure is independent of an empty runs listing.
+  Keep the previous composition on failure and offer Retry locally.
+- A Flow listing refresh should retain a verified result viewer when its exact
+  artifact identity is unchanged. Reset its review context and invalidate the
+  viewer when the refreshed identity changes.

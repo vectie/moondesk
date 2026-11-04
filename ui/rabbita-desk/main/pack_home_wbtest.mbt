@@ -167,7 +167,7 @@ test "Pack Home exposes common lifecycle without absorbing domain rules" {
   assert_true(studio_markup.contains("Pack Studio"))
   assert_true(studio_markup.contains("moondesk pack create"))
   assert_true(studio_markup.contains("draft → active → projecting"))
-  assert_true(studio_markup.contains("candidate intake never authorizes"))
+  assert_true(studio_markup.contains("Command reference"))
 }
 
 ///|
@@ -273,7 +273,7 @@ test "collaboration surface is honest and read only before a typed adapter publi
     ),
   )
   assert_true(markup.contains("Collaboration is not initialized"))
-  assert_true(markup.contains("Open MoonFlow"))
+  assert_true(markup.contains("Refresh collaboration"))
   assert_true(markup.contains("Read only in MoonDesk"))
   assert_true(
     markup.contains("data-principal-contract=\"moonsuite.principal-ref.v1\""),
@@ -281,7 +281,7 @@ test "collaboration surface is honest and read only before a typed adapter publi
   assert_true(
     markup.contains("data-handover-contract=\"moonsuite.handover-control.v1\""),
   )
-  assert_true(markup.contains("data-testid=\"collaboration-open-moonflow\""))
+  assert_true(markup.contains("data-testid=\"collaboration-refresh\""))
 }
 
 ///|

@@ -205,16 +205,27 @@ fn render_moonflow_retained_references(
         is Some(_)
       div([
         button(
-          class="secondary-button",
+          class="secondary-button flow-artifact-button",
           disabled=!available,
-          attrs=@html.Attrs::build().data_set(
-            "testid",
-            "flow-retained-open-" + item.work_item_id + "-" + index.to_string(),
-          ),
+          attrs=@html.Attrs::build()
+            .title(reference)
+            .data_set(
+              "testid",
+              "flow-retained-open-" +
+              item.work_item_id +
+              "-" +
+              index.to_string(),
+            ),
           on_click=dispatch(
             MoonFlowRetained(Inspect(run.run_id, item.work_item_id, index)),
           ),
-          "Artifact: " + reference,
+          [
+            ui_icon("files"),
+            span(
+              attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+              reference.split("/").last().unwrap_or(reference[:]).to_owned(),
+            ),
+          ],
         ),
         if available {
           @html.nothing
@@ -240,47 +251,64 @@ fn render_moonflow_retained(
     return @html.nothing
   }
   section(
-    class="flow-handoff-card",
+    class="flow-handoff-card flow-retained-card",
     attrs=@html.Attrs::build().data_set("testid", "flow-retained-inspection"),
     [
-      h3("Inspect retained result"),
+      header(class="flow-section-heading", [
+        h3("Inspect retained result"),
+        button(
+          class="moon-icon-button",
+          attrs=@html.Attrs::build()
+            .aria_label("Close inspection")
+            .title("Close inspection"),
+          on_click=dispatch(MoonFlowRetained(Close)),
+          [ui_icon("close")],
+        ),
+      ]),
       p(state.notice),
-      p(
-        "Book: " +
-        handoff_text(state.identity, "workspace_id") +
-        " · Run: " +
-        run.run_id +
-        " · Item: " +
-        handoff_text(state.identity, "work_item_id"),
-      ),
-      p(
-        "Attempt: " +
-        handoff_text(state.identity, "attempt_id") +
-        " · Result: " +
-        handoff_text(state.identity, "result_id"),
-      ),
-      p("Action: " + handoff_text(state.identity, "action_id")),
-      code(state.reference),
+      details(class="technical-details", [
+        summary("Result details"),
+        p(
+          "Book: " +
+          handoff_text(state.identity, "workspace_id") +
+          " · Run: " +
+          run.run_id +
+          " · Item: " +
+          handoff_text(state.identity, "work_item_id"),
+        ),
+        p(
+          "Attempt: " +
+          handoff_text(state.identity, "attempt_id") +
+          " · Result: " +
+          handoff_text(state.identity, "result_id"),
+        ),
+        p("Action: " + handoff_text(state.identity, "action_id")),
+        code(state.reference),
+      ]),
       match state.response {
         None => @html.nothing
         Some(response) =>
           div([
-            p(
-              "Adapter request: " + handoff_text(response, "adapter_request_id"),
-            ),
-            strong(handoff_text(response, "identity_scope")),
-            p(
-              handoff_text(response, "sha256") +
-              " · " +
-              handoff_field(response, "byte_length").stringify() +
-              " bytes",
-            ),
-            p(
-              "Fixture-reference-only. Production qualified: false. Physical authority: false. Inspection does not accept or review this result.",
-            ),
-            p(
-              "The adapter output digest binds receipt bytes only. Other output bytes are checked against Flow’s recorded per-file observations. Embedded Mold JSON digests describe semantic content, not file-byte identity.",
-            ),
+            details(class="technical-details", [
+              summary("Verification details"),
+              p(
+                "Adapter request: " +
+                handoff_text(response, "adapter_request_id"),
+              ),
+              strong(handoff_text(response, "identity_scope")),
+              p(
+                handoff_text(response, "sha256") +
+                " · " +
+                handoff_field(response, "byte_length").stringify() +
+                " bytes",
+              ),
+              p(
+                "Fixture-reference-only. Production qualified: false. Physical authority: false. Inspection does not accept or review this result.",
+              ),
+              p(
+                "The adapter output digest binds receipt bytes only. Other output bytes are checked against Flow’s recorded per-file observations. Embedded Mold JSON digests describe semantic content, not file-byte identity.",
+              ),
+            ]),
             pre(
               attrs=@html.Attrs::build().data_set(
                 "testid", "flow-retained-preview",
@@ -302,22 +330,16 @@ fn render_moonflow_retained(
                 "-" +
                 handoff_text(response, "record_digest")[7:].to_owned(),
               download="",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "flow-retained-download",
-              ),
-              "Download exact retained bytes",
-            ),
-            small(
-              "Download rechecks all retained records and file identities. Changed or missing evidence is refused.",
+              class="secondary-button moon-icon-button flow-download-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Download exact retained bytes")
+                .title("Download exact retained bytes")
+                .data_set("testid", "flow-retained-download"),
+              [ui_icon("download")],
             ),
             render_moonflow_exact_review(dispatch, state),
           ])
       },
-      button(
-        class="secondary-button",
-        on_click=dispatch(MoonFlowRetained(Close)),
-        "Close inspection",
-      ),
     ],
   )
 }

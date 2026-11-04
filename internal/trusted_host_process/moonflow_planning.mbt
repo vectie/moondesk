@@ -105,16 +105,9 @@ pub async fn moonflow_planning_runtime() -> Result[
   MoonFlowPlanningRuntime,
   String,
 ] {
-  let executable = match @env.get_env_var("MOONDESK_MOONFLOW_BIN") {
-    Some(value) => value
-    None =>
-      match @env.get_env_var("MOONFLOW_ROOT") {
-        Some(root) => root + "/_build/native/release/build/cmd/main/main.exe"
-        None =>
-          return Err(
-            "Configure a native Flow planning executable before preparing a plan",
-          )
-      }
+  let executable = match moonflow_executable() {
+    Ok(value) => value
+    Err(message) => return Err(message)
   }
   let stamp = match moonbook_executable_stamp(executable) {
     Ok(stamp) => stamp

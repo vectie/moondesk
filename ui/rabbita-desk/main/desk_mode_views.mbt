@@ -1291,12 +1291,19 @@ fn render_desk_folder_outline(
         let (label, path, active, depth) = item
         button(
           class=desk_folder_outline_row_class(active, depth),
+          attrs=@html.Attrs::build().data_set("i18n-preserve", "title"),
           title=empty_root_path(path),
           on_click=dispatch(OpenDirectory(path)),
           [
             span(class="folder-indent", ""),
             ui_icon("folder"),
-            span(class="folder-label", label),
+            span(
+              class="folder-label",
+              attrs=desk_name_attrs(
+                desk_outline_label_i18n_key(label, path, model.entries),
+              ),
+              label,
+            ),
           ],
         )
       }),
@@ -1319,7 +1326,17 @@ fn render_desk_file_browser(
           } else {
             small(class="desk-browser-workspace", workspace_name(model))
           },
-          h2(desk_directory_title(model.current_directory)),
+          h2(
+            attrs=@html.Attrs::build().data_set(
+              "i18n-scope",
+              if model.current_directory == "" {
+                "interface"
+              } else {
+                "content"
+              },
+            ),
+            desk_directory_title(model.current_directory),
+          ),
         ]),
         button(
           class="secondary-button compact-button moon-icon-button",
@@ -1772,7 +1789,12 @@ fn desk_entry_matches_filter(
   query : String,
 ) -> Bool {
   entry.display_name.to_lower().contains(query) ||
-  entry.path.to_lower().contains(query)
+  entry.path.to_lower().contains(query) ||
+  (match desk_system_entry_i18n_key(entry) {
+    Some(key) =>
+      interface_label(key, entry.display_name).to_lower().contains(query)
+    None => false
+  })
 }
 
 ///|
@@ -1940,6 +1962,7 @@ fn render_desk_file_row(
   }
   let row_attrs = @html.Attrs::build()
     .data_set("testid", "desk-file-row")
+    .data_set("i18n-preserve", "title")
     .data_set("path", entry.path)
     .role("option")
     .aria_selected(selected_value)
@@ -1955,14 +1978,28 @@ fn render_desk_file_row(
     .on_dragstart(fn(event) { wiki_chat_drag_start_cmd(entry.path, event) })
   }
   div(class=class_name, title=entry.path, attrs=row_attrs, [
-    span(class="desk-file-name", [
-      ui_icon(if entry.kind is Directory { "folder" } else { "files" }),
-      if model.desk_rename_editing_path == entry.path {
-        desk_inline_rename_input(dispatch, model, entry)
-      } else {
-        strong(entry.display_name)
-      },
-    ]),
+    span(
+      class="desk-file-name",
+      attrs=@html.Attrs::build().data_set(
+        "i18n-scope",
+        if desk_system_entry_i18n_key(entry) is Some(_) {
+          "interface"
+        } else {
+          "content"
+        },
+      ),
+      [
+        ui_icon(if entry.kind is Directory { "folder" } else { "files" }),
+        if model.desk_rename_editing_path == entry.path {
+          desk_inline_rename_input(dispatch, model, entry)
+        } else {
+          strong(
+            attrs=desk_name_attrs(desk_system_entry_i18n_key(entry)),
+            entry.display_name,
+          )
+        },
+      ],
+    ),
     span(kind_label(entry.kind)),
     span(optional_text(entry.modified_at, "—")),
     span(size_label(entry.size_bytes)),
@@ -1979,6 +2016,7 @@ fn desk_inline_rename_input(
     class="line-input inline-rename-input",
     attrs=@html.Attrs::build()
       .data_set("testid", "desk-inline-rename")
+      .data_set("i18n-scope", "content")
       .data_set("path", entry.path),
     value=model.desk_rename_name,
     placeholder=entry.display_name,
@@ -2019,9 +2057,20 @@ fn render_desk_breadcrumb(
       let (label, path, active) = crumb
       button(
         class=if active { "breadcrumb-chip active" } else { "breadcrumb-chip" },
+        attrs=@html.Attrs::build().data_set("i18n-preserve", "title"),
         title=empty_root_path(path),
         on_click=dispatch(OpenDirectory(path)),
-        label,
+        // Only the root marker is a UI label; other segments are real names.
+        span(
+          attrs=desk_name_attrs(
+            if path == "" {
+              Some("desk.section_root")
+            } else {
+              None
+            },
+          ),
+          label,
+        ),
       )
     }),
   )
@@ -2131,15 +2180,21 @@ fn render_desk_details(
             section(class="desk-detail-panel", [
               div(class="desk-detail-title", [
                 span(class="tree-icon", icon_for_kind(entry.kind)),
-                h3(entry.display_name),
+                h3(
+                  attrs=desk_name_attrs(desk_system_entry_i18n_key(entry)),
+                  entry.display_name,
+                ),
               ]),
-              info_row("Type", kind_label(entry.kind)),
+              div(class="info-row", [span("Type"), span(kind_label(entry.kind))]),
               info_row(
                 "Modified",
                 optional_text(entry.modified_at, "Not available"),
               ),
               info_row("Size", size_label(entry.size_bytes)),
-              info_row("Access", desk_access_label(Some(entry))),
+              div(class="info-row", [
+                span("Access"),
+                span(desk_access_label(Some(entry))),
+              ]),
               desk_disclosure(
                 "desk-technical-details",
                 "desk-selection-technical-details",
@@ -2147,14 +2202,21 @@ fn render_desk_details(
                 [
                   info_row("Path", empty_root_path(entry.path)),
                   info_row("Source area", layer_label(entry.source_layer)),
-                  info_row("Readable", yes_no(entry.readable)),
-                  info_row("Writable", yes_no(entry.writable)),
+                  div(class="info-row", [
+                    span("Readable"),
+                    span(yes_no(entry.readable)),
+                  ]),
+                  div(class="info-row", [
+                    span("Writable"),
+                    span(yes_no(entry.writable)),
+                  ]),
                 ],
               ),
               render_desk_inline_preview(dispatch, model),
               div(class="desk-detail-actions", [
                 input(
                   class="line-input",
+                  attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
                   value=model.desk_rename_name,
                   placeholder=entry.display_name,
                   on_input=fn(value) { dispatch(SetDeskRenameName(value)) },

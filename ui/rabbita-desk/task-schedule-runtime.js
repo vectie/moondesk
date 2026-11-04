@@ -1,5 +1,6 @@
 import { localDateTime, scheduleDraftPayload } from './mooncode-calendar-runtime.js'
 import { taskSources } from './work-journey-runtime.js'
+import { uiText, uiLocale, userContent } from './ui-locale.js'
 
 const bindingKey = 'moondesk.task-schedules.v1'
 const scheduleViews = new Map()
@@ -32,7 +33,7 @@ export function rememberTaskSchedules(workspaceId, schedules) {
   scheduleViews.set(workspaceId, { schedules, loaded: true, busy: false, error: '' })
 }
 
-export function renderTaskSchedules(origin, { el, onEdit, onOpenRun, onChanged }) {
+export function renderTaskSchedules(origin, { el, onEdit, onOpenRun, onChanged, onChooseResult }) {
   const { workspaceId, conversationId } = origin
   let view = scheduleViews.get(workspaceId)
   if (!view) { view = { schedules: [], loaded: false, busy: false, error: '' }; scheduleViews.set(workspaceId, view) }
@@ -61,15 +62,22 @@ export function renderTaskSchedules(origin, { el, onEdit, onOpenRun, onChanged }
   }
   const draw = () => {
     root.replaceChildren()
-    const refresh = el('button', 'secondary-button', 'Refresh'); refresh.type = 'button'; refresh.onclick = load; refresh.disabled = view.busy
-    root.append(refresh)
+    const refresh = el('button', 'moon-icon-button'); refresh.type = 'button'; refresh.onclick = load; refresh.disabled = view.busy
+    refresh.setAttribute('aria-label', 'Refresh'); refresh.title = 'Refresh'
+    const glyph = el('span', 'moon-icon'); glyph.dataset.icon = 'refresh'; glyph.setAttribute('aria-hidden', 'true'); refresh.append(glyph)
+    const toolbar = el('div', 'task-schedule-actions'); toolbar.append(refresh); root.append(toolbar)
     const status = el('p', 'status-line', view.error || (view.busy ? 'Updating schedules…' : '')); status.setAttribute('role', 'status'); root.append(status)
     const bindings = taskScheduleBindings()
     const schedules = view.schedules.filter(schedule => schedule.book_id === workspaceId && bindings[schedule.id] && (!conversationId || bindings[schedule.id].conversationId === conversationId))
-    if (view.loaded && !schedules.length) root.append(el('p', 'document-tool-empty', 'No schedules for this task. Use the calendar beside an output to create one.'))
+    if (view.loaded && !schedules.length) {
+      root.append(el('p', 'document-tool-empty', 'No scheduled work'))
+      if (onChooseResult) {
+        const choose = el('button', 'secondary-button', 'View results'); choose.type = 'button'; choose.onclick = onChooseResult; root.append(choose)
+      }
+    }
     for (const schedule of schedules) {
       const row = el('article', 'task-schedule-row')
-      row.append(el('strong', '', schedule.title || bindings[schedule.id].title), el('small', '', `${schedule.enabled ? 'Active' : 'Paused'} · ${new Date(Number(schedule.next_due_at) * 1000).toLocaleString()}`))
+      row.append(userContent(el('strong', '', schedule.title || bindings[schedule.id].title)), el('small', '', `${uiText(schedule.enabled ? 'Active' : 'Paused')} · ${new Date(Number(schedule.next_due_at) * 1000).toLocaleString(uiLocale())}`))
       const actions = el('div', 'task-schedule-actions')
       for (const [icon, label, callback] of [
         ['edit', 'Edit schedule', () => onEdit(schedule, bindings[schedule.id])],
@@ -80,7 +88,7 @@ export function renderTaskSchedules(origin, { el, onEdit, onOpenRun, onChanged }
         const button = el('button', 'moon-icon-button'); button.type = 'button'; button.title = label; button.setAttribute('aria-label', label); button.disabled = view.busy
         const glyph = el('span', 'moon-icon'); glyph.dataset.icon = icon; glyph.setAttribute('aria-hidden', 'true'); button.append(glyph); button.onclick = callback; actions.append(button)
       }
-      if (schedule.last_command_id && onOpenRun) { const run = el('button', 'secondary-button', 'Open last run'); run.type = 'button'; run.onclick = () => onOpenRun(schedule.session_id); actions.append(run) }
+      if (schedule.last_command_id && schedule.session_id && onOpenRun) { const run = el('button', 'secondary-button', 'Open last run'); run.type = 'button'; run.onclick = () => onOpenRun(schedule.session_id); actions.append(run) }
       row.append(actions); root.append(row)
     }
   }
@@ -123,7 +131,7 @@ export function renderTaskSchedule(origin, { el, onClose, onSaved }) {
   }
   const form = el('form', 'task-start-form')
   const back = el('button', 'secondary-button', origin.returnTab === 'schedules' ? '← Schedules' : '← Results'); back.type = 'button'; back.onclick = onClose
-  root.append(back, el('h3', '', draft.editing ? 'Edit schedule' : 'Schedule this task'), el('p', 'status-line', origin.bundle.title))
+  root.append(back, el('h3', '', draft.editing ? 'Edit schedule' : 'Schedule this task'), userContent(el('p', 'status-line', origin.bundle.title)))
   for (const [key, label, type] of [['title', 'Name', 'text'], ['prompt', 'Task', 'textarea'], ['start', 'First run', 'datetime-local']]) {
     const field = el('label', '', label)
     const input = el(type === 'textarea' ? 'textarea' : 'input')

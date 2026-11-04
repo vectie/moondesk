@@ -9,15 +9,16 @@ fn code_workbench_button(value : String, label : String) -> @rabbita.Html {
     class="code-workbench-tab moon-icon-button",
     attrs=@html.Attrs::build()
       .id("code-workbench-tab-" + value)
-      .role("tab")
+      .role("button")
       .data_set("workbench-view", value)
       .data_set("i18n-title", "code.pane_" + value)
       .data_set("i18n-aria-label", "code.pane_" + value)
       .aria_label(label)
       .title(label)
       .aria_controls("code-workbench-panel")
-      .aria_selected(if value == "source" { "true" } else { "false" })
-      .tabindex(if value == "source" { 0 } else { -1 }),
+      .aria_pressed("false")
+      .aria_expanded("false")
+      .tabindex(0),
     [
       ui_icon(icon),
       span(
@@ -38,7 +39,7 @@ fn render_code_workbench_toolbar() -> @rabbita.Html {
       div(
         class="code-workbench-tabs",
         attrs=@html.Attrs::build()
-          .role("tablist")
+          .role("group")
           .aria_label("Workspace panels")
           .aria_orientation("horizontal"),
         [

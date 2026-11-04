@@ -140,24 +140,29 @@ fn render_moonflow_owner_summary(
         attrs=@html.Attrs::build().data_set("testid", "moonflow-owner-summary"),
         [
           h3(value.next_action),
-          p(value.outcome_label),
-          small(
-            "Next role: " +
-            value.next_role.unwrap_or("not recorded") +
-            " · owner: " +
-            value.next_actor_id.unwrap_or("unknown"),
-          ),
+          if value.next_actor_id is Some(_) {
+            small(
+              "Next role: " +
+              flow_system_text(value.next_role.unwrap_or("not recorded")) +
+              " · owner: " +
+              value.next_actor_id.unwrap_or(flow_system_text("unknown")),
+            )
+          } else {
+            @html.nothing
+          },
           div(
             class="flow-action-list",
             value.actions.map(action => {
               details(class="flow-disclosure", [
-                summary(action.work_item_id + " · " + action.action),
+                summary(
+                  action.work_item_id + " · " + flow_system_text(action.action),
+                ),
                 div(class="flow-disclosure-body", [
                   p(
                     "Next role: " +
-                    action.next_role.unwrap_or("not recorded") +
+                    flow_system_text(action.next_role.unwrap_or("not recorded")) +
                     " · owner: " +
-                    action.next_actor_id.unwrap_or("unknown"),
+                    action.next_actor_id.unwrap_or(flow_system_text("unknown")),
                   ),
                   div(action.reasons.map(reason => p(reason))),
                   if action.depends_on.is_empty() {
@@ -184,6 +189,17 @@ fn render_moonflow_owner_summary(
           details(class="flow-disclosure", [
             summary("Observation and accepted-work evidence"),
             div(class="flow-disclosure-body", [
+              p(value.outcome_label),
+              if value.next_actor_id is None {
+                p(
+                  "Next role: " +
+                  flow_system_text(value.next_role.unwrap_or("not recorded")) +
+                  " · owner: " +
+                  flow_system_text("unknown"),
+                )
+              } else {
+                @html.nothing
+              },
               p(
                 "Revision " +
                 value.declaration_revision +
@@ -212,9 +228,9 @@ fn render_moonflow_owner_summary(
                   )
                 }),
               ),
+              small(value.acceptance_boundary),
             ]),
           ]),
-          small(value.acceptance_boundary),
         ],
       )
     }

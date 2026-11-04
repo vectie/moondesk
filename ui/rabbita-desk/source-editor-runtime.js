@@ -4,6 +4,7 @@ import { syncJsonComparison, changeJsonComparison, actJsonComparison } from './s
 import { codeOutline } from './source-code-outline.js'
 import { parseSourceLocation, SourceNavigation } from './source-navigation.js'
 import { SourcePositionMemory } from './source-position-memory.js'
+import { setUiText } from './ui-locale.js'
 import { syncTableDerive, changeTableDerive, actTableDerive } from './source-table-derive-ui.js'
 import { syncTableDeduplicate, changeTableDeduplicate, actTableDeduplicate } from './source-table-deduplicate-ui.js'
 import { syncTableReshape, changeTableReshape, actTableReshape } from './source-table-reshape-ui.js'
@@ -204,7 +205,7 @@ function syncEditor(element) {
   if (isTypeScriptBuffer(parts)) openBuffers.set(JSON.stringify([semanticContext(parts).workspaceId, semanticContext(parts).path]), parts.editor.value)
   if (!parts.surface.classList.contains?.('is-semantic-loading')) setSemanticBusy(parts, false)
   const large = parts.editor.value.length > MAX_HIGHLIGHT_CHARACTERS
-  const signature = large
+  const signature = parts.editor.disabled ? 'unavailable' : large
     ? `${parts.language}\u0000large`
     : `${parts.language}\u0000${parts.editor.value}`
   const changed = renderedHighlights.get(parts.highlight) !== signature
@@ -218,12 +219,12 @@ function syncEditor(element) {
   parts.surface.classList.toggle('is-highlight-ready', !large)
   if (changed && parts.diagnostics instanceof HTMLElement) {
     const problem = large ? '' : structuralDiagnostic(parts.editor.value, parts.language)
-    const message = large
+    const message = parts.editor.disabled ? '' : large
       ? 'Local highlighting and diagnostics paused for this large file'
       : problem
       ? `Local diagnostics: ${problem}`
       : 'Local diagnostics: no structural issues'
-    if (parts.diagnostics.textContent !== message) parts.diagnostics.textContent = message
+    setUiText(parts.diagnostics, message)
     parts.diagnostics.classList.toggle('has-problem', Boolean(problem))
   }
   syncNavigation(parts)
@@ -436,7 +437,7 @@ function setSemanticBusy(parts, busy) {
   for (const button of parts.surface.querySelectorAll('[data-action="source-compiler-check"], [data-action="source-go-definition"], [data-action="source-find-references"]')) {
     if (button instanceof HTMLButtonElement) {
       button.disabled = busy || !available || parts.editor.disabled
-      if (button.dataset.action === 'source-compiler-check') button.textContent = isTypeScriptBuffer(parts) ? 'Check file syntax' : 'Check workspace'
+      if (button.dataset.action === 'source-compiler-check') setUiText(button, isTypeScriptBuffer(parts) ? 'Check file syntax' : 'Check workspace')
     }
   }
 }

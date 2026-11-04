@@ -58,23 +58,31 @@ function syncPanelTabs(surface) {
   const view = surface.dataset.workbenchView || 'source'
   const panelOpen = surface.dataset.workbenchFocus === 'split'
   for (const tab of surface.querySelectorAll('button[data-workbench-view]')) {
-    const active = tab.dataset.workbenchView === view
-    tab.setAttribute('role', panelOpen ? 'tab' : 'button')
-    if (panelOpen) {
-      tab.setAttribute('aria-selected', String(active))
-      tab.removeAttribute('aria-expanded')
-    } else {
-      tab.removeAttribute('aria-selected')
-      tab.setAttribute('aria-expanded', 'false')
+    // Opening a local panel is available even without a file, chat or PTY.
+    tab.disabled = false
+    if (tab.getAttribute('aria-disabled') !== 'false') tab.setAttribute('aria-disabled', 'false')
+    if (!tab.dataset.panelClickInstalled) {
+      tab.dataset.panelClickInstalled = 'true'
+      tab.addEventListener('click', () => {
+        setView(surface, tab.dataset.workbenchView)
+        tab.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+      })
     }
-    tab.removeAttribute('aria-pressed')
-    tab.tabIndex = !panelOpen || active ? 0 : -1
+    const active = tab.dataset.workbenchView === view
+    // Panel toggles keep one stable native role across loading and rerenders.
+    tab.setAttribute('role', 'button')
+    tab.removeAttribute('aria-selected')
+    tab.setAttribute('aria-pressed', String(panelOpen && active))
+    tab.setAttribute('aria-expanded', String(panelOpen && active))
+    tab.tabIndex = 0
   }
-  surface.querySelector('.code-workbench-tabs')?.setAttribute('role', panelOpen ? 'tablist' : 'group')
+  surface.querySelector('.code-workbench-tabs')?.setAttribute('role', 'group')
+  const selectionControl = surface.querySelector('[data-workbench-action="selection"]')
+  if (selectionControl) selectionControl.disabled = !lastSelection?.text?.trim()
   const panel = surface.querySelector('.code-workbench-work')
   if (panel) {
     panel.id = 'code-workbench-panel'
-    panel.setAttribute('role', 'tabpanel')
+    panel.setAttribute('role', 'region')
     panel.setAttribute('aria-labelledby', `code-workbench-tab-${view}`)
     panel.tabIndex = 0
   }
@@ -187,6 +195,7 @@ function renderContexts() {
     inspect.type = 'button'
     inspect.textContent = item.label
     inspect.title = item.text
+    inspect.dataset.i18nScope = 'content'
     inspect.addEventListener('click', () => {
       let preview = tray.querySelector('.code-context-preview')
       if (preview) { preview.remove(); return }
@@ -220,7 +229,7 @@ function addContext(detail) {
   if (!surface) {
     if (!normalizeCodeContext(detail)) return
     pendingContext = detail
-    document.querySelector('button[title="Open Code"]')?.click()
+    document.querySelector('[data-testid="mode-code"]')?.click()
     return
   }
   const item = normalizeCodeContext(detail)
@@ -272,6 +281,8 @@ function showSelectionActions(selection) {
   const surface = root()
   if (!surface || !selection?.text.trim()) return
   lastSelection = selection
+  const selectionControl = surface.querySelector('[data-workbench-action="selection"]')
+  if (selectionControl) selectionControl.disabled = false
   let actions = surface.querySelector('.code-selection-actions')
   if (!actions) {
     actions = document.createElement('div')
@@ -327,7 +338,7 @@ function enhance() {
   if (!surface.dataset.workbenchInstalled) {
     surface.dataset.workbenchInstalled = 'true'
     surface.addEventListener('keydown', event => {
-      const tab = event.target.closest?.('[role="tab"]')
+      const tab = event.target.closest?.('button[data-workbench-view], [role="tab"]')
       if (!tab || tab !== event.target) return
       if (tab.matches('button[data-workbench-view]')) {
         navigateTabList(event, surface.querySelectorAll('button[data-workbench-view]'), next => setView(surface, next.dataset.workbenchView))
@@ -342,7 +353,7 @@ function enhance() {
     })
     surface.addEventListener('click', event => {
       const tab = event.target.closest('button[data-workbench-view]')
-      if (tab) { setView(surface, tab.dataset.workbenchView); tab.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); return }
+      if (tab) return
       if (event.target.closest('.source-editor-tab-close')) {
         requestAnimationFrame(() => surface.querySelector('.source-editor-tab-select[aria-selected="true"]')?.focus({ preventScroll: true }))
         return
@@ -363,7 +374,7 @@ function enhance() {
         saveStored(layoutKey(surface), { view: surface.dataset.workbenchView, focus: surface.dataset.workbenchFocus })
         syncPanelTabs(surface)
         if (action === 'focus') promptInput()?.focus()
-        else surface.querySelector('button[data-workbench-view][aria-selected="true"]')?.focus({ preventScroll: true })
+        else surface.querySelector('button[data-workbench-view][aria-pressed="true"]')?.focus({ preventScroll: true })
       }
     })
   }
@@ -409,6 +420,8 @@ function enhance() {
     button.dataset.pickCodeElement = 'true'
     button.textContent = 'Select element'
     button.title = 'Select an element in a MoonDesk-served preview to discuss it'
+    const frame = surface.querySelector('[data-testid="mooncode-developer-browser-frame"]')
+    button.disabled = !frame?.src || frame.src === 'about:blank' || new URL(frame.src, location.href).origin !== location.origin
     button.addEventListener('click', () => {
       surface.querySelector('[data-testid="mooncode-developer-browser-frame"]')?.contentWindow?.postMessage({ protocol: 'moondesk-preview-v1', type: 'pick-element' }, '*')
       announce('Click an element in the preview. Escape cancels. Available on MoonDesk-served previews.')

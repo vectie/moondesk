@@ -377,7 +377,19 @@ function installBrowser(root) {
     const forward = root.querySelector('[data-developer-browser-action="forward"]')
     if (back instanceof HTMLButtonElement) back.disabled = cursor === 0
     if (forward instanceof HTMLButtonElement) forward.disabled = cursor >= history.length - 1
+    const target = history[cursor]
+    const hasPage = Boolean(target && target !== 'about:blank')
+    for (const name of ['reload', 'open-external']) {
+      const control = root.querySelector(`[data-developer-browser-action="${name}"]`)
+      if (control) control.disabled = !hasPage
+    }
+    const go = form.querySelector('button')
+    if (go) go.disabled = !address.value.trim() || !normalizeDeveloperBrowserUrl(address.value)
+    panel.dataset.hasPage = String(hasPage)
+    const picker = panel.querySelector('[data-pick-code-element]')
+    if (picker) picker.disabled = !hasPage || new URL(target, location.href).origin !== location.origin
   }
+  address.addEventListener('input', updateButtons)
 
   const load = (target, { record = true } = {}) => {
     const normalized = normalizeDeveloperBrowserUrl(target)
@@ -427,7 +439,7 @@ function installBrowser(root) {
         setStatus(root, 'Reloading isolated preview')
         break
       case 'open-external': {
-        const target = normalizeDeveloperBrowserUrl(address.value)
+        const target = history[cursor]
         if (!target || target === 'about:blank') {
           setStatus(root, 'Enter a valid HTTP or HTTPS address first')
           break
@@ -441,7 +453,10 @@ function installBrowser(root) {
 
   frame.addEventListener('load', () => {
     setStatus(root, frame.src === 'about:blank' ? 'Enter a preview address' : 'Ready · isolated preview')
+    updateButtons()
   })
+  frame.addEventListener('error', () => setStatus(root, 'Preview could not be loaded. Check the address and retry.'))
+  address.value = initial === 'about:blank' ? '' : initial
   updateButtons()
 }
 

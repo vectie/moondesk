@@ -1,5 +1,10 @@
 # Active-document Truth Audit — 2026-07-27
 
+Historical evidence as of 2026-07-27, not current implementation status. Old
+MoonCode plans named below were removed during the 2026-11-04 documentation
+cleanup; their contents remain in Git history. Current MoonCode ownership and
+next work are described in [MoonCode Workspace](MOONCODE.md).
+
 ## Scope and evidence boundary
 
 This documentation-only audit compares every document in the active reading
@@ -42,9 +47,9 @@ release evidence is claimed.
 | [`WIKI_MODE_UX_PLAN.md`](WIKI_MODE_UX_PLAN.md) | Wiki UX hierarchy and implementation gates | Current scoped UX plan | None confirmed | None | Its own gates require their own evidence. |
 | [`WIKI_MODE_USER_E2E_PLAN.md`](WIKI_MODE_USER_E2E_PLAN.md) | Wiki user journeys and acceptance methodology | Current acceptance plan | None confirmed | None | Planned E2E evidence is not implied by local fast validation. |
 | [`MOONCODE.md`](MOONCODE.md) | Code-mode contract and MoonClaw handoff | Current product contract | None confirmed | None | Contract text does not establish typed-target implementation. |
-| [`MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md`](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md) | Conversation/runtime upgrade record | Historical upgrade record; not a current productization plan | None confirmed | Classification clarified by this audit; content unchanged | Must remain historical and must not direct current phase status. |
-| [`MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md`](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md) | Conversation/thinking/live-update correction record | Historical alignment record; not a current productization plan | None confirmed | Classification clarified by this audit; content unchanged | Must remain historical and must not become a current plan. |
-| [`MOONCODE_TYPED_CONTRACT_TARGET.md`](MOONCODE_TYPED_CONTRACT_TARGET.md) | Phase 3.1 inventory, target, decisions, and migration slices | Current completed design/inventory target | Any reading that treats the completed target as implemented is false | Current-status documents now distinguish completed inventory/target from implementation not started | Phase 3 implementation and its evidence remain outstanding. |
+| `MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md` (retired; Git history) | Conversation/runtime upgrade record | Historical upgrade record; not a current productization plan | None confirmed | Classification clarified by this audit; content unchanged | Must remain historical and must not direct current phase status. |
+| `MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md` (retired; Git history) | Conversation/thinking/live-update correction record | Historical alignment record; not a current productization plan | None confirmed | Classification clarified by this audit; content unchanged | Must remain historical and must not become a current plan. |
+| `MOONCODE_TYPED_CONTRACT_TARGET.md` (retired; Git history) | Phase 3.1 inventory, target, decisions, and migration slices | Current completed design/inventory target | Any reading that treats the completed target as implemented is false | Current-status documents now distinguish completed inventory/target from implementation not started | Phase 3 implementation and its evidence remain outstanding. |
 | [`STATUS.md`](STATUS.md) | Canonical current implementation state and known gaps | Current status | “Only [Phase 0's] validation-entrypoint slice is complete” omitted completed baseline metrics, ownership, typed inventory/target, and contradiction-audit work; fast evidence did not state 217/217 native explicitly | Updated to state all confirmed local evidence and, after isolated validation, local Phase 0 completion | No remote run evidence exists. |
 | [`BASELINE_2026-07-27.md`](BASELINE_2026-07-27.md) | Reproducible starting/current evidence and metrics | Historical starting baseline plus bounded current local evidence | Phase 0 close conditions were stale as the audit and full proof were added | Linked both retained records and marked local Phase 0 complete | Current coverage remains unmeasured. |
 | [`DOCUMENT_TRUTH_AUDIT_2026-07-27.md`](DOCUMENT_TRUTH_AUDIT_2026-07-27.md) | Contradiction ledger and evidence boundary | Current Phase 0 audit record | New document; no prior contradiction | Added and linked immediately after the baseline | Records local evidence only and cannot establish remote CI or release readiness. |

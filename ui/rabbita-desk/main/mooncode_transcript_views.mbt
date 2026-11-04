@@ -24,7 +24,20 @@ fn render_mooncode_transcript(
   let items = mooncode_transcript_items(model, session)
   if items.length() == 0 {
     div(class="mooncode-empty", [
-      h1(mooncode_empty_transcript_title(session)),
+      h1(
+        attrs=@html.Attrs::build().data_set(
+          "i18n-scope",
+          if session.status == "failed" ||
+            session.status == "queued" ||
+            session.queued_count > 0 ||
+            session.status == "running" {
+            "interface"
+          } else {
+            "content"
+          },
+        ),
+        mooncode_empty_transcript_title(session),
+      ),
       p(class="lead", mooncode_empty_transcript_message(session)),
     ])
   } else {
@@ -141,7 +154,7 @@ fn render_mooncode_transcript_row(
       if row.role == "assistant" {
         div(class="mooncode-message-actions", [
           button(
-            class="mooncode-inline-action",
+            class="mooncode-inline-action moon-icon-button",
             attrs=@html.Attrs::build()
               .aria_label(
                 if model.mooncode_copied_item_id == message_id {
@@ -158,30 +171,25 @@ fn render_mooncode_transcript_row(
                   "code.copy_answer_aria"
                 },
               )
-              .data_set(
-                "i18n",
-                if model.mooncode_copied_item_id == message_id {
-                  "code.copied_answer"
-                } else {
-                  "code.copy_answer"
-                },
-              )
               .data_set("testid", "mooncode-copy-answer"),
             on_click=dispatch(CopyMoonCodeText(message_id, row.content)),
-            if model.mooncode_copied_item_id == message_id {
-              "Copied"
-            } else {
-              "Copy"
-            },
+            [
+              ui_icon(
+                if model.mooncode_copied_item_id == message_id {
+                  "check"
+                } else {
+                  "copy"
+                },
+              ),
+            ],
           ),
           button(
-            class="mooncode-inline-action",
+            class="mooncode-inline-action moon-icon-button",
             attrs=@html.Attrs::build()
               .data_set("mooncode-compare-from", "true")
               .aria_label("Try another implementation approach from here")
-              .data_set("i18n-aria-label", "code.try_another_approach_aria")
-              .data_set("i18n", "code.try_another_approach"),
-            "Try another approach",
+              .data_set("i18n-aria-label", "code.try_another_approach_aria"),
+            [ui_icon("fork")],
           ),
         ])
       } else {
@@ -237,7 +245,9 @@ fn render_mooncode_ordered_user_content(
           index < 12 {
           children.push(
             img(
-              src=@desk.mooncode_session_media_url(session_id, command_id, index),
+              src=@desk.mooncode_session_media_url(
+                session_id, command_id, index,
+              ),
               alt=if name == "" { "Attached image" } else { name },
               attrs=@html.Attrs::build().data_set(
                 "testid", "mooncode-user-image",

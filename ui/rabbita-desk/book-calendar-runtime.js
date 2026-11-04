@@ -1,4 +1,6 @@
 import { localDateTime, zonedInputSeconds, scheduleOccurrences } from './mooncode-calendar-runtime.js'
+import { iconMarkup } from './ui-icons.js'
+import { uiText, uiLocale, userContent } from './ui-locale.js'
 
 const calendars = new Map()
 const reminded = new Set()
@@ -36,7 +38,7 @@ function renderBookCalendar(state, options = {}) {
   const root = el('div', 'document-tool-content book-calendar')
   const load = async () => {
     if (calendar.loading || !workspaceId) return
-    calendar.loading = true
+    calendar.loading = true; draw()
     try {
       const response = await fetch(`/api/document-calendar?workspace_id=${encodeURIComponent(workspaceId)}`)
       if (!response.ok) throw new Error('Calendar could not be loaded. Try Refresh.')
@@ -64,18 +66,22 @@ function renderBookCalendar(state, options = {}) {
   }
   const draw = () => {
     root.replaceChildren()
-    const intro = el('div', 'document-tool-intro with-action')
-    const copy = el('div'); copy.append(el('h3', '', 'Book calendar'), el('p', '', 'Keep meetings, review dates and reminders beside the work they refer to.'))
-    intro.append(copy, button('New event', () => edit(null)), button('Refresh', load)); root.append(intro)
-    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') root.append(button('Enable desktop reminders', async () => { await Notification.requestPermission(); draw() }))
-    root.append(el('p', 'mooncode-schedule-form-help', 'MoonDesk shows reminders while this book calendar is open. Export an event to your calendar app for reminders when MoonDesk is closed.'))
+    const intro = el('div', 'document-tool-intro secondary-tools')
+    const refresh = button('', load); refresh.className = 'moon-icon-button'; refresh.setAttribute('aria-label', 'Refresh'); refresh.title = 'Refresh'; refresh.innerHTML = iconMarkup('refresh')
+    if (!calendar.draft) intro.append(button('New event', () => edit(null)))
+    intro.append(refresh); root.append(intro)
+    const reminders = el('details', 'book-calendar-reminders')
+    reminders.append(el('summary', '', 'Reminder behavior'), el('p', 'mooncode-schedule-form-help', 'MoonDesk shows reminders while this book calendar is open. Export an event to your calendar app for reminders when MoonDesk is closed.'))
+    if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') reminders.append(button('Enable desktop reminders', async () => { await Notification.requestPermission(); draw() }))
     const status = el('p', 'status-line', calendar.error || (calendar.loading ? 'Loading calendar…' : '')); status.setAttribute('role', 'status'); root.append(status)
     if (calendar.draft && !calendar.draft.deleting) {
       const draft = calendar.draft
       const form = el('form', 'mooncode-calendar-form')
+      const canSave = () => Boolean(draft.title.trim() && draft.start && draft.end && draft.end > draft.start && !calendar.busy)
+      const syncSave = () => { submit.disabled = !canSave() }
       for (const [key, label, type] of [['title', 'Event title', 'text'], ['description', 'Notes', 'text'], ['start', 'Starts', 'datetime-local'], ['end', 'Ends', 'datetime-local'], ['document_path', 'Related file', 'text']]) {
         const field = el('label'); field.append(el('span', '', label))
-        const input = el('input'); input.type = type; input.value = draft[key] || ''; input.required = ['title', 'start', 'end'].includes(key); input.addEventListener('input', () => { draft[key] = input.value }); field.append(input); form.append(field)
+        const input = el('input'); input.type = type; input.value = draft[key] || ''; input.required = ['title', 'start', 'end'].includes(key); input.addEventListener('input', () => { draft[key] = input.value; syncSave() }); field.append(input); form.append(field)
       }
       for (const [key, label, choices] of [['recurrence', 'Repeat', [['once', 'Once'], ['daily', 'Daily'], ['weekdays', 'Weekdays'], ['weekly', 'Weekly']]], ['remind_minutes', 'Remind me', [['-1', 'No reminder'], ['0', 'At start'], ['5', '5 minutes before'], ['15', '15 minutes before'], ['60', '1 hour before']]]]) {
         const field = el('label'); field.append(el('span', '', label)); const select = el('select')
@@ -83,16 +89,18 @@ function renderBookCalendar(state, options = {}) {
         select.value = String(draft[key]); select.addEventListener('change', () => { draft[key] = select.value }); field.append(select); form.append(field)
       }
       form.append(el('p', 'mooncode-schedule-form-help', `Time zone: ${draft.timezone}`))
-      const submit = el('button', 'primary-button', calendar.busy ? 'Saving…' : 'Save event'); submit.type = 'submit'; submit.disabled = calendar.busy; form.append(submit, button('Cancel', () => { calendar.draft = null; draw() }))
-      form.addEventListener('submit', event => { event.preventDefault(); try { void save({ ...draft, starts_at: zonedInputSeconds(draft.start, draft.timezone), ends_at: zonedInputSeconds(draft.end, draft.timezone), remind_minutes: Number(draft.remind_minutes) }) } catch (error) { calendar.error = error.message; draw() } })
+      const submit = el('button', 'primary-button', calendar.busy ? 'Saving…' : 'Save event'); submit.type = 'submit'; syncSave()
+      const actions = el('div', 'mooncode-calendar-form-actions'); actions.append(button('Cancel', () => { calendar.draft = null; draw() }), submit); form.append(actions)
+      form.addEventListener('submit', event => { event.preventDefault(); if (!canSave()) return; try { void save({ ...draft, starts_at: zonedInputSeconds(draft.start, draft.timezone), ends_at: zonedInputSeconds(draft.end, draft.timezone), remind_minutes: Number(draft.remind_minutes) }) } catch (error) { calendar.error = error.message; draw() } })
       root.append(form)
     }
     const occurrences = bookCalendarOccurrences(calendar.events)
-    root.append(el('h4', '', 'Next two weeks'))
-    if (!occurrences.length) root.append(el('p', 'document-tool-empty', 'No upcoming events. Add a review date or a reminder for this book.'))
+    if (occurrences.length) root.append(el('h4', '', 'Next two weeks'))
+    if (!occurrences.length && calendar.loaded && !calendar.error && !calendar.draft) root.append(el('p', 'document-tool-empty', 'No upcoming events.'))
+    root.append(reminders)
     for (const { schedule: event, time } of occurrences) {
       const row = el('article', 'result-bundle')
-      row.append(el('strong', '', event.title), el('p', '', new Date(time * 1000).toLocaleString()), el('p', '', event.description || ''))
+      row.append(userContent(el('strong', '', event.title)), el('p', '', new Date(time * 1000).toLocaleString(uiLocale())), userContent(el('p', '', event.description || '')))
       const actions = el('div', 'result-bundle-actions'); actions.append(button('Edit event', () => edit(event)), button('Export to calendar', () => downloadCalendarEvent(event)))
       if (event.document_path) actions.append(button('Open related work', () => options.openFile?.(event.document_path)))
       actions.append(button('Remove event', () => { calendar.draft = { ...event, start: localDateTime(event.starts_at, event.timezone), end: localDateTime(event.ends_at, event.timezone), deleting: true }; draw() }))
@@ -104,7 +112,7 @@ function renderBookCalendar(state, options = {}) {
     const past = calendar.events.filter(event => event.recurrence === 'once' && Number(event.ends_at) < Date.now() / 1000)
     if (past.length) {
       const history = el('details'); history.append(el('summary', '', `${past.length} past events`))
-      for (const event of past) history.append(button(event.title, () => edit(event)))
+      for (const event of past) history.append(userContent(button(event.title, () => edit(event))))
       root.append(history)
     }
   }
@@ -118,8 +126,8 @@ function renderBookCalendar(state, options = {}) {
       const key = `${workspaceId}:${event.id}:${time}`
       if (due <= now && now < time + 60 && !reminded.has(key)) {
         reminded.add(key)
-        const notice = el('p', 'result-bundle', `Reminder: ${event.title} · ${new Date(time * 1000).toLocaleTimeString()}`); notice.setAttribute('role', 'alert'); root.prepend(notice)
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification(event.title, { body: event.description || 'Your book calendar event is starting soon.', tag: key })
+        const notice = userContent(el('p', 'result-bundle', `${uiText('Reminder')}: ${event.title} · ${new Date(time * 1000).toLocaleTimeString(uiLocale())}`)); notice.setAttribute('role', 'alert'); root.prepend(notice)
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification(event.title, { body: event.description || uiText('Your book calendar event is starting soon.'), tag: key })
       }
     }
   }, 15000)

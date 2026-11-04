@@ -48,14 +48,11 @@ fn moonflow_handover_catalog_valid(catalog : Json) -> Bool {
 }
 
 ///|
-fn moonflow_validated_handover_catalog(
-  moonflow_root : String,
+async fn moonflow_validated_handover_catalog(
+  _moonflow_root : String,
   workspace_path : String,
 ) -> Json? {
-  let response = execution_sandbox_client_submit({
-    operation: MoonFlowListHandovers,
-    input: { "moonflow_root": moonflow_root, "workspace_path": workspace_path },
-  })
+  let response = moonflow_native_service(workspace_path, ListHandovers)
   guard response is Ok(catalog) else { return None }
   if moonflow_handover_catalog_valid(catalog) {
     Some(catalog)
@@ -172,14 +169,10 @@ async fn handle_moonflow_collaboration(
     return
   }
   let moonflow_root = json_string(capability, "root", default="")
-  let inspected = execution_sandbox_client_submit({
-    operation: MoonFlowInspectCollaboration,
-    input: {
-      "moonflow_root": moonflow_root,
-      "workspace_path": workspace.root_path,
-      "workspace_id": workspace_id,
-    },
-  })
+  let inspected = moonflow_native_service(
+    workspace.root_path,
+    InspectCollaboration(workspace_id~),
+  )
   guard inspected is Ok(snapshot) else {
     send_json(
       conn,
@@ -188,9 +181,9 @@ async fn handle_moonflow_collaboration(
         workspace_id,
         None,
         false,
-        "sandbox_unavailable",
-        execution_sandbox_unavailable_message(),
-        "configure_execution_sandbox",
+        "quarantined",
+        moonflow_native_error(inspected),
+        "review_collaboration",
       ),
     )
     return

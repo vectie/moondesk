@@ -292,6 +292,7 @@ struct Model {
   moonflow_ingest_preparing : Bool
   moonflow_composition : MoonFlowComposition?
   moonflow_composition_status : String
+  moonflow_composition_load_failed : Bool
   moonflow_composition_saving : Bool
   flow_canvas : FlowCanvasState
   moonflow_operator_actions : Array[MoonFlowOperatorActions]

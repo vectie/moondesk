@@ -1,5 +1,10 @@
 # MoonCode Session Lifecycle E2E Evidence
 
+Historical test evidence. Models, ports, test counts, and results describe
+this dated run and do not establish current readiness. Use
+[MoonCode Workspace](MOONCODE.md) and the [current plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md)
+for current guidance.
+
 Date: 2026-07-15
 
 ## Purpose

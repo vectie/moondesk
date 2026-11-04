@@ -12,6 +12,21 @@ test "source path typing does not open until explicit request" {
 }
 
 ///|
+test "empty source view has no saved claim and cannot open a blank path" {
+  let source = init_source_pane("book", "chat")
+  let markup = render_test_dom(
+    @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, source)),
+  )
+  assert_true(markup.contains("No file open"))
+  assert_false(markup.contains(">Saved</span>"))
+  let typed = update_source_pane(source, SetPathInput("src/main.mbt"))
+  let typed_markup = render_test_dom(
+    @rabbita.static_cell(render_source_editor(fn(_) { @rabbita.none }, typed)),
+  )
+  assert_true(typed_markup.contains("data-testid=\"source-open\""))
+}
+
+///|
 test "same-workspace session changes preserve source state and response authority" {
   let loading = update_source_pane(
     update_source_pane(

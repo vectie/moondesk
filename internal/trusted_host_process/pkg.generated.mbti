@@ -120,9 +120,15 @@ pub async fn moonbook_export_runtime() -> Result[MoonBookExportRuntime, String]
 
 pub async fn moonbook_import_runtime(exact? : Bool) -> Result[MoonBookExportRuntime, String]
 
+pub fn moonflow_executable() -> Result[String, String]
+
 pub async fn moonflow_planning_runtime() -> Result[MoonFlowPlanningRuntime, String]
 
 pub async fn moonflow_review_runtime() -> Result[MoonFlowReviewRuntime, String]
+
+pub async fn moonflow_service_runtime() -> Result[MoonFlowServiceRuntime, String]
+
+pub fn moonflow_single_step_configuration() -> String
 
 pub async fn moonflow_single_step_runtime() -> Result[MoonFlowSingleStepRuntime, String]
 
@@ -141,6 +147,8 @@ pub async fn run_lepusa_operation(String, LepusaOperation) -> Int
 pub async fn run_moonflow_planning(MoonFlowPlanningRuntime, String, MoonFlowPlanningOperation) -> Result[String, String]
 
 pub async fn run_moonflow_review(MoonFlowReviewRuntime, String, MoonFlowReviewOperation) -> Result[String, String]
+
+pub async fn run_moonflow_service(MoonFlowServiceRuntime, String, MoonFlowServiceOperation) -> Result[Json, String]
 
 pub async fn run_moonflow_single_step(MoonFlowSingleStepRuntime, String, MoonFlowSingleStepOperation) -> Result[String, String]
 
@@ -234,6 +242,18 @@ pub(all) enum MoonFlowReviewOperation {
 }
 
 pub struct MoonFlowReviewRuntime {
+  // private fields
+}
+
+pub(all) enum MoonFlowServiceOperation {
+  ValidateGraph(graph_path~ : String, catalog_path~ : String, evaluated_at~ : String)
+  ImportGraph(graph_path~ : String, catalog_path~ : String, evaluated_at~ : String)
+  Control(run_id~ : String, action~ : String, evaluated_at~ : String, detail~ : String)
+  InspectCollaboration(workspace_id~ : String)
+  ListHandovers
+}
+
+pub struct MoonFlowServiceRuntime {
   // private fields
 }
 

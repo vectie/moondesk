@@ -204,9 +204,6 @@ export function installMoonCodeCompare(root) {
   if (panel.dataset.comparisonRuntimeInstalled === 'true') return
   panel.dataset.comparisonRuntimeInstalled = 'true'
   if (!panel.querySelector('[data-developer-compare-form]')) panel.innerHTML = `
-    <div class="mooncode-developer-tool-heading">
-      <div><h3>Compare answers or approaches</h3><p>Run two conversations, compare their results, and continue with your choice.</p></div>
-    </div>
     <form class="mooncode-compare-form" data-developer-compare-form="true">
       <label>Goal<textarea data-developer-compare-goal required placeholder="What should both approaches accomplish?"></textarea></label>
       <div class="mooncode-compare-branches">
@@ -214,7 +211,7 @@ export function installMoonCodeCompare(root) {
         <label>Approach B<textarea data-developer-compare-b placeholder="Alternative implementation, library choice, or route B"></textarea></label>
       </div>
       <button class="mooncode-developer-terminal-submit" type="submit">Run isolated comparison</button>
-      <p class="mooncode-developer-tool-footnote" data-testid="mooncode-developer-compare-status" role="status" aria-live="polite">Results, diffs, checks, latency, tokens, and cost stay in the MoonCode transcript.</p>
+      <p class="mooncode-developer-tool-footnote" data-testid="mooncode-developer-compare-status" role="status" aria-live="polite"></p>
     </form><div class="mooncode-compare-results-host" data-developer-compare-results-host="true"></div>`
   const form = panel.querySelector('[data-developer-compare-form]')
   const goal = panel.querySelector('[data-developer-compare-goal]')
@@ -239,6 +236,7 @@ export function installMoonCodeCompare(root) {
     return select
   }
   const mode = labeledSelect('Compare', [['approaches', 'Implementation approaches'], ['models', 'Model answers · read only']])
+  mode.parentElement.classList.add('mooncode-comparison-mode')
   const modelSource = root.closest('[data-testid="mooncode-center"]')?.querySelector('[data-models]') || document.querySelector('[data-models]')
   const available = String(root.dataset.models || modelSource?.dataset.models || '').split('\n').filter(Boolean)
   const modelEntries = [['', 'Default model'], ...available.map(value => [value, value])]
@@ -248,10 +246,13 @@ export function installMoonCodeCompare(root) {
   if (available.length > 1) modelB.value = available[1]
   const draftKey = () => `moondesk.compare.draft:${root.dataset.workspaceId || 'general'}`
   const liveDrafts = new Map()
+  let busy = false
+  const syncSubmit = () => { submit.disabled = busy || !goal.value.trim() }
   const saveDraft = () => {
     const draft = { goal: goal.value, a: approachA.value, b: approachB.value, mode: mode.value, modelA: modelA.value, modelB: modelB.value }
     liveDrafts.set(draftKey(), draft)
     try { localStorage.setItem(draftKey(), JSON.stringify(draft)) } catch { /* Keep current inputs. */ }
+    syncSubmit()
   }
   const restoreDraft = () => {
     let draft = liveDrafts.get(draftKey()) || {}; if (!liveDrafts.has(draftKey())) try { draft = JSON.parse(localStorage.getItem(draftKey()) || '{}') } catch { /* No saved draft. */ }
@@ -264,6 +265,7 @@ export function installMoonCodeCompare(root) {
     }
     approachA.disabled = mode.value === 'models'; approachB.disabled = mode.value === 'models'
     submit.textContent = mode.value === 'models' ? 'Compare model answers' : 'Run isolated comparison'
+    syncSubmit()
   }
   form.addEventListener('input', saveDraft); form.addEventListener('change', saveDraft)
   mode.addEventListener('change', () => {
@@ -273,7 +275,6 @@ export function installMoonCodeCompare(root) {
   })
   form.prepend(options)
   restoreDraft()
-  submit.disabled = false
   submit.dataset.compareReady = 'true'
   let scope = root.dataset.workspaceId || ''
   let restoreEpoch = 0
@@ -323,8 +324,8 @@ export function installMoonCodeCompare(root) {
   }
   form.addEventListener('submit', async event => {
     event.preventDefault()
-    if (submit.disabled) return
-    submit.disabled = true
+    if (busy || !goal.value.trim()) return
+    busy = true; syncSubmit()
     restoreEpoch++
     try {
     const {
@@ -336,7 +337,7 @@ export function installMoonCodeCompare(root) {
     const origin = { dataset: { workspaceId: root.dataset.workspaceId || '', contextPath: root.dataset.contextPath || '' } }
     const identity = await comparisonRequestIdentity(origin, goal.value)
     const branches = configureComparisonBranches(moonCodeComparisonBranches(goal.value, approachA.value, approachB.value, identity), mode.value, [modelA.value, modelB.value], goal.value).map(branch => ({ ...branch, client_turn_id: `compare-${branch.label.toLowerCase()}-${globalThis.crypto?.randomUUID?.() || Date.now()}` }))
-    if (!branches.length) { submit.disabled = false; return }
+    if (!branches.length) return
     status.textContent = mode.value === 'models' ? 'Asking both models…' : 'Starting two isolated MoonCode branches…'
       let comparison = {
         contract: 'moondesk.mooncode_comparison.v1',
@@ -369,7 +370,7 @@ export function installMoonCodeCompare(root) {
     } catch (error) {
       status.textContent = `Comparison could not start: ${error?.message || error}`
     } finally {
-      submit.disabled = false
+      busy = false; syncSubmit()
     }
   })
 }

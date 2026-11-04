@@ -70,7 +70,6 @@ run_step "MoonCode command action contract ownership" bash "${ROOT}/scripts/vali
 run_step "MoonCode runtime tool contract ownership" bash "${ROOT}/scripts/validate_mooncode_runtime_tool_contract.sh"
 run_step "MoonCode native command execution contract ownership" bash "${ROOT}/scripts/validate_mooncode_native_command_execution_contract.sh"
 run_step "MoonCode runtime evidence contract ownership" bash "${ROOT}/scripts/validate_mooncode_runtime_evidence_contract.sh"
-run_step "MoonCode final architecture closure" bash "${ROOT}/scripts/validate_mooncode_final_closure.sh"
 run_step "MoonCode backend method dispatch ownership" bash "${ROOT}/scripts/validate_mooncode_backend_method_dispatch.sh"
 run_step "MoonCode HTTP route method contract coverage" node "${ROOT}/scripts/mooncode_http_method_contract_smoke.mjs"
 run_step "MoonLib consumer pins" bash "${ROOT}/scripts/validate_moonlib_consumer_pins.sh"

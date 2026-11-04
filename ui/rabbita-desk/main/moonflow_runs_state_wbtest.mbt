@@ -194,7 +194,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
     ),
   )
   assert_true(ready_markup.contains("run-selected"))
-  assert_true(ready_markup.contains("Executable work exists"))
+  assert_true(ready_markup.contains("Ingest latest revision"))
   assert_false(ready_markup.contains("moonflow-runs-state-announcement"))
   let zero_markup = render_test_dom(
     @rabbita.static_cell(
@@ -205,7 +205,9 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
     ),
   )
   assert_true(zero_markup.contains("data-state=\"legitimate-zero\""))
-  assert_eq(zero_markup.split("No executable work yet").count(), 2)
+  assert_false(zero_markup.contains("No executable work yet"))
+  assert_false(zero_markup.contains("Edit workflow"))
+  assert_eq(zero_markup.split("No executable Work graph yet").count(), 2)
   let zero_before_canvas = zero_markup
     .split("data-testid=\"moonflow-composition-canvas\"")
     .to_array()
@@ -224,9 +226,7 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
   assert_true(stale_markup.contains("Showing earlier executable work"))
   assert_true(stale_markup.contains("run-selected"))
   assert_true(
-    stale_markup.contains(
-      "<summary>Technical details</summary><code>private refresh failure</code>",
-    ),
+    stale_markup.contains("</summary><code>private refresh failure</code>"),
   )
   let failed_markup = render_test_dom(
     @rabbita.static_cell(
@@ -240,11 +240,47 @@ test "Flow run listing renders owned copy and confines refresh diagnostics" {
   assert_true(failed_markup.contains("Executable work couldn’t be loaded"))
   assert_true(failed_markup.contains(">Retry</button>"))
   assert_true(
-    failed_markup.contains(
-      "<summary>Technical details</summary><code>private initial failure</code>",
-    ),
+    failed_markup.contains("</summary><code>private initial failure</code>"),
   )
   assert_false(failed_markup.contains("No executable work yet"))
+}
+
+///|
+test "Flow review outcome remains distinct from active execution" {
+  let run = moonflow_runs_test_run("book-selected", "run-selected")
+  assert_eq(moonflow_run_state({ ..run, outcome: "review", }), "review")
+  assert_eq(moonflow_run_state(run), "in-progress")
+  assert_eq(moonflow_run_state({ ..run, outcome: "accepted", }), "complete")
+}
+
+///|
+test "workflow read failure remains distinct from an empty successful collection" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let (_, failed) = update_workspace_results(
+    dispatch,
+    LoadedMoonFlowComposition(Err("read failed")),
+    moonflow_runs_test_model(),
+  )
+  assert_true(failed.moonflow_composition_load_failed)
+  let markup = render_test_dom(
+    @rabbita.static_cell(render_moonflow_workspace(dispatch, failed)),
+  )
+  assert_true(markup.contains("Workflow couldn’t be loaded"))
+  assert_true(markup.contains(">Retry</button>"))
+  assert_false(markup.contains("No executable Work graph yet"))
+  let (_, retrying) = update_navigation_actions(
+    dispatch,
+    SelectWorkspaceMode(MoonFlow),
+    failed,
+  )
+  assert_false(retrying.moonflow_composition_load_failed)
+  let valid = plan_form_fixture_model()
+  let (_, recovered) = update_workspace_results(
+    dispatch,
+    LoadedMoonFlowComposition(Ok(valid.moonflow_composition.unwrap())),
+    { ..valid, moonflow_composition_load_failed: true, },
+  )
+  assert_false(recovered.moonflow_composition_load_failed)
 }
 
 ///|
@@ -279,16 +315,11 @@ test "Flow capability limits preparation without erasing run history" {
   )
   assert_true(markup.contains("run-selected"))
   assert_false(markup.contains("data-testid=\"moonflow-prepare-selected\""))
-  assert_true(markup.contains("<summary>Technical details</summary>"))
+  assert_true(markup.contains("aria-label=\"Technical details\""))
   assert_true(markup.contains("runtime-root-unavailable"))
   assert_true(markup.contains("/missing/flow"))
-  let limited_before_canvas = markup
-    .split("data-testid=\"moonflow-composition-canvas\"")
-    .to_array()
-  assert_eq(limited_before_canvas.length(), 2)
-  assert_true(
-    limited_before_canvas[0].contains("data-state=\"capability-limited\""),
-  )
+  assert_false(markup.contains("No executable Work graph yet"))
+  assert_true(markup.contains("data-state=\"capability-limited\""))
   let (_, refused) = update_workspace_surface_actions(
     dispatch,
     PrepareMoonFlow,

@@ -1,0 +1,17 @@
+{
+  "run_id": "desktop-flow-check-r1",
+  "outcome": "review",
+  "last_sequence": 4,
+  "items": [
+    {
+      "work_item_id": "create-model",
+      "status": "review",
+      "attempt_count": 1,
+      "result_id": "result-attempt-e43f6de13784ff12fdcc5ede4a3539322346ee9a1783bac154a6b4a46c0ff41c-succeeded",
+      "output_digest": "sha256:d9e659e381b657d81db434929b4ecd58e0e05ab15287ee100c4acb50b2455059",
+      "artifacts": [
+        ".moonsuite/products/moonmold/adapter-attempts/attempt-e43f6de13784ff12fdcc5ede4a3539322346ee9a1783bac154a6b4a46c0ff41c/operation-receipt.json"
+      ]
+    }
+  ]
+}

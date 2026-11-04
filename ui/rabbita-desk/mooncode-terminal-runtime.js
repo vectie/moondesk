@@ -2,6 +2,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { SearchAddon } from '@xterm/addon-search'
 import { iconMarkup, setIconButton } from './ui-icons.js'
+import { uiText, setUiText } from './ui-locale.js'
 import '@xterm/xterm/css/xterm.css'
 import './styles/mooncode-terminal.css'
 
@@ -38,10 +39,24 @@ function button(label, action) {
 }
 
 function report(book, error) {
-  book.status.textContent = error instanceof Error ? error.message : String(error)
+  setUiText(book.status, error instanceof Error ? error.message : String(error))
+  book.failed = error instanceof Error
 }
 
 function active(book) { return book.sessions.get(book.selected) }
+function disable(control, value) { if (control && control.disabled !== Boolean(value)) control.disabled = Boolean(value) }
+
+function syncControls(book) {
+  const session = active(book)
+  for (const control of book.sessionControls || []) if (![book.interrupt, book.send, book.previous, book.next].includes(control)) disable(control, !session)
+  disable(book.interrupt, !session || session.status !== -1 || session.ended)
+  disable(book.send, !session?.term.getSelection()?.trim())
+  for (const control of [book.previous, book.next]) disable(control, !session || !book.search.value.trim())
+}
+
+function sessionStatus(session) {
+  return session ? `${session.title} · ${session.directory || uiText('Book root')} · ${uiText(session.status === -1 ? 'Running' : `Exited (${session.status})`)}` : ''
+}
 
 function fit(book, session) {
   if (!session || !session.host.isConnected || !session.host.getBoundingClientRect().width) return
@@ -66,10 +81,8 @@ function select(book, id, focusTerminal = true) {
   }
   const session = active(book)
   book.empty.hidden = book.sessions.size > 0
-  book.status.textContent = session
-    ? `${session.title} · ${session.directory || 'Book root'} · ${session.status === -1 ? 'Running' : `Exited (${session.status})`}`
-    : ''
-  for (const control of book.sessionControls) control.disabled = !session
+  setUiText(book.status, sessionStatus(session)); book.failed = false
+  syncControls(book)
   book.actionsSummary.setAttribute('aria-disabled', String(!session))
   book.actionsSummary.tabIndex = session ? 0 : -1
   book.actions.open = false
@@ -101,8 +114,11 @@ function addSession(book, info) {
   book.screens.append(host)
   book.tabs.append(tab)
   term.open(host)
+  const terminalInput = host.querySelector('textarea')
+  if (terminalInput) terminalInput.setAttribute('aria-label', uiText('Terminal input'))
   const session = { ...info, term, host, tab, fit: fitAddon, search, offset: '0', size: '', queue: Promise.resolve(), polling: false }
   book.sessions.set(info.id, session)
+  term.onSelectionChange(() => syncControls(book))
   term.onData(data => {
     if (session.status !== -1) return
     session.queue = session.queue.then(() => request(book.id, info.id, { action: 'input', data })).catch(error => report(book, error))
@@ -130,6 +146,7 @@ async function poll(book) {
       }
       session.offset = String(data.next)
       session.status = data.status
+      if (book.failed && book.selected === session.id) { setUiText(book.status, sessionStatus(session)); book.failed = false }
       if (data.status !== -1 && !data.output) {
         session.ended = true
         session.term.write(`\r\n[Shell exited with code ${data.status}]\r\n`)
@@ -143,18 +160,23 @@ async function poll(book) {
       }
       report(book, error)
     }
-    finally { session.polling = false }
+    finally { session.polling = false; syncControls(book) }
   }
 }
 
 async function refresh(book) {
+  if (book.loading) return
+  book.loading = true; book.empty.hidden = true
+  if (book.refresh) book.refresh.disabled = true
+  report(book, 'Loading terminals…')
   try {
     const data = await request(book.id)
     for (const info of data.sessions) addSession(book, info)
     const preferred = sessionStorage.getItem(`moondesk.terminal.${book.id}`)
     select(book, book.sessions.has(preferred) ? preferred : book.sessions.keys().next().value || '')
     await poll(book)
-  } catch (error) { report(book, error) }
+  } catch (error) { book.empty.hidden = true; report(book, error) }
+  finally { book.loading = false; if (book.refresh) book.refresh.disabled = false }
 }
 
 function createBook(workspaceId) {
@@ -258,6 +280,7 @@ function createBook(workspaceId) {
     } }))
     report(book, 'Selected output added to the conversation.')
   })
+  book.interrupt = interrupt; book.send = send
   setIconButton(send, 'selection', 'Ask about selected output')
   function find(previous = false) {
     const session = active(book)
@@ -281,6 +304,10 @@ function createBook(workspaceId) {
   previous.textContent = '↑'
   const next = button('Next match', () => find())
   next.textContent = '↓'
+  book.previous = previous; book.next = next
+  search.addEventListener('input', () => syncControls(book))
+  const reload = button('Refresh terminals', () => refresh(book))
+  setIconButton(reload, 'refresh', 'Refresh terminals'); book.refresh = reload
   const searchControls = element('div', 'mooncode-terminal-search-controls')
   searchControls.setAttribute('role', 'search')
   searchControls.setAttribute('aria-label', 'Search terminal output')
@@ -295,7 +322,7 @@ function createBook(workspaceId) {
   for (const control of book.sessionControls) control.disabled = true
   actionsSummary.setAttribute('aria-disabled', 'true')
   actionsSummary.tabIndex = -1
-  toolbar.append(directory, newTerminal, interrupt, send, actions, searchControls)
+  toolbar.append(directory, newTerminal, interrupt, send, actions, reload, searchControls)
   screens.append(empty)
   shell.append(tabs, toolbar, screens, status)
   new ResizeObserver(() => fit(book, active(book))).observe(screens)

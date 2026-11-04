@@ -1,5 +1,7 @@
 import { taskArtifacts } from './work-journey-runtime.js'
 import { taskScheduleBindings, linkedScheduleResults } from './task-schedule-runtime.js'
+import { setIconButton } from './ui-icons.js'
+import { uiText, uiLocale, userContent } from './ui-locale.js'
 // A result keeps its output files and conversation together after work finishes.
 const views = new Map()
 const receiptsKey = 'moondesk.result-inbox.read.v1'
@@ -149,8 +151,8 @@ function renderResultInbox(state, options = {}) {
     const unread = bundles.filter(bundle => receipts[bundle.id] !== bundle.revision).length
     const header = el('div', 'document-tool-intro with-action')
     const copy = el('div')
-    copy.append(el('p', '', `${unread} unread`))
-    const refresh = action(view.loading ? 'Refreshing…' : 'Refresh', load)
+    if (unread) copy.append(el('p', '', `${unread} unread`))
+    const refresh = setIconButton(action('Refresh', load), 'refresh', 'Refresh')
     refresh.disabled = view.loading
     header.append(copy, refresh)
     const controls = el('div', 'result-inbox-controls')
@@ -171,14 +173,21 @@ function renderResultInbox(state, options = {}) {
     status.setAttribute('role', 'status')
     root.append(status)
     const visible = filterResultBundles(bundles, view.filter, view.query, receipts)
-    if (!visible.length) root.append(el('p', 'document-tool-empty', bundles.length ? 'No results match this view.' : 'Completed work and scheduled results will appear here with their output files.'))
+    if (!visible.length && !view.loading && !view.error) root.append(el('p', 'document-tool-empty', bundles.length ? 'No results match this view.' : 'Completed work and scheduled results will appear here with their output files.'))
     for (const bundle of visible) {
       const row = el('article', `result-bundle${bundle.attention ? ' needs-attention' : ''}`)
       const heading = el('div', 'result-bundle-heading')
-      heading.append(el('h4', '', bundle.title), el('span', '', `${receipts[bundle.id] !== bundle.revision ? 'Unread · ' : ''}${bundle.status}`))
-      row.append(heading, el('p', '', bundle.summary))
-      if (resultTimestamp(bundle.created_at)) row.append(el('small', '', new Date(resultTimestamp(bundle.created_at)).toLocaleString()))
-      for (const file of bundle.artifacts) row.append(action(file.title || file.path, () => { mark(bundle); options.openFile?.(file.path, bundle) }))
+      heading.append(userContent(el('h4', '', bundle.title)), el('span', '', `${receipts[bundle.id] !== bundle.revision ? uiText('Unread') + ' · ' : ''}${uiText(bundle.status)}`))
+      row.append(heading)
+      if (bundle.summary) {
+        const preview = el('details', 'result-bundle-summary')
+        const toggle = el('summary')
+        toggle.append(userContent(el('span', 'result-bundle-excerpt', bundle.summary)), el('span', 'result-bundle-details-label', 'Details'))
+        preview.append(toggle, userContent(el('p', '', bundle.summary)))
+        row.append(preview)
+      }
+      if (resultTimestamp(bundle.created_at)) row.append(el('small', '', new Date(resultTimestamp(bundle.created_at)).toLocaleString(uiLocale())))
+      for (const file of bundle.artifacts) row.append(userContent(action(file.title || file.path, () => { mark(bundle); options.openFile?.(file.path, bundle) })))
       const actions = el('div', 'result-bundle-actions')
       if (bundle.artifacts.length && options.revise) actions.append(action('Revise', () => options.revise(bundle)))
       if (bundle.artifacts.length && options.downloadFile) actions.append(action('Download output', () => options.downloadFile(bundle.artifacts[0])))
@@ -192,7 +201,7 @@ function renderResultInbox(state, options = {}) {
           globalThis.location.assign(url)
         } else options.openConversation?.(bundle.conversation_id)
       }))
-      actions.append(action('View work', () => { mark(bundle); options.openWork?.(bundle) }))
+      actions.prepend(action('View work', () => { mark(bundle); options.openWork?.(bundle) }))
       if (bundle.code_session_id) actions.append(action('Open run', () => options.openCodeSession?.(bundle.code_session_id)))
       actions.append(action('Add to task', () => globalThis.dispatchEvent(new CustomEvent('moondesk:add-context', { detail: {
         kind: 'result', label: bundle.title, workspaceId: key,
@@ -200,6 +209,14 @@ function renderResultInbox(state, options = {}) {
       } }))))
       actions.append(action('Export result', () => options.exportBundle?.(bundle)))
       if (receipts[bundle.id] !== bundle.revision) actions.append(action('Mark read', () => { mark(bundle); draw() }))
+      // File names and the main action stay visible; repeated utilities share
+      // the accessible glyphs used by workspace toolbars.
+      const actionIcons = { 'Revise': 'edit', 'Download output': 'download', 'Schedule…': 'calendar',
+        'Open conversation': 'chat', 'Open run': 'play', 'Add to task': 'attach', 'Export result': 'package', 'Mark read': 'check' }
+      for (const button of actions.children) {
+        const label = button.textContent
+        if (actionIcons[label]) setIconButton(button, actionIcons[label], label)
+      }
       row.append(actions)
       root.append(row)
     }

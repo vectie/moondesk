@@ -152,20 +152,9 @@ fn render_mooncode_job_history(
                         ),
                       "Turns run: \{job.ran_turn_count} · failed: \{job.failed_turn_count}",
                     ),
-                    if job.stopped_by != "" {
-                      p(
-                        attrs=@html.Attrs::build()
-                          .data_set("i18n", "code.job_stopped_by")
-                          .data_set(
-                            "i18n-params",
-                            ({ "reason": job.stopped_by } : Json).stringify(),
-                          ),
-                        "Stopped by: " + job.stopped_by,
-                      )
-                    } else {
-                      @html.nothing
-                    },
-                    if job.detail != "" {
+                    if job.detail != "" &&
+                      job.status != "completed" &&
+                      job.status != "done" {
                       p(job.detail)
                     } else if job.status == "interrupted" {
                       p(
@@ -184,6 +173,20 @@ fn render_mooncode_job_history(
                         ),
                         "Technical details",
                       ),
+                      if job.stopped_by != "" {
+                        div(class="info-row", [
+                          span("Stop reason"),
+                          code(job.stopped_by),
+                        ])
+                      } else {
+                        @html.nothing
+                      },
+                      if job.detail != "" &&
+                        (job.status == "completed" || job.status == "done") {
+                        p(code(job.detail))
+                      } else {
+                        @html.nothing
+                      },
                       code(
                         attrs=@html.Attrs::build()
                           .data_set("i18n", "code.job_run_id")

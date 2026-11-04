@@ -12,9 +12,10 @@ test('closing and remounting retains edited fields per book without saving serve
     'knowledge-embedding-url': 'https://example.com/embeddings', 'knowledge-embedding-model': 'embed', 'knowledge-embedding-token': 'embedding-token',
   }
   const root = { dataset: { workspaceId: 'draft-book-a' }, querySelector(selector) { const name = selector.match(/name="([^"]+)"/)?.[1]; return name in values ? { value: values[name] } : null } }
-  const state = { ...restoreCodingSetupDraft(root), tab: 'skills', draft: { id: 'old', files: [{ path: 'SKILL.md', content: 'old' }] }, data: { instructions: 'saved instructions' } }
+  const state = { ...restoreCodingSetupDraft(root), loading: true, tab: 'skills', draft: { id: 'old', files: [{ path: 'SKILL.md', content: 'old' }] }, data: { instructions: 'saved instructions' } }
   retainCodingSetupDraft(state)
   const reopened = restoreCodingSetupDraft({ dataset: { workspaceId: 'draft-book-a' } })
+  assert.equal(reopened.loading, false)
   assert.equal(reopened.draft.id, 'my-review')
   assert.equal(reopened.draft.files[0].content, 'unsaved skill')
   assert.equal(reopened.instructions, 'unsaved instructions')

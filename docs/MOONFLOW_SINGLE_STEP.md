@@ -16,12 +16,19 @@ Blender, production work, physical equipment, or any robot.
 
 The Desk host administrator configures:
 
-- `MOONDESK_MOONFLOW_BIN`: canonical absolute native Flow executable
-- `MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG`: workspace-relative, host-owned
-  `moonflow.single-step-config.v1` configuration
+- Packaged macOS builds include the native Flow executable. `MOONDESK_MOONFLOW_BIN`
+  can override it with a canonical absolute executable path.
+- The library-local default configuration is
+  `.moonsuite/products/moondesk/flow-runtime/single-step.json`.
+  `MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG` can override this workspace-relative path.
+  Current owner runtimes use `moonflow.single-step-config.v2` and the matching
+  Mold `verify-single-step` command.
 
 The configuration contains `capability_ref`, `envelope_ref`, `usage_ref`,
 `gate_executable`, `gate_sha256`, `mold_executable` and `mold_sha256`.
+The native v3 imported projection can omit `adapter_id`; Desk checks the exact
+product and operation, while native Flow resolves and verifies the adapter from
+the configured capability catalog before execution.
 Executable identities and paths are checked by Flow. The existing Gate authority
 must match the workspace, run source, exact operation and bounded paths, and
 remain unexpired and unrevoked. Fresh conformant catalog and hashed health

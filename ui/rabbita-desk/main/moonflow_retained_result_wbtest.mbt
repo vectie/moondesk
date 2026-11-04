@@ -27,6 +27,41 @@ fn retained_ui_model() -> Model {
 }
 
 ///|
+test "Flow refresh retains an inspected result while the exact saved artifact is unchanged" {
+  let ready = retained_ui_ready()
+  let (_, refreshing) = update_workspace_results(
+    code_mode_test_dispatch,
+    RequestMoonFlowRuns,
+    ready,
+  )
+  let refreshing = sync_workspace_editor_context(refreshing)
+  assert_true(refreshing.moonflow_retained is Some(_))
+  assert_eq(
+    refreshing.moonflow_retained.unwrap().response,
+    ready.moonflow_retained.unwrap().response,
+  )
+  let (_, loaded) = update_workspace_results(
+    code_mode_test_dispatch,
+    LoadedMoonFlowRuns(Ok(ready.moonflow_runs)),
+    refreshing,
+  )
+  assert_true(
+    sync_workspace_editor_context(loaded).moonflow_retained is Some(_),
+  )
+  let run = ready.moonflow_runs[0]
+  let changed = {
+    ..run,
+    items: [{ ..run.items[0], result_id: "new-result", }],
+  }
+  let (_, replaced) = update_workspace_results(
+    code_mode_test_dispatch,
+    LoadedMoonFlowRuns(Ok([changed])),
+    refreshing,
+  )
+  assert_true(sync_workspace_editor_context(replaced).moonflow_retained is None)
+}
+
+///|
 fn retained_ui_reply(state : MoonFlowRetainedState) -> Json {
   {
     "contract_id": "moondesk.flow-retained-result.v1",

@@ -4,10 +4,13 @@ import { readFile } from 'node:fs/promises'
 
 // Exercise the production restoration coordinator, including a delayed real
 // loadServerThreads callback. Accessors are appended only to this test module.
-const source = await readFile(new URL('./workspace-features-runtime.js', import.meta.url), 'utf8')
+const source = (await readFile(new URL('./workspace-features-runtime.js', import.meta.url), 'utf8'))
+  .replace("'./work-journey-runtime.js'", JSON.stringify(new URL('./work-journey-runtime.js', import.meta.url).href))
+  .replace("'./ui-locale.js'", JSON.stringify(new URL('./ui-locale.js', import.meta.url).href))
+  .replace("'./ui-icons.js'", JSON.stringify(new URL('./ui-icons.js', import.meta.url).href))
 const runtime = await import(`data:text/javascript;base64,${Buffer.from(source + `
 export function setPreparedHistoryFixture(prompt = 'Exact specialist brief', hasContext = true) {
-  serverState = { workspace_id: 'specialist-book', selected_document: '', task_id: '', chat: [],
+  serverState = { workspace_id: 'specialist-book', workspace_mode: 'Wiki', selected_document: '', task_id: '', chat: [],
     request_prompt: prompt, chat_draft_has_context: hasContext,
     request_status: 'Example prepared. Review it and click Send to try your specialist.' }
 }
@@ -42,10 +45,12 @@ test('prepared specialist survives cached and late server history; automatic res
     assert.equal(calls.length, 0, 'selected knowledge survives even after the user clears the prompt')
     runtime.setPreparedHistoryFixture('', false); runtime.maybeRestoreFixture()
     assert.equal(calls.length, 1, 'ordinary empty conversation still restores')
-    assert.deepEqual([calls[0][0], calls[0][1], calls[0][4]], ['restore-thread', 'previous-thread', 'automatic'])
+    assert.deepEqual([calls[0][0], calls[0][1]], ['restore-thread', 'previous-thread'])
+    assert.equal(JSON.parse(calls[0][4]).restore_kind, 'automatic')
     runtime.setPreparedHistoryFixture(); runtime.explicitlyResumeFixture()
     assert.equal(calls.length, 2)
-    assert.deepEqual([calls[1][0], calls[1][1], calls[1][4]], ['restore-thread', 'previous-thread', ''])
+    assert.deepEqual([calls[1][0], calls[1][1]], ['restore-thread', 'previous-thread'])
+    assert.equal(JSON.parse(calls[1][4]).restore_kind, 'explicit')
   } finally {
     for (const [key, descriptor] of prior) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor)

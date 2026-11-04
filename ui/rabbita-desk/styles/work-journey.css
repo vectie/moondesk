@@ -85,7 +85,7 @@
   .work-book-switcher > summary { min-height: 44px; }
   .work-book-switcher > summary > .moon-icon:first-child { display: none; }
   .work-shortcuts > .moon-icon-button { display: none; }
-  .work-shortcuts > .moon-icon-button[aria-label="Start a task"] { display: inline-flex; }
+  .work-shortcuts > .moon-icon-button[data-work-action="start-task"] { display: inline-flex; }
   .work-shortcuts .moon-icon-button { width: 44px; height: 44px; min-height: 44px; }
   .desk-shell .title-bar > .command-button { grid-column: 4; min-height: 44px; width: 44px; padding: 10px; }
   .desk-shell .title-bar > .command-button > span:not(.moon-icon) { display: none; }

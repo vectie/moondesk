@@ -249,7 +249,10 @@ test('explicit new conversations cannot be auto-restored over by document histor
 import { readFile } from 'node:fs/promises'
 
 const sourcePath = new URL('./workspace-features-runtime.js', import.meta.url)
-const source = (await readFile(sourcePath, 'utf8')).replace("'./work-journey-runtime.js'", JSON.stringify(new URL('./work-journey-runtime.js', import.meta.url).href))
+const source = (await readFile(sourcePath, 'utf8'))
+  .replace("'./work-journey-runtime.js'", JSON.stringify(new URL('./work-journey-runtime.js', import.meta.url).href))
+  .replace("'./ui-locale.js'", JSON.stringify(new URL('./ui-locale.js', import.meta.url).href))
+  .replace("'./ui-icons.js'", JSON.stringify(new URL('./ui-icons.js', import.meta.url).href))
 
 test('continuation inspection anchors explicitly bypass client route interception', async () => {
   const view = await readFile(new URL('./main/work_continuation_outputs.mbt', import.meta.url), 'utf8')
@@ -420,7 +423,7 @@ export const capturedForTest = () => capturedLearning
     signal: (action, payload) => signal(action, JSON.stringify(payload)),
     teach: (binding = initial, answer = canonicalSource) => signal('teach-captured-work', JSON.stringify({ binding, source: answer })),
     review: (binding = initial) => signal('review-captured-learning', JSON.stringify({ binding })),
-    find: (tag, text) => allNodes(root).find(node => node.tagName === tag && (text === undefined || node.textContent === text)),
+    find: (tag, text) => allNodes(root).find(node => node.tagName === tag && (text === undefined || node.textContent === text || node.attributes?.['aria-label'] === text)),
     click(text) {
       const node = this.find('button', text)
       assert.ok(node, `button exists: ${text}`)

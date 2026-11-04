@@ -1,3 +1,5 @@
+import { setUiText } from './ui-locale.js'
+
 function installMoonDeskShellStartup() {
   if (globalThis.__moondeskShellStartupInstalled) return
   globalThis.__moondeskShellStartupInstalled = true
@@ -267,9 +269,7 @@ function sourceEditorParts(element) {
 }
 
 function setTextContent(element, value) {
-  if (element instanceof HTMLElement && element.textContent !== value) {
-    element.textContent = value
-  }
+  if (element instanceof HTMLElement) setUiText(element, value)
 }
 
 function sourceEditorMatches(parts) {

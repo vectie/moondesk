@@ -81,6 +81,7 @@ test('installed code outline filters current drafts and navigates without editin
   assert.equal(filter.value, ''); assert.match(items()[0].textContent, /other/)
   editor.disabled = true; emit('scroll', editor)
   assert.equal(items()[0].disabled, true); assert.equal(filter.disabled, true)
+  assert.equal(surface.querySelector('[data-testid="source-local-diagnostics"]').textContent, '', 'unavailable source is not a successful diagnostic check')
   editor.disabled = false; editor.value = Array.from({length: 105}, (_, i) => `fn item${i}() {}`).join('\n'); emit('input', editor)
   assert.equal(items().length, 100); assert.match(status(), /105 matching; showing 100/)
   filter.value = 'item104'; emit('input', filter); assert.equal(items().length, 1)

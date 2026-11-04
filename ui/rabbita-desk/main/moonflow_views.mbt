@@ -22,7 +22,9 @@ fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
     "complete"
   } else if run.outcome == "blocked" || run.outcome == "failed" {
     "blocked"
-  } else if run.outcome == "active" || run.outcome == "review" {
+  } else if run.outcome == "review" {
+    "review"
+  } else if run.outcome == "active" {
     "in-progress"
   } else if !run.runnable_item_ids.is_empty() {
     "ready"
@@ -157,7 +159,13 @@ fn render_moonflow_runs_state(
           ),
           strong(moonflow_runs_state_title(state, !selected_runs.is_empty())),
           details(class="flow-state-explanation", [
-            summary("Details"),
+            summary(
+              class="moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("About this status")
+                .title("About this status"),
+              [ui_icon("info")],
+            ),
             p(moonflow_runs_state_detail(state, !selected_runs.is_empty())),
           ]),
           match moonflow_runs_state_action(state) {
@@ -171,7 +179,13 @@ fn render_moonflow_runs_state(
           },
           if moonflow_runs_state_shows_details(state) {
             details(class="technical-details", [
-              summary("Technical details"),
+              summary(
+                class="moon-icon-button",
+                attrs=@html.Attrs::build()
+                  .aria_label("Technical details")
+                  .title("Technical details"),
+                [ui_icon("code")],
+              ),
               code(
                 if state == CapabilityLimited {
                   moonflow_capability_technical_detail(model)
@@ -197,13 +211,12 @@ fn render_moonflow_workspace(
   let runs_state = moonflow_effective_runs_state(model)
   main_(class="flow-main", attrs=main_content_attrs(MoonFlow), [
     section(class="flow-hero flow-hero-compact", [
-      div([
-        h1("MoonFlow"),
-        span(class="workspace-context", workspace_name(model)),
-      ]),
+      div([h1("MoonFlow")]),
       button(
         class="secondary-button compact-button moon-icon-button",
         attrs=@html.Attrs::build().aria_label("Refresh Flow"),
+        disabled=model.moonflow_runs_state is Some(Loading) ||
+          model.moonflow_composition_status == "Loading composition…",
         on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
         [ui_icon("refresh")],
       ),
@@ -213,7 +226,38 @@ fn render_moonflow_workspace(
       { ..model, moonflow_runs_state: runs_state, },
       selected_runs,
     ),
-    if selected_runs.is_empty() &&
+    if model.moonflow_composition_load_failed {
+      section(
+        class="surface-state-panel flow-composition-error",
+        attrs=@html.Attrs::build().role("status").aria_live("polite"),
+        [
+          strong(
+            if model.moonflow_composition is Some(_) {
+              interface_label(
+                "flow.workflow_stale", "Showing an earlier workflow",
+              )
+            } else {
+              interface_label(
+                "flow.workflow_load_failed", "Workflow couldn’t be loaded",
+              )
+            },
+          ),
+          button(
+            class="secondary-button",
+            on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
+            "Retry",
+          ),
+          details(class="technical-details", [
+            summary("Technical details"),
+            code(model.moonflow_composition_status),
+          ]),
+        ],
+      )
+    } else {
+      @html.nothing
+    },
+    if model.moonflow_composition is Some(_) &&
+      selected_runs.is_empty() &&
       moonflow_runs_state_shows_empty_action(runs_state) {
       section(
         class="flow-empty",
@@ -222,9 +266,6 @@ fn render_moonflow_workspace(
           .data_set("state", moonflow_runs_state_key(model.moonflow_runs_state)),
         [
           strong("No executable work yet"),
-          p(
-            "Start with the selected MoonBook's executable document. MoonFlow creates the run, then publishes authority-bound handoffs for every governed decision.",
-          ),
           button(
             class="primary-button",
             attrs=@html.Attrs::build().data_set(
@@ -249,8 +290,28 @@ fn render_moonflow_workspace(
     } else {
       @html.nothing
     },
-    render_moonflow_composition_canvas(dispatch, model),
-    render_moonflow_plan_authoring(dispatch, model),
+    if model.moonflow_composition is Some(_) ||
+      (
+        !model.moonflow_composition_load_failed &&
+        (
+          moonflow_runs_state_shows_empty_action(runs_state) ||
+          runs_state is Some(Loading)
+        )
+      ) {
+      render_moonflow_composition_canvas(dispatch, model)
+    } else {
+      @html.nothing
+    },
+    if model.moonflow_composition is Some(composition) &&
+      composition.workspace_id == Some(model.selected_workspace_id) &&
+      composition.source_graph is Some(_) {
+      details(class="flow-history flow-plan-disclosure", [
+        summary([ui_icon("edit"), span("Edit workflow")]),
+        render_moonflow_plan_authoring(dispatch, model),
+      ])
+    } else {
+      @html.nothing
+    },
     if selected_runs.is_empty() &&
       moonflow_runs_state_shows_empty_action(runs_state) {
       render_moonflow_composition_continuation(model.moonflow_composition)
@@ -277,12 +338,6 @@ fn render_moonflow_workspace(
       }
       div([
         section(class="flow-revision-toolbar", [
-          div([
-            strong("Executable work exists"),
-            p(
-              "Ingest a new revision after the selected MoonBook changes. Existing runs and their evidence remain immutable.",
-            ),
-          ]),
           if runs_state is Some(CapabilityLimited) {
             @html.nothing
           } else {
@@ -339,16 +394,7 @@ fn render_moonflow_run(
   }
   section(class="flow-run-card", [
     header(class="flow-run-head", [
-      div([
-        p(class="eyebrow", "Run · sequence \{run.last_sequence}"),
-        h2(run.book_id),
-        small(
-          "Executable revision " +
-          run.declaration_revision +
-          " · " +
-          owner_state,
-        ),
-      ]),
+      div([h2("Executable revision " + run.declaration_revision)]),
       span(class="flow-state " + moonflow_run_state(run), owner_state),
     ]),
     render_moonflow_owner_summary(dispatch, model, run),
@@ -635,7 +681,11 @@ fn moonflow_scorecard_evidence_available(
 
 ///|
 fn moonflow_control_evidence_available(control : MoonFlowRunControl) -> Bool {
-  !control.contract_id.is_empty() && !control.recorded_at.is_empty()
+  // Native Flow starts imported runs in running state and persists the first
+  // control on demand. A timestamp is not required to offer that first pause.
+  control.contract_id == "moonflow.run-control.v1" &&
+  !control.run_id.is_empty() &&
+  ["running", "paused", "cancelled"].contains(control.state)
 }
 
 ///|
@@ -653,7 +703,7 @@ fn render_moonflow_controls(
         div(class="flow-section-heading", [
           div([
             h3("Bounded intervention"),
-            small("Current state · " + control.state),
+            small("Current state · " + flow_system_text(control.state)),
           ]),
           span(
             class="flow-state " +

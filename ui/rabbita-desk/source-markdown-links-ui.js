@@ -1,4 +1,5 @@
 import { markdownLinks, prepareMarkdownLinkReplacement, applyMarkdownLinkReplacement } from './source-markdown-links.js'
+import { uiText } from './ui-locale.js'
 
 const states = new WeakMap()
 const PAGE_SIZE = 25
@@ -87,7 +88,8 @@ function render(panel, state) {
     : 'No supported inline destinations found. Reference links and excluded syntax are not included.'
   find(panel, 'results').replaceChildren(...state.links.slice(start, start + PAGE_SIZE).map((link, offset) => {
     const row = document.createElement('div'), label = document.createElement('p')
-    label.textContent = `${link.kind} · L${link.line}:${link.column} · ${link.label.slice(0, 120)} → ${link.destination.slice(0, 300)}${link.destination.length > 300 ? ' [shortened; full token in edit field]' : ''}`
+    label.setAttribute('data-i18n-scope', 'content')
+    label.textContent = `${uiText(link.kind === 'image' ? 'Image' : 'Link')} · L${link.line}:${link.column} · ${link.label.slice(0, 120)} → ${link.destination.slice(0, 300)}${link.destination.length > 300 ? uiText(' [shortened; full token in edit field]') : ''}`
     row.append(label)
     for (const [kind, title] of [['select', 'Select destination in editor'], ['edit', 'Edit destination']]) {
       const control = button(kind, title); control.dataset.markdownLinksIndex = String(start + offset); control.dataset.markdownLinksGeneration = String(state.generation)
@@ -125,7 +127,7 @@ export function actMarkdownLinks(parts, target, reveal) {
     else {
       invalidateReview(panel, state); state.selected = link
       find(panel, 'edit').hidden = false; find(panel, 'replacement').value = link.destination
-      find(panel, 'selected').textContent = `Editing ${link.kind} at L${link.line}:${link.column}. Enter one destination token; labels and titles stay unchanged.`
+      find(panel, 'selected').textContent = uiText(`Edit destination at L${link.line}:${link.column}. Labels and titles stay unchanged.`)
       find(panel, 'replacement').focus()
     }
     return
@@ -142,9 +144,9 @@ export function actMarkdownLinks(parts, target, reveal) {
       state.plan = prepareMarkdownLinkReplacement(parts.editor.value, state.selected.destinationStart, replacement, kind === 'review-one' ? 'one' : 'matching')
       const plan = state.plan
       const shortened = Math.max(plan.before.length, replacement.length) > 4000
-      find(panel, 'review').textContent = `Before:\n${plan.before.slice(0, 4000)}\nAfter:\n${replacement.slice(0, 4000)}\nAffected occurrences (${plan.matches.length}):\n` +
-        plan.matches.map(link => `${link.kind} L${link.line}:${link.column}`).join('\n') +
-        (shortened ? '\nToken previews shortened at 4,000 UTF-16 units. Inspect the full destination field and source before applying.' : '')
+      find(panel, 'review').textContent = `${uiText('Before:')}\n${plan.before.slice(0, 4000)}\n${uiText('After:')}\n${replacement.slice(0, 4000)}\n${uiText(`Affected occurrences (${plan.matches.length}):`)}\n` +
+        plan.matches.map(link => `${uiText(link.kind === 'image' ? 'Image' : 'Link')} L${link.line}:${link.column}`).join('\n') +
+        (shortened ? '\n' + uiText('Token previews shortened at 4,000 UTF-16 units. Inspect the full destination field and source before applying.') : '')
       find(panel, 'status').textContent = plan.changed
         ? `Review ${plan.matches.length} destination replacement${plan.matches.length === 1 ? '' : 's'} in the current draft. No file is saved.`
         : 'No change: the destination token is already identical.'

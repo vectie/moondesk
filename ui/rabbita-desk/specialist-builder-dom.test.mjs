@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { mountSpecialistBuilder, specialistStorageKeyFor } from './specialist-builder.js'
+import { compositionContract, compositionSelections } from './specialist-composition.js'
 
 // Minimal DOM adapters invoke the real installed controls. They qualify event
 // flow and recovery only, not browser layout or native/provider integration.
@@ -31,6 +32,47 @@ const agent = { contract_id: 'moonsuite.agent-passport.v1', source_kind: 'moonbo
 const settle = async () => { for (let i = 0; i < 10; i++) await Promise.resolve() }
 const visibleText = node => [node.textContent, ...node.children.map(visibleText)].join('\n')
 
+test('new specialist enables creation only after its required fields and Book are selected', async () => {
+  const { doc } = browserAdapter()
+  const mounted = mountSpecialistBuilder({ document: doc, scope: 'required-inputs', storage: { getItem: () => null },
+    fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }) })
+  await mounted.controller.open()
+  const create = () => mounted.panel.querySelectorAll('button').find(item => item.textContent === 'Create specialist')
+  const fill = (name, value) => { const input = mounted.panel.querySelector(`[name="${name}"]`); input.value = value; input.fire('input') }
+  assert.equal(create().disabled, true)
+  fill('name', 'Report writer'); fill('purpose', 'Write a report'); fill('example', 'Write the weekly report')
+  assert.equal(create().disabled, true)
+  mounted.controller.chooseBook(agent.workspace_id)
+  assert.equal(create().disabled, false)
+  fill('purpose', '  ')
+  assert.equal(create().disabled, true)
+})
+
+test('mounted stage work prepares one stage and exposes incoming and final observed output', async () => {
+  const { doc } = browserAdapter(), sent = []
+  const source = name => ({ contract: 'moondesk.specialist-preset.v1', id: name, revision: 1, name, purpose: `Do ${name}`, example: 'Original example', book: agent, capabilities: [], knowledge_paths: [`wiki/${name}.md`] })
+  const composition = { contract: compositionContract, stages: [{ source: source('Research'), handoff: 'Findings' }, { source: source('Write'), handoff: 'Final answer' }] }
+  const creator = { ...source('Journey'), composition, ...compositionSelections(composition) }
+  const raw = JSON.stringify({ contract: 'moondesk.specialist-library.v1', records: [creator] })
+  const mounted = mountSpecialistBuilder({ document: doc, scope: 'stage-ui', storage: { getItem: () => raw }, id: () => 'stage-ui-request', dispatch: (...args) => sent.push(args),
+    fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }) })
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const fill = (name, value) => { const node = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(node, name); node.value = value; node.fire('input') }
+  await mounted.controller.open(); button('Journey · revision 1').click()
+  fill('stage-task', 'Compare the two projects'); button('Start stage work').click()
+  assert.equal(button('Stage 2: Write').disabled, true)
+  button('Preview this stage').click(); button('Prepare this stage in chat').click(); await settle()
+  assert.equal(sent.length, 1); assert.match(sent[0][2], /Compare the two projects/)
+  mounted.controller.receive('specialist-prepared', JSON.stringify({ request_id: 'stage-ui-request' }))
+  await mounted.controller.open()
+  fill('stage-output', 'Observed research findings'); button('Record stage response').click()
+  button('Stage 2: Write').click(); button('Preview this stage').click()
+  assert.match(visibleText(mounted.panel), /Incoming response:\nObserved research findings/)
+  fill('stage-output', 'Final reviewed draft'); button('Record stage response').click()
+  assert.match(visibleText(mounted.panel), /Final recorded output\nFinal reviewed draft/)
+  button('Clear stage work').click(); assert.equal(mounted.controller.state.stageJourney, null)
+})
+
 async function rowEditFixture(options = {}, source = 'Subject,Reader\n,Founder\nOther,Reader\nextra,columns,must-stay') {
   const { doc, app } = browserAdapter(), dispatches = []
   const creator = { contract: 'moondesk.specialist-preset.v1', id: 'row-editor', revision: 3, name: 'Row editor', purpose: 'Review source material', example: 'Review an example',
@@ -40,7 +82,7 @@ async function rowEditFixture(options = {}, source = 'Subject,Reader\n,Founder\n
   let serial = 0
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'row-edit-ui', storage: { getItem: () => raw, setItem: (_, value) => { raw = value } }, id: () => 'row-ui-' + ++serial,
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }), dispatch: (...args) => dispatches.push(args), ...options })
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const field = name => { const node = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(node, name); return node }
   const fill = (name, value) => { const node = field(name); node.value = value; node.fire('input'); return node }
   await mounted.controller.open(); button('Row editor · revision 3').click()
@@ -400,7 +442,7 @@ test('visible builder controls complete define, choose, create, try, revise, sav
     ],
   } : { contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] } })
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'library-a', storage, fetch: request, id: () => `preset-${++serial}`, dispatch: (...args) => dispatches.push(args) })
-  const click = label => { const item = mounted.panel.querySelectorAll('button').find(node => node.textContent === label); assert.ok(item, `visible control: ${label}`); item.click() }
+  const click = label => { const item = mounted.panel.querySelectorAll('button').find(node => node.textContent === label || node.attrs['aria-label'] === label); assert.ok(item, `visible control: ${label}`); item.click() }
   const fill = (name, value) => { const item = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(item, `visible field: ${name}`); item.value = value; item.fire('input') }
   const choose = label => { const node = mounted.panel.querySelectorAll('label').find(node => visibleText(node).includes(label)); assert.ok(node, `visible choice: ${label}`); const input = node.querySelector('input'); input.checked = true; input.fire('change') }
   await mounted.controller.open()
@@ -434,7 +476,7 @@ test('builder escapes user text by textContent, traps keyboard focus, and retain
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'library-a', storage: { getItem: () => null }, fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }) })
   await mounted.controller.open()
   const input = mounted.panel.querySelector('[name="purpose"]'); input.value = '<img src=x onerror=alert(1)>'; input.fire('input')
-  const buttons = mounted.panel.querySelectorAll('button'), last = buttons.at(-1); last.focus()
+  const buttons = mounted.panel.querySelectorAll('button'), last = mounted.panel.querySelectorAll('button, input, textarea, select, summary').filter(item => !item.disabled).at(-1); last.focus()
   let prevented = false; mounted.panel.fire('keydown', { key: 'Tab', preventDefault() { prevented = true } })
   assert.equal(prevented, true); assert.equal(doc.activeElement, buttons[0])
   mounted.panel.fire('keydown', { key: 'Escape' }); await mounted.controller.open()
@@ -472,7 +514,7 @@ test('visible composition controls select saved revisions, reorder handoffs, cre
   const request = async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) })
   const options = { document: doc, scope: 'library-a', storage, fetch: request, id: () => 'composed', dispatch: (...args) => dispatches.push(args) }
   let mounted = mountSpecialistBuilder(options)
-  const click = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, `visible button ${label}`); node.click() }
+  const click = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, `visible button ${label}`); node.click() }
   const fill = (name, value) => { const node = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(node, `visible input ${name}`); node.value = value; node.fire('input') }
   const add = value => { const node = mounted.panel.querySelector('[name="stage-source"]'); node.value = value; click('Add stage') }
   await mounted.controller.open(); click('Compose specialists')
@@ -533,7 +575,7 @@ test('visible reusable task form creates, fills, invalidates preview, prepares, 
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }),
     id: () => 'task-form-creator', dispatch: (...args) => dispatches.push(args) }
   let mounted = mountSpecialistBuilder(options)
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const fill = (name, value) => { const input = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(input, name); input.value = value; input.fire('input'); return input }
   await mounted.controller.open()
   fill('name', 'Reusable analyst'); fill('purpose', 'Explain evidence'); fill('example', 'Explain Q3')
@@ -575,7 +617,7 @@ test('visible saved-creator variant copies composition and form, edits independe
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }),
     id: () => 'variant-ui-' + ++serial, dispatch: (...args) => dispatches.push(args) }
   let mounted = mountSpecialistBuilder(options)
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const click = label => button(label).click()
   const fill = (name, value) => { const input = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(input, name); input.value = value; input.fire('input') }
   await mounted.controller.open(); click('Reviewed creator · revision 5')
@@ -617,7 +659,7 @@ test('detached variant controls cannot fork over a newer draft and failed naming
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'variant-ui', storage: { getItem: () => raw }, id: () => 'new-variant',
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }) })
   await mounted.controller.open()
-  const get = label => mounted.panel.querySelectorAll('button').find(node => node.textContent === label)
+  const get = label => mounted.panel.querySelectorAll('button').find(node => node.textContent === label || node.attrs['aria-label'] === label)
   const detached = get('Create variant of <Source>'); get('New specialist').click(); detached.click()
   assert.equal(mounted.controller.state.draft.name, '')
   get('Create variant of <Source>').click()
@@ -663,7 +705,7 @@ test('mounted CSV workflow maps local spreadsheet columns, inspects errors, prep
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'csv-ui', storage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) },
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }),
     id: () => `csv-ui-${++serial}`, dispatch: (...args) => dispatches.push(args) })
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const map = (key, column) => { const node = mounted.panel.querySelector(`[name="csv-map-${key}"]`); assert.ok(node, key); node.value = column; node.fire('change') }
   await mounted.controller.open(); button('CSV review creator · revision 5').click()
   const input = mounted.panel.querySelector('[name="task-csv-file"]')
@@ -703,7 +745,7 @@ test('detached CSV mapping, row, prepare and file controls cannot affect newer r
   const raw = JSON.stringify({ contract: 'moondesk.specialist-library.v1', records: [saved] })
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'csv-stale', storage: { getItem: () => raw },
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }), dispatch: (...args) => dispatches.push(args) })
-  const button = label => mounted.panel.querySelectorAll('button').find(node => node.textContent === label)
+  const button = label => mounted.panel.querySelectorAll('button').find(node => node.textContent === label || node.attrs['aria-label'] === label)
   await mounted.controller.open(); button('CSV source · revision 1').click()
   let file = mounted.panel.querySelector('[name="task-csv-file"]')
   file.files = [{ name: 'tasks.csv', size: 7, arrayBuffer: async () => new TextEncoder().encode('a,b\nX,Y').buffer }]; file.fire('change'); await settle()
@@ -753,7 +795,7 @@ test('visible creator export/import reviews a portable composition, binds instal
   const localAgent = { ...agent, workspace_id: 'new-installation', name: 'Local installed Book' }
   let serial = 0, mounted = mountSpecialistBuilder({ document: doc, scope: 'portable-origin', storage,
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }), download: packet => downloads.push(packet) })
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const fill = (name, value) => { const node = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(node, name); node.value = value; node.fire('input') }
   await mounted.controller.open(); button('Export Portable reviewer').click()
   assert.equal(downloads.length, 1); assert.equal(JSON.parse(downloads[0].content).creator.revision, 7)
@@ -816,7 +858,7 @@ test('visible task-only files reach exact normal-chat brief, cancel late reads, 
   const record = { contract: 'moondesk.specialist-preset.v1', id: 'writer', revision: 1, name: 'Writer', purpose: 'Explain supplied evidence', example: 'Explain Q4', book: { workspace_id: agent.workspace_id, book_id: agent.book_id, name: agent.name, version: agent.version }, capabilities: [], knowledge_paths: [] }
   const key = specialistStorageKeyFor('file-controls'), raw = JSON.stringify({ contract: 'moondesk.specialist-library.v1', records: [record] }); values.set(key, raw)
   const mounted = mountSpecialistBuilder({ document: doc, scope: 'file-controls', storage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }, fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }), id: () => 'request-file', dispatch: (...args) => dispatches.push(args) })
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const pick = input => { const node = mounted.panel.querySelector('[name="task-text-file"]'); node.files = [input]; node.fire('change') }
   const file = content => ({ name: 'quarter.md', size: new TextEncoder().encode(content).length, arrayBuffer: async () => new TextEncoder().encode(content).buffer })
   await mounted.controller.open(); button('Writer · revision 1').click()
@@ -857,7 +899,7 @@ function stageReplacementDomHarness() {
   const options = { document: doc, scope: 'stage-replacement-ui', storage, id: () => 'unused-new-id', dispatch: (...args) => dispatches.push(args),
     fetch: async () => ({ ok: true, json: async () => ({ contract_id: 'moonsuite.agent-catalog.v1', ok: true, agents: [agent] }) }) }
   let mounted = mountSpecialistBuilder(options)
-  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label); assert.ok(node, label); return node }
+  const button = label => { const node = mounted.panel.querySelectorAll('button').find(item => item.textContent === label || item.attrs['aria-label'] === label); assert.ok(node, label); return node }
   const click = label => button(label).click()
   const input = (name, value) => { const node = mounted.panel.querySelector(`[name="${name}"]`); assert.ok(node, name); node.value = value; node.fire('input'); return node }
   const choose = (index, id) => { const select = mounted.panel.querySelector(`[name="stage-replacement-${index}"]`); assert.ok(select); select.value = id; click(`Review replacement for stage ${index + 1}`) }

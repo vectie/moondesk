@@ -1,4 +1,5 @@
 import { setIconButton } from './ui-icons.js'
+import { uiText, uiLocale, userContent } from './ui-locale.js'
 
 const mounted = new WeakMap()
 
@@ -152,7 +153,7 @@ function mountCalendar(host) {
     host.classList.add('mooncode-calendar')
     const header = el('div', 'mooncode-calendar-toolbar')
     header.append(button('New scheduled task', () => edit(null)), iconButton('Refresh', 'refresh', load))
-    host.append(header)
+    if (!state.draft) host.append(header)
     const status = el('p', 'status-line', state.error || (state.loading ? 'Loading…' : state.notice))
     status.setAttribute('role', state.error ? 'alert' : 'status')
     if (status.textContent) host.append(status)
@@ -160,34 +161,35 @@ function mountCalendar(host) {
     start.setHours(0, 0, 0, 0)
     start.setDate(start.getDate() + state.offset * 7)
     const navigation = el('div', 'mooncode-calendar-toolbar')
-    navigation.append(iconButton('Previous week', 'chevron-left', () => { state.offset--; draw() }), button('Today', () => { state.offset = 0; draw() }), iconButton('Next week', 'chevron-right', () => { state.offset++; draw() }), el('span', 'mooncode-calendar-month', start.toLocaleDateString(undefined, { year: 'numeric', month: 'long' })))
-    host.append(navigation)
+    navigation.append(iconButton('Previous week', 'chevron-left', () => { state.offset--; draw() }), button('Today', () => { state.offset = 0; draw() }), iconButton('Next week', 'chevron-right', () => { state.offset++; draw() }), el('span', 'mooncode-calendar-month', start.toLocaleDateString(uiLocale(), { year: 'numeric', month: 'long' })))
+    if (!state.draft) host.append(navigation)
     const week = el('div', 'mooncode-calendar-week')
     const events = scheduleOccurrences(state.schedules, start)
     for (let day = 0; day < 7; day++) {
       const date = new Date(start)
       date.setDate(date.getDate() + day)
       const column = el('section', 'mooncode-calendar-day')
-      column.append(el('span', 'mooncode-calendar-weekday', date.toLocaleDateString(undefined, { weekday: 'short' })), el('h4', '', String(date.getDate())))
+      column.append(el('span', 'mooncode-calendar-weekday', date.toLocaleDateString(uiLocale(), { weekday: 'short' })), el('h4', '', String(date.getDate())))
       const daily = events.filter(event => new Date(event.time * 1000).toDateString() === date.toDateString())
       for (const event of daily.slice(0, 4)) {
-        const label = `${new Date(event.time * 1000).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · ${event.schedule.title || event.schedule.id}`
-        column.append(button(label, () => edit(event.schedule)))
+        const label = `${new Date(event.time * 1000).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' })} · ${event.schedule.title || event.schedule.id}`
+        column.append(userContent(button(label, () => edit(event.schedule))))
       }
       if (daily.length > 4) column.append(el('small', '', `+${daily.length - 4} more runs`))
       week.append(column)
     }
-    host.append(week)
-    if (!events.length) host.append(el('p', 'mooncode-calendar-empty', 'No runs this week'))
+    if (!state.draft) host.append(week)
+    if (!state.draft && !events.length) host.append(el('p', 'mooncode-calendar-empty', 'No runs this week'))
     const timing = el('details', 'mooncode-calendar-timing')
     timing.append(el('summary', '', 'Schedule timing'), el('p', '', 'Times use your local timezone. Daily and weekly tasks keep their saved local time, including daylight-saving changes. Custom intervals start after the previous run finishes.'))
-    host.append(timing)
+    if (!state.draft) host.append(timing)
     if (state.draft) {
       const draft = state.draft
       const form = el('form', 'mooncode-calendar-form')
       form.append(el('h4', '', draft.id ? 'Edit scheduled task' : 'New scheduled task'))
       for (const [key, label, type] of [['title', 'Task name', 'text'], ['prompt', 'What should happen?', 'textarea'], ['model', 'Model', 'text'], ['start', 'Start at', 'datetime-local']]) {
         const field = el('label')
+        if (['title', 'prompt'].includes(key)) field.className = 'mooncode-calendar-full-field'
         field.append(el('span', '', label))
         const input = el(type === 'textarea' ? 'textarea' : 'input')
         if (type !== 'textarea') input.type = type
@@ -213,7 +215,7 @@ function mountCalendar(host) {
       })
       cadence.append(select)
       form.append(cadence)
-      form.append(el('p', 'mooncode-schedule-form-help', `Time zone: ${draft.timezone}. Weekly tasks repeat on the start date’s weekday.`))
+      form.append(el('p', 'mooncode-schedule-form-help', `Time zone: ${draft.timezone}`))
       if (select.value === 'interval') {
         const label = el('label')
         label.append(el('span', '', 'Repeat every (minutes)'))
@@ -224,20 +226,22 @@ function mountCalendar(host) {
       }
       const save = el('button', 'primary-button', state.busy ? 'Saving…' : 'Save task')
       save.type = 'submit'; save.disabled = state.busy
-      form.append(save, button('Cancel', () => { state.draft = null; draw() }))
+      const actions = el('div', 'mooncode-calendar-form-actions')
+      actions.append(button('Cancel', () => { state.draft = null; draw() }), save)
+      form.append(actions)
       form.addEventListener('submit', event => {
         event.preventDefault()
         try { void mutate(scheduleDraftPayload(draft, workspaceId)) } catch (error) { state.error = error.message; draw() }
       })
-      host.append(form)
+      host.append(form, timing)
     }
-    for (const schedule of state.schedules) {
+    for (const schedule of state.draft ? [] : state.schedules) {
       const row = el('article', 'mooncode-calendar-task')
       const prompt = el('details', 'mooncode-calendar-prompt')
-      prompt.append(el('summary', '', schedule.title || schedule.id), el('p', '', schedule.prompt))
+      prompt.append(userContent(el('summary', '', schedule.title || schedule.id)), userContent(el('p', '', schedule.prompt)))
       row.append(prompt)
-      const last = Number(schedule.last_finished_at) > 0 ? ` · Last result: ${schedule.last_status} · ${new Date(Number(schedule.last_finished_at) * 1000).toLocaleString()}` : ''
-      row.append(el('small', '', `${schedule.enabled ? 'Active' : 'Paused'}${last}`))
+      const last = Number(schedule.last_finished_at) > 0 ? ` · ${uiText('Last result')}: ${uiText(schedule.last_status)} · ${new Date(Number(schedule.last_finished_at) * 1000).toLocaleString(uiLocale())}` : ''
+      row.append(el('small', '', `${uiText(schedule.enabled ? 'Active' : 'Paused')}${last}`))
       const actions = el('div', 'mooncode-calendar-toolbar')
       const pending = Boolean(schedule.pending_command_id)
       for (const [label, icon, handler] of [
@@ -251,7 +255,7 @@ function mountCalendar(host) {
       }
       const nativeRow = [...host.parentElement.querySelectorAll('[data-schedule-id]')].find(item => item.dataset.scheduleId === schedule.id)
       const nativeOpen = nativeRow?.querySelector('button')
-      if (schedule.last_status !== 'never-run') actions.append(iconButton('Open conversation', 'chat', () => {
+      if (schedule.session_id && schedule.last_status !== 'never-run') actions.append(iconButton('Open conversation', 'chat', () => {
         if (nativeOpen && !nativeOpen.disabled) nativeOpen.click()
         else {
           const url = new URL(globalThis.location.href)

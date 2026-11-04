@@ -55,6 +55,7 @@ test "Code schedule panel keeps MoonTown state scoped to selected MoonBook" {
     ),
   )
   assert_true(markup.contains("nightly-review"))
+  assert_true(markup.contains("data-popup-focus-dismiss=\"false\""))
   assert_true(markup.contains("Review changed code"))
   assert_true(markup.contains("data-i18n=\"code.schedule_next\""))
   let switched = { ..loaded, selected_workspace_id: "book-b", }

@@ -1207,6 +1207,12 @@ fn select_workspace_mode_action(
     } else {
       model.moonflow_composition_status
     },
+    moonflow_composition_load_failed: if mode == MoonFlow &&
+      model.selected_workspace_id != "" {
+      false
+    } else {
+      model.moonflow_composition_load_failed
+    },
     moonflow_operator_action_status: if mode == MoonFlow &&
       model.selected_workspace_id != "" {
       "Loading operator actions…"

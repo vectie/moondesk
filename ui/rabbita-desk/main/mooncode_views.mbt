@@ -783,11 +783,26 @@ fn render_mooncode_center(
             ui_icon("panel-left"),
           ),
           div([
-            strong(mooncode_context_title(model, session)),
-            if session is None && model.selected_path == "" {
+            strong(
+              attrs=@html.Attrs::build().data_set(
+                "i18n-scope",
+                if session is Some(_) {
+                  "content"
+                } else {
+                  "interface"
+                },
+              ),
+              mooncode_context_title(model, session),
+            ),
+            if (session is None && model.selected_path == "") ||
+              mooncode_context_path_label(model, session) ==
+              workspace_name(model) {
               @html.nothing
             } else {
-              span(mooncode_context_path_label(model, session))
+              span(
+                attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+                mooncode_context_path_label(model, session),
+              )
             },
           ]),
           if model.selected_workspace_id == "" {
@@ -1095,6 +1110,11 @@ fn render_mooncode_center(
               if model.mooncode_composer_status == "" ||
                 model.mooncode_composer_status == "draft" ||
                 model.mooncode_composer_status == "mooncode idle" ||
+                model.mooncode_composer_status == "MoonCode workspace ready" ||
+                model.mooncode_composer_status.has_prefix(
+                  "MoonClaw daemon running on ",
+                ) ||
+                model.mooncode_composer_status.has_suffix(" model(s) available") ||
                 model.mooncode_composer_status.has_suffix(
                   " MoonCode session(s)",
                 ) ||
@@ -1237,6 +1257,7 @@ fn render_source_editor(
           attrs=@html.Attrs::build()
             .role("tablist")
             .aria_label("Open source files")
+            .data_set("i18n-aria-label", "code.open_source_files")
             .aria_orientation("horizontal")
             .data_set("testid", "source-tabs"),
           source.buffers.map(buffer => {
@@ -1257,21 +1278,24 @@ fn render_source_editor(
                     .aria_controls("source-buffer-panel")
                     .tabindex(if active { 0 } else { -1 })
                     .title(buffer.path)
-                    .aria_label(
-                      buffer.path +
-                      (if source_pane_buffer_dirty(buffer) {
-                        " · modified"
-                      } else {
-                        ""
-                      }),
-                    )
+                    .aria_label(buffer.path)
+                    .data_set("i18n-preserve", "aria-label title")
                     .data_set("testid", "source-tab-" + buffer.path),
                   on_click=dispatch(SourcePane(SwitchBuffer(buffer.path))),
                   disabled=source.saving,
                   [
-                    span(class="source-editor-tab-path", buffer.path),
+                    span(
+                      class="source-editor-tab-path",
+                      attrs=@html.Attrs::build().data_set(
+                        "i18n-scope", "content",
+                      ),
+                      buffer.path,
+                    ),
                     if source_pane_buffer_dirty(buffer) {
-                      span(class="source-editor-tab-modified", "modified")
+                      span(
+                        class="source-editor-tab-modified",
+                        interface_label("desk.modified", "Modified"),
+                      )
                     } else {
                       @html.nothing
                     },
@@ -1280,8 +1304,10 @@ fn render_source_editor(
                 button(
                   class="source-editor-tab-close",
                   attrs=@html.Attrs::build()
-                    .aria_label("Close " + buffer.path)
-                    .title("Close " + buffer.path)
+                    .aria_label("Close source file")
+                    .data_set("i18n-aria-label", "code.close_source_file")
+                    .title(buffer.path)
+                    .data_set("i18n-preserve", "title")
                     .data_set("testid", "source-tab-close-" + buffer.path),
                   on_click=dispatch(SourcePane(CloseBuffer(buffer.path))),
                   disabled=source.saving,
@@ -1312,7 +1338,9 @@ fn render_source_editor(
             .on_click(_ => {
               dispatch(SourcePane(RequestSource(browser_source_path_value())))
             }),
-          disabled=source.content is Loading || source.saving,
+          disabled=source.path_input.trim() == "" ||
+            source.content is Loading ||
+            source.saving,
           "Open",
         ),
         button(
@@ -1507,7 +1535,11 @@ fn render_source_editor(
             source.requested_path
           },
         ),
-        span(if source_pane_dirty(source) { "Modified" } else { "Saved" }),
+        if source.content is Ready(_) {
+          span(if source_pane_dirty(source) { "Modified" } else { "Saved" })
+        } else {
+          @html.nothing
+        },
         span(
           attrs=@html.Attrs::build().data_set("testid", "source-language"),
           source_pane_language_label(source),

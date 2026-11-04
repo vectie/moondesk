@@ -129,7 +129,8 @@ fn moonflow_single_step_eligible(
 ) -> Bool {
   run.runnable_item_ids.contains(item.work_item_id) &&
   item.status == "ready" &&
-  item.adapter_id == Some("moonmold-pack-local-v1") &&
+  item.product_id == "moonmold" &&
+  (item.adapter_id is None || item.adapter_id == Some("moonmold-pack-local-v1")) &&
   item.operation == "moonmold/spatial.operation.execute@0.2.0" &&
   item.requested_authority == "workspace-mutation" &&
   item.required_claim == "digital-artifact"
@@ -427,32 +428,49 @@ fn render_moonflow_single_step(
   }
   let setup = run.single_step_setup.unwrap_or(Json::null())
   section(
-    class="flow-handoff-card",
+    class="flow-handoff-card flow-single-step-card",
     attrs=@html.Attrs::build().data_set("testid", "flow-single-step"),
     [
       h3("Run one digital step"),
-      p(
-        "Select one imported Mold item. Existing Gate authority is checked; successful digital work stops at Review. Review is a separate explicit decision.",
-      ),
-      p(
-        if handoff_text(setup, "message") == "" {
-          "The host must configure a trusted Flow executable and single-step configuration with existing Gate authority."
-        } else {
-          handoff_text(setup, "message")
-        },
-      ),
+      if json_field_bool(setup, "configured", default=false) {
+        @html.nothing
+      } else {
+        p(
+          if handoff_text(setup, "message") == "" {
+            "The host must configure a trusted Flow executable and single-step configuration with existing Gate authority."
+          } else {
+            handoff_text(setup, "message")
+          },
+        )
+      },
       div(
         run.items.map(item => {
           button(
             class="secondary-button",
-            attrs=@html.Attrs::build().data_set(
-              "testid",
-              "flow-single-step-select-" + item.work_item_id,
-            ),
+            attrs=@html.Attrs::build()
+              .data_set(
+                "testid",
+                "flow-single-step-select-" + item.work_item_id,
+              )
+              .aria_pressed(
+                if selected is Some(state) &&
+                  state.work_item_id == item.work_item_id {
+                  "true"
+                } else {
+                  "false"
+                },
+              ),
+            disabled=selected is Some(state) && state.pending,
             on_click=dispatch(
               MoonFlowSingleStep(Select(run.run_id, item.work_item_id)),
             ),
-            item.work_item_id + " · " + item.status,
+            [
+              span(
+                attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+                item.work_item_id,
+              ),
+              span(class="flow-step-status", flow_system_text(item.status)),
+            ],
           )
         }),
       ),
@@ -460,9 +478,11 @@ fn render_moonflow_single_step(
         None => p("Choose the imported item to inspect its action and result.")
         Some(state) =>
           div([
-            strong("Selected: " + state.work_item_id),
             if state.request_id != "" {
-              small("Action: " + state.request_id)
+              details(class="technical-details", [
+                summary("Action details"),
+                code(state.request_id),
+              ])
             } else {
               @html.nothing
             },
@@ -475,9 +495,13 @@ fn render_moonflow_single_step(
             if state.status == "review" {
               div([
                 strong("Review required"),
-                p(
-                  "Digital result: fixture-reference-only. Production qualified: false. Physical authority: false. No reviewer or dependent item was dispatched.",
-                ),
+                p("Reference result · not production-qualified"),
+                details(class="technical-details", [
+                  summary("Verification details"),
+                  p(
+                    "Digital result: fixture-reference-only. Production qualified: false. Physical authority: false. No reviewer or dependent item was dispatched.",
+                  ),
+                ]),
               ])
             } else if state.status == "reconcile-required" {
               button(
@@ -487,7 +511,11 @@ fn render_moonflow_single_step(
                   "testid", "flow-single-step-reconcile",
                 ),
                 on_click=dispatch(MoonFlowSingleStep(Reconcile)),
-                "Reconcile same attempt",
+                if state.pending {
+                  "Checking same attempt…"
+                } else {
+                  "Reconcile same attempt"
+                },
               )
             } else if state.status == "not-applied" || state.status == "failed" {
               p(
@@ -505,22 +533,29 @@ fn render_moonflow_single_step(
                   "testid", "flow-single-step-execute",
                 ),
                 on_click=dispatch(MoonFlowSingleStep(Execute)),
-                "Run this digital step",
+                if state.pending {
+                  "Running digital step…"
+                } else {
+                  "Run this digital step"
+                },
               )
             },
             match moonflow_item_by_id(run, state.work_item_id) {
               Some(item) if item.attempt_count > 0 =>
                 div([
-                  p(
-                    "Attempt: " +
-                    item.active_attempt_id +
-                    " · " +
-                    item.attempt_status,
-                  ),
-                  p("Output digest: " + item.output_digest),
                   render_moonflow_retained_references(
                     dispatch, model, run, item,
                   ),
+                  details(class="technical-details", [
+                    summary("Technical evidence"),
+                    p(
+                      "Attempt: " +
+                      item.active_attempt_id +
+                      " · " +
+                      item.attempt_status,
+                    ),
+                    p("Output digest: " + item.output_digest),
+                  ]),
                 ])
               _ => @html.nothing
             },
@@ -545,6 +580,12 @@ fn render_moonflow_single_step(
             },
           ])
       },
+      details(class="technical-details", [
+        summary("About this step"),
+        p(
+          "Select one imported Mold item. Existing Gate authority is checked; successful digital work stops at Review. Review is a separate explicit decision.",
+        ),
+      ]),
     ],
   )
 }

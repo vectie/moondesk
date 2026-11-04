@@ -110,7 +110,7 @@ export function createSpecialistController({
   const storageKey = specialistStorageKeyFor(scope)
   const state = { open: false, loading: false, searching: false, preparing: false,
     records: [], agents: [], hits: [], draft: null, created: null, editing: true,
-    status: '', storage_error: '', pending: '', prepared: '', taskValues: {}, taskPreview: '', csv: null, csvLoading: false, portableImport: null, importLoading: false, taskFiles: [], taskFileLoading: false, stageReplacement: null, refinement: null }
+    status: '', storage_error: '', pending: '', prepared: '', taskValues: {}, taskPreview: '', csv: null, csvLoading: false, portableImport: null, importLoading: false, taskFiles: [], taskFileLoading: false, stageReplacement: null, refinement: null, stageJourney: null, stageTask: '' }
   let baseRecord = null
   let storeSnapshot = null, generation = 0, searchGeneration = 0, tryGeneration = 0, csvGeneration = 0, importGeneration = 0, taskFileGeneration = 0
   const notify = () => changed(state)
@@ -160,7 +160,7 @@ export function createSpecialistController({
     if (!storage || state.storage_error || storage.getItem(storageKey) !== storeSnapshot) throw new Error('Saved creators changed or storage is unavailable. Close and reopen before restoring a checkpoint; your current batch is kept.')
     return creator
   }
-  const resetTask = () => { state.stageReplacement = null; resetFiles(); resetImport(); state.taskValues = {}; state.taskPreview = ''; resetCsv() }
+  const resetTask = () => { state.stageJourney = null; state.stageTask = ''; state.stageReplacement = null; resetFiles(); resetImport(); state.taskValues = {}; state.taskPreview = ''; resetCsv() }
   const newDraft = () => { if (state.preparing || state.refinement) return false; state.draft = { name: '', purpose: '', example: '', book: null,
     capabilities: [], knowledge_paths: [] }; state.created = null; state.editing = true;
     resetTask(); state.hits = []; state.prepared = ''; state.status = ''; baseRecord = null; searchGeneration++; notify() }
@@ -203,6 +203,57 @@ export function createSpecialistController({
   }
   const api = {
     state, selectedAgent, taskBrief,
+    editStageTask(value) {
+      if (state.preparing || state.stageJourney) return false
+      state.stageTask = value; return true
+    },
+    startStageJourney() {
+      if (!state.open || state.editing || !state.created?.composition || state.preparing || state.taskFileLoading || state.refinement || state.stageJourney) return false
+      try {
+        const task = state.stageTask || state.created.example
+        if (!safeText(task)) throw new Error('Enter a task of up to 8,000 characters.')
+        state.stageJourney = { creator: clone(state.created), task, files: clone(state.taskFiles), index: 0, outputs: [], preview: '' }
+        state.status = 'Stage work keeps this task and its files in this page session. Prepare one stage, use ordinary Send, then paste the response you want to hand onward.'
+        notify(); return true
+      } catch (error) { return fail(error) }
+    },
+    selectJourneyStage(index) {
+      const run = state.stageJourney
+      if (!run || state.preparing || !Number.isInteger(index) || index < 0 || index >= run.creator.composition.stages.length || index > run.outputs.length) return false
+      run.index = index; run.preview = ''; notify(); return true
+    },
+    recordStageOutput(value) {
+      const run = state.stageJourney
+      if (!run || state.preparing) return false
+      try {
+        if (!safeText(value)) throw new Error('Paste the observed stage response, up to 8,000 characters.')
+        if (run.outputs[run.index] !== value) { run.outputs = run.outputs.slice(0, run.index); run.outputs.push(value); run.preview = '' }
+        state.status = 'Response recorded as operator-provided text. Later responses were cleared if this handoff changed. Select the next stage when ready.'
+        notify(); return true
+      } catch (error) { return fail(error) }
+    },
+    previewJourneyStage() {
+      const run = state.stageJourney
+      if (!run || state.preparing) return false
+      try {
+        const stage = run.creator.composition.stages[run.index]
+        const task = [`Original composed task:\n${run.task}`, `Composition: ${run.creator.name} revision ${run.creator.revision}; stage ${run.index + 1} of ${run.creator.composition.stages.length}.`, `Overall purpose:\n${run.creator.purpose}`,
+          ...(run.index ? [`Previous stage response (operator-provided text):\n${run.outputs[run.index - 1]}`] : []),
+          `Required output / handoff:\n${stage.handoff}`, 'Perform only this stage. The operator will review and carry the response to the next stage.'].join('\n\n')
+        run.preview = withTaskFiles(specialistBrief(stage.source, task), run.files)
+        if (run.preview.length > 48000) { run.preview = ''; throw new Error('This stage brief exceeds the 48,000-character chat limit. Shorten the task or recorded handoff.') }
+        notify(); return true
+      } catch (error) { return fail(error) }
+    },
+    prepareJourneyStage() {
+      const run = state.stageJourney
+      if (!run || !run.preview || state.preparing) return false
+      return prepareBrief(run.creator.composition.stages[run.index].source, run.preview)
+    },
+    finishStageJourney() {
+      if (state.preparing) return false
+      state.stageJourney = null; state.status = 'Stage work cleared from this page session.'; notify(); return true
+    },
     improveTaskCreator(index) {
       if (!state.open || state.editing || state.refinement || state.preparing || state.loading || state.csvLoading || state.importLoading || state.taskFileLoading || state.csv?.editor || state.csv?.resultEditor) return false
       try {
@@ -795,11 +846,16 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
   const button = (label, action, disabled = false) => { const epoch = renderEpoch; const node = el('button', label, 'secondary-button'); node.type = 'button'; node.disabled = disabled; node.addEventListener('click', event => { if (epoch === renderEpoch) action(event) }); return node }
   const status = el('p', '', 'status-line'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite')
   const controller = createSpecialistController({ ...options, changed: render })
+  let createControl = null
+  const syncCreation = () => {
+    const state = controller.state
+    if (createControl) createControl.disabled = state.loading || state.importLoading || !safeText(state.draft?.name, 100) || !safeText(state.draft?.purpose) || !safeText(state.draft?.example) || !state.draft?.book
+  }
   const field = (labelText, name, value, multiline = false, update = value => controller.edit(name, value)) => {
     const epoch = renderEpoch
     const label = el('label', labelText, 'specialist-field'), input = el(multiline ? 'textarea' : 'input')
     input.name = name; input.value = value; input.maxLength = name === 'name' ? 100 : name.startsWith('handoff-') ? 2000 : maxText
-    input.addEventListener('input', () => { if (epoch === renderEpoch) update(input.value) }); label.append(input); return label
+    input.addEventListener('input', () => { if (epoch === renderEpoch) { update(input.value); syncCreation() } }); label.append(input); return label
   }
   const checkbox = (labelText, checked, action) => {
     const epoch = renderEpoch
@@ -807,6 +863,7 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
     input.addEventListener('change', () => { if (epoch === renderEpoch) action(input.checked) }); label.append(input, el('span', labelText)); return label
   }
   function render(state) {
+    createControl = null
     renderEpoch++
     const epoch = renderEpoch
     if (!state.open) { if (panel) { overlay.remove(); panel = null; if (app) app.inert = wasInert; if (returnFocus?.isConnected) returnFocus.focus() } return }
@@ -827,12 +884,18 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
       app = doc.getElementById?.('app'); if (app) { wasInert = app.inert; app.inert = true }
     }
     const focusedName = panel.contains(doc.activeElement) ? doc.activeElement.name : ''
+    const portableOpen = panel.querySelector('.specialist-portable')?.open || !!state.portableImport || state.importLoading
+    const taskFormOpen = panel.querySelector('.specialist-task-form')?.open ?? !!state.draft.task_form?.template
     panel.replaceChildren()
     const head = el('header', '', 'specialist-header')
-    head.append(el('h2', 'Build your specialist'), button('Close', () => controller.close()))
-    panel.append(head, el('p', 'A reusable task brief tied to one installed MoonBook. Saved only in this browser; it does not install a pack or change accepted Book behavior.'))
+    const close = button('', () => controller.close())
+    close.className = 'moon-icon-button'; close.setAttribute('aria-label', 'Close'); close.title = 'Close'
+    const closeIcon = el('span', '', 'moon-icon'); closeIcon.dataset.icon = 'close'; closeIcon.setAttribute('aria-hidden', 'true'); close.append(closeIcon)
+    head.append(el('h2', 'Build your specialist'), close)
+    panel.append(head, el('p', 'Create a reusable specialist with a MoonBook. Saved in this browser.'))
     const saved = el('section')
-    saved.append(el('h3', 'Saved specialists'), button('New specialist', () => controller.newDraft(), state.preparing || !!state.refinement),
+    if (state.records.length) saved.append(el('h3', 'Saved specialists'))
+    saved.append(button('New specialist', () => controller.newDraft(), state.preparing || !!state.refinement),
       button('Compose specialists', () => controller.newComposition(), state.preparing || !!state.refinement))
     for (const record of state.records) {
       const row = el('div', '', 'specialist-actions')
@@ -842,8 +905,9 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
       saved.append(row)
     }
     panel.append(saved)
-    const portableArea = el('section', '', 'specialist-portable')
-    portableArea.append(el('h3', 'Move a saved creator by file'),
+    const portableArea = el('details', '', 'specialist-portable')
+    portableArea.open = portableOpen
+    portableArea.append(el('summary', 'Import or move a specialist'),
       el('p', 'Export one saved definition as local JSON, then explicitly import that file here or in another Desk library. Includes brief, task template and composition snapshots; excludes knowledge file bytes, task inputs, credential fields and permissions. Authored text may contain private information; review before sharing. No automatic sync or origin storage transfer. Review file text before trying it.'))
     const importLabel = el('label', state.importLoading ? 'Checking creator file…' : 'Import local creator JSON', 'specialist-field'), importFile = el('input')
     importFile.type = 'file'; importFile.name = 'creator-import-file'; importFile.accept = '.json,application/json'; importFile.disabled = state.loading || state.preparing || !!state.refinement
@@ -896,8 +960,10 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
       panel.append(context)
     }
     if (state.editing) {
-      panel.append(el('h3', '1 · Define the work'), field('Name', 'name', state.draft.name),
+      const definition = el('div', '', 'specialist-definition')
+      definition.append(field('Name', 'name', state.draft.name),
         field(state.refinement ? 'Purpose / concrete correction' : 'Purpose', 'purpose', state.draft.purpose, true), field('Representative example', 'example', state.draft.example, true))
+      panel.append(el('h3', '1 · Define the work'), definition)
       if (state.draft.composition) {
         const stages = state.draft.composition.stages
         panel.append(el('h3', '2 · Compose ordered specialist stages'), el('p', 'Choose 2–4 saved single-stage specialists from the same Book and version. Their saved briefs are copied as revision snapshots. The configured assistant applies these stages within one conversation.'))
@@ -978,10 +1044,14 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
         for (const path of choices) panel.append(checkbox(path, state.draft.knowledge_paths.includes(path), checked => controller.toggleKnowledge(path, checked)))
       }
       }
-      panel.append(el('h3', 'Reusable task form (optional)'),
+      const taskForm = el('details', '', 'specialist-task-form')
+      taskForm.open = taskFormOpen
+      taskForm.append(el('summary', 'Reusable task form (optional)'),
         el('p', 'Keep the representative example above. Add a reusable template such as “Compare {{topic}} for {{audience}}”. Each field is required when using the creator for new work; up to 8 fields. Inputs are kept only until you reload or switch creators.'),
         field('Task template', 'task-template', state.draft.task_form?.template || '', true, value => controller.editTaskTemplate(value)))
-      panel.append(button(state.created ? 'Create revised specialist' : 'Create specialist', () => controller.create(), state.loading || state.importLoading))
+      panel.append(taskForm)
+      createControl = button(state.created ? 'Create revised specialist' : 'Create specialist', () => controller.create())
+      syncCreation(); panel.append(createControl)
     } else if (state.created) {
       panel.append(el('h3', `${state.created.name} · revision ${state.created.revision}`), el('p', state.refinement ? '3 · Retry the captured task, revise, then save' : '3 · Try the representative example, revise, then save'))
       if (state.created.composition) panel.append(el('p', `Composed from ${state.created.composition.stages.length} saved specialist revisions, in order: ${state.created.composition.stages.map(stage => `${stage.source.name} r${stage.source.revision}`).join(' → ')}`))
@@ -993,6 +1063,30 @@ export function mountSpecialistBuilder({ document: doc = globalThis.document, do
       actions.append(button(state.preparing ? 'Preparing…' : state.refinement ? 'Prepare same captured task in chat' : 'Try in chat', () => void (state.refinement ? controller.prepareRefinedTask() : controller.tryExample()), state.preparing || state.importLoading || state.taskFileLoading),
         button('Revise', () => controller.revise(), state.preparing), button('Save specialist', () => controller.save(), state.preparing || state.importLoading || !!state.storage_error))
       panel.append(actions)
+      if (state.created.composition && !state.refinement) {
+        const area = el('section', '', 'specialist-stage-journey')
+        area.append(el('h3', 'Work through stages'), el('p', 'Prepare one specialist at a time, review its response in chat, and paste the handoff for the next specialist. This page keeps your task, file snapshots and recorded responses until you clear them, revise or switch creators, or reload.'))
+        const run = state.stageJourney
+        if (!run) {
+          area.append(field('Task for these stages', 'stage-task', state.stageTask || state.created.example, true, value => controller.editStageTask(value)),
+            button('Start stage work', () => controller.startStageJourney(), state.preparing || state.taskFileLoading))
+        } else {
+          area.append(el('pre', `Task: ${run.task}`))
+          run.creator.composition.stages.forEach((stage, index) => area.append(button(`Stage ${index + 1}: ${stage.source.name}${run.outputs[index] ? ' · response recorded' : ''}`, () => controller.selectJourneyStage(index), state.preparing || index > run.outputs.length)))
+          const stage = run.creator.composition.stages[run.index]
+          area.append(el('h4', `Current stage ${run.index + 1}: ${stage.source.name} revision ${stage.source.revision}`), el('pre', `Required handoff: ${stage.handoff}`))
+          if (run.index) area.append(el('pre', `Incoming response:\n${run.outputs[run.index - 1]}`))
+          area.append(button('Preview this stage', () => controller.previewJourneyStage(), state.preparing))
+          if (run.preview) area.append(el('pre', run.preview), button('Prepare this stage in chat', () => void controller.prepareJourneyStage(), state.preparing))
+          const output = field('Observed response to hand onward', 'stage-output', run.outputs[run.index] || '', true, () => {})
+          output.querySelector('textarea').disabled = state.preparing
+          area.append(output, button('Record stage response', () => controller.recordStageOutput(output.querySelector('textarea').value), state.preparing),
+            el('p', 'Recorded responses are supplied by you, not verified run receipts. Changing an earlier response clears later responses. Preparation still requires ordinary Send in chat.'),
+            button('Clear stage work', () => controller.finishStageJourney(), state.preparing))
+          if (run.outputs.length === run.creator.composition.stages.length) area.append(el('h4', 'Final recorded output'), el('pre', run.outputs.at(-1)))
+        }
+        panel.append(area)
+      }
       if (!state.refinement) {
       const filesArea = el('section', '', 'specialist-task-files')
       filesArea.append(el('h3', 'Files for this task only'), el('p', 'Add up to four local UTF-8 text files, at most 32 KiB each and 64 KiB together. Their text is included only in the exact brief prepared next. Review private data before ordinary Send. Files are not saved in the creator, exported with it or added to MoonBook.'))

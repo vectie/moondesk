@@ -115,9 +115,10 @@ fn moonflow_composition_item_catalog_status(
   item : MoonFlowCompositionItem,
 ) -> String {
   if moonflow_optional_evidence(composition.catalog_id, "").is_empty() ||
-    moonflow_optional_evidence(composition.catalog_status, "").is_empty() ||
-    moonflow_optional_evidence(composition.validation_status, "").is_empty() {
+    moonflow_optional_evidence(composition.catalog_status, "").is_empty() {
     "Catalog evidence unavailable"
+  } else if composition.validation_status is None {
+    "Checked when imported"
   } else if !moonflow_composition_validation_accepted(composition) {
     "Graph validation " +
     moonflow_optional_evidence(composition.validation_status, "unavailable")
@@ -578,9 +579,16 @@ fn render_flow_composition_evidence(
   details(class="flow-composition-evidence", [
     summary(
       "Catalog · " +
-      moonflow_optional_evidence(composition.catalog_status, "Unavailable") +
+      flow_system_text(
+        moonflow_optional_evidence(composition.catalog_status, "Unavailable"),
+      ) +
       " · validation " +
-      moonflow_optional_evidence(composition.validation_status, "Unavailable"),
+      flow_system_text(
+        moonflow_optional_evidence(
+          composition.validation_status,
+          "Checked when imported",
+        ),
+      ),
     ),
     div(class="flow-contract-grid", [
       div([
@@ -606,7 +614,7 @@ fn render_flow_composition_evidence(
         strong(
           moonflow_optional_evidence(
             composition.validation_status,
-            "Unavailable",
+            "Checked when imported",
           ),
         ),
       ]),
@@ -631,45 +639,54 @@ fn render_moonflow_composition_canvas(
   model : Model,
 ) -> @rabbita.Html {
   section(class="flow-composer flow-composer-infinite", [
-    render_flow_canvas_chrome(dispatch, model),
+    if model.moonflow_composition is Some(_) {
+      render_flow_canvas_chrome(dispatch, model)
+    } else {
+      @html.nothing
+    },
     match model.moonflow_composition {
       None =>
-        div(class="flow-composer-stage", [
-          render_flow_canvas_viewport(dispatch, model, [
-            div(class="flow-canvas-empty", [
-              strong(
-                if model.moonflow_composition_status == "Loading composition…" {
-                  "Loading executable Work graph"
-                } else {
-                  "No executable Work graph yet"
-                },
-              ),
-              p(
-                if model.moonflow_composition_status == "Loading composition…" {
-                  "Restoring the selected MoonBook composition, runs, and authorized actions."
-                } else {
-                  "Start a task, or open a workflow file already in this MoonBook."
-                },
-              ),
-              if model.moonflow_composition_status == "Loading composition…" {
-                @html.nothing
-              } else {
-                button(
-                  class="secondary-button",
-                  on_click=dispatch(
-                    OpenMoonBook(model.selected_workspace_id, StartTask),
+        div(
+          class="flow-composer-stage",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "moonflow-runs-state-panel")
+            .data_set(
+              "state",
+              moonflow_runs_state_key(model.moonflow_runs_state),
+            ),
+          [
+            render_flow_canvas_viewport(dispatch, model, [
+              div(class="flow-canvas-empty", [
+                strong(
+                  flow_system_text(
+                    if model.moonflow_composition_status ==
+                      "Loading composition…" {
+                      "Loading executable Work graph"
+                    } else {
+                      "No executable Work graph yet"
+                    },
                   ),
-                  "Start a task",
-                )
-              },
-              button(
-                class="quiet-button",
-                on_click=dispatch(workspace_feature_msg("open-flow-files")),
-                "Choose workflow file",
-              ),
+                ),
+                if model.moonflow_composition_status == "Loading composition…" {
+                  @html.nothing
+                } else {
+                  button(
+                    class="secondary-button",
+                    on_click=dispatch(
+                      OpenMoonBook(model.selected_workspace_id, StartTask),
+                    ),
+                    "Start a task",
+                  )
+                },
+                button(
+                  class="quiet-button",
+                  on_click=dispatch(workspace_feature_msg("open-flow-files")),
+                  "Choose workflow file",
+                ),
+              ]),
             ]),
-          ]),
-        ])
+          ],
+        )
       Some(composition) => {
         let nodes : Array[@rabbita.Html] = [
           render_flow_canvas_edges(model, composition),
@@ -685,9 +702,18 @@ fn render_moonflow_composition_canvas(
             render_flow_canvas_viewport(dispatch, model, nodes),
             render_flow_product_palette(composition),
             div(class="flow-canvas-hint", [
-              span(
-                "Fit for an overview · drag empty space to pan · scroll to zoom · drag a node handle to rearrange",
-              ),
+              details(class="flow-canvas-help", [
+                summary(
+                  class="moon-icon-button",
+                  attrs=@html.Attrs::build()
+                    .aria_label("Canvas controls")
+                    .title("Canvas controls"),
+                  [ui_icon("help")],
+                ),
+                p(
+                  "Fit for an overview · drag empty space to pan · scroll to zoom · drag a node handle to rearrange",
+                ),
+              ]),
               button(
                 class="quiet-button",
                 on_click=dispatch(workspace_feature_msg("open-flow-files")),

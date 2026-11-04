@@ -214,7 +214,7 @@
   .mooncode-center[data-workbench-focus="split"] .code-workbench-toolbar {
     border-left: 1px solid var(--mooncode-line);
   }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-tab[aria-selected="true"] .code-workbench-tab-label { display: inline; }
+  .mooncode-center[data-workbench-focus="split"] .code-workbench-tab[aria-pressed="true"] .code-workbench-tab-label { display: inline; }
   .mooncode-center[data-workbench-focus="split"] .code-workbench-actions { margin-left: auto; }
 }
 @media (max-width: 1279px) {

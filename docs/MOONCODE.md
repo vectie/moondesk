@@ -1,5 +1,11 @@
 # MoonCode Workspace
 
+This document describes the current desktop/runtime ownership boundary. The
+approved simplification plan is [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md);
+its runtime changes are planned, not implemented by this documentation cleanup.
+The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
+original comparisons, revisions, and decisions.
+
 MoonCode is the coding conversation mode for a MoonBook. The product has one
 ordered conversation, one durable owner, and one desktop projection:
 
@@ -117,7 +123,7 @@ MoonClaw journal cutover.
 
 ## Desktop API
 
-The active desktop surface contains seven route families:
+The desktop session surface is:
 
 ```text
 GET|HEAD  /api/mooncode/status
@@ -226,7 +232,7 @@ in a separate disclosure and are never mixed into the active groups.
 Each MoonClaw session has one authoritative journal:
 
 ```text
-<moonclaw-product-home>/sessions/<session-id>/
+<moonclaw-product-home>/mooncode/sessions/<session-id>/
   journal.jsonl
   session.json
 ```
@@ -253,42 +259,38 @@ rebuild a conversation.
 
 ## Validation
 
-Code changes must pass:
+Use focused checks for the packages affected by a change. MoonBit changes also
+require `moon info`, `moon fmt`, and review of generated interface differences.
+The repository release gate is `scripts/validate.sh full`; it is not an
+authoring check for documentation-only edits.
 
-```sh
-moon fmt
-moon info
-moon check --target all --warn-list +73
-moon test --target native
-(cd ui/rabbita-desk && moon test --target js)
-npm --prefix ui/rabbita-desk run build
-git diff --check
-```
+For changes to conversation behavior, exercise real keyboard and mouse input,
+multiple turns, reload, reconnect, and cancellation. Verify stable
+`user -> work -> assistant` ordering, truthful progress, and preservation of
+the last accepted state. The focused scenarios and validation entry points
+are in [Code mode test plan](CODE_MODE_TEST_PLAN.md).
 
-Acceptance also requires a visible browser journey using real keyboard and
-mouse input:
+## Approved Next Work
 
-1. Open a fresh Code view and confirm persisted sessions hydrate.
-2. Start or select a MoonBook-bound session.
-3. Submit with the mouse and with Enter.
-4. Confirm the user row appears immediately without a fabricated work state.
-5. Confirm factual work appears only after MoonClaw signals it.
-6. Confirm every turn remains `user, work, assistant` in append order.
-7. Continue for at least four turns.
-8. Hard reload and verify the same rail selection and conversation.
-9. Repeat across MoonClaw restart and network interruption for release gates.
+The [current implementation plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md)
+replaces earlier MoonCode upgrade, alignment, and phase plans. Implement it
+through the existing MoonClaw runtime:
 
-## Remaining Product Work
+1. Remove the legacy Goal implementation and dual-authority branches.
+2. Merge task definitions and completion checks; keep `finish` and return
+   repairable gaps to the same agent.
+3. Bind verification to actual results and relevant versions; reuse the
+   journal and continuation for recovery.
+4. Remove forced-mutation heuristics, permissive tool-call repair, and
+   duplicated prompt rules.
+5. Remove MoonDesk's independent acceptance inference and render runtime state.
 
-The storage, conversation ownership, approval, and live-cancellation upgrades
-are complete. Remaining work is product capability, not another architecture
-rewrite:
+Default to one primary agent and autonomous completion. Do not introduce a
+permanent Router/Worker agent pair, a new runtime framework, a universal
+checker registry, or mandatory human review. Existing authorization and
+sandbox boundaries remain enforced. No old-protocol compatibility or
+dual-write implementation is required.
 
-- richer permission, context-loss, and offline recovery
-- durable per-session model and web-search preferences
-- large-history virtualization and performance metrics
-- automated latency, duplicate-row, rollback, reconnect, accessibility, and
-  responsive release gates
-
-The finite delivery order and evidence are tracked in
-`MOONCODE_PRODUCTION_UPGRADE_PLAN.md`.
+This is an implementation direction, not a claim that the runtime
+consolidation has already shipped. Dated test reports remain historical
+evidence; current readiness requires current checks.

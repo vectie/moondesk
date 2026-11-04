@@ -1,0 +1,1 @@
+const t=t=>globalThis.window?.MoonSuiteI18n?.text?.(String(t))??String(t),n=()=>globalThis.window?.MoonSuiteI18n?.locale?.()||void 0;function o(n,o){const e=t(o);n&&n.textContent!==e&&(n.textContent=e)}function e(t){return t.setAttribute("data-i18n-scope","content"),t}export{e as a,n as b,o as s,t as u};

@@ -51,7 +51,10 @@ fn moonflow_review_arguments(
 
 ///|
 pub async fn moonflow_review_runtime() -> Result[MoonFlowReviewRuntime, String] {
-  let executable = @env.get_env_var("MOONDESK_MOONFLOW_BIN").unwrap_or("")
+  let executable = match moonflow_executable() {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
   let stamp = match moonbook_executable_stamp(executable) {
     Ok(value) => value
     Err(_) =>

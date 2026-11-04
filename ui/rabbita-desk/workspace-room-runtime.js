@@ -1,3 +1,6 @@
+import { uiText, uiLocale, userContent } from './ui-locale.js'
+import { iconMarkup } from './ui-icons.js'
+
 const rooms = new Map()
 let activeRoom = null
 let refreshTimer = 0
@@ -45,21 +48,30 @@ function renderWorkspaceRoom(state, options = {}) {
   root.dataset.testid = 'workspace-room'
   activeRoom = { root, room }
   const context = () => `${workspaceId}:${room.channel}`
-  const load = async () => {
+  const load = async (showProgress = false) => {
     if (!workspaceId || room.loading) return
     const requested = context()
+    const firstLoad = !room.loaded
+    let redraw = firstLoad || showProgress
     room.loading = true
+    room.refreshing = showProgress
+    if (redraw) draw()
     try {
       const response = await fetch(`/api/document-room?workspace_id=${encodeURIComponent(workspaceId)}&channel=${encodeURIComponent(room.channel)}`)
       if (!response.ok) throw new Error('Room could not be loaded. Try Refresh.')
       const payload = await response.json()
       if (requested !== context()) return
       const changed = JSON.stringify(room.payload) !== JSON.stringify(payload)
+      redraw ||= changed || Boolean(room.error)
       room.payload = payload
+      room.loaded = true
       room.error = ''
-      if (changed) draw()
-    } catch (error) { room.error = error.message; draw() }
-    finally { room.loading = false }
+    } catch (error) { if (requested === context()) { room.error = error.message; redraw = true } }
+    finally {
+      room.loading = false; room.refreshing = false
+      if (requested !== context()) void load(true)
+      else if (redraw) draw()
+    }
   }
   const send = async (action, fields = {}, quiet = false) => {
     if (!room.profile.name.trim()) { room.error = 'Enter your name to join the room.'; draw(); return false }
@@ -84,14 +96,14 @@ function renderWorkspaceRoom(state, options = {}) {
     // Keep the caret stable while messages arrive. Drafts survive other redraws.
     if (root.contains(document.activeElement) && document.activeElement?.matches('textarea')) return
     root.replaceChildren()
-    const intro = el('div', 'document-tool-intro with-action')
-    const copy = el('div')
-    copy.append(el('h3', '', 'Book room'), el('p', '', 'Discuss work with people connected to this MoonDesk workspace. Messages and replies stay with the book.'))
-    intro.append(copy, button('Refresh', load))
+    const intro = el('div', 'document-tool-intro secondary-tools')
+    const refresh = button('', () => load(true)); refresh.className = 'moon-icon-button'; refresh.setAttribute('aria-label', 'Refresh'); refresh.title = 'Refresh'; refresh.innerHTML = iconMarkup('refresh'); refresh.disabled = room.loading
+    intro.append(refresh)
     root.append(intro)
     const identity = el('label', 'workspace-room-profile')
     identity.append(el('span', '', 'Your display name'))
     const name = el('input'); name.value = room.profile.name; name.placeholder = 'Your name'
+    name.addEventListener('input', () => { room.profile.name = name.value; syncActions() })
     name.addEventListener('change', () => {
       room.profile.name = name.value
       try { localStorage.setItem(profileKey, JSON.stringify(room.profile)) } catch {}
@@ -102,31 +114,36 @@ function renderWorkspaceRoom(state, options = {}) {
     const channels = room.payload.channels.length ? room.payload.channels : [{ id: 'general', title: 'General' }]
     for (const channel of channels) {
       const tab = button(channel.title, () => {
-        room.channel = channel.id; room.reply = ''; room.payload = { ...room.payload, messages: [], presence: [] }; draw(); void load()
+        if (room.channel === channel.id) return
+        room.channel = channel.id; room.reply = ''; room.loaded = false; room.error = ''; room.payload = { ...room.payload, messages: [], presence: [] }; draw(); void load()
       })
+      if (channel.id !== 'general') userContent(tab)
       tab.setAttribute('aria-pressed', String(room.channel === channel.id)); channelRow.append(tab)
     }
     const channelForm = el('form', 'workspace-room-new-channel')
     const channelName = el('input'); channelName.placeholder = 'New channel'; channelName.setAttribute('aria-label', 'New channel name'); channelName.required = true
     const create = el('button', 'secondary-button', 'Create channel'); create.type = 'submit'
+    channelName.addEventListener('input', () => syncActions())
     channelForm.append(channelName, create)
     channelForm.addEventListener('submit', event => { event.preventDefault(); void send('create-channel', { title: channelName.value }) })
-    root.append(channelRow, channelForm)
+    const channelCreate = el('details', 'workspace-room-channel-create')
+    channelCreate.append(el('summary', '', 'New channel'), channelForm)
+    root.append(channelRow, channelCreate)
     const others = room.payload.presence.filter(person => person.actor_id !== room.profile.id)
-    const presence = el('p', 'status-line', others.length ? others.map(person => `${person.author}${person.typing ? ' is typing…' : ' is here'}`).join(' · ') : 'You are the first person here.')
-    presence.setAttribute('aria-live', 'polite'); root.append(presence)
+    const presence = el('p', 'status-line', others.length ? others.map(person => uiText(`${person.author}${person.typing ? ' is typing…' : ' is here'}`)).join(' · ') : 'You are the first person here.')
+    presence.setAttribute('aria-live', 'polite'); if (others.length) root.append(presence)
     const messages = el('div', 'workspace-room-messages')
     messages.setAttribute('role', 'log'); messages.setAttribute('aria-label', 'Room messages')
     const renderMessage = (message, reply = false) => {
       const row = el('article', `workspace-room-message${reply ? ' reply' : ''}`)
-      row.append(el('strong', '', message.author), el('p', '', message.text))
+      row.append(userContent(el('strong', '', message.author)), userContent(el('p', '', message.text)))
       const date = new Date(/^\d+$/.test(String(message.created_at)) ? Number(message.created_at) : message.created_at)
-      if (Number.isFinite(date.getTime())) row.append(el('small', '', date.toLocaleString()))
-      if (message.document_path) row.append(button(`Open ${message.document_path}`, () => options.openFile?.(message.document_path)))
+      if (Number.isFinite(date.getTime())) row.append(el('small', '', date.toLocaleString(uiLocale())))
+      if (message.document_path) row.append(userContent(button(`${uiText('Open')} ${message.document_path}`, () => options.openFile?.(message.document_path))))
       const counts = reactionCounts(message)
       const actions = el('div', 'workspace-room-message-actions')
       for (const [id, label] of [['agree', 'Agree'], ['thanks', 'Thanks'], ['question', 'Question']]) {
-        const reaction = button(`${label}${counts[id] ? ` ${counts[id]}` : ''}`, () => send('react', { message_id: message.id, reaction: id }))
+        const reaction = button(`${uiText(label)}${counts[id] ? ` ${counts[id]}` : ''}`, () => send('react', { message_id: message.id, reaction: id }))
         reaction.setAttribute('aria-pressed', String((message.reactions || []).some(item => item.actor_id === room.profile.id && item.reaction === id)))
         actions.append(reaction)
       }
@@ -139,7 +156,7 @@ function renderWorkspaceRoom(state, options = {}) {
       messages.append(renderMessage(message))
       for (const reply of roomMessages(room.payload.messages, message.id)) messages.append(renderMessage(reply, true))
     }
-    if (!room.payload.messages.length) messages.append(el('p', 'document-tool-empty', 'Start with a question, a decision, or an update for your collaborators.'))
+    if (!room.payload.messages.length && room.loaded && !room.loading && !room.error) messages.append(el('p', 'document-tool-empty', 'No messages yet.'))
     root.append(messages)
     const composer = el('form', 'workspace-room-composer')
     if (room.reply) {
@@ -152,18 +169,25 @@ function renderWorkspaceRoom(state, options = {}) {
     const text = el('textarea'); text.required = true; text.value = draft.text; text.setAttribute('aria-label', room.reply ? 'Write a reply' : 'Write a message'); text.placeholder = room.reply ? 'Write a reply…' : 'Share an update or ask a question…'
     text.addEventListener('input', () => {
       draft.text = text.value
-      if (Date.now() - room.typingAt > 5000) { room.typingAt = Date.now(); void send('presence', { typing: Boolean(text.value.trim()) }, true) }
+      syncActions()
+      if (room.profile.name.trim() && Date.now() - room.typingAt > 5000) { room.typingAt = Date.now(); void send('presence', { typing: Boolean(text.value.trim()) }, true) }
     })
     text.addEventListener('blur', () => setTimeout(draw, 100))
     composer.append(text)
+    const composerActions = el('div', 'workspace-room-compose-actions')
     if (state.selected_document) {
       const attach = el('label')
       const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.checked = room.attach
       checkbox.addEventListener('change', () => { room.attach = checkbox.checked })
-      attach.append(checkbox, document.createTextNode(` Attach ${state.selected_document}`)); composer.append(attach)
+      attach.append(checkbox, document.createTextNode(` Attach ${state.selected_document}`)); composerActions.append(attach)
     }
     const submit = el('button', 'primary-button', room.sending ? 'Sending…' : 'Send message'); submit.type = 'submit'; submit.disabled = room.sending || !workspaceId
-    composer.append(submit)
+    function syncActions() {
+      create.disabled = room.sending || !name.value.trim() || !channelName.value.trim()
+      submit.disabled = room.sending || !workspaceId || !name.value.trim() || !text.value.trim()
+    }
+    syncActions()
+    composerActions.append(submit); composer.append(composerActions)
     composer.addEventListener('submit', async event => {
       event.preventDefault()
       const text = draft.text.trim()
@@ -173,7 +197,7 @@ function renderWorkspaceRoom(state, options = {}) {
       if (saved && room.drafts.get(draftKey)?.text.trim() === text) { room.drafts.delete(draftKey); if (room.reply === replyTo) room.reply = ''; draw() }
     })
     root.append(composer)
-    const error = el('p', 'status-line', room.error); error.setAttribute('role', 'status'); root.append(error)
+    const error = el('p', 'status-line', room.error || (room.loading && (!room.loaded || room.refreshing) ? 'Loading book room…' : '')); error.setAttribute('role', 'status'); root.append(error)
   }
   draw()
   void load()

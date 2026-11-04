@@ -24,6 +24,13 @@ pub struct MoonFlowSingleStepRuntime {
 }
 
 ///|
+pub fn moonflow_single_step_configuration() -> String {
+  @env.get_env_var("MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG").unwrap_or(
+    ".moonsuite/products/moondesk/flow-runtime/single-step.json",
+  )
+}
+
+///|
 fn moonflow_single_step_configuration_ref(value : String) -> Bool {
   value != "" &&
   value.length() <= 512 &&
@@ -81,16 +88,12 @@ pub async fn moonflow_single_step_runtime() -> Result[
   MoonFlowSingleStepRuntime,
   String,
 ] {
-  let executable = match @env.get_env_var("MOONDESK_MOONFLOW_BIN") {
-    Some(value) if value != "" => value
-    _ =>
-      return Err(
-        "Digital step setup is missing. Configure MOONDESK_MOONFLOW_BIN with the trusted native Flow executable.",
-      )
+  let executable = match moonflow_executable() {
+    Ok(value) => value
+    Err(message) => return Err(message)
   }
-  let configuration_ref = match
-    @env.get_env_var("MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG") {
-    Some(value) if moonflow_single_step_configuration_ref(value) => value
+  let configuration_ref = match moonflow_single_step_configuration() {
+    value if moonflow_single_step_configuration_ref(value) => value
     _ =>
       return Err(
         "Digital step setup is missing. Configure MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG with the host-owned workspace-relative configuration and existing Gate authority.",

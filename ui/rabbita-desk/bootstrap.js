@@ -1,3 +1,4 @@
+import './interface-locale.js'
 import '/styles.css'
 import '/styles/provider-connection.css'
 import '/styles/product-shell.css'
@@ -22,8 +23,9 @@ import '/styles/source-quiet.css'
 import '/styles/workbench-layout.css'
 import '/styles/destination-layout.css'
 import '/styles/work-journey.css'
-import '/styles/type-hierarchy.css'
 import '/styles/specialist-builder.css'
+// Shared visual roles are last so new surfaces inherit the workspace standard.
+import '/styles/type-hierarchy.css'
 import {
   connectedWorkspaceUrl,
   parseProviderHandoff,
@@ -37,10 +39,9 @@ const app = document.getElementById('app')
 if (app) {
   app.innerHTML = `
     <div class="boot-shell">
-      <div class="boot-panel">
-        <p class="eyebrow">MoonDesk</p>
-        <h1>Loading workspace</h1>
-        <p>Preparing the explorer, previews, inspector, and activity drawer.</p>
+      <div class="workspace-loading" role="status" aria-live="polite">
+        <span class="workspace-loading-indicator" aria-hidden="true"></span>
+        <span>Loading workspace</span>
       </div>
     </div>
   `

@@ -2025,7 +2025,7 @@ fn render_git_repository_context(
     return @html.nothing
   }
   let refresh = button(
-    class="mooncode-git-refresh",
+    class="mooncode-git-refresh moon-icon-button",
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-git-refresh")
       .aria_label("Refresh repository changes")
@@ -2034,10 +2034,7 @@ fn render_git_repository_context(
     disabled=model.git_projection_loading ||
       model.git_review_saving ||
       model.git_review_note.trim() != "",
-    span(
-      attrs=@html.Attrs::build().data_set("i18n", "common.refresh"),
-      "Refresh",
-    ),
+    [ui_icon("refresh")],
   )
   if model.git_projection_loading {
     return section(
@@ -2050,7 +2047,9 @@ fn render_git_repository_context(
           attrs=@html.Attrs::build().data_set(
             "i18n", "code.repo_changes_loading",
           ),
-          "Reading repository changes…",
+          interface_label(
+            "code.repo_changes_loading", "Reading repository changes…",
+          ),
         ),
         refresh,
       ],
@@ -2067,10 +2066,24 @@ fn render_git_repository_context(
   }
   guard model.git_projection_workspace_id == workspace_id &&
     model.git_projection is Some(projection) else {
-    return @html.nothing
+    return section(class="mooncode-git-context", [
+      span(
+        interface_label(
+          "code.repo_not_loaded", "Repository changes have not been loaded.",
+        ),
+      ),
+      refresh,
+    ])
   }
   if projection.state == "not_repository" {
-    return @html.nothing
+    return section(class="mooncode-git-context", [
+      span(
+        interface_label(
+          "code.repo_not_git", "This MoonBook is not a Git repository.",
+        ),
+      ),
+      refresh,
+    ])
   }
   if projection.state != "ready" {
     return section(

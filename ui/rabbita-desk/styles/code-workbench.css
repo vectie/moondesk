@@ -49,7 +49,7 @@
 .code-workbench-toolbar .code-workbench-tab { flex: 0 0 auto; white-space: nowrap; }
 .code-workbench-tab-label { display: inline; }
 .code-workbench-toolbar button[aria-pressed="true"], .code-workbench-toolbar button[aria-selected="true"] { color: var(--mooncode-ink); border-color: transparent; }
-.code-workbench-toolbar .code-workbench-tab[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--mooncode-accent); }
+.code-workbench-toolbar .code-workbench-tab[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--mooncode-accent); }
 .code-workbench-work:focus-visible { outline: 2px solid var(--mooncode-focus); outline-offset: -2px; }
 .code-workbench-actions { flex: 0 0 auto; }
 .code-workbench-actions { gap: 2px; padding-left: 6px; border-left: 1px solid var(--mooncode-line); }

@@ -221,9 +221,15 @@ async fn moonflow_single_step_actions(
 }
 
 ///|
-fn moonflow_single_step_setup() -> Json {
-  let available = @env.get_env_var("MOONDESK_MOONFLOW_BIN").unwrap_or("") != "" &&
-    @env.get_env_var("MOONDESK_MOONFLOW_SINGLE_STEP_CONFIG").unwrap_or("") != ""
+async fn moonflow_single_step_setup(run_root : String) -> Json {
+  let mut root = run_root
+  for _ in 0..<5 {
+    root = @pathx.dirname(root).to_owned()
+  }
+  let available = @trusted_host.moonflow_executable() is Ok(_) &&
+    @fs.exists(
+      @pathx.join(root, @trusted_host.moonflow_single_step_configuration()),
+    )
   {
     "configured": available,
     "message": if available {

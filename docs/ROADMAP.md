@@ -77,23 +77,22 @@ Still needed:
 
 ### 3. MoonCode Workspace
 
-Goal: a Codex-like coding/chat workspace for executable books, with MoonClaw as
-the runtime and MoonBook as the durable artifact owner.
+Goal: autonomously produce useful, verified deliverables with one primary
+agent, using MoonClaw's existing execution and recovery mechanisms.
 
-Done:
+The current desktop foundation includes book-scoped sessions, the prompt
+composer, runtime status, tool approvals, and canonical conversation display.
+The approved next work is in the
+[current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md):
 
-- book-scoped session surfaces
-- contextual prompt composer
-- MoonClaw daemon/model inspection
-- command queues, runtime events, tool approvals, tests, package views
-- desktop projection records for UI state
+- delete legacy Goal and duplicate completion/acceptance mechanisms
+- unify completion through `finish`, returning repairable gaps to the agent
+- reuse journal and continuation for reliable execution and restart recovery
+- remove forced-mutation rules and MoonDesk-owned acceptance inference
+- evaluate deliverable quality, user intervention, rework, latency, and cost
 
-Still needed:
-
-- stronger live diff review and patch staging
-- clearer commit/package handoff
-- model-backed eval coverage for real coding tasks
-- longer resume/cancel reliability testing
+These are planned changes, not completion claims. No permanent Router/Worker
+agent pair, new runtime framework, or old-protocol compatibility is required.
 
 ### 4. MoonTown Control Surface
 

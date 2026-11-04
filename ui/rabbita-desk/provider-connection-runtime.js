@@ -65,7 +65,11 @@ export function openProviderConnection() {
   const accept = value => {
     if (closed) return
     stopCamera(); candidate = value; text.value = ''; file.value = ''; preview.replaceChildren()
-    for (const [label, item] of Object.entries(connectionPreview(value))) preview.append(node('dt', label), node('dd', String(item)))
+    const labels = { base_url: t('Service URL', '服务地址'), model: t('Model', '模型'), max_output_tokens: t('Maximum output tokens', '最大输出词元数'), api_key: t('API key', 'API 密钥') }
+    for (const [label, item] of Object.entries(connectionPreview(value))) {
+      const content = node('dd', String(item)); content.setAttribute('translate', 'no')
+      preview.append(node('dt', labels[label] || label), content)
+    }
     preview.hidden = false; connect.disabled = false; status.textContent = t('Ready to connect. Check the URL and model.', '可以连接，请核对地址和模型。')
   }
   const report = error => { if (!closed) { status.textContent = error.message || t('Could not read the QR code.', '无法读取二维码。'); connect.disabled = !candidate } }

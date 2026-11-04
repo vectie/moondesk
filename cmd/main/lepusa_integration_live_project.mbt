@@ -67,6 +67,11 @@ fn lepusa_integration_live_project_json(
     "signing": { "identity": "-" },
     "bundleResources": [
       { "source": sidecar, "path": "moondesk-sidecar", "executable": true },
+      {
+        "source": moondesk_flow_build_output(repo_root),
+        "path": "moonflow",
+        "executable": true,
+      },
       { "source": options.ui_dir, "path": "lepusa/assets/main" },
     ],
     "runtime": {

@@ -43,7 +43,7 @@ fn current_work_title(model : Model) -> String {
     if model.selected_path != "" {
       @desk.display_name(model.selected_path)
     } else {
-      "New task"
+      interface_label("task.new", "New task")
     }
   }
 }

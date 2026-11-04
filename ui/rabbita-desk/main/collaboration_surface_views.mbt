@@ -2,7 +2,22 @@
 fn collaboration_principal_label(
   reference : CollaborationPrincipalRef,
 ) -> String {
-  reference.principal_id + " · " + reference.kind
+  reference.principal_id + " · " + collaboration_system_label(reference.kind)
+}
+
+///|
+fn collaboration_system_label(value : String) -> String {
+  match value {
+    "human" => interface_label("collaboration.human", "Person")
+    "agent" => interface_label("collaboration.agent", "Agent")
+    "active" => interface_label("collaboration.active", "Active")
+    "owner" => interface_label("collaboration.owner", "Owner")
+    "reviewer" => interface_label("collaboration.reviewer", "Reviewer")
+    "member" => interface_label("collaboration.member", "Member")
+    "viewer" => interface_label("collaboration.viewer", "Viewer")
+    "contributor" => interface_label("collaboration.contributor", "Contributor")
+    _ => value
+  }
 }
 
 ///|
@@ -17,25 +32,13 @@ fn render_collaboration_empty() -> @rabbita.Html {
   div(
     class="collaboration-empty",
     attrs=@html.Attrs::build().role("status").aria_live("polite"),
-    [
-      span(
-        class="collaboration-icon",
-        attrs=@html.Attrs::build().aria_hidden("true"),
-        "◎",
-      ),
-      div([
-        strong("No shared records in this validated snapshot"),
-        p(
-          "MoonDesk does not infer people, assignments, reviews, comments, or handovers from domain state.",
-        ),
-      ]),
-    ],
+    [ui_icon("chat"), strong("No shared records yet")],
   )
 }
 
 ///|
 fn render_collaboration_recovery(
-  dispatch : Dispatch[Msg],
+  _dispatch : Dispatch[Msg],
   status : String,
   message : String,
   next_action : String,
@@ -48,15 +51,7 @@ fn render_collaboration_recovery(
       .role("status")
       .aria_live("polite"),
     [
-      span(
-        class="collaboration-icon",
-        attrs=@html.Attrs::build().aria_hidden("true"),
-        if status == "quarantined" {
-          "!"
-        } else {
-          "◎"
-        },
-      ),
+      ui_icon(if status == "loading" { "running" } else { "info" }),
       div([
         strong(
           match status {
@@ -68,23 +63,12 @@ fn render_collaboration_recovery(
             _ => "Select a MoonBook"
           },
         ),
-        p(message),
+        if status == "not_initialized" || status == "loading" || message == "" {
+          @html.nothing
+        } else {
+          p(message)
+        },
       ]),
-      if status == "not_initialized" ||
-        status == "quarantined" ||
-        status == "owner_unavailable" ||
-        status == "owner_timeout" {
-        button(
-          class="secondary-button compact-button collaboration-recovery-action",
-          attrs=@html.Attrs::build()
-            .data_set("testid", "collaboration-open-moonflow")
-            .aria_label("Open MoonFlow collaboration controls"),
-          on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
-          "Open MoonFlow",
-        )
-      } else {
-        @html.nothing
-      },
     ],
   )
 }
@@ -97,16 +81,25 @@ fn render_collaboration_people(
     @html.nothing
   } else {
     article(class="collaboration-lane", [
-      header([
-        span(attrs=@html.Attrs::build().aria_hidden("true"), "◉"),
-        h3("People"),
-      ]),
+      header([h3("People")]),
       ul(
         people.map(person => {
-          li([
-            strong(collaboration_principal_label(person.principal_ref)),
-            span(person.status),
-            small(person.roles.join(", ")),
+          li(class="collaboration-person-row", [
+            strong(
+              attrs=@html.Attrs::build()
+                .data_set("i18n-scope", "content")
+                .title(collaboration_principal_label(person.principal_ref)),
+              person.principal_ref.principal_id,
+            ),
+            small(person.roles.map(collaboration_system_label).join(", ")),
+            if person.status == "active" {
+              @html.nothing
+            } else {
+              span(
+                class="collaboration-person-status",
+                collaboration_system_label(person.status),
+              )
+            },
           ])
         }),
       ),
@@ -258,16 +251,19 @@ fn render_collaboration_surface(
       .data_set("handover-contract", "moonsuite.handover-control.v1")
       .aria_label("Collaboration"),
     [
-      header(class="pack-section-heading", [
-        div([
-          p(class="eyebrow", "Shared work, exact ownership"),
-          h2("Collaboration"),
-          p(
-            "A read-only view of typed principals, work ownership, independent review, anchored discussion, and digest-bound agent handovers.",
-          ),
-        ]),
+      header(class="collaboration-toolbar", [
         span(
-          "\{surface.people.length() + surface.assignments.length() + surface.reviews.length() + surface.comments.length() + surface.handovers.length()} records",
+          title="Read only in MoonDesk. Delegation, authority decisions, mutations, conflict resolution, and continuation remain with MoonFlow and the owning product.",
+          "Read-only",
+        ),
+        button(
+          class="moon-icon-button",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "collaboration-refresh")
+            .aria_label("Refresh collaboration")
+            .title("Refresh collaboration"),
+          on_click=dispatch(RefreshAll),
+          [ui_icon("refresh")],
         ),
       ]),
       if model.collaboration_status != "ready" {
@@ -288,10 +284,6 @@ fn render_collaboration_surface(
           render_collaboration_handovers(surface.handovers),
         ])
       },
-      p(
-        class="collaboration-boundary",
-        "Read only in MoonDesk. Delegation, authority decisions, mutations, conflict resolution, and continuation remain with MoonFlow and the owning product.",
-      ),
     ],
   )
 }

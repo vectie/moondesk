@@ -8,7 +8,15 @@ fn work_icon_action(
   button(
     class="moon-icon-button",
     title=label,
-    attrs=@html.Attrs::build().aria_label(label),
+    attrs=@html.Attrs::build()
+      .aria_label(label)
+      .data_set(
+        "work-action",
+        match message {
+          OpenMoonBook(_, StartTask) => "start-task"
+          _ => ""
+        },
+      ),
     on_click=dispatch(message),
     [ui_icon(icon)],
   )
@@ -30,7 +38,18 @@ fn render_work_book_switcher(
           ),
           [
             ui_icon("book"),
-            span(workspace_name(model)),
+            span(
+              attrs=@html.Attrs::build().data_set(
+                "i18n-scope",
+                if model.selected_workspace_id == "" &&
+                  model.workspace_root_path == "" {
+                  "interface"
+                } else {
+                  "content"
+                },
+              ),
+              workspace_name(model),
+            ),
             ui_icon("chevron-down"),
           ],
         ),
@@ -115,12 +134,14 @@ fn render_work_shortcuts(
             None => @html.nothing
           },
           button(
+            class="work-menu-shortcut",
             on_click=dispatch(
               workspace_feature_msg("open-toolbox", first="threads"),
             ),
             "Recent tasks",
           ),
           button(
+            class="work-menu-shortcut",
             on_click=dispatch(
               workspace_feature_msg("open-toolbox", first="results"),
             ),

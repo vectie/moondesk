@@ -25,8 +25,8 @@
 .mooncode-terminal-screen .xterm { height: 100%; }
 .mooncode-terminal-status { margin: 0; min-height: 1.5em; font-size: 12px; color: var(--mooncode-muted, #526072); overflow-wrap: anywhere; }
 .mooncode-terminal-status:empty { display: none; }
-.mooncode-terminal-empty { padding: 28px; color: #cbd5e3; line-height: 1.6; }
+.mooncode-terminal-empty { padding: 20px; color: var(--muted, #686d76); background: var(--bg-raised, #fff); font-size: var(--text-control, 13px); line-height: 1.6; }
 .mooncode-terminal-empty[hidden] { display: none; }
 .mooncode-terminal-agent-evidence { padding-top: 8px; border-top: 1px solid var(--mooncode-line, #d5dbe3); }
 .mooncode-terminal-agent-evidence > summary { cursor: pointer; font-size: 13px; padding: 6px 0; }
-@media (max-width: 650px) { .mooncode-terminal-button, .mooncode-terminal-toolbar input, .mooncode-terminal-rename { min-height: 44px; } .mooncode-terminal-button { min-width: 44px; } .mooncode-terminal-toolbar { gap: 8px; } .mooncode-terminal-search-controls { flex: 1 1 100%; margin-left: 0; gap: 8px; } .mooncode-terminal-screen { height: 250px; } }
+@media (max-width: 760px) { .mooncode-terminal-button, .mooncode-terminal-toolbar input, .mooncode-terminal-rename { min-height: 44px; } .mooncode-terminal-button { min-width: 44px; } .mooncode-terminal-toolbar { gap: 8px; } .mooncode-terminal-search-controls { flex: 1 1 100%; margin-left: 0; gap: 8px; } .mooncode-terminal-screen { height: 250px; } }

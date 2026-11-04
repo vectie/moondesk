@@ -58,6 +58,19 @@ fn step_ui_reply(model : Model, status : String) -> MoonFlowSingleStepMsg {
 }
 
 ///|
+test "native v3 projection can select the exact Mold operation before adapter binding" {
+  let run = step_ui_model().moonflow_runs[0]
+  let item = { ..run.items[0], adapter_id: None, }
+  assert_true(moonflow_single_step_eligible(run, item))
+  assert_false(
+    moonflow_single_step_eligible(run, { ..item, product_id: "other", }),
+  )
+  assert_false(
+    moonflow_single_step_eligible(run, { ..item, adapter_id: Some("other"), }),
+  )
+}
+
+///|
 extern "js" fn step_ui_write_fixture_request(body : String) =
   #| body => { const p = globalThis.process?.env?.MOONDESK_FLOW_STEP_UI_REQUEST; if (p) process.getBuiltinModule('fs').writeFileSync(p,body); }
 

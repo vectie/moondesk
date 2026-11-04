@@ -53,38 +53,38 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
 10. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
    journeys, rationale, expected behavior, methodology, and acceptance evidence.
 11. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-12. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
-   canonical conversation/runtime upgrade plan.
-13. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
-   finite single-owner conversation, thinking, and live-update correction.
-14. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
-   Phase 3.1 public-surface inventory, typed target, decisions, and migration slices.
-15. [AGENT_WORKSPACE_EVOLUTION.md](AGENT_WORKSPACE_EVOLUTION.md): implemented
+12. [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md):
+    approved single-agent simplification and deletion order; runtime changes
+    are not implied to be implemented.
+13. [CODE_MODE_TEST_PLAN.md](CODE_MODE_TEST_PLAN.md): focused runtime,
+    conversation, recovery, and deliverable checks.
+14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
+    terminal evidence, browser preview, and explicit comparison surfaces.
+15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):
+    complete four-project analysis, source material, and design revisions.
+16. [AGENT_WORKSPACE_EVOLUTION.md](AGENT_WORKSPACE_EVOLUTION.md): implemented
     document-agent workflows and portable MoonBook agent ownership.
-16. [OWB_SECOND_ROUND_FEATURE_COMPARISON.md](OWB_SECOND_ROUND_FEATURE_COMPARISON.md):
+17. [OWB_SECOND_ROUND_FEATURE_COMPARISON.md](OWB_SECOND_ROUND_FEATURE_COMPARISON.md):
     feature-only comparison and recommended Agent Library, learning, agenda,
     collaboration, artifact, multimodal, and subscribed-source journeys.
-17. [STATUS.md](STATUS.md): current implementation state and known gaps.
-18. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
-    starting/current evidence, repository metrics, and explicitly unmeasured gaps.
-19. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
-    active-document contradiction audit, evidence boundary, and Phase 0 gate state.
-20. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
-    retained clean-checkout full-validation transcript and evidence boundary.
-21. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
-    credentialed release procedure, immutable-output policy, and remote gate.
-22. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
-    exact local unsigned-candidate commands, checksums, refusal tests, and
-    evidence boundary.
-23. [qualification/README.md](qualification/README.md): genuine UI-to-UI
-    qualification rules, current case results, interproduct seams, retained
-    evidence layout, and the detailed operator handbook.
-24. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-25. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
-   phased plan for product clarity, typed contracts, package boundaries,
-   security, observability, release discipline, and operational proof.
-26. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
-   historical migration plan and validation record; it is not a current plan.
+18. [STATUS.md](STATUS.md): implementation evidence and known gaps.
+19. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): dated Phase 0 baseline,
+    repository metrics, and explicitly unmeasured gaps.
+20. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
+    historical document audit; its phase status is not current readiness.
+21. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
+    retained clean-checkout validation transcript and its evidence boundary.
+22. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): preview and credentialed release
+    procedure, immutable-output policy, and remote gate.
+23. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
+    dated unsigned-candidate commands, checksums, refusal tests, and limits.
+24. [qualification/README.md](qualification/README.md): UI-to-UI qualification
+    rules, case results, interproduct seams, and retained evidence.
+25. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+26. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
+    MoonDesk-wide productization and external release gates.
+27. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+    historical migration and validation record, not a current plan.
 
 ## Implementation Map
 
@@ -155,9 +155,9 @@ journeys, methodology, and release acceptance evidence.
 
 ## Future Plan
 
-- Execute the finite MoonCode consolidation plan: one MoonClaw-owned
-  ordered conversation, one stable work disclosure per turn, and a thin
-  MoonDesk renderer.
+- Follow the current MoonCode simplification plan: one primary agent, one
+  completion decision, reused journal/recovery, and a thin MoonDesk renderer.
+  Delete superseded mechanisms rather than layering new frameworks.
 - Add longer fresh-root and reload UI smokes for Desk, Wiki, and Code.
 - Keep extracting path/layout helpers to MoonLib instead of growing local string
   utilities.

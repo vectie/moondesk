@@ -24,12 +24,12 @@ test "desk command palette exposes primary modes and Wiki tabs" {
 ///|
 test "wiki command palette exposes its tabs without runtime controls" {
   let titles = palette_commands_for_mode(MoonWiki).map(command => command.0)
-  assert_eq(titles.length(), 16)
+  assert_eq(titles.length(), 15)
   assert_true(titles.contains("Open Desk"))
   assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Pages"))
   assert_true(titles.contains("Search Books"))
-  assert_true(titles.contains("New Inbox Note"))
+  assert_false(titles.contains("New Inbox Note"))
   assert_true(titles.contains("Open Requests"))
   assert_true(titles.contains("Open Review"))
   assert_true(titles.contains("Open Settings"))
@@ -40,6 +40,34 @@ test "wiki command palette exposes its tabs without runtime controls" {
   assert_false(titles.contains("Submit Request"))
   assert_false(titles.contains("Run Daemon Tick"))
   assert_false(titles.contains("Start Daemon"))
+}
+
+///|
+test "localized command labels and descriptions are searchable" {
+  assert_true(
+    palette_text_matches(
+      "Open Settings", "Manage preferences", "打开设置", "管理偏好设置",
+      "设置",
+    ),
+  )
+  assert_true(
+    palette_text_matches(
+      "Open Settings", "Manage preferences", "打开设置", "管理偏好设置",
+      "偏好",
+    ),
+  )
+  assert_true(
+    palette_text_matches(
+      "Open Settings", "Manage preferences", "打开设置", "管理偏好设置",
+      "settings",
+    ),
+  )
+  assert_false(
+    palette_text_matches(
+      "Open Settings", "Manage preferences", "打开设置", "管理偏好设置",
+      "missing",
+    ),
+  )
 }
 
 ///|

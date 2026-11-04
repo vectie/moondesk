@@ -60,12 +60,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://127.0.0.1:4321',
+      '/api': process.env.MOONDESK_API_ORIGIN || 'http://127.0.0.1:4321',
     },
   },
   preview: {
     proxy: {
-      '/api': 'http://127.0.0.1:4321',
+      '/api': process.env.MOONDESK_API_ORIGIN || 'http://127.0.0.1:4321',
     },
   },
   plugins: [moondeskRabbita(), moondeskMoonbitBrowserShim()],

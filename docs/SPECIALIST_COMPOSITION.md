@@ -1,5 +1,9 @@
 # Compose specialist creators
 
+To inspect and carry intermediate responses yourself, use the
+[step-through stage workbench](SPECIALIST_STAGE_WORK.md). The original single-chat
+composition route below remains available.
+
 ## User workflow
 
 1. In **Packs → Agents → Build your specialist**, create and save two or more

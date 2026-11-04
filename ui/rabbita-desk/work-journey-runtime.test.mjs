@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { workPanelItems, taskDraft, codingTaskPresets, mergeTaskThreads, taskPosition, taskArtifacts, taskResultPackage } from './work-journey-runtime.js'
+import { JSDOM } from 'jsdom'
+import { workPanelItems, taskDraft, codingTaskPresets, mergeTaskThreads, taskPosition, taskArtifacts, taskResultPackage, renderTaskDraft } from './work-journey-runtime.js'
 import { taskSchedulePayload, linkedScheduleResults } from './task-schedule-runtime.js'
 
 test('task start and recent conversations have focused destinations', () => {
@@ -52,4 +53,34 @@ test('a coding preset stages a named editable task', () => {
   assert.equal(draft.title, 'Fix a bug')
   assert.match(draft.prompt, /The menu is clipped$/)
   assert.deepEqual(taskDraft('  Weekly report\nUse my sources ', 'document'), { prompt: 'Weekly report\nUse my sources', kind: 'document', title: 'Weekly report' })
+})
+
+test('switching task type refreshes suggestions without losing an unsent request', () => {
+  const dom = new JSDOM('<main></main>')
+  try {
+    const { document, Event } = dom.window
+    const draft = { kind: 'code', prompt: '', title: '' }
+    let submitted
+    const el = (tag, className = '', text = '') => {
+      const node = document.createElement(tag)
+      node.className = className; node.textContent = text
+      return node
+    }
+    const render = () => document.body.replaceChildren(renderTaskDraft({
+      draft, workspace: 'book', el, onKindChange: render,
+      onPreset: () => {}, onContinue: value => { submitted = value },
+    }))
+    render()
+    assert.equal(document.querySelectorAll('.task-start-preset').length, 3)
+    const input = document.querySelector('textarea')
+    input.value = 'Keep this unsent request'
+    input.dispatchEvent(new Event('input'))
+    const mode = document.querySelector('select')
+    mode.value = 'document'; mode.dispatchEvent(new Event('change'))
+    assert.equal(document.querySelector('textarea').value, 'Keep this unsent request')
+    assert.equal(document.querySelector('.task-start-presets'), null)
+    document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }))
+    assert.equal(submitted.kind, 'document')
+    assert.equal(submitted.prompt, 'Keep this unsent request')
+  } finally { dom.window.close() }
 })

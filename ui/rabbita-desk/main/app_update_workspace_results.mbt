@@ -416,6 +416,11 @@ fn update_workspace_results(
           } else {
             model.moonflow_composition_status
           },
+          moonflow_composition_load_failed: if restoring_moonflow {
+            false
+          } else {
+            model.moonflow_composition_load_failed
+          },
           moonflow_operator_actions: if restoring_moonflow &&
             selected_workspace_changed {
             []
@@ -642,6 +647,12 @@ fn update_workspace_results(
         {
           ..model,
           moonflow_runs_generation: generation,
+          moonflow_retained: match model.moonflow_retained {
+            Some(state) if state.response is Some(_) &&
+              moonflow_retained_current(model, state) =>
+              Some({ ..state, runs_generation: generation, review: None, })
+            _ => None
+          },
           moonflow_runs_state: Some(Loading),
           moonflow_runs_error: None,
         },
@@ -729,6 +740,7 @@ fn update_workspace_results(
                 plan_source_unconfirmed: Some(true),
               }),
               moonflow_composition_status: message,
+              moonflow_composition_load_failed: false,
               moonflow_composition_saving: false,
             },
           )
@@ -745,6 +757,7 @@ fn update_workspace_results(
                 composition,
               ),
               moonflow_composition_status: "Composition loaded",
+              moonflow_composition_load_failed: false,
               moonflow_composition_saving: false,
             },
           )
@@ -759,6 +772,7 @@ fn update_workspace_results(
             plan_source_unconfirmed: Some(true),
           }),
           moonflow_composition_status: error,
+          moonflow_composition_load_failed: true,
           moonflow_composition_saving: false,
         },
       )
@@ -776,6 +790,7 @@ fn update_workspace_results(
             composition,
           ),
           moonflow_composition_status: "Composition saved · next run uses this selection",
+          moonflow_composition_load_failed: false,
           moonflow_composition_saving: false,
         },
       )

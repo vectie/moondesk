@@ -89,6 +89,13 @@ export function installQuietControls(doc = document, win = window) {
   function triggerFor(panel) {
     return panel.dataset.popupTrigger ? doc.querySelector(panel.dataset.popupTrigger) : panel.querySelector(':scope > summary')
   }
+  function belongsToPopup(panel, target) {
+    if (panel.contains(target) || triggerFor(panel)?.contains(target)) return true
+    // Multiple controls can select content in the same drawer. Switching
+    // between them must not dispatch an outside-close before their click.
+    const control = target.closest?.('[aria-controls]')
+    return Boolean(panel.id && control?.getAttribute('aria-controls')?.split(/\s+/).includes(panel.id))
+  }
   function onPointerOver(event) {
     if (event.pointerType === 'touch') return
     const control = event.target.closest?.(iconSelector)
@@ -99,7 +106,8 @@ export function installQuietControls(doc = document, win = window) {
   }
   function onFocusIn(event) {
     for (const panel of popups().filter(item => item.tagName !== 'DETAILS')) {
-      if (!panel.contains(event.target) && !triggerFor(panel)?.contains(event.target)) dismissPopup(panel, { document: doc })
+      if (panel.dataset.popupFocusDismiss === 'false') continue
+      if (!belongsToPopup(panel, event.target)) dismissPopup(panel, { document: doc })
     }
     const control = event.target.closest?.(iconSelector)
     if (control) showTooltip(control, true)
@@ -108,7 +116,7 @@ export function installQuietControls(doc = document, win = window) {
   function onPointerDown(event) {
     hideTooltip()
     for (const panel of popups().reverse()) {
-      if (!panel.contains(event.target) && !triggerFor(panel)?.contains(event.target)) dismissPopup(panel, { document: doc })
+      if (!belongsToPopup(panel, event.target)) dismissPopup(panel, { document: doc })
     }
   }
   function onKeyDown(event) {

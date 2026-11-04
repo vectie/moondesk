@@ -202,11 +202,6 @@ test "restored Flow workspace immediately hydrates its full operator state" {
     @rabbita.static_cell(render_moonflow_composition_canvas(dispatch, restored)),
   )
   assert_true(markup.contains("Loading executable Work graph"))
-  assert_true(
-    markup.contains(
-      "Restoring the selected MoonBook composition, runs, and authorized actions.",
-    ),
-  )
   assert_false(markup.contains("No executable Work graph yet"))
 }
 

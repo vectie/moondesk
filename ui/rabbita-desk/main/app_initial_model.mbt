@@ -291,6 +291,7 @@ fn init_model() -> Model {
     moonflow_ingest_preparing: false,
     moonflow_composition: None,
     moonflow_composition_status: "composition not loaded",
+    moonflow_composition_load_failed: false,
     moonflow_composition_saving: false,
     flow_canvas: init_flow_canvas_state(),
     moonflow_operator_actions: [],

@@ -131,7 +131,7 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
                 .data_set("developer-browser-action", "back")
                 .aria_label("Back")
                 .disabled(true),
-              "←",
+              [ui_icon("chevron-left")],
             ),
             button(
               class="mooncode-developer-browser-button",
@@ -139,14 +139,14 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
                 .data_set("developer-browser-action", "forward")
                 .aria_label("Forward")
                 .disabled(true),
-              "→",
+              [ui_icon("chevron-right")],
             ),
             button(
               class="mooncode-developer-browser-button",
               attrs=@html.Attrs::build()
                 .data_set("developer-browser-action", "reload")
                 .aria_label("Reload preview"),
-              "↻",
+              [ui_icon("refresh")],
             ),
           ]),
           @html.form(
@@ -155,7 +155,6 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
               "developer-browser-address-form", "true",
             ),
             [
-              span(class="mooncode-developer-browser-isolation", "Isolated"),
               input(
                 class="mooncode-developer-browser-address",
                 attrs=@html.Attrs::build()
@@ -168,11 +167,11 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
             ],
           ),
           button(
-            class="mooncode-developer-browser-external",
+            class="mooncode-developer-browser-external moon-icon-button",
             attrs=@html.Attrs::build()
               .data_set("developer-browser-action", "open-external")
               .aria_label("Open current address externally"),
-            "Open external",
+            [ui_icon("external-link")],
           ),
         ]),
         div(class="mooncode-developer-browser-stage", [
@@ -198,9 +197,16 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
               "Loading isolated preview"
             },
           ),
-          span(
-            "Scripts and forms allowed · origin and top navigation isolated",
-          ),
+          details(class="mooncode-preview-details", [
+            summary(
+              class="moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Preview isolation")
+                .title("Preview isolation"),
+              [ui_icon("info")],
+            ),
+            p("Scripts and forms allowed · origin and top navigation isolated"),
+          ]),
           button(
             class="mooncode-developer-browser-button",
             attrs=@html.Attrs::build()
@@ -256,15 +262,6 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
         .data_set("developer-tool-panel", "compare")
         .data_set("testid", "mooncode-developer-compare"),
       [
-        div(class="mooncode-developer-tool-heading", [
-          div([
-            h3("Fork & compare"),
-            p(
-              "Trial two approaches from one workspace baseline, then promote only the winner.",
-            ),
-          ]),
-          span(class="mooncode-developer-tool-badge", "MoonFort isolated"),
-        ]),
         @html.form(
           class="mooncode-compare-form",
           attrs=@html.Attrs::build().data_set("developer-compare-form", "true"),
@@ -314,7 +311,7 @@ fn render_mooncode_developer_tools_body(initial_url : String) -> @rabbita.Html {
                 .data_set("testid", "mooncode-developer-compare-status")
                 .role("status")
                 .aria_live("polite"),
-              "Results, diffs, checks, latency, tokens, and cost stay in the MoonCode transcript.",
+              "",
             ),
           ],
         ),
