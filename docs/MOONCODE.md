@@ -2,6 +2,9 @@
 
 This document describes the current desktop/runtime ownership boundary. The
 discussion baseline is [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md).
+The [agent machine and dynamic graph design](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md)
+consolidates the later OS/compiler/data-system analysis and task-driven
+interpretation model. Dynamic graph presentation remains a design direction.
 The single-agent consolidation removes the separate Goal panel and desktop
 package-review/proof-gate inference. The runtime completion boundary is described
 in MoonClaw's `docs/executable_book_runtime_boundary.md`.

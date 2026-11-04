@@ -53,9 +53,11 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
 10. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
    journeys, rationale, expected behavior, methodology, and acceptance evidence.
 11. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-12. [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md):
-    approved single-agent simplification and deletion order; runtime changes
-    are not implied to be implemented.
+12. [MoonCode agent machine and dynamic graph design](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md):
+    consolidated execution primitives, data model, framework comparison and
+    task-driven runtime graph; separates current implementation from design.
+    The [November 4 plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md)
+    retains the historical simplification and deletion decisions.
 13. [CODE_MODE_TEST_PLAN.md](CODE_MODE_TEST_PLAN.md): focused runtime,
     conversation, recovery, and deliverable checks.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional

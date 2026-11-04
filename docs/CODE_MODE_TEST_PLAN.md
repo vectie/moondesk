@@ -5,6 +5,9 @@ the [discussion plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md) for the
 historical design decisions. Goal, Goal Runtime, independent quality/no-change
 protocols and desktop acceptance inference have been removed. Current execution
 and evidence limits are documented in MoonClaw's executable-book runtime boundary.
+The [agent machine and dynamic graph record](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md)
+defines the later design direction; graph projection and complete dependency
+analysis are not existing runtime guarantees.
 
 ## Scope
 

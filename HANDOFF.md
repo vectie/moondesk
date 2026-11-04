@@ -18,6 +18,13 @@ are `docs/MOONCODE.md` and `docs/CODE_MODE_TEST_PLAN.md`; the old MoonCode phase
 plans and execution diary were removed. Do not restore document-phrase closure
 checks or treat dated test reports as current readiness.
 
+The 2026-11-05 synthesis is
+`docs/MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md`: execution primitives,
+OS/compiler/database/dataflow mappings, framework comparison, executable
+top-down work and task-driven dynamic graphs. Keep the November 4 archive
+unchanged. Graph presentation remains planned; do not turn this design record
+into another completion gate, graph database or user-authored wiring workflow.
+
 ## Current single-agent implementation
 
 - Goal APIs, separate quality/no-change policy and desktop
