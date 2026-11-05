@@ -35,15 +35,57 @@
 
 好的原语至少回答六个问题：它的身份是什么，拥有什么状态，接受哪些操作，操作有什么前后条件，失败或中断意味着什么，与其他原语如何组合。支持范围可以小，但范围内的语义应闭合。
 
-| 概念 | MoonCode 对应 | 必须明确的边界 |
+### 当前八项职责审计
+
+审计基线：MoonClaw `047749b3`、MoonDesk `248e6879`，以及本轮下述重构后的实现。结论是**基本功能已实现，职责可以闭合，但尚未成为具有完整类型契约和分布式执行语义的 Agent OS**。八项是分析维度，彼此有依赖，不是八层架构；一个 session 也不是一个 OS process。
+
+| 维度 | 功能与所有者 | 接口、输入 → 输出 | 运行逻辑 | 实现与边界 |
+| --- | --- | --- | --- | --- |
+| Process / Thread | 被 claim 的 prompt/package command 是逻辑交付任务；service 拥有主执行协程，工具子协程属于调用它的 TaskGroup。Session 保存队列、会话与 Book 绑定。 | `/turns`、`start_runtime_service`、`runtime_loop_execute`、`runtime_turn_execute`；命令/修订 → 结果、可恢复位置或终态 receipt。 | service 取得 session 所有权，loop 取队列，turn 解释当前 command；独立只读调用 fork/join，取消沿已有 task group 传播。 | **已实现限定范围**。不是每个 turn 一个线程，也没有独立地址空间或持久调用栈。普通命令默认一个主 Agent；显式 worker 不构成默认常驻团队。 |
+| Memory | Context compiler 拥有“本轮模型工作集”，journal 拥有原始执行记录，文件拥有文件内容。 | `compile_context` / `Pruner::compile_messages`；任务、消息、schema、窗口 → messages + metrics；`read_result(evidence_ref, end_ref?, lines?)` → 保留的原始结果或范围目录。 | 按压力保留指令/任务与最新完整交换，压缩旧消息，保留精确/首尾来源句柄，需要时补读。 | **已实现限定范围**。摘要有损；未保留的 stdout、旧文件版本不能恢复。补读扫描 session journal；不是新 memory store、自动 RAG 或新的模型轮次。 |
+| Filesystem | Workspace 拥有选定 MoonBook 的真实路径、文件内容与本地条件写入。 | `workspace_path(book_root,path)` → canonical/relative identity；`workspace_replace(root,absolute,expected,content)` → 成功或 stale/error；read/edit/write/patch 为工具入口。 | 解析真实资源，在同一资源锁内比较旧内容，用同目录临时文件及 rename 替换；patch 复用既有回滚。 | **原生文件路径已实现**。同一资源的协作式互斥和过期检查，不是完整 VFS、MVCC、多文件事务或不可变版本库。shell、外部编辑器不参与此文件锁。 |
+| I/O | provider transport 负责模型协议；catalog/executor 负责工具 ABI；grant/executor 边界负责实际执行授权。 | 模型消息 → provider response；`tool + arguments` → canonical result `{ok,is_error,message,output,metadata}` → execution/event → journal/model/UI。 | schema 校验、绑定既有执行条件、运行、返回规范结果；工具错误交回同一 Agent。用户输入、steering、审批和取消沿命令路径进入。 | **主线已实现**。Function Calling 是调用形状，MCP 是接入协议；都不自动提供权限、幂等或结果正确性。控制事件与已执行效果有区别；工具成功不等于交付完成。 |
+| Synchronization | execution lease 保护 session 执行者；lifecycle gate 保护归档/恢复；journal lock 保护追加/claim 顺序；file lock 保护真实文件；batch join 保护工具生命周期。 | `open_session_execution_lease`、lifecycle/session lock、`workspace_file_lock`、`TaskGroup`；资源/操作 → 所有权、等待、busy 或有序结果。 | 外部入口持有 lifecycle shared gate + execution exclusive lease，内部 loop/turn 借用，不重入获取。不同 session 可运行；独立读并发，普通修改按调用顺序执行。 | **局部同步已实现**。这些锁不能合并成全 Book 大锁；本地提交序号不是跨服务时钟。进程工具与原生文件工具仍不具有统一写事务。 |
+| Fault tolerance | Journal + continuation 保存执行位置和已完成结果；recovery 决定复用、重读或核对未知效果。 | append/checkpoint → `MoonCodeResumePoint`；`operation_recovery(operation_id,call)` → 既有 execution、允许安全重读或 outcome_unknown。 | 操作前 intent、操作后 result；重进执行时按调用身份复用；只读可重试，未提交外部效果先核对实际状态。 | **位置/结果恢复已实现**。不恢复任意 `.mbtx` 程序栈，不提供任意外部效果 exactly-once。当前恢复由既有 service 启动、任务控制或 `/turns` 重试触发；没有发现 daemon 启动时主动遍历所有 Book/session 唤醒任务的实现。 |
+| Data model | Command/task revision、operation、tool-call、result event、resource version 分别拥有身份；canonical conversation/work graph 是派生视图。 | journal records/decimal sequence；continuation result refs + digest；`event_id` 是 work step 的来源，graph 从它导出 evidence_ref；显式检查携带 task_revision 与输入 fingerprint。 | 追加事实 → 恢复模型 → 本轮工作集/界面视图；日志顺序、调用身份和内容版本分别表达，不能互相代替。 | **关系已有，类型仍局部**。ResumePoint、sequence、completion verdict 已有类型；大量内部 command/result 仍为 Json，尚无统一强类型 IR、完整外键/血缘或自动失效重算。 |
+| Compute engine | 模型是增量解释器；turn 执行下一批行动，policy 声明已知效果；程序片段使用现有 shell/项目语言；graph 只展示。 | task + context → model round → tool batch → results → next round/finish；`parallel_read_batch_allowed` / `execute_parallel_reads`；`work.graph` → 现有卡片和文件导航。 | 整体边观察边展开；已知连续计算可以脚本完成；只读调用依据效果声明并发，结果按源顺序 join；finish 使用当前任务与必要事实。 | **解释执行与最小图已实现**。没有预编译的完整 DAG、跨任务公共子表达式缓存、通用依赖调度器或工具调用 SDK。恢复旧结果与跨运行缓存是两种语义。 |
+
+接口全名、资源归属与失败语义见运行时自包含的[八项契约](../../moonclaw/docs/executable_book_runtime_boundary.md#agent-machine)。核心调用链如下；箭头表示数据流或调用关系，不表示新增分层：
+
+```text
+用户 command/revision → session queue → service/loop（执行所有权）
+    → task + journal results → Context compiler → model round
+    → tool calls → declared effects / batch → executor → filesystem / external I/O
+    → result + operation identity → journal → next round / finish
+                                  ├→ continuation recovery
+                                  └→ canonical work / graph / watch → UI
+```
+
+### 身份不能混用
+
+| 身份 | 用途 | 不等于 |
 | --- | --- | --- |
-| Process | 一条被 claim 的 command 的可恢复执行，携带任务修订、范围、结果和执行位置 | Session 是命令与日志容器；任务目标不等于一次模型请求。执行实例也不自动获得独立 OS 地址空间。 |
-| Thread | 一项执行中的主模型—工具控制流 | turn 或 step 是执行步，不必一一对应线程。子工具任务的生命周期、等待和取消应有归属。 |
-| Memory | 本轮决策使用的有限上下文，包括任务、观察、进度和技能 | 当前工作视图、原始记录、索引、摘要和长期事实分别有来源与失效条件。 |
-| Filesystem | 选定 MoonBook 的真实文件和交付物 | 路径、版本、写入范围和结果定位明确；journal 不替代文件内容。 |
-| IO | 模型请求、工具调用和结果，以及用户输入、steering 和控制事件 | 调用身份、参数、权限、外部效果、取消和未知结果分别有语义。 |
-| 同步 | session 执行所有权、journal 顺序、工具屏障与输入版本检查 | 不同机制保护不同资源；一个 session 的 lease 不是整个工作区的文件锁。 |
-| 容错 | 保存位置、恢复引用、复用已完成结果、核对未知效果 | 必须区分尚未执行、已完成、未能确认结果；远程超时不能证明没有执行。 |
+| session_id | Book 绑定、会话、队列、日志及执行 lease 的范围。 | 当前交付任务或 OS process。 |
+| command_id + task_revision | 本次交付请求与当前约束；控制命令引用所属任务。 | 一次模型请求、一次工具调用。 |
+| operation_id | `command_id:step_index:tool_index`，恢复同一执行位置；step/tool index 为零基。 | 相同参数的全局计算缓存 key。 |
+| tool_call_id | provider call/result 协议配对。原生开始/完成优先通过 operation_id 关联，避免上游跨轮重复 ID 合并执行。 | 跨轮执行主键、文件版本或权限。 |
+| event_id / evidence_ref | 同一条已保留执行事实的来源/取回句柄。图从 step.event_id 派生引用。 | 原文件永远不变、结果仍适用于当前输入。 |
+| canonical path + fingerprint | 资源位置及已观察内容；显式检查的适用性依据。 | inode 级隔离、完整依赖血缘。 |
+| journal sequence | session 内已提交日志位置及 watch 游标。 | 墙上时钟、执行次数或全局因果序。 |
+
+### 本轮实际收敛
+
+- [x] **Memory**：语义引用检查确认 `calculate_pruning` 只有测试调用、`prune_messages` 无生产调用；删除两套旧算法、PruneResult、四个直接依赖及 11 个专属测试，只保留真实使用的 compile_messages。删除旧代码中的 O(n²) 路径不等于证明正常热路径提速。
+- [x] **Process / synchronization**：删除 loop 的 `runtime_gates_held` 布尔开关及其有效路径中不可达的重新加锁分支；改成明确的外部获取所有权、内部借用接口。保留 service 向异步任务转交 lease 的现有机制，不把不同锁合并。
+- [x] **Compute / I/O**：删除独立于 policy 的并行工具名名单；资源类调用仍用 canonical path/cwd，其他已声明只读调用用精确参数身份。`read_result` 与 `mcp_list_tools` 现在能进入既有只读批次。既有回归同时验证两个补读并发后顺序、原始结果与无效果重跑。
+- [x] **Data model**：原生开始/结果通过已有 operation_id 关联，修复上游跨轮复用 tool-call ID 时 work step 被合并的问题；删除 work step 中没人消费的 step_id、turn_id 与重复 evidence_ref，保留 item_id、command_id、event_id；graph 由 event_id 导出结果引用。顶层 turn_id、消息 turn_id 和图中的结果引用仍有独立用途，保留。
+- [x] **Fault tolerance / I/O**：unknown-outcome 的恢复结果复用同一 execution constructor，删除另一份手写结果包装；错误语义与“不自动重放外部效果”保持。
+- [x] **Filesystem**：核对现有身份、CAS、锁与条件回滚；本轮不另写一个资源解析器、锁服务或版本存储。保留已知边界。
+
+本轮验证：MoonClaw native 全量 **1853/1853**，身份/会话定向回归 **21/21**，初次 memory/并行/lease/队列/恢复检查 **43/43**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅删除内部 pruner 的废弃 API，canonical work step 别名删除及 operation 身份收敛已记录。MoonBit production 净删 **157 行**、测试净删 **282 行**（合计 439 行，不计接口/依赖/文档变化，不把搬移算删除）。历史归档 11 个文件哈希不变。没有 UI 布局/安装包改动，也未做真实 provider、崩溃断电或在线性能对照；不能从删旧代码推断质量和耗时已改善。
+
+仍待明确/实现的产品能力只有具体问题：是否要求服务重启后无需客户端触发就恢复全部待办；是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排仍可继续按真实重复收敛；本轮没有引入通用 IR、八个包、额外模型请求或人工步骤。
+
 
 四个分析视角处理不同问题，不构成必须部署的四层：
 
@@ -151,6 +193,23 @@ UI 会话和图是派生视图，可按已有事实重建。摘要是有损派�
 DSH Super-agent 文章针对交互连续性、人的注意力、多信道和多任务并发。计算、状态与环境分离，以及明确归属的事件直送，有参考价值；常驻 Router/Worker 是其场景选择。文章及原型不等于当前 checkout 的默认产品能力，其耗时工具调度实验也不能证明真实编码质量提升。
 
 同一任务默认一个主 Agent，不意味着所有用户请求必须排在同一个推理循环后面。需要共享上下文的范围、工作所有权和独立任务调度，应分别按实际需求定义。
+
+### 按相同原语横向比较
+
+本轮只读核对本地 OpenSeek `dbe35ecc`、DSH `8bd073392e`、Pi `80f7a1149`；不是线上能力或性能排名。Pi coding-agent 与实验性 pi-durable 分开评价。
+
+| 原语 | OpenSeek | DSH | Pi coding-agent / pi-durable | MoonCode 的取舍 |
+| --- | --- | --- | --- | --- |
+| Process / Thread | Session/turn、job 与原生循环；store claim 是会话身份占用，不能直接当所有执行的线程锁。 | Session-backed Agent；scope/fiber 管理注册归属和生命周期，ScopeKey 本身不是进程隔离或互斥锁。 | coding-agent 的 Agent loop/abort；durable 的 Task 树提供持久所有权。 | 保留 session lease、command 执行与结构化子任务，不把会话等同进程，不搬入持久 Task 平台。 |
+| Memory | SessionItem → chat projection，压缩/来源仍须区分。 | committed session facts → 领域 projection/context；各视图由所属服务负责。 | transformContext → convertToLlm；会话树控制当前上下文分支，摘要仍有损。 | 借清楚的转换边界；只保留一个正常 compiler，按引用补读原始结果。 |
+| Filesystem | 工具负责文件访问；owns_file_access 是声明，不自动带来 OS 级隔离。 | FsTarget 的 opaque targetKey 与 displayPath 分开，FsVersion/条件写入区分位置与新鲜度。 | coding-agent 按 realpath 的文件修改 Promise 队列，限本进程；durable 不因此把外部文件纳入数据库事务。 | 已有真实路径/条件替换，不为仿 VFS 增接口；借 target/version 的分工，保留外部进程写入缺口。 |
+| I/O | AgentToolDefinition 邻接 schema/executor，Respond/Control 区分输出和循环控制；program_callable 为程序接入声明。 | canonical JSON value/schema 与模型/界面 render 分离，ToolRunContext 承载取消和执行身份。 | AgentTool/schema、事件流与模型转换边界；durable 为嵌套工具保留各自 intent/replay。 | 复用已有 catalog、规范结果与 grant 执行边界，删除恢复路径的独立包装，不新建注册框架。 |
+| Synchronization | SessionStore 的 session.lock、快照/fingerprint 校验保证其存储范围。 | 批次 exclusive barrier 与 parallel pool，已提交事件推动投影；能力仍取决于 profile/provider。 | 默认并行模式可声明 sequential；本地文件队列只保护参与者；durable commit 原子更新内部文档。 | 锁按真实资源划分；并发资格统一读 policy，移除第二份工具名单。没有全 Book 互斥或分布式锁。 |
+| Fault tolerance | 日志能重建历史；不等于恢复任意脚本栈或外部效果。 | 持久 Session/repair/projection 契约清楚，实际恢复还依挂载的组件与环境。 | coding-agent 会话历史不是 durable Task；durable 先 commit intent，按 safe/unsafe replay，内部事务不覆盖任意远端效果。 | 只借“复用已提交结果、未知效果按状态核对”；保留现有 continuation，不移植 durable runtime。 |
+| Data model | 类型化 SessionItem、ToolCall/Result 与序列化较集中。 | 类型化 session sequence、Agent identity、规范结果、opaque resource identity 以及 asOfSeq 视图边界。 | session 的 id/parentId/leafId；durable 的 Entry/Document/Task/Commit 是另一套更强模型。 | 身份职责已有但 Json 仍多；先删无用别名、统一来源引用，不宣布已拥有完整外键或数据血缘。 |
+| Compute engine | 增量循环 + `.mbtx`/可程序调用工具，可减少明确片段的模型往返。 | 动态工具批次、顺序屏障和可选 PTC/run_code；并非预先由用户画完整图。 | 动态 loop 与工具并发；durable 才具备 Task/嵌套调用的记录与恢复语义。 | 整体解释执行、局部普通程序、日志物化图；不让图调度，不为普通批量工作增加 Agent。 |
+
+本轮补查入口：[OpenSeek Tool ABI](../../openseek/agent_tool/agent_tool.mbt)、[Session store](../../openseek/agent_session/store/store.mbt)、[DSH Agent 数据](../../dsh/packages/core/agent/src/types.ts)、[Scope 的路由语义](../../dsh/packages/core/scope/src/index.ts)、[资源身份/版本](../../dsh/packages/fs/fs/src/types.ts)、[批次调度](../../dsh/packages/core/tools/src/batch.ts)、[Pi 消息/调度接口](../../pia/packages/agent/src/types.ts)、[文件修改队列](../../pia/packages/coding-agent/src/core/tools/file-mutation-queue.ts)、[durable 的独立契约](../../pia/packages/durable/README.md)。
 
 ## 内置工作方法与认知负担
 
@@ -289,7 +348,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 动态图仍按前文作为 journal 的可重建视图演进。本轮不把图编辑器、图数据库或完整依赖分析塞入执行内核，最小图能力在后续五步实施中交付，完整依赖分析仍不勾选。
 
-## 按模块的减法优化计划
+## 前轮模块减法记录与剩余项
 
 以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；已实现 Task、Completion、Execution、Tools ABI 与原生 Workspace 身份/条件写入；进程级 Workspace 隔离及其余细项按下方 checklist 保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
 
@@ -440,7 +499,7 @@ Projection/Telemetry 本轮验证：MoonClaw native **1862/1862**，MoonDesk nat
 Task、Completion、Execution、Context/Journal 及 Tools/Workspace 的已勾选项已实施；本轮 Projection canonical watch 和 Telemetry collector 完成减法。只读历史结果补读与最小动态图已在下面五步中交付；进程级写入隔离、完整依赖分析及真实线上结果/成本基线继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
 
 
-## 新一轮实施顺序：可编程性与工作效率
+## 五步实现记录：可编程性与工作效率
 
 本轮基线为 MoonClaw `165d3147`、MoonDesk `8ba58519`。前面的模块 checklist 保留已完成事实；旧策略删除不再重复列为待办。新一轮的目标是让单主 Agent 更容易组织工作、减少模型往返与重复探索、更快交付。OS/编译器/数据库/数据计算继续是分析视角，不增加架构层或九个包。
 
@@ -494,7 +553,7 @@ Task、Completion、Execution、Context/Journal 及 Tools/Workspace 的已勾选
 
 长任务回归连续压缩两次后仍能找到最早结果范围；Context 包 29 项通过。UI 组件使用真实编译产物在浏览器验证折叠、失败输出、中文、文件导航与 390 px 无水平溢出；UI 全量 839 项通过。图视图构造随节点/边数线性增长，完整 canonical watch 仍读全历史并传全会话，折叠不等于按需创建 DOM。安装包更新和真实 provider 的质量/轮次/tokens/费用对照未执行，不宣称已取得线上收益。
 
-### 最终交付验证
+### 五步实现时的交付验证
 
 | 检查 | 本轮结果 |
 | --- | --- |

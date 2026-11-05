@@ -13,7 +13,9 @@ session listings. MoonDesk uses the canonical conversation and runtime receipts;
 ordinary work does not become blocked because it has no review or package.
 The runtime's [agent machine model](../../moonclaw/docs/executable_book_runtime_boundary.md#agent-machine)
 maps existing commands, context, files and tools to process/thread, memory,
-filesystem and IO, with explicit synchronization and recovery limits.
+filesystem, IO, synchronization, recovery, data identity and dynamic computation.
+The [eight-primitive audit](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md#当前八项职责审计)
+records implemented interfaces and limits, plus OpenSeek/DSH/Pi comparisons.
 The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
 original comparisons, revisions, and decisions.
 
