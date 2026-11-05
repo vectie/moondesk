@@ -31,7 +31,8 @@ restart should lead to automatic repair or recovery where possible.
 | Working method | Check a real feature from request through change and verification. Test observable behavior, context continuity and recovery; matching prompt phrases cannot establish delivery quality. |
 | Task interpretation | Equivalent Chinese/English requests retain the same default tools. Explicit read-only selection remains; keywords do not invent tests or mutation quotas. Long requests and ordered corrections retain their constraints. |
 | Repair autonomy | After a failed edit the model selects its next action; repeated safe reads and transient check retries are allowed. An optional observation error does not require a manufactured successful action. |
-| Authority | Execution stays within the current grant. Rejected or pending approval does not become permission; changing an action cannot reuse unrelated authorization. |
+| Workspace | Unified diffs share one executor; scope compares normalized path spellings. Whole-workspace scope works without Git; failed narrow snapshots precede effects. Concurrent external-file isolation remains unfinished. |
+| Authority | Commands such as commit and script generation use configured grants without word-based approval. Explicit approval is honored regardless of planner label. Execution stays within the current grant. Rejected or pending approval does not become permission; changing an action cannot reuse unrelated authorization. |
 | Recovery | Completed results are reused after restart. Uncertain side effects are reconciled before replay; unresolved outcomes remain explicit. |
 | Empty model follow-up | The same claim can resume without milestones, including after rejected completion or restart. Progress state does not grant or deny completion. |
 | Conversation | User input appears immediately. Work is shown only from runtime facts. Canonical turn identity and ordering survive refresh. |

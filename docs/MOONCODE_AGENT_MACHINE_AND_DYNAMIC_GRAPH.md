@@ -291,7 +291,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 ## 按模块的减法优化计划
 
-以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；本轮已实现 Task、Completion、Execution 的减法，其余模块保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
+以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；已实现 Task、Completion、Execution，并完成 Tools/Workspace 的首轮减法；剩余细项按下方 checklist 保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
 
 优化目标是让主 Agent 自主解决问题，运行时只承担确定的执行责任。用户约束、真实授权、资源隔离、数据完整性和明确要求的检查属于必要契约；从关键词猜要求、规定解题步骤、重复审批、双路径兼容以及为恢复制造额外状态，属于优先删除或收敛的对象。
 
@@ -345,8 +345,9 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有入口：`mooncode_tools.mbt` 的读写/patch、`mooncode_task_scope.mbt`、`mooncode_moon_fmt_scope.mbt`、现有 book 路径解析与文件引用。
 
-- [ ] **合并** 同一请求重复的路径解析、范围检查和文件版本读取；在文件边界使用一次规范化资源身份，后续复用。文件、结果和检查通过既有引用关联，不新建文件状态数据库。
-- [ ] **删除全局工具偏好禁令**：在现有 sandbox/grant 对实际写入范围的约束验证完成后，移除“重定向、sed、inline interpreter 一律不能写文件”等强制改用某个工具的规则及仅服务这些禁令的解析。项目自身明确要求的 `.mbtx` 或编辑方式仍按项目规范执行。
+- [x] **合并现有重复路径**：单/多文件 unified diff 共用 patchset 执行器，每个文件只在该执行器读取一次；task scope 每次调用解析一次，直接文件 scope 与工具使用同一个 book-relative 解析规则。删除通用文件工具的 MoonBit manifest 语法门槛；复用既有文件/检查引用。
+- [ ] **完成资源身份收敛**：后续统一 symlink/实际资源身份与重复文件版本读取；当前路径规范化仍是 lexical，不宣称已经实现并发事务或完整文件边界抽象。
+- [x] **删除全局工具偏好禁令**：保留 exact grant、既有路径与窄 scope 检查，移除“重定向、sed、inline interpreter 一律不能写文件”等强制改用某个工具的规则及仅服务这些禁令的解析。项目自身明确要求的 `.mbtx` 或编辑方式仍按项目规范执行。
 - [ ] **验收** 授权内的文件编辑与脚本生成可自主完成；过期 old text、越权路径、部分 patch 失败和并发文件变化仍有准确结果，不能覆盖不相关工作。
 
 保留原子写入、必要的旧内容匹配和实际权限范围。不同写入入口必须报告足够的变更事实以使旧检查失效；不会先删保护，再用“sandbox 应该会挡住”代替验证。
@@ -355,12 +356,20 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有入口：`internal/mooncode_tools`、`mooncode_runtime_approvals.mbt`、`mooncode_execution_sandbox_gate.mbt`、`mooncode_process_tools.mbt`、MCP 与 provider transport。
 
-- [ ] **删除按命令名一律要求人审的分支**，例如 commit 或任意非只读 shell 自动要求批准。执行入口显式携带并核对现有授权范围；已有用户/宿主授权覆盖的操作直接执行，实际扩大权限或用户明确要求人审时才等待。不能从模型的 `planner`、`approval` 或“安全”声明生成授权。
+- [x] **删除按命令名一律要求人审的分支**，例如 commit 或任意非只读 shell 自动要求批准。执行入口显式携带并核对现有授权范围；已有用户/宿主授权覆盖的操作直接执行，显式审批继续等待；超出配置的权限直接返回拒绝，Agent 可换方法或沿现有用户交互解决，不新增扩权流程。不能从模型的 `planner`、`approval` 或“安全”声明生成授权。
 - [ ] **收敛 ABI**：schema/参数在调用边界验证，实际 grant 在执行边界验证，结果在 provider 适配处规范化。删除内部反复解析、重复 preflight 和重复工具名单；保留这些不同边界的必要检查。
-- [ ] **缩小 shell 分析职责**：只保留执行、结果解释、并发或现有安全边界确实消费的语义，移除被上述策略删除淘汰的词表与解析分支。保留检查退出状态的真实性，不因模型填写了 `verification_kind` 就把任意命令算作检查。
-- [ ] **验收** 在明确授权范围内 commit、脚本和项目检查不重复打断用户；参数错误返回 Agent 修复；拒绝或权限缺失不能执行；超时保留未知结果而非擅自重试副作用。
+- [x] **缩小 shell 分析职责**：只保留执行、结果解释、并发或现有安全边界确实消费的语义，移除被上述策略删除淘汰的词表与解析分支。保留检查退出状态的真实性，不因模型填写了 `verification_kind` 就把任意命令算作检查。
+- [x] **验收** 现有 runtime 用例已取消预置审批/plan，自动执行 commit、重定向、sed 和 `.mbtx` 生成后验证并 finish；显式审批/驳回/重启、grant 匹配及取消/未知效果回归保留。权限缺失仍拒绝，planner 标签不能免除显式审批。
+
+本轮另外删除 `local_operation/local_validation` 两个审批属性及 sensitive/install/overwrite/inline-authoring 解析，保留只读并发判定、真实检查退出状态和必要 scope 分析。shell 初始执行/配置执行合并为一个入口，计划构造与最终执行复用同一 preflight；ABI 全面收敛仍未勾选。
+
+可写 shell 的检查失效复用原有只读执行属性：不能证明为观察的 shell 不沿用旧检查；receipt 的 changed_paths 纳入后续检查输入。原 mutation_states 仅为收集路径构造伪 before/after 状态，现已改为直接返回路径，减少实现。
+
+Workspace 的全工作区 scope 不再扫描 Git；窄 scope 的快照失败现在先拒绝再执行。窄范围/局部 fmt 的整树快照与回滚尚未消除，跨 session/外部编辑隔离也未完成，因此对应验收仍待办。不能把“脚本现在可执行”写成这些剩余约束已解决。
 
 此模块不是新增授权服务。具体命令仍使用真实 sandbox grant；减少的是重复人的决策，不是绕过隔离、取消或执行证据。
+
+Tools/Workspace 本轮证据：最终 native 1892/1892；completion/fmt/repair 17/17；真实 producer → decoder probe、info/fmt 与文档链接检查通过。生产 MoonBit 净减 568 行，测试净减 447 行；internal tool interface 仅删除淘汰属性/函数。全工作区 scope 少一次完整前后 Git 快照；窄 scope 仍有整树成本。没有新增 package、状态机、人审步骤或模型调用；既有六项 daemon warning 与 live-provider/安装态未验证的限制保留。11 个历史归档哈希不变。
 
 ### 6 Journal 模块 减少恢复与持久化的重复成本
 
@@ -409,7 +418,7 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 每个模块都按“移除一条多余策略 → 走通实际行为 → 删除旧实现与专属测试”交付。模块化必须消除重复责任或便于独立验证，单纯搬文件不算完成。除真实的外部契约外，不保留旧实现兼容路径；不以新增状态、抽象层、人工确认或大批镜像测试换取删行数。
 
-Task、Completion、Execution 的本轮勾选项已实施；Context、Workspace、Tools、Journal、Projection、Telemetry 仍待实施。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
+Task、Completion、Execution 与 Tools/Workspace 的已勾选项已实施；Tools 的 ABI 收敛、Workspace 的资源身份/并发隔离及未勾选的其他模块继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
 
 
 ## 源码与参考资料
