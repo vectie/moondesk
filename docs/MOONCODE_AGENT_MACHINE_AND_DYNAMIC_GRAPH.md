@@ -86,6 +86,36 @@
 
 启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
 
+### 边界收口：恢复位置与执行编排（2026-11-06）
+
+运行时实现提交：MoonClaw `89157123`（`main`）。
+
+本轮审视结论：职责主线和基本功能已有，不能由 checklist 已勾选推导八项都已高内聚、低耦合。八项是交叉的职责视角，不要求八个 package；同一事实由一个所有者维护，消费者通过明确契约使用它，才是收敛标准。不同资源的锁、原生文件与 shell 的不同保证应明确保留，不为形式统一新增 VFS、通用 IR 或恢复平台。
+
+| 职责 | 本轮开始时的判断 | 本轮取舍 |
+| --- | --- | --- |
+| Process / Thread | service / loop / turn 归属清楚，daemon 编排和 SessionBinding 仍聚合较宽。 | 优先减少执行主线对持久字段的理解，不拆出新调度层。 |
+| Memory | 原始记录、工作集与来源引用已有各自所有者。 | 保持单一 compiler，不增加强制检索或总结阶段。 |
+| Filesystem | 原生路径、锁与条件替换清楚；shell 和外部写入不参与同一协议。 | 保留支持范围，不扩建文件系统来填满类比。 |
+| I/O | schema、授权、transport 与规范结果已区分。 | 沿现有调用边界收口实际消费的数据，不再复制一套 ABI。 |
+| Synchronization | 各资源和锁的生命周期已区分，同包内仍依靠调用契约。 | 保留外部获取、内部借用；不合并成大锁。 |
+| Fault tolerance | 原位置、结果与启动续跑已有；解码后仍泄漏 checkpoint 状态字段。 | 由恢复解码交出工具位置和已验证审批，执行端直接消费。 |
+| Data model | 身份已区分，内部 Json 契约仍偏隐式。 | 只表达真实使用的恢复输入，边界解码一次，不引入完整 IR。 |
+| Compute engine | 增量解释执行已清楚，turn 仍重复组装模型暂停记录。 | 将暂停识别与持久表示留在 continuation，turn 负责顺序和事件提交。 |
+
+- [x] 恢复后的工具位置携带 step/tool/end、调用内外区别和可选审批，删除 turn 对原始状态及重复审批字段的读取；沿用原 ResumePoint 状态集合。
+- [x] 同一模型暂停只有一份 checkpoint 选择和组装，初次恢复与轮内 follow-up 共同消费；删除旧 transport/replan 两个构造器和重复的可变 paused 标记。
+- [x] 用现有服务、审批、transport、replan、取消和结果重放回归验证，不增加额外检查流程。
+- [x] 更新两仓运行契约与证据，复核实际净变化；局部收口不宣称八项已经独立或完整类型化。
+
+具体修复：后续 executing checkpoint 已经替代旧审批等待时，service 不能因它同样属于 ResumeTools 就把空 approval_id 当成新的待审批项。现在直接消费恢复契约中的可选审批，沿现有服务回归验证，不增加审批条件。checkpoint 中已有的状态、来源引用与序列化格式保持；普通工具错误仍回到同一 Agent。
+
+成本与剩余范围：不增加模型请求、journal 写入或用户步骤；正常后续轮次不再检查入口恢复暂停。内部 plan/result 仍为 Json，SessionBinding 和 daemon 编排仍偏宽，尚未达到完整类型或包隔离。Memory、Filesystem、Synchronization 的已有资源边界保持，不把这些差异扩成新的架构项目；没有测端到端延迟或 live-provider 质量。
+
+验证：MoonClaw native **1845/1845**、MoonDesk native **1726/1726**、恢复/审批定向 **28/28** 与实际 producer → consumer probe 通过。check、info/fmt、接口和空白检查通过，`.mbti` 无变化。生产 `.mbt` 净删 **85 行**；既有测试改为消费真实暂停入口并补上替代审批位置回归，测试净增 **44 行**，合计净删 **41 行**，没有新增测试项。不改 UI、安装包或公共协议；已有 11 个讨论归档文件保持原样。
+
+实现入口：[恢复位置与暂停记录](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[turn 顺序与提交](../../moonclaw/cmd/daemon/mooncode_runtime_turn.mbt)、[service 审批恢复](../../moonclaw/cmd/daemon/mooncode_runtime_service.mbt)。
+
 ### 八项复审：会话元数据与真实执行回归（2026-11-05）
 
 运行时实现提交：MoonClaw `b998d890`（`main`）。

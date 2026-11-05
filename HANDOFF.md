@@ -5,6 +5,26 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Boundary closure: tool resume and planner pauses 2026-11-06
+
+- Recorded the eight-responsibility assessment in the design checklist:
+  functional ownership is clearer than type/package isolation. Continue with
+  actual boundary leaks and duplication; do not introduce eight packages,
+  a full IR, new scheduler or confirmation workflow.
+- Claw continuation owns decoded tool position/quantum end/in-call distinction
+  and optional validated approval. Turn consumes these directly. A newer
+  execution checkpoint must not resurrect a superseded approval wait; the
+  existing service fixture now covers that recovery pitfall.
+- Resumed and in-quantum planner pauses share one production chooser and
+  checkpoint serialization. Removed two separate constructors and mutable
+  duplicate pause state; existing fixtures exercise the real production path.
+- Memory/filesystem/lock scope and command/plan/result Json limits remain.
+  No desktop execution/recovery state or wire contract changes were added.
+- Validation: Claw native 1845/1845, Desk native 1726/1726, focused
+  recovery/approval 28/28 and producer/consumer probe passed. Check/info/fmt,
+  interfaces and whitespace checked; .mbti unchanged. Production .mbt -85,
+  tests +44, net -41; no new test cases, UI/install or live-provider claim.
+
 ## Eight-module re-audit: session metadata and execution evidence 2026-11-05
 
 - Claw now restores first-prompt/title metadata and command count through the
