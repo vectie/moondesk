@@ -5,6 +5,23 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Context/Journal cleanup 2026-11-05
+
+- MoonClaw uses the existing context compiler by default for initial and
+  follow-up planning. Fixed suffixes, shadow/active flags and overload transcript
+  rewrites are removed; tool result JSON is no longer clipped again by planner.
+- One recovery-position decoder reuses the existing loop and operation results.
+  The append cache retains directory-sync success, invalidated before lifecycle
+  moves; ordinary cached appends sync file bytes. No new state machine, store,
+  model round or human confirmation was added.
+- Checklist sections 3 and 6 record implementation and limits. Model-facing
+  history lookup by evidence ID remains unchecked. The desktop continues to
+  consume canonical conversation facts without a local replay path.
+- MoonClaw native 1873/1873 and the real producer/consumer probe passed;
+  public interfaces are unchanged. Code/tests together net -1611 lines, with
+  95 test-helper lines moved rather than counted as deletion. The historical
+  archive's 11 hashes are unchanged. No UI or packaged-app change was needed.
+
 ## MoonCode design discussion
 
 MoonCode design discussion is archived in

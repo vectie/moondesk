@@ -71,6 +71,12 @@ contracts. MoonGate may measure those contracts but does not own them.
    while a selected session is hydrated.
 10. New features must extend the canonical contract or renderer; they must not
     add a second store, replay engine, or projection reducer in MoonDesk.
+
+MoonClaw's [Context/Journal path](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md)
+now uses one default context projection and one recovery-position decoder.
+The desktop continues to consume canonical conversation facts. Compaction does
+not erase journaled results or create a new confirmation step. General lookup
+of omitted history by evidence ID remains unfinished.
 11. Approval and cancellation commands are control-plane records, not chat
     turns. Approval renders as a stable work step inside its owning turn.
 12. Stop is offered only for canonical unfinished work and must interrupt the

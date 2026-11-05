@@ -332,14 +332,16 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 ### 3 Context 模块 减少内存管理的双路径和固定流程
 
-现有入口：`mooncode_runtime_model_planner.mbt`、`mooncode_semantic_compaction_trial.mbt`、`mooncode_context_provenance.mbt`、`internal/context_pruner` 和知识检索。
+现有入口：`mooncode_runtime_model_planner.mbt`、`mooncode_context.mbt`、`mooncode_context_provenance.mbt`、`internal/context_pruner` 和知识检索。
 
-- [ ] **删除** legacy 32-message suffix、active/shadow 并行路径、v1 兼容读取和只证明旧开关的测试，留下一个正常使用的、按模型窗口与压力投影的路径。
-- [ ] **合并** 各处输出截断、摘要和 overload shaping 的重复责任；transport 只处理 provider 协议和重试，Context 决定本轮保留什么。保留完整指令优先级、调用/结果配对、任务修订和关键来源引用。
+- [x] **删除** legacy 32-message suffix、active/shadow 并行路径、provenance v1 兼容读取和只证明旧开关的测试，留下一个正常使用的、按模型窗口与压力投影的路径。
+- [x] **合并** 各处输出截断、摘要和 overload shaping 的重复责任；transport 只处理 provider 协议和重试，Context 决定本轮保留什么。保留完整指令优先级、调用/结果配对和任务修订；当前结果携带 evidence_ref，旧跨度中的引用仍可能随压缩省略。
 - [ ] **按需回取** journal、文件、sandbox 输出和知识片段；不强制每轮检索、总结或改写 query。没有保留原文的内容明确视为缺失，不能把摘要当成精确原文。
-- [ ] **验收** 压缩/重启后仍知道当前目标、已做工作和下一步；允许补读已经不在上下文中的事实。关键约束不丢失，重复读取、上下文复制和额外模型调用减少。
+- [x] **验收** checkpoint 回灌后仍保留当前目标、关键约束和最近结果；继续使用现有 follow-up 选择下一步，不因压缩重跑已完成效果。原始事实仍在日志；不增加总结模型调用，不按固定条数重复投影。补读任意历史原文仍有下面的明确缺口。
 
 现有 RAG 已有文本/embedding 混合排序，优先复用；只有具体检索失败需要时才增加 query 改写或 rerank。
+
+本轮边界：[Context/Journal 运行契约](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md) 描述默认窗口预算、单一 compiler 与恢复。按需补读文件、已安装 skill 和可用 artifact/backend 复用现有入口；模型按 evidence ID 查询任意历史输出尚未实现，因此“按需回取”不勾选。摘要不是原文，不能通过重跑写入或外部效果来恢复旧输出。窗口估算使用现有 cl100k tokenizer，保留完整前缀和最新批次仍可能超预算；不声称任何输入都能装入窗口。tokenizer 词表延迟初始化一次，每轮计数仍与输入/schema 大小相关。
 
 ### 4 Workspace 模块 减少文件策略与存储责任混杂
 
@@ -382,12 +384,16 @@ ABI/Workspace 后续实现：两仓各约 800 行的旧 native_command_execution
 
 现有入口：`mooncode_session_journal*.mbt`、`mooncode_journal_sequence_v2.mbt`、`mooncode_runtime_continuation.mbt`、`mooncode_runtime_operations.mbt`。
 
-- [ ] **替换** 多套 continuation 字符串/布尔校验为覆盖现有暂停原因的明确类型，边界解码一次；删除重复 packet、完整结果/历史副本及旧格式兼容分支。恢复沿同一执行位置和结果身份，不新建 operation store。
-- [ ] **减少磁盘同步成本**：普通追加同步日志文件；创建/替换目录项时才同步实际改变的目录，删除每次追加向上 fsync 全部祖先目录的路径。保留所声明的 crash/durability 契约并用故障测试确认。
-- [ ] **复用已有增量 append cache**，不另写一套索引。重启、文件替换或缓存失效才重建；journal 顺序、冲突身份、torn-tail 修复和一致的提交边界仍由同一 writer 负责。
-- [ ] **验收** 完成结果恢复不重跑；只有 intent 没有结果时保留未知并核对；坏日志不能伪装成空会话；追加成本不随全量历史反复增长。
+- [x] **替换** 多套 continuation 字符串/布尔校验为覆盖现有暂停原因的明确类型，边界解码一次；删除重复校验、整段结果摘要 hash、旧 inline checkpoint 兼容分支和已下线 Goal journal 特判。恢复沿同一执行位置和结果身份，不新建 operation store；当前格式中的合成 inline result 保留。
+- [x] **减少磁盘同步成本**：普通缓存命中追加只同步日志文件；首次观察文件、重启或缓存失效时保守同步祖先目录链，生命周期变更继续同步受影响目录。删除每次追加都向上 fsync 的路径。保留所声明的 crash/durability 契约并用故障测试确认。
+- [x] **复用已有增量 append cache**，不另写一套索引。重启、文件替换或缓存失效才重建；journal 顺序、冲突身份、torn-tail 修复和一致的提交边界仍由同一 writer 负责。
+- [x] **验收** 完成结果恢复不重跑；只有 intent 没有结果时保留未知并核对；坏日志不能伪装成空会话；追加成本不随全量历史反复增长。
 
 这里优化的是已有日志与恢复，而不是建设分布式数据库。不同资源的锁、未知副作用语义和必要的同步不能为凑删行数移除。
+
+缓存的目录同步事实在 archive/restore/delete intent 前失效；首次观察、缓存失效和重启仍保守同步祖先链，普通命中追加只同步文件。故障回归验证同步失败后 duplicate retry 不增加重复记录。恢复只回灌最新 checkpoint；引用唯一、有序、位于 checkpoint 之前且 event digest 匹配，错误明确报 InvalidJournal。已完成结果及未知效果仍沿原 operation identity 处理。checkpoint 构造仍遍历累计引用并保存一次当前 transcript，不宣称固定成本；Windows 目录 sync 原有 no-op 与非协作文件替换限制保留。
+
+Context/Journal 本轮验证：MoonClaw native **1873/1873**，真实 MoonClaw producer → MoonDesk decoder probe 通过；info/fmt、空白检查和公开 `.mbti` 核对通过，未改变接口。生产 MoonBit 净减 985 行，其中 95 行仅供测试的 parser helper 归入测试，不算实际删除收益；测试净减 626 行，合计净减 **1611 行**。41 个本地链接和 11 个历史归档哈希已核对。全仓仍有既有 warning，不宣称严格 release gate、live-provider 质量、断电或安装态应用验证通过。MoonDesk 本轮只更新文档。
 
 ### 7 Completion 模块 减少验收的猜测与重复门槛
 
