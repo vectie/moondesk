@@ -289,11 +289,96 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 动态图仍按前文作为 journal 的可重建视图演进。本轮不把图编辑器、图数据库或完整依赖分析塞入执行内核，也不据此点亮尚未交付的图能力。
 
+## 后续分阶段计划
+
+基线为 MoonClaw `8b4c0f0d`、MoonDesk `9dd6df8a`。上面的 10 项完成的是上一轮精简，下面各阶段尚未实施。按真实任务交付推进，每阶段可独立发布；不等全部抽象完善才开始使用。
+
+### 仍未完成的部分
+
+| 领域 | 当前已有 | 剩余工作 |
+| --- | --- | --- |
+| 执行原语 | 统一工具属性模块、参数检查、授权、执行结果与主循环。 | 工具结果、继续/等待/结束控制仍有分散 JSON 和布尔表达；统一内部调用与结果边界。 |
+| 恢复 | journal、intent/result 身份、结果引用和恢复校验已实现。 | continuation 的不同原因仍靠字符串和组合字段校验；收敛为现有语义的明确类型，减少重复校验与矛盾状态。 |
+| 长任务内存 | 有 provenance、压缩和持久结果引用。 | 主动压力驱动压缩默认关闭；默认仍有 32 条 follow-up 的旧投影。统一实际使用路径、来源引用与缺失信息回取。 |
+| 数据关系 | 任务修订、调用身份、部分产物信息、检查输入指纹。 | 尚无系统化的调用消费关系、资源范围和产物/检查关联；目前不足以构建完整的数据依赖图。 |
+| 动态执行图 | 有 journal 和 canonical conversation。 | 尚无图投影与图 UI；历史事实、未来计划和未知依赖的展示尚未实现。 |
+| 增量展示 | 桌面 canonical watch 可用；服务端 typed resume stream 可选。 | MoonCode 桌面尚未以该 typed stream 持续消费增量输出；是否替换 watch 应由延迟和开销决定。 |
+| 质量与发布 | 行为回归、离线 replay、planner 用量和传输指标已有。 | 真实模型任务成功、返工、接管、成本与耗时基线尚未完成；最新精简尚未完成安装态应用验证，发布链仍有既有警告阻塞。 |
+
+知识检索已经使用任务文本触发，支持文本与 embedding 混合排序，不能写成“没有 RAG”。问题驱动的再次检索、query 改写和独立 rerank 尚未形成闭环；只有真实检索失败证明需要时才补。沙箱已有输出引用能力，后续核查应关注模型能否沿当前工具结果找到所需内容，不重建一套输出存储。
+
+### Phase 0 建立真实交付基线
+
+先回答现有实现能否可靠交付。复用当前 harness、journal、用量指标和隔离 MoonBook，从一个小功能和一个已有 bug 建立基线；后续逐步覆盖 UI 修改、已满足无需改动、多轮改需求、长任务压缩与重启。它们是回归样本，不是每次用户请求的强制流程，也不要求先建齐样本库才开始下一阶段。
+
+- [ ] 固定任务输入和预期可观察结果，记录模型/配置/版本、产物、实际检查、用户接管、返工、模型与工具用量及总耗时；费用缺少价格依据时标为未知。
+- [ ] 从第一条基线任务验证真实模型与 MoonFort 路由；清理阻塞构建/安装的实际警告和死声明，确认安装态 MoonDesk 的当前交付链。
+- [ ] 按已观察失败归因到任务理解、上下文、检索、工具或运行时，并将可确定复现的问题回流现有测试；保留模型行为样本与确定性协议回归的区别。
+
+交付物是可复跑任务及结果记录。无需新评测服务、Reviewer Agent 或完成审批。后续阶段持续使用这些任务，不能把 1917 项单测通过代替这一步。
+
+### Phase 1 收敛执行与恢复契约
+
+以 `mooncode_tools`、`mooncode_runtime_turn`、`mooncode_runtime_operations`、`mooncode_runtime_continuation` 和现有协议包为入口，把调用身份、结果事实和继续执行的控制分别表达。结果区分成功、明确失败、未执行、结果未知；恢复类型只覆盖现有暂停原因，不增加业务阶段。
+
+- [ ] 在输入/持久化边界解码一次，内部使用明确类型；序列化仍进入现有 journal，删除重复字段读取、包装和合法性判断。
+- [ ] 把可独立测试的恢复判断移出 daemon；仅在能删除重复逻辑时建立内部包，daemon 保留 provider、IO 和任务调度组合。
+- [ ] 审计显式预算、取消和恢复位置能否贯穿重启；发现实际遗漏就补到已有 checkpoint。调度 quantum 不当成失败，模型自行添加的限制不变成人工确认。
+
+验收沿用授权拒绝、结果未知、连续空响应、finish 修复、取消和 restart 行为测试。已完成调用不重跑，未知副作用先核对，用户无需为恢复重新下达任务。无兼容性要求；调整协议时同步 producer 和 consumer。
+
+### Phase 2 统一长任务工作上下文
+
+以 `mooncode_runtime_model_planner`、`mooncode_semantic_compaction_trial`、现有 context compiler 和 provenance 为入口，收敛成一个实际使用的上下文投影。按模型窗口和压力选取内容，保留任务修订、适用指令、当前问题、未完成动作和关键结果引用。
+
+- [ ] 用真实任务验证后，以一个正常路径替换 legacy 32-message suffix 与 active/shadow 并行分支，删除过时开关、v1 兼容读取和只证明旧路径存在的测试。
+- [ ] 摘要携带可回取的来源引用；缺少事实时沿既有 journal、文件或 sandbox 输出引用补读，保持工具调用与结果配对。未知窗口使用现有可用信息估计并记录依据，不新增用户配置门槛。
+- [ ] 用户更改目标、旧输出被压缩、跨块引用和 restart 后，Agent 能继续当前工作。先解决实际缺失信息，再决定是否需要检索改写或 rerank，不默认增加模型轮次。
+
+验收看压缩后能否正确完成任务，以及重复读取、上下文体积和总成本是否改善。不可压缩的指令和最近完整交换超过窗口时，明确返回可处理的问题，不能静默丢失约束或无限重试同一请求。
+
+### Phase 3 补齐必要数据关系
+
+沿用任务、调用、结果、文件/产物和检查的身份，为当前任务增加可验证的引用。优先记录实际消费的结果引用、观察或修改的文件版本，以及检查覆盖的任务修订和输入；未观测依赖保持未知。
+
+- [ ] 统一现有 event ID、operation ID、digest、路径版本与检查引用的构造和读取，删除 prompt、完成判断与 UI 各自拼接关系的重复代码。
+- [ ] 验证用户修改目标或文件后，只沿已知关系判断哪些观察和检查仍适用；复用同一调用结果，不按参数字符串直接做跨任务缓存。
+- [ ] 资源范围先用于解释现有串行/并发决策；只有真实共享资源冲突出现时，才在所属执行器补最小范围同步。继续允许独立安全读取并发。
+
+交付物是可查询的既有事实关系，足以说明“这个结果来自哪里、这个检查针对哪个版本”。不做全仓扫描、全局文件锁、MVCC、完整程序依赖分析或通用缓存引擎。
+
+### Phase 4 交付动态执行图
+
+先用已有引用投影一个最小执行图，再随 Phase 3 的关系覆盖扩展。MoonClaw 负责从 journal 产生 canonical 图/进度投影；MoonDesk 负责增量展示、布局和跳转，不从原始事件再推导第二份任务状态。
+
+- [ ] 展示任务、已执行操作、产物和检查的关系；未执行计划可修改，与历史事实明确区分。一次失败与修复保留各自实例，未知依赖不画成确定连线。
+- [ ] 先复用 canonical watch，刷新和断线后从快照/游标重建。若实测延迟或流量需要 typed resume stream，将它接入同一 canonical 投影并删除被替代的传输分支，不把现有内容流直接冒充图协议。
+- [ ] 默认给出简洁结果进展，按需展开依赖；能打开产物、定位失败、修改目标和停止任务。图关闭时执行照常推进，绘图不调用模型。
+
+验收包括重复事件不重复节点、切会话不串图、重连不丢进展、长历史按需展开和增量渲染成本。图展示独立于完整依赖覆盖，不等待通用 DAG 调度器，也不要求用户拖线或批准阶段。
+
+### Phase 5 完成安装态交付验证
+
+对最终实际使用路径重跑 Phase 0 的任务，安装并检查 MoonDesk/MoonClaw 的对应资源和程序，验证输入、工作进展、产物、用户修正、断线及恢复在同一体验中成立。
+
+- [ ] 比较交付成功、错误宣布完成、接管、返工、成本与耗时，分别报告改善和退化；记录冷启动、构建/链接与图交互的成本。
+- [ ] 对观察到的缺陷修根因，回流最小回归；删除已无调用方的旧实现、功能开关、重复测试和过时文档，不以跳过有效检查换取绿色结果。
+- [ ] 确认两仓协议、相关 suite、UI 状态与安装态应用通过；保留可复跑的结果证据，后续按实际 badcase 维护。
+
+Phase 1–4 的每个改动都先通过它影响的功能闭环并可单独交付；Phase 5 检查最终组合，不形成运行时的额外验收引擎。
+
+### 条件满足后再做的扩展
+
+PTC/CodeMode 的通用工具编程、跨次计算缓存、更细的并发写入、跨任务资源协调、query 改写和 rerank，只在基线显示具体收益时实施。mbtx 本身可编译执行，不代表 MoonCode 已拥有完整的可重放工具程序运行时。
+
+默认多 Agent 团队、常驻 Router/Reviewer/Watchdog、用户绘制工作流、新 Goal/Mission/图数据库、普遍人工验收、任意外部副作用 exactly-once，以及为兼容旧方案保留双路径，均不进入本计划。
+
 ## 源码与参考资料
 
 ### 当前源码入口
 
 - MoonClaw：[主 Agent 与模型边界](../../moonclaw/cmd/daemon/mooncode_runtime_model_planner.mbt)、[任务上下文](../../moonclaw/cmd/daemon/mooncode_runtime_horizon.mbt)、[工具语义模块](../../moonclaw/internal/mooncode_tools/policy.mbt)、[continuation](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[调用恢复](../../moonclaw/cmd/daemon/mooncode_runtime_operations.mbt)、[完成检查](../../moonclaw/cmd/daemon/mooncode_runtime_completion.mbt)。
+- 后续计划入口：[压缩默认行为](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md)、[知识检索](../../moonclaw/cmd/daemon/mooncode_knowledge_context.mbt)、[planner 指标](../../moonclaw/cmd/daemon/mooncode_planner_metrics.mbt)、[typed resume stream](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md)、[桌面 canonical watch](../ui/rabbita-desk/main/mooncode_session_watch_commands.mbt)。
 - OpenSeek：[工具与控制类型](../../openseek/agent_tool/agent_tool.mbt)、[Session 数据](../../openseek/agent_session/types.mbt)、[消息投影](../../openseek/agent_session/projection.mbt)、[存储](../../openseek/agent_session/store/store.mbt)。
 - DSH：[工具契约](../../dsh/packages/core/tools/src/contracts.ts)、[批次执行](../../dsh/packages/core/tools/src/batch.ts)、[恢复](../../dsh/packages/core/session/src/repair.ts)、[存储接口](../../dsh/packages/session/session-persistence/src/handle.ts)、[派生状态](../../dsh/packages/session/session-projection/README.md)、[文件接口](../../dsh/packages/fs/fs/src/types.ts)、[默认组合](../../dsh/packages/bundle/base/cordis.patch.yml)。
 - Pi：[轻量循环](../../pia/packages/agent/src/agent-loop.ts)、[类型边界](../../pia/packages/agent/src/types.ts)、[会话树](../../pia/packages/coding-agent/src/core/session-manager.ts)、[文件修改队列](../../pia/packages/coding-agent/src/core/tools/file-mutation-queue.ts)、[实验性 Durable](../../pia/packages/durable/README.md)、[Durable 工具恢复](../../pia/packages/durable/src/harness/tool.ts)。

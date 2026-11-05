@@ -55,7 +55,8 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
 11. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
 12. [MoonCode agent machine and dynamic graph design](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md):
     consolidated execution primitives, data model, framework comparison and
-    task-driven runtime graph; separates current implementation from design.
+    task-driven runtime graph; separates current implementation from design,
+    records the completed cleanup and phases 0–5 for the remaining work.
     The [November 4 plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md)
     retains the historical simplification and deletion decisions.
 13. [CODE_MODE_TEST_PLAN.md](CODE_MODE_TEST_PLAN.md): focused runtime,

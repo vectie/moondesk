@@ -57,6 +57,11 @@ into another completion gate, graph database or user-authored wiring workflow.
 
 ## Tool boundary cleanup 2026-11-05
 
+- The same synthesis now records remaining work as phases 0–5: live delivery
+  baseline, execution/recovery contracts, one context projection, necessary
+  data relations, dynamic graph, and installed-app qualification. Those phases
+  remain unimplemented; the earlier completed ten-item checklist covers only
+  the tool-boundary cleanup. Do not revive superseded mechanisms from archives.
 - The design synthesis now contains a completed ten-item cleanup checklist
   and evidence. MoonClaw owns pure tool semantics in `internal/mooncode_tools`;
   MoonDesk continues to project canonical runtime facts, with no new UI phase.
