@@ -26,6 +26,14 @@ tool results. Completed tasks, unresolved approvals, suspended/archived
 sessions and finished manual runs retain their existing stop semantics. This
 is one background startup pass, not a new scheduler or desktop recovery queue.
 
+Capability catalogs describe action/tool names, aliases and protocol ownership.
+The runtime catalog owns tool argument schemas and execution policy; the core
+and desktop adapter no longer duplicate command approval, tool review or finish
+requirements. Desktop capability `commands` is an array of action names, and
+the obsolete `tool_specs` field is removed. Native packets carry the validated
+submission and acceptance identity; actual approval decisions still carry their
+action and approval IDs through the ordinary command path.
+
 MoonCode is the coding conversation mode for a MoonBook. The product has one
 ordered conversation, one durable owner, and one desktop projection:
 

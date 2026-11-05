@@ -240,7 +240,6 @@ fn native_capability_surface_json() -> Json {
     "native_command_execution_contract": native_command_execution_contract_json(),
     "runtime_tool_contract": runtime_tool_contract_json(),
     "runtime_tool_call_contract": runtime_tool_call_contract_json(),
-    "runtime_tool_capability_specs": runtime_tool_capability_specs(),
     "required_endpoints": native_capability_required_endpoints(),
     "required_tools": native_capability_required_tools(),
     "command_body_required_fields": native_command_body_required_fields(),

@@ -135,18 +135,6 @@ fn accepted_command_packet_json(
   fields["workspace_root"] = ToJson::to_json(accepted.workspace_root)
   fields["client_turn_id"] = ToJson::to_json(command.client_turn_id)
   fields["action"] = ToJson::to_json(action)
-  let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
-  for row in adapter_surface_command_actions(surface) {
-    if json_string(row, "action", default="") == action {
-      fields["control"] = ToJson::to_json(
-        json_string(row, "control", default=""),
-      )
-      fields["approval"] = ToJson::to_json(
-        json_string(row, "approval", default=""),
-      )
-      break
-    }
-  }
   let model = if command.model == "" {
     json_string(session, "model", default="")
   } else {

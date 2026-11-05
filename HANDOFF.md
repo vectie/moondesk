@@ -5,6 +5,34 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Eight-module re-audit: catalog and execution ownership 2026-11-05
+
+- Removed the duplicated core command/tool execution descriptions in both
+  repos. Capabilities retain names/aliases/protocol ownership; actual schemas,
+  argument checks, grants, tool policy and finish remain runtime-owned.
+- Native packet assembly now serializes validated submissions directly,
+  removing a full capability-tree allocation per submit and inferred packet
+  control/approval fields. Real approval actions/IDs still pass through.
+- commands is now an action-name array; tool_specs, old input-field catalogs
+  and approval/review/completion labels are removed. No compatibility shim.
+  Removed Desk's deprecated wrappers and three test-only bridge exports;
+  Claw core drops 28 unused exports. Check .mbti removals, not just compilation.
+- Old untagged cancellation matching and its fixture are gone; current tagged
+  receipt replay, pinned targets and automatic startup recovery remain.
+  The active-cancel predicate moved beside its producer without new logic.
+- Retired five obsolete tests across both repos. One MoonWiki review test
+  silently passed on an empty tools array; it did not prove runtime behavior.
+  Actual schema/grant/file/finish/cancel/restart and UI regressions remain.
+- Eight contracts were reviewed without forcing new abstractions: retain the
+  context compiler, distinct lock lifetimes, native CAS and journal projection.
+  Large scans, external writers and partial dependency provenance retain their
+  limits. No new store, runner, state machine, model request or confirmation.
+- Validation: Claw native 1852/1852, Desk native 1726/1726, core JS 64/64,
+  UI 839/839, final cancel/recovery 14/14 and producer/consumer probe passed.
+  Info/fmt and .mbti removals reviewed. Production .mbt net -2585, tests -379,
+  total -2964; predicate relocation is not counted as deletion. No UI layout /
+  package install or live-provider/end-to-end performance qualification.
+
 ## Process / Thread and restart recovery 2026-11-05
 
 - MoonClaw daemon startup now discovers unfinished sessions from configured

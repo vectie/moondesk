@@ -19,18 +19,6 @@ fn adapter_surface_strings(surface : Json, field : String) -> Array[String] {
 }
 
 ///|
-fn adapter_surface_command_actions(surface : Json) -> Array[Json] {
-  json_array_items(
-    adapter_surface_field(surface, "command_action_contract"),
-    "actions",
-  ).map(spec => {
-    "action": json_string(spec, "action", default=""),
-    "control": json_string(spec, "control", default=""),
-    "approval": json_string(spec, "approval", default=""),
-  })
-}
-
-///|
 fn adapter_surface_advertised_actions(surface : Json) -> Array[String] {
   json_string_array_items(
     adapter_surface_field(surface, "command_action_contract"),
@@ -46,11 +34,6 @@ fn adapter_surface_tool_contract(surface : Json) -> Json {
 ///|
 fn adapter_surface_tool_call_contract(surface : Json) -> Json {
   adapter_surface_field(surface, "runtime_tool_call_contract")
-}
-
-///|
-fn adapter_surface_tool_specs(surface : Json) -> Array[Json] {
-  json_array_items(surface, "runtime_tool_capability_specs")
 }
 
 ///|
@@ -112,11 +95,11 @@ fn capabilities_json_for(
     "desktop_route_contracts": Json::array(desktop_projection_route_contracts()),
     "tool_contract": adapter_surface_tool_contract(surface),
     "tool_call_contract": adapter_surface_tool_call_contract(surface),
-    "commands": adapter_surface_command_actions(surface),
-    "tools": adapter_surface_tool_specs(surface).map(spec => {
-      json_string(spec, "id", default="")
-    }),
-    "tool_specs": adapter_surface_tool_specs(surface),
+    "commands": adapter_surface_advertised_actions(surface),
+    "tools": adapter_surface_strings(
+      adapter_surface_tool_contract(surface),
+      "supported_tools",
+    ),
   }
   let extra = capability.extensions.copy()
   guard generated is Object(generated_fields) else {
@@ -382,32 +365,4 @@ pub fn engine_status_projection_json(
       ),
     ],
   }
-}
-
-///|
-pub fn runtime_tool_names() -> Array[String] {
-  let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
-  json_string_array_items(
-    adapter_surface_tool_contract(surface),
-    "supported_tools",
-  )
-}
-
-///|
-pub fn tool_contract_json() -> Json {
-  adapter_surface_tool_contract(
-    adapter_capability_surface(@mooncode_core.mooncode_capability()),
-  )
-}
-
-///|
-pub fn tool_contract_tool_ids(contract : Json) -> Array[String] {
-  let ids : Array[String] = []
-  for tool in json_array_items(contract, "tools") {
-    let id = json_string(tool, "id", default="")
-    if id != "" {
-      ids.push(id)
-    }
-  }
-  ids
 }

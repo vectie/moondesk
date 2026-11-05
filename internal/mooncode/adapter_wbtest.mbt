@@ -90,8 +90,6 @@ test "typed adapter derives stable acceptance identity from caller submission" {
   assert_eq(json_string(packet, "status", default=""), "accepted")
   assert_eq(json_string(packet, "client_turn_id", default=""), "client-one")
   assert_eq(json_string(packet, "action", default=""), "prompt")
-  assert_eq(json_string(packet, "control", default=""), "prompt")
-  assert_eq(json_string(packet, "approval", default=""), "user")
   assert_eq(
     json_string(packet, "created_at", default=""),
     "2026-07-15T00:00:00Z",
@@ -199,8 +197,6 @@ test "typed approval command keeps adapter and runtime packet wire parity" {
     "packet",
   )
   assert_eq(json_string(packet, "action", default=""), "approve_tool")
-  assert_eq(json_string(packet, "control", default=""), "command")
-  assert_eq(json_string(packet, "approval", default=""), "operator")
   assert_eq(json_string(packet, "approval_id", default=""), "approval-one")
   assert_eq(json_string(packet, "target_command_id", default=""), "command-one")
   assert_eq(json_string(packet, "tool_call_id", default=""), "call-one")

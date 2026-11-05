@@ -37,7 +37,7 @@
 
 ### 当前八项职责审计
 
-审计基线：MoonClaw `047749b3`、MoonDesk `248e6879`，以及本轮下述重构后的实现。结论是**基本功能已实现，职责可以闭合，但尚未成为具有完整类型契约和分布式执行语义的 Agent OS**。八项是分析维度，彼此有依赖，不是八层架构；一个 session 也不是一个 OS process。
+最初审计基线为 MoonClaw `047749b3`、MoonDesk `248e6879`；下表随后续收敛更新，具体实现和验证见各轮记录。结论是**基本功能已实现，职责可以闭合，但尚未成为具有完整类型契约和分布式执行语义的 Agent OS**。八项是分析维度，彼此有依赖，不是八层架构；一个 session 也不是一个 OS process。
 
 | 维度 | 功能与所有者 | 接口、输入 → 输出 | 运行逻辑 | 实现与边界 |
 | --- | --- | --- | --- | --- |
@@ -85,6 +85,29 @@
 八项审计时的验证：MoonClaw native 全量 **1853/1853**，身份/会话定向回归 **21/21**，初次 memory/并行/lease/队列/恢复检查 **43/43**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅删除内部 pruner 的废弃 API，canonical work step 别名删除及 operation 身份收敛已记录。MoonBit production 净删 **157 行**、测试净删 **282 行**（合计 439 行，不计接口/依赖/文档变化，不把搬移算删除）。历史归档 11 个文件哈希不变。没有 UI 布局/安装包改动，也未做真实 provider、崩溃断电或在线性能对照；不能从删旧代码推断质量和耗时已改善。
 
 启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
+
+### 八项复审：目录描述能力，运行时拥有执行事实（2026-11-05）
+
+运行时实现提交：MoonClaw `6f612243`（`main`）。
+
+复审基线：MoonClaw `33932930`、MoonDesk `f1646bac`。本轮主要问题是描述层还在发布已经退出主线的执行策略：两仓各有一份 command 审批/工具要求与建议/完成证明/预期事件分类，以及另一份工具输入字段、写入范围、review 和完成政策目录。这些没有实际执行消费者，却与真正的 catalog、工具 policy、授权边界和 finish 判断并存。直接删除旧目录及其专属测试，不用新类型层、统一 runner 或兼容壳替代。
+
+- [x] **Process/Thread**：桌面 packet 只携带已校验提交和接受身份，删除推导的 `control/approval`；runtime 的命令动作与控制投影继续决定实际行为。service、loop、turn 的执行所有权不变。
+- [x] **Memory**：每条提交不再为查两个标签构造完整 capabilities；上下文仍只用既有压力驱动 compiler 与结果引用。不把 capability 减量说成模型 tokens 或交付速度改善。
+- [x] **Filesystem**：删除描述目录里的旧写入路径政策；真实 canonical path、范围、资源锁、CAS 和 rename 保留在文件边界。没有增加全局锁，也没有让 shell 伪装成文件事务。
+- [x] **I/O**：输入 schema 与参数验证继续归 [runtime catalog](../../moonclaw/cmd/daemon/mooncode_tool_catalog.mbt) 和 [arguments](../../moonclaw/internal/mooncode_tools/arguments.mbt)；core 的 command/tool 描述保留名称、别名和协议，不再复制输入字段或审阅标签。
+- [x] **Synchronization**：核对 lifecycle、execution、journal、file lock 与 batch join 的资源和生命周期，继续保留各自边界；同步测试入口与后台 service 的所有权期限不同，不为减少表面入口数再造调度抽象。
+- [x] **Fault tolerance**：取消恢复只使用当前 receipt 的显式 control 身份，删除旧未标记 receipt 的 event × receipt 猜测匹配。主动取消事实谓词移回主动取消实现旁，启动恢复仍复用它；保留当前取消重放、审批与自动续跑测试。
+- [x] **Data model**：capabilities 的 `commands` 收敛为动作名数组；删除 `tool_specs` 和旧 command/tool 策略字段。删除 MoonClaw core 28 个无实际执行消费者的导出以及 Desk 3 个仅供旧测试使用的桥接导出。删除延期 deprecated 壳，不保留旧格式适配。
+- [x] **Compute engine / projection**：真正的并发、重放和技能边界仍由现有工具 policy 决定，图仍由实际 journal 事实派生；删除 core 中重复的效果/review 分类、工具建议和 expected-lanes 表。
+
+删除一项旧取消兼容测试、两仓各一项分类/常量镜像测试，以及 MoonWiki 的两项旧工具政策测试。其中一个旧用例对空工具数组循环也能通过；不能用它证明真实授权或交付质量。实际 ABI、参数、授权、文件、任务修订、取消、恢复和 UI 行为回归保留。MoonWiki 不再借自己的测试要求 MoonCode 的每次修改都必须 review；同时删除其三个无生产消费者的桥接函数及失效 package 文件条目。
+
+边界变化：`command_action_contract` 不再发布 action 级审批、工具顺序/建议或完成证明；`runtime_tool_contract` 不再发布第二份 tools/input_fields/constraints。桌面 native packet 不带推导的审批/控制标签；真实 `approve_tool/reject_tool` 的动作与 approval_id 等身份字段照常传递。完整参数定义仍在 runtime，权限和执行证据仍由真实边界负责。
+
+验证：MoonClaw native **1852/1852**、MoonDesk native **1726/1726**、core JS **64/64**、UI **839/839**，定向取消/恢复 **14/14**、跨仓 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅为上述旧导出删除。production `.mbt` 净删 **2585 行**，测试净删 **379 行**，合计 **2964 行**；谓词搬移不计作删除。不新增运行状态、包、模型请求、服务或人工确认。未做安装包、真实 provider 或端到端性能资格验证。
+
+剩余边界仍是具体需求问题：大 journal 的启动/补读成本、shell 与外部写入的协作范围、部分依赖来源及内部 Json 的类型边界。已有扫描、原生文件锁和事实引用继续工作；没有用新索引、状态库或完整 IR 把这些问题扩成必做架构工程。前轮两个未完成的隔离/真实任务评测项继续保持未勾选。
 
 ### Process/Thread + Fault Tolerance：服务重启后自动续跑（2026-11-05）
 
