@@ -38,6 +38,11 @@ Capability negotiation decodes the response once and reuses the typed value
 for the existing readiness decision. Boolean readiness and status presentation
 share that decision; their public response shapes and acceptance rules remain.
 
+MoonClaw restores session metadata through one snapshot/journal path, including
+the first user prompt used for the title. Missing title metadata can be recovered
+from the original journal without a separate restore/read pass. The current
+task and completion evidence continue to belong to the command and its revision.
+
 MoonCode is the coding conversation mode for a MoonBook. The product has one
 ordered conversation, one durable owner, and one desktop projection:
 

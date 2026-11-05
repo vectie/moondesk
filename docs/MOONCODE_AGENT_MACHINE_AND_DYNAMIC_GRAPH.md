@@ -86,6 +86,22 @@
 
 启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
 
+### 八项复审：会话元数据与真实执行回归（2026-11-05）
+
+运行时实现提交：MoonClaw `b998d890`（`main`）。
+
+复审基线：MoonClaw `300922ea`、MoonDesk `2a250757`。本轮实际重复是提交时依次调用首条 prompt 恢复与 metadata 恢复，冷缓存/缺少标题字段时会重复读 snapshot/journal；而启动/admission 的完整 metadata 入口缺少 journal 首条 prompt 的补读。另有五个生产代码中的包装仅被测试调用，并未参与真实请求、重试、transport、route 或退出码判断。
+
+- [x] **Memory / Data model / Fault tolerance**：首条 prompt、模型/workspace 与命令计数统一由 [metadata restore](../../moonclaw/cmd/daemon/mooncode_session_binding.mbt) 从同一已加载数据恢复；删除独立首条 prompt 读取函数和提交时的第二个入口。沿用缓存优先级，缺字段时取第一条有效历史输入，多条历史请求不会使标题变成最后一条请求。首条 prompt 只服务 session 标题，不是当前任务或完成证明。
+- [x] **Process/Thread / Compute engine**：真实 model round、Context compiler、provider error retry 与 service/continuation 主线保持；删除只供测试使用的简化 request builder 和旧字符串重试包装，不补新的 runner。取消、自动续跑和任务修订边界保持。
+- [x] **I/O**：删除恒真 route-available、未被执行使用的 transport-name 和退出码判断包装。真正的 MoonFort 配置、transport 分支和预期退出码仍由现有执行与回执代码负责；没有删掉负向退出能力或新增授权要求。
+- [x] **Filesystem / Synchronization**：复用既有 snapshot/journal reader 与锁；不新增缓存、索引、元数据 store、事务或全局锁。资源路径/CAS、外部效果未知和各类锁的不同生命周期继续保留。
+- [x] **验收**：删除一项仅检查旧退出码包装的测试，把负向退出验证并入已有 MoonBit 工具执行回归；真实运行类型错误的 `moon check`，先观察非零 receipt，再显式按该退出码验收。复用的 MoonFort 夹具标记为 Degraded，不是生产隔离资格验证。保留实际 refusal、retry delay/event、provider selector 和恢复回归，删除伪装成实际执行证明的旁路断言，修正测试名称的过度表述。
+
+成本与边界：只在首条输入缓存缺失时消除原来的重复读取；已有首条输入的热会话原先也只读一次 journal，不能宣称每次提交都少一次 IO。恢复仍扫描 journal；本轮未测端到端延迟或模型质量。生产实现净删 **66 行**；为真实恢复/退出回执扩展既有回归，测试净增 **15 行**，合计净删 **51 行**，不以测试越少证明质量。
+
+验证：MoonClaw native **1845/1845**、MoonDesk native **1726/1726**、core JS **64/64**、UI **839/839**；metadata/model-workspace 定向 **20/20**、process/listing 定向 **28/28**，跨仓 producer → consumer probe 通过。`moon info` / `moon fmt`、接口与空白检查通过，`.mbti` 无变化。没有新增 package、状态机、人工确认或模型请求；前轮资源隔离、真实任务评测和部分依赖来源的限制保持，未做安装态/live-provider 资格验证。
+
 ### 八项复审：投影读取与流式 I/O（2026-11-05）
 
 运行时实现提交：MoonClaw `300922ea`（`main`）。

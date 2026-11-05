@@ -5,6 +5,27 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Eight-module re-audit: session metadata and execution evidence 2026-11-05
+
+- Claw now restores first-prompt/title metadata and command count through the
+  same existing snapshot/journal-pair entry. Intake no longer performs a
+  separate first-prompt restore. The current task/revision remains distinct.
+- Preserve cache/snapshot priority and owner validation. The removed duplicate
+  reads affect cold/missing-prompt recovery; warm bindings already avoided
+  them. No new cache/store, client projection or public API is introduced.
+- Removed five test-only Claw production wrappers; real model round, provider
+  retry/transport, sandbox config and receipt exit handling stay authoritative.
+  One predicate test was retired; existing recovery and actual MoonBit command
+  fixtures were extended. Negative exits are read from the real receipt rather
+  than assumed to be 1. The fixture reports Degraded isolation, not production
+  MoonFort enforcement. Retry test names now match the evidence they observe.
+- Validation: Claw native 1845/1845, Desk native 1726/1726, core JS 64/64,
+  UI 839/839; metadata/model-workspace 20/20, process/listing 28/28 and
+  producer/consumer probe passed. Info/fmt and whitespace checked; .mbti
+  unchanged. Production .mbt -66, tests +15, net -51. No new state machine,
+  runner, model request or confirmation; no UI/install, live-provider or
+  end-to-end performance qualification. See the current eight-module checklist.
+
 ## Eight-module re-audit: stream reads and typed readiness 2026-11-05
 
 - Capability negotiation and readiness reuse one typed decode and the existing
