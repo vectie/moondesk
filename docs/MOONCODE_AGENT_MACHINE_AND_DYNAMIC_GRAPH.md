@@ -82,10 +82,33 @@
 - [x] **Fault tolerance / I/O**：unknown-outcome 的恢复结果复用同一 execution constructor，删除另一份手写结果包装；错误语义与“不自动重放外部效果”保持。
 - [x] **Filesystem**：核对现有身份、CAS、锁与条件回滚；本轮不另写一个资源解析器、锁服务或版本存储。保留已知边界。
 
-本轮验证：MoonClaw native 全量 **1853/1853**，身份/会话定向回归 **21/21**，初次 memory/并行/lease/队列/恢复检查 **43/43**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅删除内部 pruner 的废弃 API，canonical work step 别名删除及 operation 身份收敛已记录。MoonBit production 净删 **157 行**、测试净删 **282 行**（合计 439 行，不计接口/依赖/文档变化，不把搬移算删除）。历史归档 11 个文件哈希不变。没有 UI 布局/安装包改动，也未做真实 provider、崩溃断电或在线性能对照；不能从删旧代码推断质量和耗时已改善。
+八项审计时的验证：MoonClaw native 全量 **1853/1853**，身份/会话定向回归 **21/21**，初次 memory/并行/lease/队列/恢复检查 **43/43**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅删除内部 pruner 的废弃 API，canonical work step 别名删除及 operation 身份收敛已记录。MoonBit production 净删 **157 行**、测试净删 **282 行**（合计 439 行，不计接口/依赖/文档变化，不把搬移算删除）。历史归档 11 个文件哈希不变。没有 UI 布局/安装包改动，也未做真实 provider、崩溃断电或在线性能对照；不能从删旧代码推断质量和耗时已改善。
 
 仍待明确/实现的产品能力只有具体问题：是否要求服务重启后无需客户端触发就恢复全部待办；是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排仍可继续按真实重复收敛；本轮没有引入通用 IR、八个包、额外模型请求或人工步骤。
 
+
+### Data Model 与 Compute Engine 收敛记录
+
+本轮基线：MoonClaw `9f4e7222`、MoonDesk `9582617b`。目标是减少同一事实的重复表示和同一决策的重复实现，不扩建类型框架或增加运行前置条件。
+
+| 位置 | 收敛后的契约 | 删除内容 |
+| --- | --- | --- |
+| 已完成调用 | journal event 保存一次 execution header 和规范 tool_result；恢复时共用 `mooncode_tool_execution_from_event`。 | operation recovery 与 continuation 各自手写的结果重建。 |
+| checkpoint 历史引用 | `{event_id,event_digest}` 指向上述事件；没有可引用事件的合成结果使用 `{inline_execution}`。由实际保存的数据区分两种表示。 | 每条引用里的重复 execution header、journaled_result 布尔标记、按事件展示名称决定是否引用的规则。patch/finish 的规范事件也可以引用。 |
+| 恢复后的模型请求 | 直接匹配既有 MoonCodeResumePoint：ResumeTools 复用当前计划；初始/初始 transport 重试构造 initial；其他恢复共用一次 follow-up，携带各自 steering/guidance。 | 三段相同 follow-up 参数组装、三个镜像恢复布尔值及 continuation_active 别名。恢复状态集合不变。 |
+| finish receipt 消费 | worker 与 conversation 都从真实 producer 保留的 execution.result 读取规范结果。 | worker 的旧扁平结果兼容探测；conversation 对扁平字段的错误假设。旧测试数据改为真实 producer 的嵌套结果。 |
+| 检查分类 | 现有显式检查和当前证据判断照常工作；普通 patch 使用普通 finish 规则。 | 已没有生产者的 patch-verification metadata 分支和一项并未证明检查发生的专属测试。不增加“编辑后必须测试”等要求。 |
+
+- [x] 同一 execution 的重建只有一个入口；规范结果、引用和执行控制分别归属。
+- [x] 减少 checkpoint 复制，保留现有来源 digest、顺序检查与未知效果恢复语义；没有新增校验服务或授权步骤。
+- [x] 复用现有枚举表达恢复位置，不增加状态、状态机、调度层或额外模型请求。
+- [x] 沿现有 compaction、restart、transport、空响应、steering、worker 和 canonical conversation 回归验证；临时数据量测量不加入产品测试框架。
+
+临时对照使用相同的 100 个规范 write 结果、每次参数 33,020 个 ASCII 源码字符，对比本轮前后实际的历史区 serializer：**3,561,392 → 12,692 个 ASCII 字符**。这是 checkpoint 历史区的序列化大小，不含原始结果事件和当前模型 transcript，不是通用压缩比例、模型 tokens 或端到端速度对照。已有结果摘要哈希和历史引用遍历仍有成本，没有宣称常数时间 checkpoint。永久回归补充大 shell 参数和 patch 结果 roundtrip；临时测量文件已移除。
+
+验证：MoonClaw native **1852/1852**；数据/receipt/worker 定向 **75/75**；恢复和 steering 定向 **50/50**（移除旧测试前）；最新大参数/patch 引用回归 **4/4**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt`、接口与空白检查通过，`.mbti` 无变化。production `.mbt` **净删 68 行**，测试 `.mbt` **净增 21 行**，合计净删 47 行；删除一个旧测试，其余扩展既有测试，不新增常驻测量或测试阶段。63 个本地链接有效，历史归档 11 个文件哈希不变。未更新安装包，未做真实 provider 质量/成本或端到端延迟对照。
+
+主要入口：[引用与 hydration](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[规范 execution 重建](../../moonclaw/cmd/daemon/mooncode_tool_execution.mbt)、[主解释循环](../../moonclaw/cmd/daemon/mooncode_runtime_turn.mbt)。内部 command/plan 仍保留 Json，完整类型 IR、依赖计算引擎和全局缓存仍未引入。
 
 四个分析视角处理不同问题，不构成必须部署的四层：
 
