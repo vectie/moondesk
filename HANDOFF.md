@@ -5,6 +5,32 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Programmable single-agent path 2026-11-05
+
+- Initial/follow-up share one model round. Ordinary tools and checkpoint share
+  result assembly; consumers use the canonical result boundary.
+- Completed operation IDs identify results; tool-call IDs join start/result.
+  Same-millisecond parallel reads must never collapse or match by tool name.
+- `read_result` reads only retained session results, including patch events.
+  Compaction preserves exact or first/last references through repeated passes.
+  It does not rerun effects or reconstruct output already truncated at execution.
+- Work graph is a disposable canonical projection and uses existing UI cards
+  and file navigation. It is not a scheduler, completion rule or new store.
+- Known local chunks use existing shell/project scripts; tiny native edits are
+  faster locally. Measurement: six read/write calls 4 ms; fixture-bridge .mbtx first
+  512 ms / warm 204 ms (script also checked outputs; no model time/tokens; Degraded fixture,
+  not a production MoonFort performance measurement).
+  Do not claim end-to-end speedup or live deliverable-quality improvement.
+- Validation: Claw native 1864/1864 + final projection focus 30/30; Desk
+  native 1729/1729; core JS 65/65 + graph codec 3/3; UI 839/839; Node 24/24.
+  Real producer/consumer probe, info/fmt and production UI build passed.
+  Build 53.57 s; main chunk +4049 bytes vs baseline. Source production net
+  +482/test +341; shared round/result consolidation alone net -61 production.
+  Existing warnings remain; live-provider and installed-app qualification
+  are not included. The historical archive remains unchanged.
+
+
+
 ## Projection/Telemetry cleanup 2026-11-05
 
 - Canonical watch moved to MoonClaw's existing session/journal projection.
@@ -18,8 +44,8 @@ Work directly on `main`; do not create a branch unless the user requests one.
   timestamps can repeat. Missing usage/prices remain unmeasured/unpriced.
 - Snapshot rebuild still reads full history; metadata polling and a temporary
   command index reduce repeated work without another projection cache. Dedicated
-  graph UI, complete dependency edges and live outcome/cost baselines remain
-  unchecked in the synthesis. No new state machine, store or human gate.
+  graph UI is delivered in the later five-step plan; complete dependency edges
+  and live outcome/cost baselines remain unchecked in the synthesis. No new state machine, store or human gate.
 - Validation: Claw native 1862/1862; Desk native 1729/1729; core JS 65/65;
   UI watch/usage 108/108; real producer/consumer probe passed. Info/fmt and
   interface review passed. Code/tests net -2046 lines (-1307 production,

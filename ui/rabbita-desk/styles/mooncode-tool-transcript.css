@@ -2,6 +2,17 @@
   gap: 8px;
 }
 
+.mooncode-work-graph { display: grid; gap: var(--space-3); min-width: 0; }
+.mooncode-graph-step { display: flex; gap: var(--space-1); margin: 0 0 var(--space-2); color: var(--mooncode-muted); font-size: var(--text-meta); }
+.mooncode-graph-operation-title { display: flex; gap: var(--space-2); margin: 0; font-size: var(--text-control); }
+.mooncode-graph-branches { margin-left: var(--space-1); padding-left: var(--space-4); border-left: 1px solid var(--mooncode-line); }
+.mooncode-graph-operation { position: relative; min-width: 0; margin-bottom: var(--space-2); scroll-margin-top: 60px; }
+.mooncode-graph-operation::before { content: ""; position: absolute; top: 20px; left: calc(-1 * var(--space-4)); width: var(--space-4); border-top: 1px solid var(--mooncode-line); }
+.mooncode-graph-resource, .mooncode-graph-source { display: block; max-width: 100%; margin: var(--space-1) 0 0 var(--space-2); padding: var(--space-1) var(--space-2); border: 0; background: transparent; color: var(--mooncode-ink); text-align: left; font-size: var(--text-control); overflow-wrap: anywhere; cursor: pointer; }
+.mooncode-graph-resource { font-family: var(--font-mono); }
+.mooncode-graph-resource:hover, .mooncode-graph-source:hover { text-decoration: underline; }
+.mooncode-graph-resource:focus-visible, .mooncode-graph-source:focus-visible { outline: 2px solid var(--mooncode-ink); outline-offset: 2px; border-radius: var(--radius-control); }
+
 .mooncode-tool-card,
 .mooncode-evidence.mooncode-tool-card:first-child {
   min-width: 0;

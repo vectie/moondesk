@@ -4,7 +4,7 @@ This document describes the current desktop/runtime ownership boundary. The
 discussion baseline is [Current MoonCode plan](mooncode-discussion-2026-11-04/CURRENT_PLAN.md).
 The [agent machine and dynamic graph design](MOONCODE_AGENT_MACHINE_AND_DYNAMIC_GRAPH.md)
 consolidates the later OS/compiler/data-system analysis and task-driven
-interpretation model. Dynamic graph presentation remains a design direction.
+interpretation model. The work panel now renders a minimal graph from canonical calls and references.
 The single-agent consolidation removes the separate Goal panel and desktop
 package-review/proof-gate inference. The runtime completion boundary is described
 in MoonClaw's `docs/executable_book_runtime_boundary.md`.
@@ -75,15 +75,22 @@ contracts. MoonGate may measure those contracts but does not own them.
 MoonClaw's [Context/Journal path](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md)
 now uses one default context projection and one recovery-position decoder.
 The desktop continues to consume canonical conversation facts. Compaction does
-not erase journaled results or create a new confirmation step. General lookup
-of omitted history by evidence ID remains unfinished.
+not erase journaled results or create a new confirmation step. The read-only `read_result` tool recovers retained session results by evidence ID,
+or lists the first/last range preserved in a compacted span. It never repeats
+an effect and cannot recover output never retained by its original tool.
 
 The runtime also owns [canonical watch](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md).
 MoonDesk adapts its session metadata and passes exact cursors through to the
 existing renderer; it no longer downloads raw event streams to construct watch
 responses. Canonical usage comes from existing planner observations, including
 empty responses and recovery. The synchronous telemetry exporter was removed.
-Dedicated graph presentation and production outcome/cost baselines remain planned.
+Work graphs group actual calls by model batch, expose file/check-input references
+and link explicit recalled results. Cards and local file navigation are reused;
+the duplicate detail list is removed where graph data is available. Complete
+dependency analysis and production outcome/cost baselines remain unmeasured.
+Known local sequences may run project scripts through existing shell execution;
+MoonBit projects can use `.mbtx`. Small tasks still use direct tools. No new
+programming SDK, mandatory script stage or agent team is introduced.
 11. Approval and cancellation commands are control-plane records, not chat
     turns. Approval renders as a stable work step inside its owning turn.
 12. Stop is offered only for canonical unfinished work and must interrupt the

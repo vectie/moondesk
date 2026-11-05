@@ -30,6 +30,7 @@ struct MoonCodeActivityRow {
   session_id : String
   retry_prompt : String
   evidence : Array[MoonCodeEvidenceRow]
+  graph : Json
 }
 
 ///|
@@ -158,17 +159,7 @@ fn render_mooncode_activity_body(
         },
         row.title,
       ),
-      if row.detail == "" {
-        span(class="mooncode-activity-detail empty", "")
-      } else {
-        pre(class="mooncode-activity-detail", row.detail)
-      },
-      render_mooncode_evidence_list(
-        dispatch,
-        model,
-        row.session_id,
-        row.evidence,
-      ),
+      render_mooncode_work_content(dispatch, model, row),
     ])
   }
 }
@@ -214,12 +205,7 @@ fn render_mooncode_activity_disclosure(
         ),
       ],
     ),
-    if row.detail == "" {
-      span(class="mooncode-activity-detail empty", "")
-    } else {
-      pre(class="mooncode-activity-detail", row.detail)
-    },
-    render_mooncode_evidence_list(dispatch, model, row.session_id, row.evidence),
+    render_mooncode_work_content(dispatch, model, row),
   ])
 }
 

@@ -51,6 +51,8 @@
   "code.work_summary_interrupted": "工作已中断",
   "code.work_summary_completed": "工作已完成",
   "code.work_summary_working": "正在处理请求",
+  "code.execution_step": "步骤",
+  "code.result_source": "来源结果",
   "code.show_details": "显示详情",
   "code.hide_details": "隐藏详情",
   "code.evidence_edit": "编辑",

@@ -51,6 +51,8 @@
   "code.work_summary_interrupted": "Work interrupted",
   "code.work_summary_completed": "Completed work",
   "code.work_summary_working": "Working on request",
+  "code.execution_step": "Step",
+  "code.result_source": "Source result",
   "code.show_details": "Show details",
   "code.hide_details": "Hide details",
   "code.evidence_edit": "Edit",

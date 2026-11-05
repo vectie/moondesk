@@ -117,9 +117,9 @@ test "adapter serializes current v1 capability with transport parity" {
     }
   })
   let expected_tools = [
-    "read", "edit", "write", "shell", "moon_ide", "glob", "grep", "todo_write", "web_fetch",
-    "web_search", "moon_cmd", "moon_check", "apply_patch", "revert_patch", "package_app_tool",
-    "eval_harness", "finish",
+    "read_result", "read", "edit", "write", "shell", "moon_ide", "glob", "grep",
+    "todo_write", "web_fetch", "web_search", "moon_cmd", "moon_check", "apply_patch",
+    "revert_patch", "package_app_tool", "eval_harness", "finish",
   ]
   assert_eq((tools, tool_spec_ids), (expected_tools, expected_tools))
 }

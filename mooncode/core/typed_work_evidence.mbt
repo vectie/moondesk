@@ -334,3 +334,12 @@ fn decode_work_codec(
 fn encode_mooncode_work(work : MoonCodeWork) -> Json {
   work.raw
 }
+
+///|
+/// Execution graph is a journal projection, never an execution plan.
+pub fn MoonCodeWork::graph(self : MoonCodeWork) -> Json {
+  match self.raw {
+    { "graph": graph, .. } => graph
+    _ => Json::null()
+  }
+}

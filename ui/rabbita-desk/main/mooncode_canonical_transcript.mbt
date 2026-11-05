@@ -182,6 +182,7 @@ fn mooncode_canonical_work_item(
       session_id,
       retry_prompt,
       evidence,
+      graph: work.graph(),
     }),
   )
 }

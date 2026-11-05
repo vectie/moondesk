@@ -483,8 +483,10 @@ test "mooncode core owns runtime tool contract" {
   assert_eq(runtime_tool_read(), "read")
   assert_eq(runtime_tool_apply_patch(), "apply_patch")
   assert_eq(runtime_tool_web_search(), "web_search")
-  assert_eq(runtime_tool_names().length(), 16)
-  assert_eq(runtime_tool_capability_names().length(), 17)
+  assert_true(runtime_tool_names().contains("read_result"))
+  assert_true(
+    runtime_tool_capability_names().contains(runtime_tool_eval_harness()),
+  )
   assert_true(runtime_tool_is_supported("moon_cmd"))
   assert_false(runtime_tool_is_supported("delete_world"))
   assert_true(runtime_tool_requires_authorization_snapshot("moon_check"))

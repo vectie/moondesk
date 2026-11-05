@@ -408,6 +408,7 @@ pub(all) struct MoonCodeWork {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeWork::equal(Self, Self) -> Bool
+pub fn MoonCodeWork::graph(Self) -> Json
 pub fn MoonCodeWork::not_equal(Self, Self) -> Bool
 pub fn MoonCodeWork::to_repr(Self) -> @debug.Repr
 

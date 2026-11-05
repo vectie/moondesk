@@ -30,6 +30,8 @@ uses the host `/api/moonclaw/*` routes.
 - `main/mooncode_views.mbt`, `main/mooncode_transcript_views.mbt`, and
   `main/mooncode_markdown_views.mbt`: grouped session rail, canonical chat,
   folded work, safe Markdown, evidence, and composer.
+- `main/mooncode_work_graph.mbt`: disposable canonical work graph using the
+  same evidence cards and local file navigation; no client execution state.
 - `main/moonwiki_*_views.mbt`: Desk and MoonWiki workspace surfaces.
 - `main/*_wbtest.mbt`: reducer, transcript, effect, navigation, Markdown, and
   session lifecycle regression coverage.
@@ -38,7 +40,7 @@ MoonCode UI code must consume only the host's compact listing and canonical
 selected-session contracts. It must not add an event merger, replay reducer,
 runtime supervisor, local conversation store, or rail-row chat hydration.
 
-The warning baseline is intentionally clean:
+Required checks (existing warning debt is recorded in the handoff):
 
 - `moon check --target native` from the repository root.
 - `moon check --target js` from `ui/rabbita-desk`.

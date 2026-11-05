@@ -20,6 +20,12 @@ fn typed_evidence_fixture() -> Json {
           "item_id": "work-package",
           "status": "done",
           "summary": "Packaged",
+          "graph": {
+            "nodes": [
+              { "id": "artifact", "kind": "operation", "batch_id": "batch-one" },
+            ],
+            "edges": [],
+          },
           "steps": [
             {
               "item_id": "other",
@@ -205,6 +211,16 @@ test "typed package review is exact, ordered, and lossless at the codec boundary
     fail("decode")
   }
   let turn = conversation.turns[0]
+  assert_eq(
+    turn.work.graph(),
+    (
+      {
+        "nodes": [
+          { "id": "artifact", "kind": "operation", "batch_id": "batch-one" },
+        ],
+        "edges": [],
+      } : Json),
+  )
   assert_eq(turn.work.evidence.length(), 7)
   assert_eq(turn.work.evidence[0].kind, "package_manifest")
   assert_eq(turn.work.evidence[1].kind, "artifact")
