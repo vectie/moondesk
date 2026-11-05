@@ -5,6 +5,32 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Process / Thread and restart recovery 2026-11-05
+
+- MoonClaw daemon startup now discovers unfinished sessions from configured
+  trusted Books and resumes the ordinary service without desktop resubmission.
+  The desktop does not own a recovery queue, scheduler or new confirmation.
+- Only pending candidates restore bindings. Existing journal claims,
+  continuations, results and execution leases remain the execution authority.
+  A queued command can precede a service finish; ordinary drain gaps resume.
+- Explicit active-cancel events distinguish user stops from process shutdown;
+  a cancelled coroutine alone does not carry that intent. Existing pending
+  withdrawal and lifecycle boundaries remain distinct.
+- Unresolved approvals wait; durable decisions can resume. Finished explicit
+  manual limits stay stopped. Interrupted services retain their ID and options;
+  max_turns remains per invocation, without a new cross-restart quota mechanism.
+- Temporary local scan: 100 completed small sessions plus one empty fixture,
+  23/25 ms, no retained bindings. No model/compile/cold-disk or large-log claim.
+  Measurement code removed. See the design checklist for the full contract.
+
+- Validation: Claw native 1854/1854, Desk core JS 65/65 and real producer /
+  consumer probe passed. Info/fmt and whitespace checked; .mbti unchanged.
+  65 local links and 11 unchanged archive hashes checked. Production .mbt
+  net +163 and tests +287 for the missing startup path; no deletion claim.
+  The existing quantum test now exercises new Daemon serve instances and
+  cancellation/restart. No UI/install change, live-provider, SIGKILL /
+  power-loss or production performance qualification.
+
 ## Data Model / Compute Engine convergence 2026-11-05
 
 - Completed operation events own their execution header and tool_result.
@@ -59,8 +85,8 @@ Work directly on `main`; do not create a branch unless the user requests one.
 - Uncertain-operation recovery uses the common execution constructor.
   No extra state machine, agent, store, model call or human step was added.
 - Remaining limits: cooperative native file locks; process tools/external
-  writers do not participate. Resume uses existing service start/turn retry
-  or task controls, not a daemon-wide boot scanner. Internal Json and
+  writers do not participate. The boot discovery gap recorded at this audit
+  is closed by the Process / Thread update above. Internal Json and
   partial dependency provenance do not constitute a typed IR or full DAG.
 
 - Validation: Claw native 1853/1853; identity/session 21/21; initial focused

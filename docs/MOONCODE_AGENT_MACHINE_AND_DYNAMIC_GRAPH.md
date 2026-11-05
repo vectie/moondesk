@@ -46,7 +46,7 @@
 | Filesystem | Workspace 拥有选定 MoonBook 的真实路径、文件内容与本地条件写入。 | `workspace_path(book_root,path)` → canonical/relative identity；`workspace_replace(root,absolute,expected,content)` → 成功或 stale/error；read/edit/write/patch 为工具入口。 | 解析真实资源，在同一资源锁内比较旧内容，用同目录临时文件及 rename 替换；patch 复用既有回滚。 | **原生文件路径已实现**。同一资源的协作式互斥和过期检查，不是完整 VFS、MVCC、多文件事务或不可变版本库。shell、外部编辑器不参与此文件锁。 |
 | I/O | provider transport 负责模型协议；catalog/executor 负责工具 ABI；grant/executor 边界负责实际执行授权。 | 模型消息 → provider response；`tool + arguments` → canonical result `{ok,is_error,message,output,metadata}` → execution/event → journal/model/UI。 | schema 校验、绑定既有执行条件、运行、返回规范结果；工具错误交回同一 Agent。用户输入、steering、审批和取消沿命令路径进入。 | **主线已实现**。Function Calling 是调用形状，MCP 是接入协议；都不自动提供权限、幂等或结果正确性。控制事件与已执行效果有区别；工具成功不等于交付完成。 |
 | Synchronization | execution lease 保护 session 执行者；lifecycle gate 保护归档/恢复；journal lock 保护追加/claim 顺序；file lock 保护真实文件；batch join 保护工具生命周期。 | `open_session_execution_lease`、lifecycle/session lock、`workspace_file_lock`、`TaskGroup`；资源/操作 → 所有权、等待、busy 或有序结果。 | 外部入口持有 lifecycle shared gate + execution exclusive lease，内部 loop/turn 借用，不重入获取。不同 session 可运行；独立读并发，普通修改按调用顺序执行。 | **局部同步已实现**。这些锁不能合并成全 Book 大锁；本地提交序号不是跨服务时钟。进程工具与原生文件工具仍不具有统一写事务。 |
-| Fault tolerance | Journal + continuation 保存执行位置和已完成结果；recovery 决定复用、重读或核对未知效果。 | append/checkpoint → `MoonCodeResumePoint`；`operation_recovery(operation_id,call)` → 既有 execution、允许安全重读或 outcome_unknown。 | 操作前 intent、操作后 result；重进执行时按调用身份复用；只读可重试，未提交外部效果先核对实际状态。 | **位置/结果恢复已实现**。不恢复任意 `.mbtx` 程序栈，不提供任意外部效果 exactly-once。当前恢复由既有 service 启动、任务控制或 `/turns` 重试触发；没有发现 daemon 启动时主动遍历所有 Book/session 唤醒任务的实现。 |
+| Fault tolerance | Journal + continuation 保存执行位置和已完成结果；recovery 决定复用、重读或核对未知效果。 | daemon 启动 → 当前配置的可信 Book/session → 既有 service；checkpoint → `MoonCodeResumePoint`；operation recovery → 既有 execution、安全重读或 outcome_unknown。 | 启动扫描只唤醒未完成工作；service 复用原 claim、结果引用、租约和工具恢复，不新建任务身份。 | **位置/结果恢复与启动自动续跑已实现**。暂停/归档、未决审批及已完成任务保留原语义；不恢复任意 `.mbtx` 程序栈，不提供任意外部效果 exactly-once。 |
 | Data model | Command/task revision、operation、tool-call、result event、resource version 分别拥有身份；canonical conversation/work graph 是派生视图。 | journal records/decimal sequence；continuation result refs + digest；`event_id` 是 work step 的来源，graph 从它导出 evidence_ref；显式检查携带 task_revision 与输入 fingerprint。 | 追加事实 → 恢复模型 → 本轮工作集/界面视图；日志顺序、调用身份和内容版本分别表达，不能互相代替。 | **关系已有，类型仍局部**。ResumePoint、sequence、completion verdict 已有类型；大量内部 command/result 仍为 Json，尚无统一强类型 IR、完整外键/血缘或自动失效重算。 |
 | Compute engine | 模型是增量解释器；turn 执行下一批行动，policy 声明已知效果；程序片段使用现有 shell/项目语言；graph 只展示。 | task + context → model round → tool batch → results → next round/finish；`parallel_read_batch_allowed` / `execute_parallel_reads`；`work.graph` → 现有卡片和文件导航。 | 整体边观察边展开；已知连续计算可以脚本完成；只读调用依据效果声明并发，结果按源顺序 join；finish 使用当前任务与必要事实。 | **解释执行与最小图已实现**。没有预编译的完整 DAG、跨任务公共子表达式缓存、通用依赖调度器或工具调用 SDK。恢复旧结果与跨运行缓存是两种语义。 |
 
@@ -84,7 +84,32 @@
 
 八项审计时的验证：MoonClaw native 全量 **1853/1853**，身份/会话定向回归 **21/21**，初次 memory/并行/lease/队列/恢复检查 **43/43**；MoonDesk core JS **65/65**、UI **839/839**，真实 producer → consumer probe 通过。`moon info` / `moon fmt` 与空白检查通过；接口变化仅删除内部 pruner 的废弃 API，canonical work step 别名删除及 operation 身份收敛已记录。MoonBit production 净删 **157 行**、测试净删 **282 行**（合计 439 行，不计接口/依赖/文档变化，不把搬移算删除）。历史归档 11 个文件哈希不变。没有 UI 布局/安装包改动，也未做真实 provider、崩溃断电或在线性能对照；不能从删旧代码推断质量和耗时已改善。
 
-仍待明确/实现的产品能力只有具体问题：是否要求服务重启后无需客户端触发就恢复全部待办；是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排仍可继续按真实重复收敛；本轮没有引入通用 IR、八个包、额外模型请求或人工步骤。
+启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
+
+### Process/Thread + Fault Tolerance：服务重启后自动续跑（2026-11-05）
+
+实现提交：MoonClaw `33932930`（`main`）。
+
+启动入口在 [Daemon::serve](../../moonclaw/cmd/daemon/daemon_serve.mbt)，[一次性发现函数](../../moonclaw/cmd/daemon/mooncode_runtime_service_restore.mbt)只读取既有配置、journal 和 continuation，最后调用同一个 `mooncode_start_runtime_service`。配置未启用时跳过；hosted 模式先完成既有模型路由 bootstrap；扫描与 HTTP 监听并行。不新增持久 registry、恢复队列、轮询调度器、状态机、模型或人工确认。
+
+| 输入事实 | 启动行为 | 继续由谁负责 |
+| --- | --- | --- |
+| 已接受的 prompt 落盘，service 尚未启动 | 自动启动普通 service，继续消费队列。 | 既有 claim fold 和 service。 |
+| service 正在执行时进程退出，或 daemon 关闭取消协程 | 用原 claim/checkpoint 继续；已记录工具结果按 operation identity 复用。 | 既有 continuation、ResumePoint、operation recovery。 |
+| 普通 service 收尾与新提交交错 | 发现未清空的普通队列并重新启动，覆盖命令先于 finish 落盘的窗口。 | 既有队列顺序与 service drain。 |
+| 未决审批；审批决定已落盘但尚未唤醒 service | 前者继续等待，后者续跑，不重新提问或新增确认。 | 既有审批事实与 continuation。 |
+| 已完成、用户取消、暂停/归档、失败或手动限次运行已结束 | 不因重启重新运行旧工作。新提交仍走普通 service。 | 既有终态 receipt、生命周期和 service 停止原因。 |
+
+service 事件只补一个 `auto_drain` 字段，区分普通队列消费与显式 `max_turns`。中断恢复保留 service/consumer 身份及 loop options；`max_turns` 仍是每次 service 调用的上限，不新增跨重启累计额度。重启时只对有待办的候选会话恢复绑定；真实权限、生命周期、执行租约仍在原边界处理。一个损坏会话记录诊断，不阻止其他会话或 HTTP 启动。已持有租约的其他进程保持执行权；这里是启动恢复，不新增跨进程自动接管服务。
+
+- [x] 移除“需要客户端重提才发现未完成任务”的启动缺口。
+- [x] 复用同一 journal → claim fold；不另写待办分类，service 事件筛选和普通队列续跑规则共用已有定义。
+- [x] 新 Daemon 实例的 `serve` 与执行中取消/重启回归：无需 `/turns` 或 service 请求，原写入只执行一次。
+- [x] 覆盖接受到启动的窗口、跨可信 Book 发现、非可信 Book 不执行、损坏邻居隔离、审批等待/已决与显式限次停点。
+
+成本：每次启动扫描配置内 active session 的 journal，成本随历史总量增长；不扫描任意磁盘，不在前台等待，也不建立新的索引/store。临时本地测量为 100 个已完成小会话加一个空 fixture 会话，连续两次扫描 **23 / 25 ms**，没有把已完成会话装入 daemon binding map；不含模型请求、历史生成或编译成本，不代表冷磁盘、大日志或生产恢复延迟。测量专用代码已删除。
+
+验证：MoonClaw native **1854/1854**、MoonDesk core JS **65/65**、真实 producer → consumer probe 通过；两仓 `moon info` / `moon fmt`、接口与空白检查通过，`.mbti` 无变化。65 个本地链接、11 个归档文件哈希核对通过。production `.mbt` 净增 **163 行**，测试净增 **287 行**，用于此前缺失的启动发现与既有测试扩展，不宣称本轮净删除；没有新的包、运行状态、常驻服务或人工步骤。未做真实 provider、进程强杀/断电或安装态性能资格验证。
 
 
 ### Data Model 与 Compute Engine 收敛记录

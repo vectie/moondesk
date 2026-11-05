@@ -19,6 +19,13 @@ records implemented interfaces and limits, plus OpenSeek/DSH/Pi comparisons.
 The [discussion archive](mooncode-discussion-2026-11-04/README.md) retains the
 original comparisons, revisions, and decisions.
 
+On daemon restart, MoonClaw discovers unfinished sessions in the current
+control configuration's trusted Books and resumes the existing runtime service
+without a desktop resubmission. It reuses journaled claims, continuations and
+tool results. Completed tasks, unresolved approvals, suspended/archived
+sessions and finished manual runs retain their existing stop semantics. This
+is one background startup pass, not a new scheduler or desktop recovery queue.
+
 MoonCode is the coding conversation mode for a MoonBook. The product has one
 ordered conversation, one durable owner, and one desktop projection:
 
