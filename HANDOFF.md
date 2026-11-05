@@ -60,9 +60,9 @@ into another completion gate, graph database or user-authored wiring workflow.
 - The synthesis's current plan is organized by Task, Execution, Context,
   Workspace, Tools, Journal, Completion, Projection and Telemetry. It replaces
   the rejected generic phases 0–5 with concrete responsibility/removal targets.
-  These module optimizations remain planned; the completed ten-item checklist
-  covers the earlier cleanup only. Prioritize removing keyword gates, forced
-  actions and repeated approval while keeping real authority/data contracts.
+  Task/Completion/Execution are now implemented; the other modules remain
+  planned. The older ten-item checklist covers the earlier tool cleanup.
+  Keep real authority/data contracts while removing redundant policy.
 - The design synthesis now contains a completed ten-item cleanup checklist
   and evidence. MoonClaw owns pure tool semantics in `internal/mooncode_tools`;
   MoonDesk continues to project canonical runtime facts, with no new UI phase.
@@ -75,6 +75,22 @@ into another completion gate, graph database or user-authored wiring workflow.
 - All 32 local design links resolve; November 4 archive hashes remain unchanged.
   No desktop runtime/UI code changed, installed-app update or live-model
   quality qualification was performed. Existing release warning debt remains.
+
+## Task Completion Execution cleanup 2026-11-05
+
+- The design checklist now marks Task, Completion and Execution complete;
+  Context/Workspace/Tools/Journal/Projection/Telemetry remain pending.
+- MoonClaw removed keyword-driven catalog/completion rules, the project-specific
+  dynamic skill gate, forced recovery reads and read/retry rejection policies.
+  Full requests and ordered task updates are preserved, and completion facts
+  are owned by the existing completion file. Required checks, fingerprints,
+  authorization, cancellation and journal recovery remain in place.
+- MoonClaw native 1899/1899, related recovery/control 118/118 and final focused
+  checks 20/20 passed. The real producer/consumer probe passed; interfaces are
+  unchanged. Production `.mbt` net -1122 lines; tests net -1069.
+- Documentation links and the unchanged November 4 archive were checked.
+  MoonDesk runtime/UI was not changed. Existing warning debt and the lack of
+  live-model/installed-app qualification remain; do not claim those passed.
 
 ## Validation 2026-11-04
 

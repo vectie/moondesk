@@ -291,7 +291,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 ## 按模块的减法优化计划
 
-以 MoonClaw `8b4c0f0d` 的运行实现为基线。上轮十项 checklist 已完成；以下是尚未实施的模块优化，替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
+以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；本轮已实现 Task、Completion、Execution 的减法，其余模块保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
 
 优化目标是让主 Agent 自主解决问题，运行时只承担确定的执行责任。用户约束、真实授权、资源隔离、数据完整性和明确要求的检查属于必要契约；从关键词猜要求、规定解题步骤、重复审批、双路径兼容以及为恢复制造额外状态，属于优先删除或收敛的对象。
 
@@ -313,9 +313,9 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有入口：`mooncode_runtime_horizon.mbt`、`mooncode_runtime_controls.mbt`、`mooncode_book_instructions.mbt` 和 `mooncode_runtime_model_planner.mbt`。
 
-- [ ] **删除** `requests_tests`、`requires_verification` 等英文关键词规则对完成条件的推导；删除通用 system 中 `dynamic_skill_gate_message` 的 MoonTown/MoonBit 专用政策，交还项目 AGENTS 与适用 skill。
-- [ ] **合并** 任务目标、修正和项目要求的组织逻辑，沿用现有任务修订；显式 required checks 保留其来源和约束，主 Agent 不能通过改计划消除要求。任务理解留在原有推理轮次，不增加规格生成 Agent 或确认表单。
-- [ ] **验收** 中英文表达同一请求不会得到不同硬门槛；“解释 fix 的含义”不被判成必须改代码；明确要求运行的测试仍然必须满足，后续修正不会丢失。
+- [x] **删除** `requests_tests`、`requires_verification` 等英文关键词规则对完成条件的推导；删除通用 system 中 `dynamic_skill_gate_message` 的 MoonTown/MoonBit 专用政策，交还项目 AGENTS 与适用 skill。
+- [x] **合并** 任务组织到既有 task contract，保留完整请求、项目上下文及有序修正；删除 prose marker/12k 输入截断和重复原文。修正复制 updates，不改写旧修订；显式 required checks 不被改计划消除，不增加规格生成 Agent 或确认表单。
+- [x] **验收** 中英文表达同一请求不会得到不同硬门槛；“解释 fix 的含义”不被判成必须改代码；显式 required checks 仍然必须满足，长请求及后续修正不丢失。
 
 保留真实用户要求，删除根据措辞猜出的额外要求。Task 不执行工具、不审批、不证明完成。
 
@@ -323,10 +323,10 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有入口：`mooncode_runtime_turn.mbt`、`mooncode_runtime_loop.mbt`、`mooncode_runtime_service.mbt`、`mooncode_parallel_reads.mbt`、active/pending cancellation。
 
-- [ ] **删除** `mooncode_runtime_turn_recovery_plan` 替换模型工具调用、强制大范围 read 的策略。编辑失败返回准确错误及可用的局部信息，主 Agent 自己选择补读、缩小修改或换方法；不伪造一条模型提出的调用。
-- [ ] **收敛** service 管生命周期，loop 取队列，turn 解释执行一次任务；保留有真实职责的边界，删除重复的执行报告拼装、取消转发和等待状态判断。内部区分结果事实与 Continue/Wait/Done，替换组合字段，不新增业务阶段。
-- [ ] **减轻去重干预**：安全重复观察优先复用仍适用的结果或返回提示；输入变化、压缩后缺失、瞬时失败后需要重试时允许执行。不将“相同参数再次出现”直接变成任务失败或人审。
-- [ ] **验收** patch 失败、检查失败、瞬时错误和空响应可以在原任务修复；用户 Stop 到达实际工具子任务。显式预算和取消有效，调度 quantum 只让出执行、不制造失败。
+- [x] **删除** `mooncode_runtime_turn_recovery_plan` 替换模型工具调用、强制大范围 read 的策略。编辑失败返回准确错误及可用的局部信息，主 Agent 自己选择补读、缩小修改或换方法；不伪造一条模型提出的调用。
+- [x] **收敛** service/loop/turn 的现有职责，复用一份终态 verdict，删除重复判定包装和 planner-mode/关键词分流。继续使用现有等待、暂停与取消控制；没有新增状态机，也不为减少行数删除不同资源的同步边界。
+- [x] **减轻去重干预**：删除按读取历史拒绝完整 read/shell 观察、按相同参数拒绝刚失败检查的策略。已保留证据作为指导，模型需要的安全观察和重试正常执行；同次 operation 的 journal 去重及已完成结果复用保留。
+- [x] **验收** 模型在同一任务修正编辑、重复读取并重试瞬时失败的检查；既有空响应、重启、取消和 quantum 回归通过。没有要求补一个成功动作、编辑或用户确认。
 
 同步放在保护真实资源的位置：session execution lease 保证一个执行所有者，工具子任务通过结构化并发 join/cancel。生命周期锁和 journal 锁保护不同对象，不能按名称相似直接删除，也不扩成工作区全局锁。
 
@@ -375,13 +375,17 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 ### 7 Completion 模块 减少验收的猜测与重复门槛
 
-现有入口：`mooncode_runtime_completion.mbt`，以及当前混在 `mooncode_runtime_model_planner.mbt` 中的 completion verdict、task intent 和 coding evidence 逻辑。
+现有入口：`mooncode_runtime_completion.mbt`。结果证据与 completion verdict 已从 planner 收拢到这里；显式 task intent 归入既有任务构造，coding evidence 配额被删除。
 
-- [ ] **合并** 为一处 finish 判定：当前任务的明确要求、必要检查、产物与版本事实。删除 planner 再次推断测试需求、`coding_evidence` 工具类别配额，以及多个调用方重复扫描同一结果历史的逻辑。
-- [ ] **删除通用错误后的补证动作要求**：一次可处理的读取失败不应强制再执行一个“成功工具”才能完成。必需检查失败、未解决的未知副作用和相关输入过时仍是具体缺口，返回同一 Agent 处理。
-- [ ] **验收** 回答、调研、无需修改、正常编码与 commit 后修复均可自然完成；明确要求的检查不能通过改计划绕开，过时检查不能冒充当前结果。
+- [x] **合并** 为一处 finish 判定：显式 required checks、产物和版本事实保留；删除关键词测试推断、`coding_evidence` 配额和终态重复 verdict 扫描。没有 accepted finish 的批次保留真实结果，但不宣告任务完成。
+- [x] **删除通用错误后的补证动作要求**：可处理的读取失败不强制再执行一个“成功工具”。明确检查失败、未知结果造成的旧证据失效及相关输入过时仍返回具体缺口；未知副作用不被自动重放。
+- [x] **验收** 回答、调研、无需修改、编码及 commit 后修复回归通过；显式检查不能用无关成功或改计划绕开，过时检查不能冒充当前结果。
 
 运行时不通过英文动词或工具类别判断用户问题是否解决。主 Agent 负责语义质量和选取合理验证；显式要求来自用户、项目规范及其实际任务上下文，不能靠删除代码一并删除。
+
+本轮实现证据：native 全量 1899/1899；相关恢复/取消/授权/任务回归 118/118；最终 task/completion/repair/catalog/parallel-read 检查 20/20；真实 MoonClaw producer → MoonDesk decoder probe 通过。新增的本地模型—sandbox 用例直接验证失败编辑后模型原计划不被替换、重复读取、瞬时检查重试和最终 required check；另有长任务输入及修订不互相改写的回归。旧英文分类、强制 read、重复调用拒绝和 prompt 句式测试随实现删除；重启用例改为显式声明其检查条件。
+
+MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completion helper 不算删减收益。既有 `.mbti` 未变；没有新增 package、状态机、模型轮次或人工确认。默认完整工具目录可能比旧的四工具纯聊天分支增加 schema 成本，仍可显式选择窄目录；保留原始任务会增加长输入体积，下一轮 Context 负责统一投影。以上是本地执行和协议证据，没有完成 live-provider 质量或安装态应用验证。
 
 ### 8 Projection 模块 减少展示对执行的反向约束
 
@@ -405,7 +409,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 每个模块都按“移除一条多余策略 → 走通实际行为 → 删除旧实现与专属测试”交付。模块化必须消除重复责任或便于独立验证，单纯搬文件不算完成。除真实的外部契约外，不保留旧实现兼容路径；不以新增状态、抽象层、人工确认或大批镜像测试换取删行数。
 
-以上模块计划均未实施。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
+Task、Completion、Execution 的本轮勾选项已实施；Context、Workspace、Tools、Journal、Projection、Telemetry 仍待实施。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
 
 
 ## 源码与参考资料
