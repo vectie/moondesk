@@ -291,7 +291,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 ## 按模块的减法优化计划
 
-以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；已实现 Task、Completion、Execution，并完成 Tools/Workspace 的首轮减法；剩余细项按下方 checklist 保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
+以 MoonClaw `8b4c0f0d` 的运行实现为设计基线。上轮十项 checklist 已完成；已实现 Task、Completion、Execution、Tools ABI 与原生 Workspace 身份/条件写入；进程级 Workspace 隔离及其余细项按下方 checklist 保持待办。这份模块计划替换此前以评测、发布顺序组织的 phases 0–5。模块按职责和数据契约划分，不要求增加九个 package，更不增加九层调用或新的运行框架。
 
 优化目标是让主 Agent 自主解决问题，运行时只承担确定的执行责任。用户约束、真实授权、资源隔离、数据完整性和明确要求的检查属于必要契约；从关键词猜要求、规定解题步骤、重复审批、双路径兼容以及为恢复制造额外状态，属于优先删除或收敛的对象。
 
@@ -346,9 +346,10 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 现有入口：`mooncode_tools.mbt` 的读写/patch、`mooncode_task_scope.mbt`、`mooncode_moon_fmt_scope.mbt`、现有 book 路径解析与文件引用。
 
 - [x] **合并现有重复路径**：单/多文件 unified diff 共用 patchset 执行器，每个文件只在该执行器读取一次；task scope 每次调用解析一次，直接文件 scope 与工具使用同一个 book-relative 解析规则。删除通用文件工具的 MoonBit manifest 语法门槛；复用既有文件/检查引用。
-- [ ] **完成资源身份收敛**：后续统一 symlink/实际资源身份与重复文件版本读取；当前路径规范化仍是 lexical，不宣称已经实现并发事务或完整文件边界抽象。
+- [x] **收敛资源身份**：读写、scope、并行读取去重、检查输入、formatter selector 与 Moon 命令使用共用的真实路径解析；新文件解析最近的已存在父目录，拒绝越界和 dangling symlink。检查凭据记录 absolute_path，别名改指向同内容的其他文件也使旧检查失效。纯 lexical helper 只承担路径/argv 排版，不提供授权证明。
 - [x] **删除全局工具偏好禁令**：保留 exact grant、既有路径与窄 scope 检查，移除“重定向、sed、inline interpreter 一律不能写文件”等强制改用某个工具的规则及仅服务这些禁令的解析。项目自身明确要求的 `.mbtx` 或编辑方式仍按项目规范执行。
-- [ ] **验收** 授权内的文件编辑与脚本生成可自主完成；过期 old text、越权路径、部分 patch 失败和并发文件变化仍有准确结果，不能覆盖不相关工作。
+- [x] **原生写入并发验收**：write/edit/patch 共用文件级稳定锁、内容比较和同目录 staging/rename；不同文件不串行。write 可带 read 返回的 expected_fingerprint，不强制增加读步骤。多文件 patch 只回滚本次已提交成员，恢复也比较当前内容；外部改动被保留，部分恢复返回明确 metadata，测试覆盖过期版本、竞争写入、权限位与未执行成员。
+- [ ] **进程级隔离收尾**：任意 shell/formatter 不参加原生文件锁，现有 grant 没有 per-task writable-path 字段；窄范围快照仍不能归因并隔离执行期间的全部外部变化。保留事实错误与条件恢复，不宣称工作区级事务，也不新增全局工作区锁、人审或文件状态数据库。
 
 保留原子写入、必要的旧内容匹配和实际权限范围。不同写入入口必须报告足够的变更事实以使旧检查失效；不会先删保护，再用“sandbox 应该会挡住”代替验证。
 
@@ -357,19 +358,25 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 现有入口：`internal/mooncode_tools`、`mooncode_runtime_approvals.mbt`、`mooncode_execution_sandbox_gate.mbt`、`mooncode_process_tools.mbt`、MCP 与 provider transport。
 
 - [x] **删除按命令名一律要求人审的分支**，例如 commit 或任意非只读 shell 自动要求批准。执行入口显式携带并核对现有授权范围；已有用户/宿主授权覆盖的操作直接执行，显式审批继续等待；超出配置的权限直接返回拒绝，Agent 可换方法或沿现有用户交互解决，不新增扩权流程。不能从模型的 `planner`、`approval` 或“安全”声明生成授权。
-- [ ] **收敛 ABI**：schema/参数在调用边界验证，实际 grant 在执行边界验证，结果在 provider 适配处规范化。删除内部反复解析、重复 preflight 和重复工具名单；保留这些不同边界的必要检查。
+- [x] **收敛 ABI**：既有 native catalog 提取为唯一缓存 schema 来源，模型解码、审批前和最终执行复用同一个类型/required/enum/嵌套参数校验；错误不再被默认值吞掉。opaque grant 独立于模型参数，执行边界仍核对实际配置和 exact plan。删掉独立 supported-tool 名单、旧请求 envelope alias、隐式 patch 验证子调用及两仓的影子工具政策表；结果复用既有 event/envelope 与 provider 适配，不加另一层工具框架。
 - [x] **缩小 shell 分析职责**：只保留执行、结果解释、并发或现有安全边界确实消费的语义，移除被上述策略删除淘汰的词表与解析分支。保留检查退出状态的真实性，不因模型填写了 `verification_kind` 就把任意命令算作检查。
 - [x] **验收** 现有 runtime 用例已取消预置审批/plan，自动执行 commit、重定向、sed 和 `.mbtx` 生成后验证并 finish；显式审批/驳回/重启、grant 匹配及取消/未知效果回归保留。权限缺失仍拒绝，planner 标签不能免除显式审批。
 
-本轮另外删除 `local_operation/local_validation` 两个审批属性及 sensitive/install/overwrite/inline-authoring 解析，保留只读并发判定、真实检查退出状态和必要 scope 分析。shell 初始执行/配置执行合并为一个入口，计划构造与最终执行复用同一 preflight；ABI 全面收敛仍未勾选。
+本轮另外删除 `local_operation/local_validation` 两个审批属性及 sensitive/install/overwrite/inline-authoring 解析，保留只读并发判定、真实检查退出状态和必要 scope 分析。shell 初始执行/配置执行合并为一个入口，计划构造与最终执行复用同一 preflight；ABI 后续收敛已完成，见下文。
 
 可写 shell 的检查失效复用原有只读执行属性：不能证明为观察的 shell 不沿用旧检查；receipt 的 changed_paths 纳入后续检查输入。原 mutation_states 仅为收集路径构造伪 before/after 状态，现已改为直接返回路径，减少实现。
 
-Workspace 的全工作区 scope 不再扫描 Git；窄 scope 的快照失败现在先拒绝再执行。窄范围/局部 fmt 的整树快照与回滚尚未消除，跨 session/外部编辑隔离也未完成，因此对应验收仍待办。不能把“脚本现在可执行”写成这些剩余约束已解决。
+Workspace 的全工作区 scope 不扫描 Git；窄 scope 的快照失败先拒绝再执行。原生写入按 canonical root + path 使用已有 OS 文件锁，替换文件 inode 不会绕开锁；既有 scope 恢复也用相同的条件写入。窄范围/局部 fmt 的快照成本和进程级外部变化归因仍待办，不能把原生文件锁写成任意进程或整个工作区的事务隔离。
 
 此模块不是新增授权服务。具体命令仍使用真实 sandbox grant；减少的是重复人的决策，不是绕过隔离、取消或执行证据。
 
 Tools/Workspace 本轮证据：最终 native 1892/1892；completion/fmt/repair 17/17；真实 producer → decoder probe、info/fmt 与文档链接检查通过。生产 MoonBit 净减 568 行，测试净减 447 行；internal tool interface 仅删除淘汰属性/函数。全工作区 scope 少一次完整前后 Git 快照；窄 scope 仍有整树成本。没有新增 package、状态机、人审步骤或模型调用；既有六项 daemon warning 与 live-provider/安装态未验证的限制保留。11 个历史归档哈希不变。
+
+ABI/Workspace 后续实现：两仓各约 800 行的旧 native_command_execution 策略被删除，capability 中只保留实际协议和 owner 信息；不再发布旧工具顺序、全局 review、manifest 语法或重复 result checklist。MoonClaw 的 schema、opaque grant 和 execution result 各自保留必要边界。具体实现位于 [工具目录](../../moonclaw/cmd/daemon/mooncode_tool_catalog.mbt)、[ABI 参数校验](../../moonclaw/internal/mooncode_tools/arguments.mbt) 和 [Workspace 文件边界](../../moonclaw/cmd/daemon/mooncode_workspace.mbt)。
+
+性能与保证：schema 在进程内构造一次；普通原生写入不增加 Git 或模型调用，但要读取/比较目标内容并暂存新内容，成本随该文件大小增长。CAS 比较复用现有 Book resource reader，保留其 16 MiB 文本上限；保留 rwx 权限，不承诺 inode、owner/xattr 或跨文件 crash transaction。rename 提供单文件替换原子性，没有宣称 fsync/power-loss durability。文件锁协调原生写入，非协作进程在最后比较之后仍可竞争；恶意目录替换的全面防护、shell/fmt 隔离和快照成本是未完成的边界。
+
+本次验证：MoonClaw native 1890/1890、MoonDesk native 1733/1733、协议核心 JS 66/66、真实 producer → decoder probe 均通过。两仓 info/fmt 与接口差异检查通过；仅保留既有六项 daemon warning。生产 MoonBit 合计净减 1695 行（Claw -901、Desk -794）；测试净增 66 行，旧政策/隐式调用测试由四个实际边界回归替代，目录搬移不计作删除。40 个本地链接、11 个历史归档哈希已核对；未进行 live-provider 或安装态应用验证。
 
 ### 6 Journal 模块 减少恢复与持久化的重复成本
 
@@ -418,7 +425,7 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 每个模块都按“移除一条多余策略 → 走通实际行为 → 删除旧实现与专属测试”交付。模块化必须消除重复责任或便于独立验证，单纯搬文件不算完成。除真实的外部契约外，不保留旧实现兼容路径；不以新增状态、抽象层、人工确认或大批镜像测试换取删行数。
 
-Task、Completion、Execution 与 Tools/Workspace 的已勾选项已实施；Tools 的 ABI 收敛、Workspace 的资源身份/并发隔离及未勾选的其他模块继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
+Task、Completion、Execution 与 Tools/Workspace 的已勾选项已实施；Tools ABI 与原生 Workspace 身份/条件写入已实现；进程级写入隔离和未勾选的其他模块继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
 
 
 ## 源码与参考资料
