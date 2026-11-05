@@ -77,6 +77,13 @@ now uses one default context projection and one recovery-position decoder.
 The desktop continues to consume canonical conversation facts. Compaction does
 not erase journaled results or create a new confirmation step. General lookup
 of omitted history by evidence ID remains unfinished.
+
+The runtime also owns [canonical watch](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md).
+MoonDesk adapts its session metadata and passes exact cursors through to the
+existing renderer; it no longer downloads raw event streams to construct watch
+responses. Canonical usage comes from existing planner observations, including
+empty responses and recovery. The synchronous telemetry exporter was removed.
+Dedicated graph presentation and production outcome/cost baselines remain planned.
 11. Approval and cancellation commands are control-plane records, not chat
     turns. Approval renders as a stable work step inside its owning turn.
 12. Stop is offered only for canonical unfinished work and must interrupt the

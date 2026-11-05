@@ -39,6 +39,8 @@ restart should lead to automatic repair or recovery where possible.
 | Conversation | User input appears immediately. Work is shown only from runtime facts. Canonical turn identity and ordering survive refresh. |
 | Concurrent responses | Stale, cross-session, or compact listing responses cannot overwrite a newer selected conversation or draft. |
 | Connection failure | Reconnect retains the last accepted state; failure is distinct from a successful empty result. |
+| Canonical watch | MoonClaw owns snapshots and exact journal revision strings. The desktop adapts metadata without raw-event replay or event-count cursors; unchanged waits return no transcript. Existing generation checks reject stale sessions. |
+| Measured usage | Existing planner events retain observed tokens, latency and retry counts, including empty responses. Compacted plans and repeated receipts do not erase or duplicate usage; missing usage and prices cannot become measured zero or invented fees. No exporter is on the execution path. |
 | Cancellation | Stop names the active command and reaches the runtime. A UI timer cannot claim an operation was cancelled. |
 | Session lifecycle | Rename, archive, restore, and deletion follow runtime state; deleting a session does not delete MoonBook files. |
 

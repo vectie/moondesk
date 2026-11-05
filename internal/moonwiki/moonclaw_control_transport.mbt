@@ -145,25 +145,6 @@ async fn moonclaw_get_json_with_control_config(
 }
 
 ///|
-async fn moonclaw_get_text_with_control_config(
-  daemon : Json,
-  path : String,
-  config : SourceSemanticsSandboxClientConfig,
-) -> Result[String, String] {
-  let port = json_int(daemon, "port", default=0)
-  guard port > 0 && path.has_prefix("/v1/") else {
-    return Err("MoonClaw control endpoint is not available")
-  }
-  let (response, data) = @http.get(
-    "http://127.0.0.1:\{port}\{path}",
-    headers=moonclaw_control_headers(config),
-  ) catch {
-    _ => return Err("MoonClaw GET \{path} failed")
-  }
-  moonclaw_control_response_text(response, data, config, "GET \{path}")
-}
-
-///|
 async fn moonclaw_post_json_with_control_config(
   daemon : Json,
   path : String,

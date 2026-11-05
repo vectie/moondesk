@@ -331,16 +331,3 @@ test "typed watch encoder emits canonical v2 snapshot heartbeat and rejects loca
     assert_true(@core.encode_mooncode_watch_result(state) is Err(Malformed(_)))
   }
 }
-
-///|
-test "native stream cursor preserves a sequence larger than Int" {
-  let current = @core.mooncode_watch_origin_cursor()
-  let stream = [
-    "{\"type\":\"meta\",\"next_since\":\"8\"}", "{\"type\":\"event\",\"sequence\":\"9\"}",
-    "{\"type\":\"done\",\"sequence\":\"9223372036854775810\",\"next_since\":\"9223372036854775810\"}",
-  ].join("\n")
-  assert_true(
-    @core.decode_mooncode_stream_cursor(stream, current~) is Ok(cursor) &&
-    cursor.sequence() == "9223372036854775810",
-  )
-}

@@ -1324,18 +1324,6 @@ async fn moonclaw_get_json(
 }
 
 ///|
-async fn moonclaw_get_text(
-  daemon : Json,
-  path : String,
-) -> Result[String, String] {
-  let config = match moonclaw_load_control_config(daemon) {
-    Ok(value) => value
-    Err(error) => return Err(error)
-  }
-  moonclaw_get_text_with_control_config(daemon, path, config)
-}
-
-///|
 async fn moonclaw_post_json(
   daemon : Json,
   path : String,

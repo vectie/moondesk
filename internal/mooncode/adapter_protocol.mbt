@@ -282,18 +282,16 @@ pub fn moonclaw_native_runtime_service_endpoint(
 }
 
 ///|
-pub fn moonclaw_native_stream_endpoint(
+pub fn moonclaw_native_watch_endpoint(
   session_id : String,
   book_root : String,
-  format : String,
   cursor : @mooncode_core.MoonCodeWatchCursor,
   wait_ms~ : Int32 = 0,
   poll_ms~ : Int32 = 100,
 ) -> String {
-  adapter_native_endpoint(["v1", "code", "sessions", session_id, "stream"], query=[
+  adapter_native_endpoint(["v1", "code", "sessions", session_id, "watch"], query=[
     ("book_root", book_root),
-    ("format", format),
-    ("since", cursor.sequence()),
+    ("since_revision", cursor.revision()),
     ("wait_ms", wait_ms.to_string()),
     ("poll_ms", poll_ms.to_string()),
   ])

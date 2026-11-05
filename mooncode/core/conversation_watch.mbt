@@ -353,51 +353,6 @@ pub fn decode_mooncode_watch_text(
 }
 
 ///|
-pub fn decode_mooncode_stream_cursor(
-  text : String,
-  current~ : MoonCodeWatchCursor,
-) -> Result[MoonCodeWatchCursor, MoonCodeFailure] {
-  let mut next = current
-  for line in text.split("\n") {
-    let trimmed = line.trim().to_owned()
-    if trimmed != "" {
-      let record = @json.parse(trimmed) catch {
-        error => return Err(Malformed("invalid stream record: \{error}"))
-      }
-      guard record is Object(fields) else {
-        return Err(Malformed("stream record must be an object"))
-      }
-      let type_ = match watch_required_string(fields, "type") {
-        Ok(value) => value
-        Err(reason) => return Err(Malformed(reason))
-      }
-      let sequence_key = if type_ == "meta" { "next_since" } else { "sequence" }
-      if type_ == "meta" || type_ == "event" || type_ == "done" {
-        let sequence = match fields.get(sequence_key) {
-          Some(String(value)) if watch_sequence_is_canonical(value) => value
-          Some(_) =>
-            return Err(
-              Malformed(
-                "stream \{sequence_key} must be a canonical nonnegative decimal string",
-              ),
-            )
-          None => return Err(Malformed("stream \{sequence_key} is required"))
-        }
-        next = watch_advance_cursor(
-          next,
-          next.revision,
-          sequence,
-          accept_revision=false,
-        )
-      } else {
-        return Err(Malformed("stream type is unsupported"))
-      }
-    }
-  }
-  Ok(next)
-}
-
-///|
 pub fn conversation_watch_response_for_cursor(
   session_id~ : String,
   cursor~ : MoonCodeWatchCursor,

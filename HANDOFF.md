@@ -5,6 +5,29 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Projection/Telemetry cleanup 2026-11-05
+
+- Canonical watch moved to MoonClaw's existing session/journal projection.
+  MoonDesk resolves the Book and adapts session metadata, preserving exact
+  revision strings and runtime status. Do not restore raw-event downloads,
+  event-count cursors or a desktop completion/replay reducer.
+- Removed unused typed resume, replay/cursor trial code, synchronous metrics
+  exporter and export-only SDK method. Planner observations reuse existing
+  final events; canonical usage no longer depends on compacted historical plans
+  or repeated receipts. Distinct responses reuse the daemon UUID source because
+  timestamps can repeat. Missing usage/prices remain unmeasured/unpriced.
+- Snapshot rebuild still reads full history; metadata polling and a temporary
+  command index reduce repeated work without another projection cache. Dedicated
+  graph UI, complete dependency edges and live outcome/cost baselines remain
+  unchecked in the synthesis. No new state machine, store or human gate.
+- Validation: Claw native 1862/1862; Desk native 1729/1729; core JS 65/65;
+  UI watch/usage 108/108; real producer/consumer probe passed. Info/fmt and
+  interface review passed. Code/tests net -2046 lines (-1307 production,
+  -739 tests). 42 local links and 11 unchanged archive hashes checked.
+- Runtime and desktop both advertise the watch endpoint; update them together.
+  Existing warning debt and lack of installed-app/live-provider qualification
+  remain. The SDK stream cursor/export methods were intentionally removed.
+
 ## Context/Journal cleanup 2026-11-05
 
 - MoonClaw uses the existing context compiler by default for initial and

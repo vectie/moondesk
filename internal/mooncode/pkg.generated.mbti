@@ -68,9 +68,9 @@ pub fn moonclaw_native_session_show_endpoint(String, String) -> String
 
 pub fn moonclaw_native_skills_endpoint(String) -> String
 
-pub fn moonclaw_native_stream_endpoint(String, String, String, @core.MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
-
 pub fn moonclaw_native_turn_endpoint(String) -> String
+
+pub fn moonclaw_native_watch_endpoint(String, String, @core.MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
 
 pub fn mooncode_negotiated_runtime_readiness(Json) -> Json
 

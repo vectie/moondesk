@@ -411,19 +411,25 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 ### 8 Projection 模块 减少展示对执行的反向约束
 
-现有入口：MoonClaw `mooncode_conversation_projection.mbt`、stream/watch；MoonDesk `mooncode_session_watch_commands.mbt`、canonical conversation 解码与渲染。动态图尚未实现。
+现有入口：MoonClaw `mooncode_conversation_projection.mbt`、`mooncode_conversation_watch.mbt`；MoonDesk `mooncode_session_watch_commands.mbt`、canonical conversation 解码与渲染。专门的动态图界面尚未实现。
 
 - [ ] **只增加最小图投影**：利用已有任务、调用、结果、产物和检查引用，边执行边形成历史；计划节点可变，执行事实不改写。缺少依赖时保持未知，不要求先生成完整 DAG。
-- [ ] **删除被替换的重复展示/传输路径**，先复用 canonical watch；只有实测需要时才用 typed stream 替换。MoonDesk 不增加事件重放和完成 reducer，图不成为新的执行数据库。
+- [x] **删除被替换的重复展示/传输路径**：canonical watch 由 MoonClaw 从原 journal 构建，MoonDesk 只适配 session metadata。删除未被桌面使用的 typed resume、游标 codec、replay spool 与指标；删除桌面“取快照→下载原始事件只为取游标→再取快照”的路径、重复 watch 构造与 Int32/event count 游标。既有 UI codec、导航取消与 generation 检查复用，不增加事件重放或完成 reducer。
 - [ ] **验收** 无需用户连线或批准图，关闭图仍能执行；刷新/重连可重建，能定位失败和打开产物；增量更新与按需展开控制渲染成本，不为绘图调用模型。
+
+本轮完成传输/投影减法，未把既有 work steps 冒充已交付的图界面。原始诊断 JSONL/SSE 保留；桌面只用 watch。实际 HTTP 回归覆盖鉴权、snapshot/heartbeat，追加唤醒与相同游标重连不重放；大十进制 revision 经过 metadata adapter 和实际 UI codec。turn 数组保序，单次投影用临时 command-id 索引，避免每条 event/receipt 都遍历全部 turn。等待期间只检查文件 metadata，不逐次解码 journal；初次和等待后的最终读取仍重建完整 canonical snapshot，变更响应仍传完整会话，不宣称增量缓存或常数重建成本。[当前 watch 契约](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md) 取代旧 typed-resume 说明。动态图与完整依赖分析继续未勾选，不增加图存储、模型调用、连线或审批流程。
 
 ### 9 Telemetry 模块 减少评测对正常执行的侵入
 
 现有入口：`mooncode_planner_metrics*.mbt`、现有 harness/replay 和任务结果记录。
 
-- [ ] **合并** 已有用量、错误、延迟与结果引用的采集；删除无消费者的 trial/export 包装和按旧策略计数的指标，不新增常驻评测服务或额外模型评审。
+- [x] **合并** 用量/延迟/重试采集：首次规划、follow-up 和空响应复用同一 collector，观察值附到已有最终 planner event；canonical usage 从这些事实汇总。删除同步 MoonGate exporter、环境开关、export 专用 SDK method、两套 configured/effective 大小统计、工具名副本和派生 cache ratio；实际工具错误/结果引用沿原事件，不另造评测阶段或服务。
 - [ ] **用真实任务验证改动**，保留错误完成、用户接管、返工、成本、启动/构建/交互耗时；实际 badcase 回流最小测试。评测是开发验证，不是每项任务的执行阶段。
-- [ ] **验收** 无遥测 exporter 或评测服务时正常执行；指标缺失不变成任务失败，缺少价格/结果依据时不伪造费用或成功率。
+- [x] **验收** 无遥测 exporter 或评测服务时正常执行；指标缺失不变成任务失败，缺少价格/结果依据时不伪造费用或成功率。恢复、重复 receipt 和空响应的本地回归覆盖实际用量；不从普通工具成功推断任务成功率。
+
+用量不再依赖会被压缩的历史 planner steps，也不被后续 receipt 覆盖。观察复用 daemon UUID，避免时间戳相同的不同响应被日志去重；每轮仍只追加原来已有的 planner event，无额外 fsync 或网络等待。collector 记录 compiled request/schema 大小、provider 明报 tokens/cache、model call 的 wall elapsed time 与外层 retry 次数。缺失/非法 usage 不当作已测零；缺少价格不估费用。它不覆盖未返回 usage 的计费尝试或 transport 内部 fallback，request_chars 也不是 provider 最终 HTTP body 大小。现有 harness/replay 保留；真实线上交付成功率、用户接管、返工、费用及启动/构建/交互基线尚未建立，第二项不勾选。
+
+Projection/Telemetry 本轮验证：MoonClaw native **1862/1862**，MoonDesk native **1729/1729**，协议核心 JS **65/65**，UI watch/usage **108/108**，真实 producer → decoder probe 均通过。既有重启任务覆盖提前 finish 被拒、连续两次空响应、重启、写入/检查/完成，6 次模型响应统计为 600 input/60 output tokens，写入只执行一次。两仓 info/fmt、空白检查及接口差异核对通过；公开差异仅增加 watch endpoint、移除弃用的流游标/endpoint builder 与 export 专用 SDK method。生产 MoonBit 合计净减 **1307 行**（Claw -954、Desk -353），测试净减 **739 行**，合计 **2046 行**。42 个本地链接、11 个历史归档哈希核对通过。保留既有 warning；没有新增 package、状态机、持久 store、模型轮次或人工确认；未做安装态应用、live-provider 或生产性能/质量资格验证。
 
 ### 实施顺序与删除标准
 
@@ -431,7 +437,7 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 每个模块都按“移除一条多余策略 → 走通实际行为 → 删除旧实现与专属测试”交付。模块化必须消除重复责任或便于独立验证，单纯搬文件不算完成。除真实的外部契约外，不保留旧实现兼容路径；不以新增状态、抽象层、人工确认或大批镜像测试换取删行数。
 
-Task、Completion、Execution 与 Tools/Workspace 的已勾选项已实施；Tools ABI 与原生 Workspace 身份/条件写入已实现；进程级写入隔离和未勾选的其他模块继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
+Task、Completion、Execution、Context/Journal 及 Tools/Workspace 的已勾选项已实施；本轮 Projection canonical watch 和 Telemetry collector 完成减法。按 evidence ID 回取历史原文、进程级写入隔离、动态图界面、完整依赖分析及真实线上结果/成本基线继续待办。回归任务和安装态检查沿用现有工程流程，不再作为一组独立产品 phase 阻塞这些精简。
 
 
 ## 源码与参考资料
@@ -439,7 +445,7 @@ Task、Completion、Execution 与 Tools/Workspace 的已勾选项已实施；Too
 ### 当前源码入口
 
 - MoonClaw：[主 Agent 与模型边界](../../moonclaw/cmd/daemon/mooncode_runtime_model_planner.mbt)、[任务上下文](../../moonclaw/cmd/daemon/mooncode_runtime_horizon.mbt)、[工具语义模块](../../moonclaw/internal/mooncode_tools/policy.mbt)、[continuation](../../moonclaw/cmd/daemon/mooncode_runtime_continuation.mbt)、[调用恢复](../../moonclaw/cmd/daemon/mooncode_runtime_operations.mbt)、[完成检查](../../moonclaw/cmd/daemon/mooncode_runtime_completion.mbt)。
-- 后续计划入口：[压缩默认行为](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md)、[知识检索](../../moonclaw/cmd/daemon/mooncode_knowledge_context.mbt)、[planner 指标](../../moonclaw/cmd/daemon/mooncode_planner_metrics.mbt)、[typed resume stream](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md)、[桌面 canonical watch](../ui/rabbita-desk/main/mooncode_session_watch_commands.mbt)。
+- 相关入口：[压缩默认行为](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md)、[知识检索](../../moonclaw/cmd/daemon/mooncode_knowledge_context.mbt)、[planner 指标](../../moonclaw/cmd/daemon/mooncode_planner_metrics.mbt)、[canonical watch](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md)、[桌面 watch 消费](../ui/rabbita-desk/main/mooncode_session_watch_commands.mbt)。
 - OpenSeek：[工具与控制类型](../../openseek/agent_tool/agent_tool.mbt)、[Session 数据](../../openseek/agent_session/types.mbt)、[消息投影](../../openseek/agent_session/projection.mbt)、[存储](../../openseek/agent_session/store/store.mbt)。
 - DSH：[工具契约](../../dsh/packages/core/tools/src/contracts.ts)、[批次执行](../../dsh/packages/core/tools/src/batch.ts)、[恢复](../../dsh/packages/core/session/src/repair.ts)、[存储接口](../../dsh/packages/session/session-persistence/src/handle.ts)、[派生状态](../../dsh/packages/session/session-projection/README.md)、[文件接口](../../dsh/packages/fs/fs/src/types.ts)、[默认组合](../../dsh/packages/bundle/base/cordis.patch.yml)。
 - Pi：[轻量循环](../../pia/packages/agent/src/agent-loop.ts)、[类型边界](../../pia/packages/agent/src/types.ts)、[会话树](../../pia/packages/coding-agent/src/core/session-manager.ts)、[文件修改队列](../../pia/packages/coding-agent/src/core/tools/file-mutation-queue.ts)、[实验性 Durable](../../pia/packages/durable/README.md)、[Durable 工具恢复](../../pia/packages/durable/src/harness/tool.ts)。

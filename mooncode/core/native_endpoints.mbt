@@ -11,6 +11,7 @@ priv struct NativeCapabilityEndpoints {
   runtime_control : String
   runtime_claim : String
   stream : String
+  watch : String
   runtime_turn : String
   runtime_loop : String
   runtime_service : String
@@ -33,6 +34,7 @@ fn native_capability_endpoints() -> NativeCapabilityEndpoints {
     runtime_control: "/v1/code/sessions/<id>/runtime-control?book_root=<path>",
     runtime_claim: "/v1/code/sessions/<id>/runtime-claim?book_root=<path>",
     stream: "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+    watch: "/v1/code/sessions/<id>/watch?book_root=<path>&since_revision=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
     runtime_turn: "/v1/code/sessions/<id>/runtime-turn?book_root=<path>",
     runtime_loop: "/v1/code/sessions/<id>/runtime-loop?book_root=<path>",
     runtime_service: "/v1/code/sessions/<id>/runtime-service?book_root=<path>",
@@ -58,6 +60,7 @@ fn NativeCapabilityEndpoints::required_endpoints(
     self.runtime_control,
     self.runtime_claim,
     self.stream,
+    self.watch,
     self.runtime_turn,
     self.runtime_loop,
     self.runtime_service,
@@ -257,44 +260,6 @@ fn native_runtime_claim_endpoint(
   native_endpoint_url(["v1", "code", "sessions", session_id, "runtime-claim"], query=[
     ("book_root", book_root),
   ])
-}
-
-///|
-fn native_stream_endpoint_raw(
-  session_id : String,
-  book_root : String,
-  format : String,
-  since : String,
-  wait_ms~ : Int32 = 0,
-  poll_ms~ : Int32 = 100,
-) -> String {
-  native_endpoint_url(["v1", "code", "sessions", session_id, "stream"], query=[
-    ("book_root", book_root),
-    ("format", format),
-    ("since", since),
-    ("wait_ms", "\{wait_ms}"),
-    ("poll_ms", "\{poll_ms}"),
-  ])
-}
-
-///|
-#warnings("-unused_value")
-fn native_stream_endpoint_for_cursor(
-  session_id : String,
-  book_root : String,
-  format : String,
-  cursor : MoonCodeWatchCursor,
-  wait_ms~ : Int32 = 0,
-  poll_ms~ : Int32 = 100,
-) -> String {
-  native_stream_endpoint_raw(
-    session_id,
-    book_root,
-    format,
-    cursor.sequence(),
-    wait_ms~,
-    poll_ms~,
-  )
 }
 
 ///|

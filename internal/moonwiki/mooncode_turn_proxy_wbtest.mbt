@@ -247,20 +247,3 @@ test "session listing joins MoonClaw rows to the actual MoonBook catalog" {
   let general = moonclaw_runtime_listing_row_with_workspace(row, [])
   assert_eq(json_string(general, "workspace_id", default="missing"), "")
 }
-
-///|
-test "canonical stream resumes from the greatest durable sequence" {
-  let stream = [
-    "{\"type\":\"meta\",\"next_since\":\"8\"}", "{\"type\":\"event\",\"sequence\":\"9\"}",
-    "{\"type\":\"done\",\"sequence\":\"9223372036854775810\",\"next_since\":\"9223372036854775810\"}",
-  ].join("\n")
-  let current = @mooncode_core.mooncode_watch_cursor("4", "2")
-  let decoded = mooncode_native_stream_cursor(stream, current)
-  match decoded {
-    Ok(cursor) => {
-      assert_eq(cursor.revision(), "4")
-      assert_eq(cursor.sequence(), "9223372036854775810")
-    }
-    _ => fail("expected advanced native stream cursor")
-  }
-}
