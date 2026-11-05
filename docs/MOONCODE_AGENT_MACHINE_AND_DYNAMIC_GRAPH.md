@@ -86,6 +86,27 @@
 
 启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
 
+### 八项复审：投影读取与流式 I/O（2026-11-05）
+
+运行时实现提交：MoonClaw `300922ea`（`main`）。
+
+复审基线：MoonClaw `6f612243`、MoonDesk `80dab536`。本轮找到两个实际重复：raw stream 的内存 replay/serializer 只被旧测试调用；即时重放先读一遍 summary 再读 spool，而前一遍结果没有消费者。桌面 capability 协商还会对同一响应重复 decode/检查，再把 JSON 状态对象转换回 Boolean。沿既有 [scanner](../../moonclaw/cmd/daemon/mooncode_stream.mbt)、[spool](../../moonclaw/cmd/daemon/mooncode_stream_spool.mbt) 和 [capability adapter](../internal/mooncode/adapter_capabilities.mbt) 收敛，不增加机制。
+
+- [x] **Process/Thread**：等待和响应继续属于原 HTTP async scope，零等待直接进入 spool；复用已有 daemon 测试夹具，删除另一份构造器。主 Agent、队列、service 与取消路径保持。
+- [x] **Memory**：删除只用于对照旧测试的整数组 stream builders；实际等待仍只保留 scalar summary，spool 按选中记录写入。不把删除冷代码说成热路径内存降幅；Context compiler 与 continuation 没有另建路径。
+- [x] **Filesystem**：继续复用临时 spool、文件清理与既有 Book/session 路径；原生文件工具的身份、CAS 和条件写入保持，本轮没有新文件存储或工作区索引。
+- [x] **I/O**：摘要与 spool 共用一套 journal 扫描逻辑；`wait_ms=0` 删除冗余预扫描。实际 JSONL/SSE frame 和 public contract 不变，移除另一套内存 encoder 及一行写入转发包装。
+- [x] **Synchronization**：session/journal 锁的获取、尾部修复和解析归同一 scan 入口；回调只输出本地 spool，HTTP 发送在锁外。不把网络慢消费者放进持锁区，也不合并不同资源的锁。
+- [x] **Fault tolerance**：重连仍从已接受的真实 journal cursor 继续；实际 HTTP 回归覆盖尾部/超大游标不倒退、无重复事件和出错前不发送 200。启动自动续跑、当前取消身份和未知效果处理保留。
+- [x] **Data model**：游标只来自 journal envelope，删除事件数组位置的测试旁路降级；验证 payload 的 journal_sequence 不能覆盖物理位置。桌面只 decode 一次 capability，并复用 typed value 作已有 readiness 判断，不新增状态或字段。
+- [x] **Compute engine**：复用 scanner 的可选本地输出，不建立新的投影引擎或执行图调度器。Capability 的 Boolean 和 JSON 展示共用一个既有判定；接受条件及错误分类保持，不重复生成/解析状态 JSON。
+
+删除六个仅验证旧内存 stream 路径的测试；扩展现有 spool/HTTP 回归，直接检查真实 journal、frames 和重连，不再通过另一个 producer 证明当前 producer。实际 mixed v1/v2 journal 读取、超大 decimal 序号基础测试、实时等待、取消/恢复和 UI 回归保留。
+
+成本对照使用同一个当前 scanner，模拟旧 summary+spool 和新 wait=0+spool 组合：1000 个事件，每批 10 次，预热本地文件系统，三批分别为 **596/575/574 ms → 386/386/388 ms**。包含扫描/投影、spool 写入与清理；不含 fixture 生成、编译、HTTP、模型或冷磁盘成本，不是完整请求/任务或真实线上性能结论。测量专用代码已删除。即时 raw replay 少一遍历史读取，长轮询和 canonical watch 的完整历史成本仍按各自契约保留。
+
+验证：MoonClaw native **1846/1846**、MoonDesk native **1726/1726**、core JS **64/64**、UI **839/839**；stream 定向 **8/8**、capability/路由定向 **32/32**，跨仓 producer → consumer probe 通过。`moon info` / `moon fmt` 和空白检查通过，`.mbti` 无变化。production `.mbt` 净删 **232 行**，测试净删 **293 行**，合计 **525 行**；没有增加 package、运行状态、常驻服务、模型请求或人工确认。前轮隔离和真实任务评测的未完成项继续保留，不能用本轮局部删减替代它们；本轮没有安装态应用、live-provider 或完整任务性能资格验证。
+
 ### 八项复审：目录描述能力，运行时拥有执行事实（2026-11-05）
 
 运行时实现提交：MoonClaw `6f612243`（`main`）。

@@ -34,6 +34,10 @@ the obsolete `tool_specs` field is removed. Native packets carry the validated
 submission and acceptance identity; actual approval decisions still carry their
 action and approval IDs through the ordinary command path.
 
+Capability negotiation decodes the response once and reuses the typed value
+for the existing readiness decision. Boolean readiness and status presentation
+share that decision; their public response shapes and acceptance rules remain.
+
 MoonCode is the coding conversation mode for a MoonBook. The product has one
 ordered conversation, one durable owner, and one desktop projection:
 

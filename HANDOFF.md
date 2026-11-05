@@ -5,6 +5,32 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Eight-module re-audit: stream reads and typed readiness 2026-11-05
+
+- Capability negotiation and readiness reuse one typed decode and the existing
+  decision. Boolean readiness no longer builds/parses a status JSON object.
+  Public response shapes and acceptance/error rules are unchanged.
+- Claw raw diagnostics share one locked scanner for wait summaries and local
+  spool output; zero-wait replay skips the discarded summary pass. Network
+  delivery stays outside session/journal locks. Canonical watch remains the UI
+  source; no desktop replay, index/store or new execution state was added.
+- Removed test-only array replay/encoders and their positional cursor fallback.
+  Existing production spool/HTTP tests cover physical positions, payload cursor
+  shadowing, JSONL/SSE bytes, reconnect and rejection before 200. Six old-path
+  tests and a duplicate daemon fixture were retired; no alternate producer oracle.
+- Same-scanner local composition measurement: 1000 events, 10 iterations,
+  three warmed batches 596/575/574 ms -> 386/386/388 ms. Includes spool/cleanup,
+  excludes HTTP, model, compile/fixture and cold disk; no end-to-end speed claim.
+  Temporary measurement code removed.
+- Validation: Claw native 1846/1846, Desk native 1726/1726, core JS 64/64,
+  UI 839/839; focused stream 8/8 and capability/routes 32/32, producer/consumer
+  probe passed. Info/fmt and whitespace checked; .mbti unchanged. Production
+  .mbt net -232, tests -293, total -525. No UI layout/package install or
+  live-provider/full-task performance qualification. The eight-module checklist
+  retains actual context, file, ownership, recovery and dependency limits.
+- Tooling pitfall: refresh `moon ide` with its normal check after edits;
+  `--no-check` can report stale/empty references from earlier source positions.
+
 ## Eight-module re-audit: catalog and execution ownership 2026-11-05
 
 - Removed the duplicated core command/tool execution descriptions in both

@@ -120,7 +120,10 @@ fn capabilities_json_for(
 }
 
 ///|
-fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
+fn mooncode_native_runtime_ready(
+  payload : Json,
+  capability : @mooncode_core.MoonCodeCapability,
+) -> Bool {
   let surface = json_object_field_or_empty(payload, "capability_surface")
   let endpoints = json_string_array_items(surface, "required_endpoints")
   let tools = json_string_array_items(surface, "required_tools")
@@ -139,6 +142,11 @@ fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
     "capability_surface_fingerprint",
     default="",
   )
+  capability.component == "mooncode" &&
+  capability.provider == "moonclaw" &&
+  capability.runtime_owner == "moonclaw" &&
+  capability.session_owner == "moonclaw" &&
+  capability.native_runtime_ready &&
   outer_fingerprint != "" &&
   outer_fingerprint == surface_fingerprint &&
   @mooncore.json_object_field(payload, "capability_surface") is Some(Object(_)) &&
@@ -153,14 +161,10 @@ fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
 pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
   match @mooncode_core.decode_mooncode_capability(payload) {
     Ok(capability) => {
-      let owners_ok = capability.component == "mooncode" &&
-        capability.provider == "moonclaw" &&
-        capability.runtime_owner == "moonclaw" &&
-        capability.session_owner == "moonclaw" &&
-        capability.native_runtime_ready
+      let ready = mooncode_native_runtime_ready(payload, capability)
       {
-        "ok": owners_ok && mooncode_v2_consumer_readiness(payload),
-        "status": if owners_ok && mooncode_v2_consumer_readiness(payload) {
+        "ok": ready,
+        "status": if ready {
           "native-runtime-ready"
         } else {
           "native-runtime-unavailable"
@@ -188,11 +192,7 @@ pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
 pub fn negotiate_capabilities_json(payload : Json) -> Json {
   match @mooncode_core.decode_mooncode_capability(payload) {
     Ok(capability) =>
-      if json_bool(
-          mooncode_negotiated_runtime_readiness(payload),
-          "ok",
-          default=false,
-        ) {
+      if mooncode_native_runtime_ready(payload, capability) {
         capabilities_json_for(capability)
       } else {
         {
@@ -250,11 +250,8 @@ pub fn moonclaw_native_capabilities_unavailable(error : String) -> Json {
 
 ///|
 pub fn moonclaw_native_capabilities_ready(capabilities : Json) -> Bool {
-  json_bool(
-    mooncode_negotiated_runtime_readiness(capabilities),
-    "ok",
-    default=false,
-  )
+  @mooncode_core.decode_mooncode_capability(capabilities) is Ok(capability) &&
+  mooncode_native_runtime_ready(capabilities, capability)
 }
 
 ///|
