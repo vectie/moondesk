@@ -48,6 +48,16 @@ test "display names handle root-like and encoded-looking paths" {
 
 ///|
 test "infer executable book source layers" {
+  assert_true(@core.infer_source_layer("research/wiki/history") is History)
+  assert_true(@core.infer_source_layer("research/wiki/reviews") is Review)
+  assert_true(
+    @core.infer_source_layer("research/wiki/history/change.md") is History,
+  )
+  assert_true(
+    @core.infer_source_layer("research/wiki/reviews/note.md") is Review,
+  )
+  assert_true(@core.infer_source_layer("research/wiki/history-old") is Wiki)
+  assert_true(@core.infer_source_layer("research/wiki/reviews-old") is Wiki)
   assert_true(@core.infer_source_layer("wiki/reviews") is Review)
   assert_true(@core.infer_source_layer("skills") is Skill)
   assert_true(@core.infer_source_layer("skills/pdf-watch/SKILL.md") is Skill)

@@ -109,6 +109,15 @@ usage and elapsed time. Its artifact passed, but autonomous process checks were
 unavailable and cash fees were unobserved. It is evidence for that case, not a
 general delivery-success or cost baseline.
 
+The [second real executor delivery](MOONCODE_LIVE_EXECUTOR_BUGFIX_2026-11-06.md)
+uses the actual MoonFort local backend: one model edit, autonomous Wasm GC core
+24/24, then unchanged implementation accepted independently on main with
+Native/JS and full Native regression. It records nine responses, actual usage,
+57.648 seconds to finish and no in-run test takeover. Source-copy scope,
+Degraded isolation, Native toolchain configuration and unavailable cash fees
+remain explicit; a successful expected-exit environment error is not a passing
+test. Only observed executor/parallel-binding bugs were fixed.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and

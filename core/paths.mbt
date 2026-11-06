@@ -110,10 +110,12 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
   if path == "wiki/history" ||
     path.has_prefix("wiki/history/") ||
+    path.has_suffix("/wiki/history") ||
     path.contains("/wiki/history/") {
     History
   } else if path == "wiki/reviews" ||
     path.has_prefix("wiki/reviews/") ||
+    path.has_suffix("/wiki/reviews") ||
     path.contains("/wiki/reviews/") {
     Review
   } else if path == "wiki" ||

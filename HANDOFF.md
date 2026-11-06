@@ -5,6 +5,27 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Live executor delivery 2026-11-06
+
+- Connected the existing real MoonFort publisher/executor to an evaluation
+  daemon. Real model fixed nested History/Review directory classification in
+  one two-line edit and ran core Wasm GC 24/24 without steering or test takeover.
+  Exact implementation copied to main; independent Native/JS core 24/24 each,
+  full Desk Native 1726/1726. Report:
+  docs/MOONCODE_LIVE_EXECUTOR_BUGFIX_2026-11-06.md.
+- Nine responses: input 262159 (cached 121472), output 1274; command-to-finish
+  57.648 sec. No implementation rework; money unknown. Source-only full core
+  copy and required local packages were evaluated, not a full repository or
+  installed app. LocalOs/Degraded, no host bypass; evaluation daemon stopped.
+- Actual runtime gaps fixed in siblings: Fort getcwd ancestor metadata,
+  trusted tool helper PATH and /dev/null write-data; Claw binds parallel shell
+  before dispatch and reuses it for later recording. Existing tests extended;
+  no new execution mechanism. Original shell replay only proves grant routing,
+  because its `|| true` and missing Git HEAD cannot prove diff validation.
+- Tool ok with expected_exit=1 can describe an environment failure; accept
+  test success only from actual test output and exit 0. Native sandbox Xcode
+  selection remains a deployment limitation; Wasm GC was the autonomous check.
+
 ## Live MoonCode bug delivery 2026-11-06
 
 - Ran the actual main-checkout MoonClaw daemon with a real Codex OAuth model,
