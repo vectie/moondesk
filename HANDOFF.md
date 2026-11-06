@@ -5,6 +5,30 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Complete-skill cost audit 2026-11-06
+
+- See docs/MOONCODE_SKILL_COST_AUDIT_2026-11-06.md. The 213432-input run
+  retained 361020 chars of skill results and 7090 chars of receipts over ten
+  follow-ups. The long guide is a shipped system asset, not a personal skill.
+- Claw replaces its empty source gitlink with maintained Markdown at the same
+  path and uses the unchanged generator/installer. Complete entrypoint
+  34084 -> 1991 chars, references on demand, receipt 709 -> 275. No context
+  truncation, extra model calls, caps, new state or manual confirmation.
+- Single new run: 8 responses, 74750 input (cached 5120)/1685 output, 134.394
+  sec; input -65.0% vs 213432. One atomic call/two edits, no post-edit rework;
+  missing AGENTS read and red test retained. Same historical real bug/prompt,
+  current HEAD includes an extra /// assertion. New source matched accepted
+  HEAD, not a novel-bug or general success-rate qualification.
+- Skill loading was still complete. Claw 1844/1844, Loader 26/26, independent
+  MoonLib Native 108/108 and JS 12/12, Desk consumer 1726/1726; public API stable.
+  Removed duplicated Loader snapshots (tests net -277). The existing source
+  YAML parser/installed-link checks passed; standalone Python validator lacked
+  PyYAML and no project dependency was added for it.
+- Clarified shell's existing disposable snapshot after observing a useless
+  cleanup call. Its effect on future round counts is unmeasured; no paid redo
+  or rm ban. Final model prose omitted initial red/edit history; report retains
+  it. Fort is unchanged and its pre-existing workbench edits remain untouched.
+
 ## Follow-up token audit 2026-11-06
 
 - See docs/MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md. The 382588-input run

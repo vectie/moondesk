@@ -141,6 +141,15 @@ private. Same-bug trials cost 248354 then 213432 input tokens. The model still
 loaded the full guide after mandatory matching was removed; no skill-specific
 savings claim. Retain the first trial's transient Git timeout and all costs.
 
+The [built-in skill audit](MOONCODE_SKILL_COST_AUDIT_2026-11-06.md) validates a
+clean installed skill and its references, rather than copying its metadata into
+every Loader snapshot. Selected skill bodies remain complete in model context.
+One new historical-bug run used 74750 input/1685 output in eight responses, with
+one atomic call/two edits and no post-edit regression. Preserve the missing
+AGENTS read, original red test and redundant scratch-cleanup round. Shell's
+snapshot-lifetime description was clarified afterward; no measured savings
+are attributed to that wording change.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and

@@ -75,6 +75,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Follow-up audit](MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md) records the
     remaining duplicate input, SDK/snapshot fixes and the 213,432-input rerun,
     including unsuccessful and inconclusive measurements.
+    [Built-in skill audit](MOONCODE_SKILL_COST_AUDIT_2026-11-06.md) locates the
+    remaining long guide in shipped resources, replaces conflicting duplicated
+    text with a small complete skill and records the single 74,750-input run.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

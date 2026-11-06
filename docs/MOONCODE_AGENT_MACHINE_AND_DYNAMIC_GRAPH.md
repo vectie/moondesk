@@ -650,6 +650,8 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 ### 9 Telemetry 模块 减少评测对正常执行的侵入
 
+2026-11-06 [完整技能与往返复查](MOONCODE_SKILL_COST_AUDIT_2026-11-06.md)：确认长指南来自本仓嵌入资源，按既有 reference 机制将完整入口 34084 → 1991 字符，去掉重复教程与冲突旧命令，缩短技能回执；不改 Context 阈值或裁剪已加载指令。内置源目录由空 gitlink 改为同路径本仓维护，原生成器和安装机制复用。通用 Loader 测试不再重复内置元数据/整段 prompt，测试净减 277 行。一次真实同类回归复测为 8 轮／74750 input（比213432少65.0%），134.394秒，一次edit调用两处原子修改、无post-edit返工；完整成本保留。另补清楚Shell快照生命周期，不禁用命令，尚未实测这句说明是否省一次清理往返。
+
 2026-11-06 [剩余 token 浪费复查](MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md)：删除重复 shell 摘要、自动 task/recent-results 消息及内部检查输入的模型副本，沿用原 journal/Completion 事实；checkpoint 跨命令笔记进入初始 task。修复默认 IDE SDK 定位和快照 execute bits。相同历史真实 bug 从 16 轮／382588 input 到最终 11 轮／213432 input（少 44.2%），183.982 秒，独立 Native 108/108、JS 12/12；第一遍 248354 input 与一次 Git timeout 全部保留。取消描述匹配即强制加载技能，但模型仍主动选择完整指南，未证明该删除省掉技能输入。生产净减 75 行，无新架构或 gate；总体线上基线仍未勾选。
 
 现有入口：`mooncode_planner_metrics*.mbt`、现有 harness/replay 和任务结果记录。
