@@ -5,6 +5,31 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Three-run token audit 2026-11-06
+
+- Read docs/MOONCODE_TOKEN_AUDIT_2026-11-06.md for root causes and comparison.
+  Old 49 responses: 2294816 input / 6350 output. A 395-character full-test
+  output arrived as a 327569-character result; follow-ups accumulated old
+  ledgers/progress. Fixed-history message JSON replay shrank 53.1%; this is
+  not a token or cash measurement. Preserve raw journal/recall references.
+- Reused existing result projection and follow-up construction; removed
+  exit-zero pipeline false failures and the keyword helper. Native test
+  failure exit code is 2. No budget gate, new state, approval or architecture.
+- Peer basename task exposed 18 generic grant refusals hiding timeout bounds.
+  Claw now preserves publisher code/message; Fort prints requested/ceiling.
+  One restart resumed the same journal/command. That first pass cost 918024
+  input / 5404 output and 499.657 seconds; it was more expensive than the old
+  clean sample, so all costs remain alongside the same-prompt clean rerun.
+- Same-prompt rerun: 16 responses, 382588 input (cached 29568) / 2620 output,
+  235.327 sec; no in-run takeover. Opaque refusals 18 -> 0; one numeric
+  refusal corrected on next call. Input -58.3% vs first pass, -24.7% vs old
+  dotfile success; elapsed is longer than the old easier bug. Three model
+  edits/two regression failures remain visible. Native 108/108 and JS 12/12
+  independently accepted. Claw 1844/1844, Fort 297/297, Desk 1726/1726.
+- Default IDE metadata/Shell-vs-moon_cmd environment and snapshot executable
+  mode noise remain. The latter makes unchanged scripts look modified in
+  scratch Git; actual main scripts were untouched. Do not label it user dirt.
+
 ## Full real repository Native delivery 2026-11-06
 
 - Actual MoonLib main at /Users/kq/Workspace/moonlib, complete Git repository;

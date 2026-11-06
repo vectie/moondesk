@@ -69,6 +69,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Full real-repository Native delivery](MOONCODE_LIVE_NATIVE_REPOSITORY_2026-11-06.md)
     records direct MoonLib main execution, full Native acceptance and all three
     attempts' costs.
+    [Three-run token audit](MOONCODE_TOKEN_AUDIT_2026-11-06.md) traces tool
+    failures, repeated exploration and context growth, with fixed-history
+    projection replay and a real peer-task rerun; records all failed costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

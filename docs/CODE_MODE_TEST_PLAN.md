@@ -126,6 +126,14 @@ usage and rework: total 49 observed responses; successful final run 104.580
 seconds. LocalOs remains Degraded and Shell environment does not configure
 moon_cmd by inheritance. General live success/cost baselines remain open.
 
+The [three-run token audit](MOONCODE_TOKEN_AUDIT_2026-11-06.md) separates actual
+provider usage from serialized-context replay. Existing follow-up tests require
+one current evidence ledger/progress view; result projection retains output and
+recall references without copying internal change inventories or edit diffs.
+Original journal facts remain intact. Real peer-task runs include repeated
+opaque refusals, a diagnostic repair/restart and a same-prompt rerun; never
+replace those costs with the successful subset or call character savings tokens.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and
