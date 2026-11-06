@@ -118,6 +118,14 @@ Degraded isolation, Native toolchain configuration and unavailable cash fees
 remain explicit; a successful expected-exit environment error is not a passing
 test. Only observed executor/parallel-binding bugs were fixed.
 
+The [full real-repository Native run](MOONCODE_LIVE_NATIVE_REPOSITORY_2026-11-06.md)
+works directly on existing MoonLib main with the complete repository and its
+original manifests. The final model run passed Native 12/12 and full 108/108,
+then independent Native/JS acceptance. Include the two stopped attempts in
+usage and rework: total 49 observed responses; successful final run 104.580
+seconds. LocalOs remains Degraded and Shell environment does not configure
+moon_cmd by inheritance. General live success/cost baselines remain open.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and

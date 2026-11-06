@@ -66,6 +66,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     actual-model quality, rework, token cost, elapsed time and verification gaps.
     [Real executor delivery](MOONCODE_LIVE_EXECUTOR_BUGFIX_2026-11-06.md)
     records autonomous repair/testing followed by independent main acceptance.
+    [Full real-repository Native delivery](MOONCODE_LIVE_NATIVE_REPOSITORY_2026-11-06.md)
+    records direct MoonLib main execution, full Native acceptance and all three
+    attempts' costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

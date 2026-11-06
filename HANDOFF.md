@@ -5,6 +5,31 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Full real repository Native delivery 2026-11-06
+
+- Actual MoonLib main at /Users/kq/Workspace/moonlib, complete Git repository;
+  no source copy or manifest substitution. MoonCode fixed dotfile replace_ext
+  in one line, added hidden-suffix assertions, and finally ran Native 12/12
+  plus full 108/108. Independent Native 108/108 and pathx JS 12/12 passed.
+- Two earlier attempts were stopped for real environment/runtime issues;
+  restored only their business patch to original bug for fresh retries. Total
+  49 observed responses, input 2294816 (cached 739712), output 6350. Final
+  attempt 104.580 seconds to finish; all attempts to final finish 977.635 sec.
+  Cash unknown; no overall no-takeover claim. Report:
+  docs/MOONCODE_LIVE_NATIVE_REPOSITORY_2026-11-06.md.
+- Reused Shell with explicit SDK/CLT environment. Fixed Fort read-root ancestor
+  metadata and disappearing-directory monitoring, removed Claw's absolute SDK
+  substring ban, and made five MoonLib test fixtures use its existing TMPDIR
+  helpers. Recovery matches the original call before regenerating a grant.
+  No new state, environment API, launcher, approval or architecture.
+- Final third run had no steering, manual business patch or test takeover;
+  coordinator changes are separately attributed. Moon_cmd does not inherit
+  shell environment; optional system Git checks remained unavailable in the
+  sandbox. Do not turn Native success into universal tool/UI/isolation claims.
+- Claw 1844/1844, Fort 297/297, Desk workspace Native 1726/1726. Private run
+  evidence lives in actual MoonLib .moonsuite and /Users/kq/mooncode-live3-20261106;
+  daemon stopped; original Fort SQLite workbench changes remain uncommitted.
+
 ## Live executor delivery 2026-11-06
 
 - Connected the existing real MoonFort publisher/executor to an evaluation
