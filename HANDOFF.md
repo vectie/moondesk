@@ -5,6 +5,30 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Runtime ownership and control/projection simplification 2026-11-06
+
+- Recorded the bounded meaning of ideal module boundaries: one owner per fact,
+  traceable consumers and no duplicated behavior. JSON at dynamic ABI/provider/
+  journal boundaries is not a reason to add an IR or extra validation.
+- Claw groups its four live execution fields separately from session metadata;
+  preserves the pre-task startup reservation and uses the existing execution
+  lease instead of the second running branch. External metadata stays the same.
+- Controls apply claimed steering once; follow-up request assembly uses one
+  loop. Planner ledger reads canonical results without a temporary JSON
+  protocol. Existing response projections moved to the receipt owner.
+- Retired one duplicate synthetic single-flight case and retained its assertions
+  in the existing wake fixture. Real lease/restart/cancel/steering tests remain.
+- No added validator, runtime state, approval, retry limit, package or desktop
+  execution responsibility. No UI/install or end-to-end quality claim.
+- Validation: final Claw native 1844/1844, Desk native 1726/1726 and real
+  capability probe passed; initial focused tests were 53/53 before merging the
+  duplicate case. Info/fmt,
+  whitespace and .mbti checked. Production -61/test -63 lines, net -124,
+  including embedded .mbt test blocks; moved projection bytes unchanged.
+- Counting pitfall: .mbt filenames do not distinguish all tests. The retired
+  service test was embedded in a normal source file; do not report its removal
+  as a production-code saving or count file moves as deleted implementation.
+
 ## Boundary closure: tool resume and planner pauses 2026-11-06
 
 - Recorded the eight-responsibility assessment in the design checklist:

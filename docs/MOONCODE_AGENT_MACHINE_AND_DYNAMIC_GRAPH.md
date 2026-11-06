@@ -86,6 +86,38 @@
 
 启动自动续跑已在下述 Process/Thread + Fault Tolerance 收敛中补齐。仍待产品需要驱动的问题包括：是否需要把进程工具纳入同一资源写入机制；哪些实际任务需要更完整的依赖追踪。它们不是为了让类比“完整”就必须先造的子系统。内部 Json 契约和 daemon 编排继续按真实重复收敛。
 
+### 职责收敛：运行状态、控制输入与结果投影（2026-11-06）
+
+运行时实现提交：MoonClaw `4a431c66`（`main`）。
+
+本轮继续收敛已有实现，不增加 hardening。“理想状态”的完成标准是当前支持范围内事实有所有者、调用关系可追踪、同一行为不由多处解释；不是所有 Json 都要变成类型、每项职责都要独立 package，或让正常任务经过更多检查。
+
+| 所有者 | 输入与输出 | 本轮收敛 |
+| --- | --- | --- |
+| SessionBinding | Book/模型/标题等元数据缓存与既有事件通道；持有本会话 live runtime 引用。 | 运行字段不再直接混在元数据字段中。外部元数据 JSON 保持原形状。 |
+| SessionRuntime | 启动占位、队列唤醒、任务句柄与当前 command。 | 复用原来的四个字段及生命周期，集中到一个私有内存记录；不持久化，不新增状态。 |
+| Controls | 已 claim 的 steering → 更新后的 command、applied 列表与既有事件。 | 三处相同应用/记录逻辑只保留一份；claim 与模型请求的触发顺序保持。 |
+| Planner | 当前任务、工具结果、steering → 下一批调用与模型工作集。 | follow-up 重复请求组装合为一个普通循环；文件证据直接由规范结果读取。 |
+| Turn | 已有任务与恢复位置 → 有序执行、记录结果、继续或交付。 | 删除重复控制应用、已获执行租约后的重复 running 分支，以及结果的中间 Json 往返。 |
+| Receipt projection | execution/claim/control/package/book facts → 返回给消费者的紧凑 JSON。 | 既有八个投影函数集中到已有 receipt 文件，不新增投影层或另一份事实。 |
+
+运行占位不能由 `task != None` 简单替代：start event 的异步提交发生在任务句柄安装之前。保留它服务实际启动语义；执行 lease 已成功取得后的第二份 running 分支则删除，由既有租约承担执行所有权。跨实例互斥、生命周期和取消语义保持。
+
+Data Model 的减法是去掉不需要的内部协议：证据 ledger 原来先复制 execution、构造 observation JSON，再读回路径/scope；现在直接用规范结果中的路径和完整性。部分读取仍不能变成完整文件观察。工具参数、provider 响应与持久记录继续使用原有 JSON，不引入全量 IR、额外解码门槛或新的校验器。
+
+- [x] Process / Thread：元数据与 live 执行状态明确分开；service / loop / turn 沿现有入口组合。
+- [x] Memory / Data model：结果事实不再绕中间 JSON；旧 observation 旁路测试改为验证实际 ledger 输出。
+- [x] Compute engine / I/O：steering 应用和 follow-up 请求去重；协议、事件数量和模型请求触发语义保持。
+- [x] Synchronization / Fault tolerance：复用原 lease、task group、journal 与 continuation；没有新锁或恢复状态。
+- [x] Filesystem：沿用现有资源身份与写入边界，本轮不增加文件系统策略。
+- [x] 验证：合并重复 single-flight 夹具，保留真实跨实例租约、队列唤醒、取消、恢复与 steering 回归。
+
+成本：每个会话把原四个 live 字段放进一个小型内存记录；不新增 IO、后台任务或模型调用。ledger 不再为每个成功结果制造中间 execution/observation 对象。receipt 函数搬移不计作删除；不据代码行数推断端到端性能或交付质量。
+
+验证：最终 MoonClaw native **1844/1844**、MoonDesk native **1726/1726** 和实际 producer → consumer probe 通过；合并重复夹具前，service/lease/steering/model 定向 **53/53** 通过。info/fmt、接口与空白检查通过，`.mbti` 无变化，八个搬移投影的内容逐字节核对不变。生产实现净删 **61 行**、测试净删 **63 行**，合计净删 **124 行**；删除一项重复测试，其他既有回归保留。这里把普通 `.mbt` 文件中内嵌的测试单独归类，不把文件移动或测试删除计为生产实现收益。
+
+实现入口：[live runtime](../../moonclaw/cmd/daemon/mooncode_runtime_service.mbt)、[控制输入应用](../../moonclaw/cmd/daemon/mooncode_runtime_controls.mbt)、[模型证据](../../moonclaw/cmd/daemon/mooncode_runtime_model_planner.mbt)、[响应投影](../../moonclaw/cmd/daemon/mooncode_runtime_turn_receipts.mbt)。
+
 ### 边界收口：恢复位置与执行编排（2026-11-06）
 
 运行时实现提交：MoonClaw `89157123`（`main`）。
