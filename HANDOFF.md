@@ -5,6 +5,37 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Live MoonCode bug delivery 2026-11-06
+
+- Ran the actual main-checkout MoonClaw daemon with a real Codex OAuth model,
+  plain /turns prompt and no injected tool calls. MoonCode fixed display_name
+  for repeated trailing slashes; coordinator provided the two failing
+  acceptance assertions first and did not revise the model's patch afterward.
+- Canonical usage: 16 responses, input 562434 (cached 269312), output 2354;
+  37 tool results, 12 successful/25 failed. Command-to-finish 124.712 seconds,
+  independent core acceptance about 141 seconds. Cash cost unknown, not zero;
+  these counts exclude this chat's coordination model use.
+- Delivery passed independent checks, but autonomous verification did not:
+  no MoonFort process route was configured. The model disclosed the refusals;
+  coordinator ran tests. Do not count this as no-takeover success or tick the
+  general quality/cost baseline. Report: docs/MOONCODE_LIVE_BUGFIX_2026-11-06.md.
+- Actual trace exposed three Claw bugs, fixed by the coordinator: neutral edit
+  placeholders rejected valid calls, work-step failure marked an active turn
+  failed, and read_skill rendered as a write. No feature, gate or authority
+  changes. Real journal-prefix/edit-argument replay passed; temporary replay
+  test removed, minimal permanent regressions retained.
+- Final Claw native 1845/1845, Desk native 1726/1726; core native/JS each 24/24;
+  JS workspace 2291/2291 includes UI 839, not an additional count. Info/fmt,
+  interfaces and whitespace checked; .mbti unchanged. No browser/install or
+  post-fix live-model rerun, so no token/latency improvement claim.
+- Tooling pitfall: standalone .mbtx imports resolved app dependencies outside
+  the local moon.work overrides and hit the old moonzip manifest. Use the
+  ordinary project test for this baseline; do not change dependencies to make
+  an evaluation pass. This preparation issue is not a MoonCode tool failure.
+- Timing uses numeric journal recorded_at values; canonical started_at and
+  updated_at were empty in this run. Do not derive live latency from those
+  optional display fields or conflate finish, settlement and service idle time.
+
 ## Runtime ownership and control/projection simplification 2026-11-06
 
 - Recorded the bounded meaning of ideal module boundaries: one owner per fact,

@@ -654,6 +654,8 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 - [x] **合并** 用量/延迟/重试采集：首次规划、follow-up 和空响应复用同一 collector，观察值附到已有最终 planner event；canonical usage 从这些事实汇总。删除同步 MoonGate exporter、环境开关、export 专用 SDK method、两套 configured/effective 大小统计、工具名副本和派生 cache ratio；实际工具错误/结果引用沿原事件，不另造评测阶段或服务。
 - [ ] **用真实任务验证改动**，保留错误完成、用户接管、返工、成本、启动/构建/交互耗时；实际 badcase 回流最小测试。评测是开发验证，不是每项任务的执行阶段。
+
+2026-11-06 已完成[首个真实 bug 交付观测](MOONCODE_LIVE_BUGFIX_2026-11-06.md)：真实模型修复已有名称问题，独立验收通过，但未配置进程执行器导致自主测试需要接管；记录 16 次响应、实际 tokens、返工与耗时，并仅修复真实日志暴露的 edit/projection bug。单例与历史回放不能证明修复后的线上成功率或成本下降，本项继续不勾选。
 - [x] **验收** 无遥测 exporter 或评测服务时正常执行；指标缺失不变成任务失败，缺少价格/结果依据时不伪造费用或成功率。恢复、重复 receipt 和空响应的本地回归覆盖实际用量；不从普通工具成功推断任务成功率。
 
 用量不再依赖会被压缩的历史 planner steps，也不被后续 receipt 覆盖。观察复用 daemon UUID，避免时间戳相同的不同响应被日志去重；每轮仍只追加原来已有的 planner event，无额外 fsync 或网络等待。collector 记录 compiled request/schema 大小、provider 明报 tokens/cache、model call 的 wall elapsed time 与外层 retry 次数。缺失/非法 usage 不当作已测零；缺少价格不估费用。它不覆盖未返回 usage 的计费尝试或 transport 内部 fallback，request_chars 也不是 provider 最终 HTTP body 大小。现有 harness/replay 保留；真实线上交付成功率、用户接管、返工、费用及启动/构建/交互基线尚未建立，第二项不勾选。

@@ -37,6 +37,8 @@ test "stable ids normalize paths" {
 test "display names handle root-like and encoded-looking paths" {
   assert_eq(@core.display_name(""), "")
   assert_eq(@core.display_name("wiki/"), "wiki")
+  assert_eq(@core.display_name("wiki///"), "wiki")
+  assert_eq(@core.display_name("资料 目录///"), "资料 目录")
   assert_eq(
     @core.display_name("docs with spaces/encoded # name.md"),
     "encoded # name.md",

@@ -62,6 +62,8 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     retains the historical simplification and deletion decisions.
 13. [CODE_MODE_TEST_PLAN.md](CODE_MODE_TEST_PLAN.md): focused runtime,
     conversation, recovery, and deliverable checks.
+    [November 6 real bug delivery](MOONCODE_LIVE_BUGFIX_2026-11-06.md) records
+    actual-model quality, rework, token cost, elapsed time and verification gaps.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

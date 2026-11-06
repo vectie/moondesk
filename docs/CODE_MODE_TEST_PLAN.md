@@ -103,6 +103,12 @@ independent output checks. Compare deliverable quality, user intervention,
 rework, latency, and total cost. Do not require live provider calls for ordinary
 unit tests or infer task success solely from `finish`.
 
+The [November 6 real bug delivery](MOONCODE_LIVE_BUGFIX_2026-11-06.md) records
+one actual-model run, independent acceptance, tool-level rework, provider token
+usage and elapsed time. Its artifact passed, but autonomous process checks were
+unavailable and cash fees were unobserved. It is evidence for that case, not a
+general delivery-success or cost baseline.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and

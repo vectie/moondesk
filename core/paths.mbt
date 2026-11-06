@@ -1,15 +1,11 @@
 ///|
 pub fn display_name(path : StringView) -> String {
+  let path = path.trim(chars=['/'])
   let parts = path.split("/").to_array()
   if parts.length() == 0 {
     path.to_owned()
   } else {
-    let name = parts[parts.length() - 1].to_owned()
-    if name == "" && parts.length() > 1 {
-      parts[parts.length() - 2].to_owned()
-    } else {
-      name
-    }
+    parts[parts.length() - 1].to_owned()
   }
 }
 
