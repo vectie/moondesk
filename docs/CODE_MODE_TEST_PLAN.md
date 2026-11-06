@@ -134,6 +134,13 @@ Original journal facts remain intact. Real peer-task runs include repeated
 opaque refusals, a diagnostic repair/restart and a same-prompt rerun; never
 replace those costs with the successful subset or call character savings tokens.
 
+The [follow-up audit](MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md) checks compact
+read/error indexes, one task/checkpoint prefix and original evidence retention.
+Fort's existing real E2E now executes a copied executable; SDK lookup keeps HOME
+private. Same-bug trials cost 248354 then 213432 input tokens. The model still
+loaded the full guide after mandatory matching was removed; no skill-specific
+savings claim. Retain the first trial's transient Git timeout and all costs.
+
 ## Historical Evidence
 
 The [July 10 journey report](MOONCODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md) and

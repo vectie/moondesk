@@ -650,6 +650,8 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 
 ### 9 Telemetry 模块 减少评测对正常执行的侵入
 
+2026-11-06 [剩余 token 浪费复查](MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md)：删除重复 shell 摘要、自动 task/recent-results 消息及内部检查输入的模型副本，沿用原 journal/Completion 事实；checkpoint 跨命令笔记进入初始 task。修复默认 IDE SDK 定位和快照 execute bits。相同历史真实 bug 从 16 轮／382588 input 到最终 11 轮／213432 input（少 44.2%），183.982 秒，独立 Native 108/108、JS 12/12；第一遍 248354 input 与一次 Git timeout 全部保留。取消描述匹配即强制加载技能，但模型仍主动选择完整指南，未证明该删除省掉技能输入。生产净减 75 行，无新架构或 gate；总体线上基线仍未勾选。
+
 现有入口：`mooncode_planner_metrics*.mbt`、现有 harness/replay 和任务结果记录。
 
 - [x] **合并** 用量/延迟/重试采集：首次规划、follow-up 和空响应复用同一 collector，观察值附到已有最终 planner event；canonical usage 从这些事实汇总。删除同步 MoonGate exporter、环境开关、export 专用 SDK method、两套 configured/effective 大小统计、工具名副本和派生 cache ratio；实际工具错误/结果引用沿原事件，不另造评测阶段或服务。

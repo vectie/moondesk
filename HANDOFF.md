@@ -5,6 +5,27 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Follow-up token audit 2026-11-06
+
+- See docs/MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md. The 382588-input run
+  still duplicated 17322-char verification inputs, 7897-char inspection ledger,
+  and automatic task/recent-result summaries. Removed those model copies,
+  preserving journal/recall and original Completion evidence. Cross-command
+  notes now enter the initial task prefix; selected skill content remains full.
+- Catalog description matching no longer mandates skill loading. User/project
+  requirements remain. The final model still chose the long MoonBit guide;
+  this is not evidence that the policy change saved its input cost.
+- Same historical real bug/prompt: first 248354 input/2599 output, 12 responses,
+  254.314 sec with one Git timeout; final 213432/2144, 11 responses, 183.982 sec.
+  Input -44.2% vs prior 382588, but both new trials' 461786/4743 cost retained.
+  No in-run takeover. Two model edits/one regression; independently accepted.
+- Fort derives SDK home for macOS registered Moon and preserves execute bits
+  in snapshots. IDE and false Git script modifications are fixed. A transient
+  Git timeout replayed successfully; no timeout/retry architecture added.
+- Claw 1844/1844, Fort 298/298, Desk 1726/1726, real MoonLib Native 108/108 and
+  JS 12/12. Public interfaces unchanged. Production net -75 lines, tests +35;
+  existing Fort workbench changes untouched. All commits are on main.
+
 ## Three-run token audit 2026-11-06
 
 - Read docs/MOONCODE_TOKEN_AUDIT_2026-11-06.md for root causes and comparison.

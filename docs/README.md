@@ -72,6 +72,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Three-run token audit](MOONCODE_TOKEN_AUDIT_2026-11-06.md) traces tool
     failures, repeated exploration and context growth, with fixed-history
     projection replay and a real peer-task rerun; records all failed costs.
+    [Follow-up audit](MOONCODE_TOKEN_AUDIT_FOLLOWUP_2026-11-06.md) records the
+    remaining duplicate input, SDK/snapshot fixes and the 213,432-input rerun,
+    including unsuccessful and inconclusive measurements.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):
