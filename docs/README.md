@@ -81,6 +81,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Snapshot and round-trip audit](MOONCODE_SNAPSHOT_COST_AUDIT_2026-11-06.md)
     records the next 91,539-input run, including the cost regression, timeout,
     rework and corrected snapshot lifecycle wording.
+    [Shell root-cause audit](MOONCODE_SHELL_ROOT_CAUSE_AUDIT_2026-11-07.md)
+    records debug hashing, duplicate inventory, the non-Exited output-cap bug,
+    disk exhaustion and all 935,131 input tokens across interrupted delivery.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

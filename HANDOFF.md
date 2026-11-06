@@ -5,6 +5,28 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Shell roots and interrupted delivery 2026-11-07
+
+- See docs/MOONCODE_SHELL_ROOT_CAUSE_AUDIT_2026-11-07.md. Three observed phases:
+  636327/1670, 158159/2323, then recovery 140645/2176 input/output. All 35
+  responses total 935131 input/6169 output; cost goal failed. Do not report
+  only the final phase or claim an unattended successful rerun.
+- Debug Fort hashes full snapshots repeatedly; release calibration plus removing
+  the third inventory reduces measured executor time. Non-Exited Claw results
+  bypassed max_output_chars: actual 260256 vs requested 20000, causing the first
+  context flood. Existing truncation now runs before status dispatch.
+- Disk space was not checked before rerun; diagnostic copies contributed to
+  exhaustion and seven snapshot refusals. Released only owned redundant copies,
+  preserving declared files/manifests, output artifacts, journals and costs.
+  Fort now retains the underlying StorageIo message. Recovery used one explicit
+  operator follow-up and no manual business patch. CPU/timeout limits unchanged.
+- Prompt tuning failed to remove caller mistakes or duplicate final Git calls
+  and was withdrawn. Input contained replace_ext; this was model semantic use,
+  not missing context. Parse structured metrics: raw output can itself contain
+  escaped prompt_tokens/journal JSON; unanchored grep can dump it again.
+- Claw 1844/1844, Fort 299/299, independent Lib Native 108/108 and JS 12/12.
+  Only final Lib difference is a redundant .view() removal; public API stable.
+
 ## Snapshot and round-trip audit 2026-11-06
 
 - docs/MOONCODE_SNAPSHOT_COST_AUDIT_2026-11-06.md records one new real run:
