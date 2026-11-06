@@ -5,6 +5,21 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Snapshot and round-trip audit 2026-11-06
+
+- docs/MOONCODE_SNAPSHOT_COST_AUDIT_2026-11-06.md records one new real run:
+  91539 input/1679 output, 10 responses, 169.897 sec. Input increased 22.5%;
+  no cleanup call, but one Shell timeout/retry and one post-edit regression.
+  Do not describe this as overall cost improvement. Source/test read once each.
+- Claw terminal message names per-call scope; evidence index removes 260 chars
+  of repeated guidance. No new policy, cap, architecture or mandatory actions.
+  Fort cleanup_verified can include managed retention: do not claim all snapshot
+  bytes were deleted. Final message corrects the trial's overbroad wording;
+  only the existing terminal integration check covers that final wording.
+- Native Claw 1844/1844; independently Lib Native 108/108, JS 12/12. Business
+  source again exactly matches accepted HEAD. Complete costs/limitations kept;
+  daemon stopped, no hand-written implementation takeover or paid retry.
+
 ## Complete-skill cost audit 2026-11-06
 
 - See docs/MOONCODE_SKILL_COST_AUDIT_2026-11-06.md. The 213432-input run
