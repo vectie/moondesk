@@ -87,6 +87,10 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Offline-only replay](MOONCODE_OFFLINE_REPLAY_AUDIT_2026-11-07.md) classifies
     caller mistakes, snapshot review and retries, removes stale guidance and
     duplicate index entries, with zero new provider calls.
+    [Per-request input budget](MOONCODE_INPUT_BUDGET_AUDIT_2026-11-07.md)
+    decomposes all 35 requests, identifies the repeated oversized grep result,
+    and replays the existing cap with the actual receipt and carried history;
+    distinguishes local estimates from billing and unresolved model decisions.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

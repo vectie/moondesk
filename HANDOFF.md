@@ -5,6 +5,25 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Full input attribution 2026-11-07
+
+- No paid rerun. docs/MOONCODE_INPUT_BUDGET_AUDIT_2026-11-07.md accounts for
+  all 35 requests / 935131 actual input. Local cl100k estimate is 954652;
+  do not present category estimates as provider billing.
+- One oversized grep body contributed 552582 local tokens over six requests.
+  Replaying its actual Killed receipt through the existing 20000-character cap
+  reduces the fixed action trace by 509634; carrying current candidate history
+  across all rounds gives 441848, not a measured new run or fewer decisions.
+- The old 0.47% replay froze original tool results and reset history each round;
+  it never measured the major cap fix. Six retries after a known snapshot
+  failure consumed 72734 actual input in their issuing rounds; these overlap
+  content accounting. Model rework/review and low-cost delivery remain open.
+- No additional runtime bug established: documentation only, no speculative
+  prompt, truncation/retry policy or test. Temporary audit entries/imports moved
+  to /Users/kq/mooncode-input-budget-20261107; original journals unchanged.
+- Final existing Native regressions: Claw 1844/1844, Desk 1726/1726; info/fmt
+  passed, public interfaces unchanged, 123 links / 11 archive hashes verified.
+
 ## Offline-only audit 2026-11-07
 
 - User explicitly paused paid reruns. Do not launch another live MoonCode/model

@@ -1,5 +1,7 @@
 # MoonCode：仅用已有日志回放（2026-11-07）
 
+度量边界补充：[93 万 input 逐轮拆分](MOONCODE_INPUT_BUDGET_AUDIT_2026-11-07.md)确认主要来源是越界 grep 结果的六次携带。本报告固定原始工具观察，0.47% 只度量旧提示/索引清理；不包含已经修复的非 Exited 输出上限。真实 receipt 和持续候选历史回放另见新报告。
+
 **本轮没有启动 MoonCode 实跑或付费模型，没有新增 provider tokens。** 上轮 935,131 input / 6,169 output 原样保留，不用离线结果改写历史成本，也不预测节省了多少模型轮次。本轮协调对话、本地编译/测试仍有资源成本。
 
 分析范围是 `mooncode-cost4-snapshot`、`mooncode-cost5-release`、`mooncode-cost5-capped`：45 次已记录响应、4 个命令。沿用[完整成本与故障记录](MOONCODE_SHELL_ROOT_CAUSE_AUDIT_2026-11-07.md)，生产改动直接在 main。
