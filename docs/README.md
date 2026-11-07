@@ -84,6 +84,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Shell root-cause audit](MOONCODE_SHELL_ROOT_CAUSE_AUDIT_2026-11-07.md)
     records debug hashing, duplicate inventory, the non-Exited output-cap bug,
     disk exhaustion and all 935,131 input tokens across interrupted delivery.
+    [Offline-only replay](MOONCODE_OFFLINE_REPLAY_AUDIT_2026-11-07.md) classifies
+    caller mistakes, snapshot review and retries, removes stale guidance and
+    duplicate index entries, with zero new provider calls.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

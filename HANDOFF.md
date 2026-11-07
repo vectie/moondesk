@@ -5,6 +5,28 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Offline-only audit 2026-11-07
+
+- User explicitly paused paid reruns. Do not launch another live MoonCode/model
+  canary without a new user instruction authorizing it. This is a work constraint,
+  not a new runtime approval flow. No product-provider calls/tokens this round.
+- docs/MOONCODE_OFFLINE_REPLAY_AUDIT_2026-11-07.md replays 12 actual source
+  revisions and 41 captured follow-ups. Source/tests were visible for all nine
+  recorded edits; caller behavior, StringView typing and root scan mistakes
+  reproduced. Do not infer hidden model reasoning or predict fewer future calls.
+- Correction: capped-1 retains its first pipeline warning for requests 2–15.
+  Delete that automatic guidance path, retaining tool flags and evidence rules;
+  deduplicate identical failure summaries in the existing index, not invocations.
+  All 339 cumulative tool observations and other context remain identical.
+- Content reduction is only 13796 chars / 0.47%, not tokens or live savings.
+  Two invalid timeouts occurred in different commands without prior ceiling
+  feedback visible. Git after a build sees .tmp; a fresh snapshot does not.
+  Do not conflate those environments or cache shell calls by text.
+- Lib removes duplicate root parsing and LLM retry prose, keeps the established
+  behavior. Claw 1844/1844; Lib Native 108/108, JS 12/12; MoonBit net -54 lines.
+  Replay must unwrap event.command and freeze enriched context/evidence refs;
+  committed journal IDs are not interchangeable with provider-observed refs.
+
 ## Shell roots and interrupted delivery 2026-11-07
 
 - See docs/MOONCODE_SHELL_ROOT_CAUSE_AUDIT_2026-11-07.md. Three observed phases:
