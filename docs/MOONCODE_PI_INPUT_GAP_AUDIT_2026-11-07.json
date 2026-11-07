@@ -1184,5 +1184,78 @@
     "public_api_changes": "Removal-only: redundant check wrappers, unused overload method, watcher diagnostic helpers and check getter. No new exports.",
     "limits": "Frozen recorded model choices; context is deliberately lossy for older tool results. No measured new provider/cache/cash usage, autonomous task quality, avoided retries or future recall turns. First whole-test read unchanged.",
     "evidence_root": "/Users/kq/mooncode-cost-components-20261107"
+  },
+  "remaining_input_cleanup": {
+    "provider_calls": 0,
+    "frozen_responses": 12,
+    "historical_calls": 15,
+    "original_cost_hashes_checked": 3,
+    "baseline": 78258,
+    "final": 76295,
+    "saved": 1963,
+    "before_components": {
+      "schema": 19896,
+      "system:planner.system": 11676,
+      "user:user.task_contract": 4608,
+      "skill": 5027,
+      "assistant": 9939,
+      "tool_headers": 9796,
+      "tool_bodies": 17316
+    },
+    "after_components": {
+      "schema": 17064,
+      "system:planner.system": 10080,
+      "user:user.task_contract": 4608,
+      "skill": 5027,
+      "assistant": 9939,
+      "tool_headers": 9259,
+      "tool_bodies": 20318
+    },
+    "ordered_ablation": [
+      {
+        "change": "baseline",
+        "tokens": 78258
+      },
+      {
+        "change": "remove unreachable browser",
+        "tokens": 78412,
+        "saved": -154
+      },
+      {
+        "change": "compact complete skill catalog and remove stale browser guidance",
+        "tokens": 77225,
+        "saved": 1187
+      },
+      {
+        "change": "omit repeated generic recall body from reference handles",
+        "tokens": 76295,
+        "saved": 930
+      }
+    ],
+    "interactions": {
+      "short_handles_alone": 78578,
+      "browser_and_short_handles": 77451,
+      "catalog_and_short_handles": 77734,
+      "all_before_stale_guidance_cleanup": 76307
+    },
+    "checks": {
+      "task_unchanged": true,
+      "assistant_text_and_calls_unchanged": true,
+      "complete_loaded_skill_unchanged": true,
+      "latest_results_unchanged": true,
+      "observed_edit_literals_retained": true,
+      "last_three_test_verdicts_retained": true
+    },
+    "limits": "Local cl100k continuous replay; frozen model choices. No new autonomous delivery, actual usage/cache/cash result or avoided model rounds. Older bodies increase 3002 tokens because pressure triggers later; no smaller window. First whole-test read unchanged. No measured future recall cost.",
+    "evidence_root": "/Users/kq/mooncode-remaining-input-20261107",
+    "regression": {
+      "native_passed": 1837,
+      "native_total": 1837,
+      "info": true,
+      "fmt": true,
+      "public_interface_changes": false,
+      "production_net_lines": -84,
+      "tests_net_lines": -4
+    }
   }
 }

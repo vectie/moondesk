@@ -7,6 +7,18 @@ Work directly on `main`; do not create a branch unless the user requests one.
 
 ## Measured working-set cleanup 2026-11-07
 
+Latest follow-up: /Users/kq/mooncode-remaining-input-20261107. Same 12 frozen
+responses, no provider call: 78258 ->76295 (-1963 /2.51%). Delete unreachable
+browser driver/schema, serialize complete skill listing as compact JSON, and
+remove repeated generic prose from referenced omitted-result handles. Schema
+-2832, system/catalog -1596, result headers -537; retained bodies +3002.
+Standalone browser deletion increases total input 154; never sum static savings
+as continuous replay savings. Task/skill/assistant/current results unchanged.
+Window remains 12288; first full-test presentation unchanged. Offline Pi ratio
+1.61 is not new usage, fewer turns or an autonomous quality measurement.
+Claw Native1837/1837, info/fmt pass; public interfaces unchanged, production-84
+/tests-4 lines. Desk has docs-only changes, no redundant Native rerun.
+
 - No paid rerun. Current journal/compiler/skill-prefix reuse: 108403 -> 78258
   fixed-trace local input, 12 responses. Steps: 671 skill receipt, 28322 working
   set, 1152 redundant check schema; full test result accounts for 21789.
