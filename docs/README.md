@@ -93,7 +93,11 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     distinguishes local estimates from billing and unresolved model decisions.
     [Resource fix and framework comparison](MOONCODE_RESOURCE_AND_FRAMEWORK_COMPARISON_2026-11-07.md)
     removes whole-workspace retention behind tiny manifests and compares actual
-    output-retention kernels; records missing common-model live qualification.
+    output-retention kernels; its then-pending live comparison is completed in
+    [Full delivery comparison](MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.md):
+    the existing Codex route, identical full repositories, four autonomous
+    deliveries and independent acceptance, all observed tokens, setup failures,
+    rework and timing, with per-round machine-readable records.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

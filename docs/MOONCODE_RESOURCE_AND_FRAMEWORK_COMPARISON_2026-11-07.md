@@ -57,7 +57,7 @@ OpenSeek 完整 workspace 测试首先失败于现有 registry 缺失依赖，�
 - 保留最初 OpenSeek workspace 依赖失败。Fort 首次要求真实 E2E 的全量运行是 276/299：23 项缺 compiled CLI 环境路径，随后构建 release 并补齐现有测试配置；不是删除失败测试或降低要求。
 - 最终 release 构建通过；按已有变量补齐 browse/compare/diff/output-reader CLI 路径，`MOONFORT_REQUIRE_LOCAL_E2E=1` Native **299/299**，包含真实 sandbox-exec、artifact 读取、提升和过期删除。info/fmt 通过，公开 `.mbti` 无变化。只扩展一个既有测试，没有增加测试框架。生产源码 +38 行、该测试 +24 行。
 - 私有 `/Users/kq/mooncode-peer-20261107` 保存原始输出、全部测试/失败日志、各框架正文、token 统计、隔离源文件及未合并原型；不把私有日志加入产品测试。Claw/OpenSeek 临时入口移出后，三个参考框架和 Claw 的源码均未修改。
-- **四框架共同模型的真实 bug 交付对比待完成。** 当前没有 DeepSeek/Kimi/GLM API 环境配置，Pi/DSH checkout 未安装运行依赖；OpenSeek CLI 的模型枚举不接受现用的 `codex/gpt-5.6-sol`。DSH 已有 wlc/Qwen 本地 profile，但不是同一模型。已请求共同配置的路径与模型名，没有请求用户在聊天中发送密钥。
-- 后续同模型测试应使用相同初始 Git tree、任务、验收和权限范围，各保留一整次尝试的调用、失败、返工、input/cached/output 和耗时；本轮输出 kernel 对照不能代替它。低成本自主交付继续未验收。
+- **后续已完成[四框架同模型完整交付](MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.md)。** 本报告结束时曾把共同模型视为待配置；随后用户明确要求复用 MoonCode 的 Codex，实际可用已有 OAuth 路由加临时兼容适配，无需新的 DeepSeek/Kimi/GLM key，也无需修改 OpenSeek 模型枚举。该前置判断不再成立。两次 Pi 适配失败和其余环境准备错误均保留。
+- 新报告使用相同完整 Git tree、任务和独立验收，保留所有已观察调用、失败、返工、input/cached/output 与耗时，并声明原有工具/沙箱/SDK差异。四套交付和独立验收均通过；本报告的 kernel 对照仍不是完整交付证据，低成本自主交付仍未验收。
 
 生产提交：MoonFort `1de0e6b`；MoonDesk 本报告、索引与 checklist 随同 main 提交。MoonClaw/OpenSeek/Pi/DSH 无本轮源码提交。

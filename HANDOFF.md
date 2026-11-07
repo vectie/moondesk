@@ -5,6 +5,30 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Full four-framework delivery 2026-11-07
+
+- User explicitly authorized live peers through the existing Codex OAuth route.
+  No new vendor key is needed. docs/MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.md
+  and its JSON contain the shared task/tree, source commits, every observed
+  response, failed setup attempts, rework, timing and independent acceptance.
+- All four autonomously delivered the same real MoonLib basename bug, full
+  Native 108/108; independent absolute-path Oct 12 Native 108/108 and pathx JS
+  12/12 pass, only pathx/path.mbt changed, tests unchanged. No manual code fix.
+  MoonCode 124777/1850, Pi 48538/1626 including two charged adapter failures,
+  OpenSeek 1249588/7353, DSH 156664/2921 including title. These are actual
+  input/output, not prices or a statistical ranking. Runtime/test delta is zero.
+- Private evidence: /Users/kq/mooncode-live-peers-20261107. Keep setup warnings,
+  failed attempts and all costs. Pi exit 0 can contain an assistant error;
+  DSH completed bash can contain a nonzero test exit. Inspect task facts.
+- Shared Git clones need local objects before sandbox execution: repack then
+  remove alternates. The temporary Codex compatibility adapter must normalize
+  assistant null content before using the internal MoonClaw message decoder.
+  Both Pi follow-up failures occurred after tools ran; they were not Pi bugs.
+  OpenSeek needs an isolated newer SDK; never upgrade the shared SDK mid-run.
+- Prior missing-common-model/pause notes below describe earlier rounds. This
+  authorized comparison is complete; no further paid rerun was performed to
+  erase non-blocking warnings. Low-cost autonomous delivery remains unqualified.
+
 ## Resource fix and peer comparison 2026-11-07
 
 - User requested a fix and OpenSeek/Pi/DSH comparison. Production change is in

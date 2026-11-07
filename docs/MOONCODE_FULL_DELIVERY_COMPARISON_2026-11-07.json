@@ -1,0 +1,1763 @@
+{
+  "date": "2026-11-07",
+  "actual_model": "gpt-5.6-sol",
+  "reasoning_effort": "none",
+  "initial_git_tree": "1c3c7190742a873cf0a42376e9c55a8d5b5556ab",
+  "projects": [
+    {
+      "project": "moondesk",
+      "head": "80c29f1bfd9ab86896fba120283a7d03dda860e6"
+    },
+    {
+      "project": "moonclaw",
+      "head": "0542905b376696b506f4f17132e81ec0445c693f"
+    },
+    {
+      "project": "moonfort",
+      "head": "1de0e6b6c4bbc4168fc2cad0a9d672a437135283"
+    },
+    {
+      "project": "moonlib",
+      "head": "f9cad489a323964711d2b28fd0c3c3b51b922619"
+    },
+    {
+      "project": "openseek",
+      "head": "dbe35ecc82681e352604b41a2e9b0b9d9e3e94d0"
+    },
+    {
+      "project": "pia",
+      "head": "80f7a11494e7e593d13749b867e66701eed94aaf"
+    },
+    {
+      "project": "dsh",
+      "head": "8bd073392eef6f54e921a093b95076248eb08cbb"
+    }
+  ],
+  "shared_task": "修复 MoonLib 现有 basename bug：docs/// 应返回 docs，资料/// 应返回 资料，根路径 / 应返回 /。pathx/path_test.mbt 的既有 basename 测试已包含失败验收断言，原有普通文件、单尾斜杠、空输入及 replace_ext 等既有语义保留。请自行定位根因、最小修复、实际测试并交付。当前是完整 Git 仓库的 main；不新增功能，不改架构、依赖或无关包，不 commit/push，不使用子 Agent。最终必须实际运行全仓 Native 测试，不能把未执行或失败写成通过。\nNative 可使用现有 shell 配置：export MOON_HOME=/Users/kq/.moon MOON_CC=/Library/Developer/CommandLineTools/usr/bin/clang MOON_AR=/Library/Developer/CommandLineTools/usr/bin/ar DEVELOPER_DIR=/Library/Developer/CommandLineTools SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk GIT_CONFIG_NOSYSTEM=1 PATH=/Library/Developer/CommandLineTools/usr/bin:/Users/kq/.moon/bin:/usr/bin:/bin:/usr/sbin:/sbin; 然后 moon test pathx --target native --frozen 或不带 pathx 跑全仓。失败退出码可能是 2；环境配置只作用于同一条 shell。",
+  "task_sha256": "a0df8ad89ad646db2fa2dff3071cc1574a31332e53eece6ec3c1c8dfbb7102c3",
+  "totals": [
+    {
+      "framework": "pia",
+      "responses": 14,
+      "input": 48538,
+      "output": 1626,
+      "cached": 16000,
+      "model_elapsed_ms": 59865,
+      "all_attempts_included": true
+    },
+    {
+      "framework": "openseek",
+      "responses": 33,
+      "input": 1249588,
+      "output": 7353,
+      "cached": 831616,
+      "model_elapsed_ms": 272206,
+      "all_attempts_included": true
+    },
+    {
+      "framework": "dsh",
+      "responses": 16,
+      "input": 156664,
+      "output": 2921,
+      "cached": 79616,
+      "model_elapsed_ms": 89063,
+      "all_attempts_included": true
+    },
+    {
+      "framework": "mooncode",
+      "responses": 12,
+      "input": 124777,
+      "output": 1850,
+      "cached": 18176,
+      "model_elapsed_ms": 62480,
+      "service_elapsed_ms": "85628",
+      "tool_calls": {
+        "read_skill": 1,
+        "read": 3,
+        "moon_ide": 1,
+        "moon_cmd": 1,
+        "edit": 3,
+        "shell": 5,
+        "finish": 1
+      },
+      "tool_failures": 5
+    }
+  ],
+  "runs": [
+    {
+      "framework": "mooncode",
+      "token_ledger": {
+        "total": {
+          "framework": "mooncode",
+          "responses": 12,
+          "input": 124777,
+          "output": 1850,
+          "cached": 18176,
+          "model_elapsed_ms": 62480,
+          "service_elapsed_ms": "85628",
+          "tool_calls": {
+            "read_skill": 1,
+            "read": 3,
+            "moon_ide": 1,
+            "moon_cmd": 1,
+            "edit": 3,
+            "shell": 5,
+            "finish": 1
+          },
+          "tool_failures": 5
+        },
+        "rounds": [
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 17562,
+            "request_message_count": 2,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 3175,
+            "completion_tokens": 27,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 2351
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 20940,
+            "request_message_count": 5,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 3,
+            "prompt_tokens": 3929,
+            "completion_tokens": 134,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 4533
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 35214,
+            "request_message_count": 10,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 2,
+            "prompt_tokens": 8015,
+            "completion_tokens": 123,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 5167
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 44439,
+            "request_message_count": 13,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 10244,
+            "completion_tokens": 237,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 6437
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 46105,
+            "request_message_count": 15,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 10678,
+            "completion_tokens": 168,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 5422
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 48742,
+            "request_message_count": 17,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 11381,
+            "completion_tokens": 202,
+            "cache_read_tokens": 2560,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 5733
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 50162,
+            "request_message_count": 19,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 11688,
+            "completion_tokens": 197,
+            "cache_read_tokens": 2560,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 5575
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 51792,
+            "request_message_count": 21,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 12084,
+            "completion_tokens": 168,
+            "cache_read_tokens": 2560,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 4993
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 53702,
+            "request_message_count": 23,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 12549,
+            "completion_tokens": 158,
+            "cache_read_tokens": 3968,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 5103
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 55882,
+            "request_message_count": 25,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 13088,
+            "completion_tokens": 60,
+            "cache_read_tokens": 3968,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 4820
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 57866,
+            "request_message_count": 27,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 13503,
+            "completion_tokens": 105,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 4334
+          },
+          {
+            "contract": "moonclaw.planner.metrics.v1",
+            "usage_observed": true,
+            "model_transport": "chat_completions",
+            "request_chars": 61636,
+            "request_message_count": 29,
+            "tool_schema_chars": 10672,
+            "tool_count": 17,
+            "tool_call_count": 1,
+            "prompt_tokens": 14443,
+            "completion_tokens": 271,
+            "cache_read_tokens": 2560,
+            "cache_write_tokens": 0,
+            "model_retry_count": 0,
+            "planner_latency_ms": 8012
+          }
+        ],
+        "failures": [
+          {
+            "tool": "read",
+            "message": "error reading /Users/kq/mooncode-live-peers-20261107/repos/mooncode/AGENTS.md: OSError(\"@fs.open(): \\\"/Users/kq/mooncode-live-peers-20261107/repos/mooncode/AGENTS.md\\\": No such file or directory\")",
+            "output": ""
+          },
+          {
+            "tool": "moon_cmd",
+            "message": "moon_cmd exited with status 1 in a per-call snapshot; later calls start from MoonBook",
+            "output": "xcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\nxcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\nxcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\nxcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\nxcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\nxcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\n"
+          },
+          {
+            "tool": "shell",
+            "message": "shell exited with status 2 in a per-call snapshot; later calls start from MoonBook",
+            "output": "Finished. moon: ran 3 tasks, now up to date\nWarning: [0001]\n   ╭─[ /Users/kq/mooncode-live-peers-20261107/fort/scratch/c6b1bb13c98cdb926a9f57f4f00afe74/pathx/path.mbt:5:16 ]\n   │\n 5 │ fn StringView::end_offset(self : StringView) -> Int32 {\n   │                ─────┬────  \n   │                     ╰────── Warning (unused_value): Unused function 'end_offset'\n───╯\n[vectie/moonlib] test pathx/path_test.mbt:172 (\"replace_ext: failed cases\") failed\nexpect test failed at /Users/kq/mooncode-live-peers-20261107/fort/scratch/c6b1bb13c98cdb926a9f57f4f00afe74/pathx/path_test.mbt:177:3-177:55\nDiff: (- expected, + actual)\n----\n-//\n+//.md\n----\n\nTotal tests: 12, passed: 11, failed: 1.\n"
+          },
+          {
+            "tool": "edit",
+            "message": "use either edits or old_string/new_string, not both",
+            "output": ""
+          },
+          {
+            "tool": "shell",
+            "message": "shell exited with status 1 in a per-call snapshot; later calls start from MoonBook",
+            "output": "xcode-select: error: unable to read data link at '/var/select/developer_dir', expected symbolic link (Operation not permitted)\nxcode-select: note: No developer tools were found, requesting install.\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools, and cancel the installation dialog.\nSee `man xcode-select` for more details.\n"
+          }
+        ]
+      },
+      "process_attempts": [
+        {
+          "file": "mooncode-process.json",
+          "result": {
+            "elapsed_ms": "90555",
+            "status": "service-stopped"
+          }
+        }
+      ],
+      "acceptance": {
+        "framework": "mooncode",
+        "checks": [
+          {
+            "check": "native",
+            "status": "passed",
+            "elapsed_ms": "120"
+          },
+          {
+            "check": "pathx-js",
+            "status": "passed",
+            "elapsed_ms": "57"
+          },
+          {
+            "check": "diff-check",
+            "status": "passed",
+            "elapsed_ms": "10"
+          },
+          {
+            "check": "tests-unchanged",
+            "status": "passed",
+            "elapsed_ms": "6"
+          }
+        ],
+        "changed_paths": "pathx/path.mbt\n",
+        "git_status": " M pathx/path.mbt\n?? .moonsuite/\n",
+        "source_hashes": "02c034b2b8b1817b2a5116d4fe0f5f628f0e3455c42fd9f2551837a20da33e21  pathx/path.mbt\ne5d34cd548d336b292117dd470b6357c906cc0baddfed95f5d7b9a40412e414c  pathx/path_test.mbt\n"
+      }
+    },
+    {
+      "framework": "pia",
+      "token_ledger": {
+        "total": {
+          "framework": "pia",
+          "responses": 14,
+          "input": 48538,
+          "output": 1626,
+          "cached": 16000,
+          "model_elapsed_ms": 59865,
+          "all_attempts_included": true
+        },
+        "rounds": [
+          {
+            "framework": "pia",
+            "round": 1,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3560",
+            "usage": {
+              "completion_tokens": 92,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 1294,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 1386
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 2,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4375",
+            "usage": {
+              "completion_tokens": 79,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 1294,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 1373
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 21,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3280",
+            "usage": {
+              "completion_tokens": 83,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 1294,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 1377
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 22,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "2343",
+            "usage": {
+              "completion_tokens": 29,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 2336,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 2365
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 23,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4444",
+            "usage": {
+              "completion_tokens": 139,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 3290,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 3429
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 24,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4593",
+            "usage": {
+              "completion_tokens": 162,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 3530,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 3692
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 25,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6647",
+            "usage": {
+              "completion_tokens": 139,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 3716,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 3855
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 26,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4028",
+            "usage": {
+              "completion_tokens": 124,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 3955,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4079
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 27,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4287",
+            "usage": {
+              "completion_tokens": 139,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4103,
+              "prompt_tokens_details": {
+                "cached_tokens": 3584,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4242
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 28,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3932",
+            "usage": {
+              "completion_tokens": 110,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4353,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4463
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 29,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4558",
+            "usage": {
+              "completion_tokens": 139,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4487,
+              "prompt_tokens_details": {
+                "cached_tokens": 4096,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4626
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 30,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4438",
+            "usage": {
+              "completion_tokens": 138,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4653,
+              "prompt_tokens_details": {
+                "cached_tokens": 3968,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4791
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 31,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3283",
+            "usage": {
+              "completion_tokens": 71,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4898,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4969
+            }
+          },
+          {
+            "framework": "pia",
+            "round": 32,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6097",
+            "usage": {
+              "completion_tokens": 182,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 5335,
+              "prompt_tokens_details": {
+                "cached_tokens": 4352,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 5517
+            }
+          }
+        ]
+      },
+      "process_attempts": [
+        {
+          "file": "pia-process.json",
+          "result": {
+            "elapsed_ms": "68727",
+            "status": "exited-zero"
+          }
+        },
+        {
+          "file": "bootstrap-missing-openai-pia-process.json",
+          "result": {
+            "elapsed_ms": "505",
+            "status": "exited-zero"
+          }
+        },
+        {
+          "file": "bootstrap-stream-adapter-pia-process.json",
+          "result": {
+            "elapsed_ms": "18780",
+            "status": "exited-zero"
+          }
+        },
+        {
+          "file": "bootstrap-null-content-adapter-pia-process.json",
+          "result": {
+            "elapsed_ms": "19191",
+            "status": "exited-zero"
+          }
+        }
+      ],
+      "acceptance": {
+        "framework": "pia",
+        "checks": [
+          {
+            "check": "native",
+            "status": "passed",
+            "elapsed_ms": "139"
+          },
+          {
+            "check": "pathx-js",
+            "status": "passed",
+            "elapsed_ms": "57"
+          },
+          {
+            "check": "diff-check",
+            "status": "passed",
+            "elapsed_ms": "9"
+          },
+          {
+            "check": "tests-unchanged",
+            "status": "passed",
+            "elapsed_ms": "6"
+          }
+        ],
+        "changed_paths": "pathx/path.mbt\n",
+        "git_status": " M pathx/path.mbt\n",
+        "source_hashes": "a42b20d0d3d412cea3e4d65e0dbadc4a36b1cfccada15fa927b50e0865173177  pathx/path.mbt\ne5d34cd548d336b292117dd470b6357c906cc0baddfed95f5d7b9a40412e414c  pathx/path_test.mbt\n"
+      }
+    },
+    {
+      "framework": "openseek",
+      "token_ledger": {
+        "total": {
+          "framework": "openseek",
+          "responses": 33,
+          "input": 1249588,
+          "output": 7353,
+          "cached": 831616,
+          "model_elapsed_ms": 272206,
+          "all_attempts_included": true
+        },
+        "rounds": [
+          {
+            "framework": "openseek",
+            "round": 1,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3602",
+            "usage": {
+              "completion_tokens": 74,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 25882,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 25956
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 2,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9570",
+            "usage": {
+              "completion_tokens": 401,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 25989,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 26390
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 3,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "45154",
+            "usage": {
+              "completion_tokens": 198,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 26638,
+              "prompt_tokens_details": {
+                "cached_tokens": 25856,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 26836
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 4,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5493",
+            "usage": {
+              "completion_tokens": 166,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 26982,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 27148
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 5,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6243",
+            "usage": {
+              "completion_tokens": 196,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 27269,
+              "prompt_tokens_details": {
+                "cached_tokens": 27008,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 27465
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 6,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4033",
+            "usage": {
+              "completion_tokens": 74,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 31727,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 31801
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 7,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6067",
+            "usage": {
+              "completion_tokens": 196,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 31830,
+              "prompt_tokens_details": {
+                "cached_tokens": 31616,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 32026
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 8,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6190",
+            "usage": {
+              "completion_tokens": 195,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 32307,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 32502
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 9,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5431",
+            "usage": {
+              "completion_tokens": 74,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 32631,
+              "prompt_tokens_details": {
+                "cached_tokens": 26240,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 32705
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 10,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "10723",
+            "usage": {
+              "completion_tokens": 393,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 32736,
+              "prompt_tokens_details": {
+                "cached_tokens": 32384,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 33129
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 11,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "11707",
+            "usage": {
+              "completion_tokens": 386,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 33425,
+              "prompt_tokens_details": {
+                "cached_tokens": 32512,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 33811
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 12,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4798",
+            "usage": {
+              "completion_tokens": 145,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 34789,
+              "prompt_tokens_details": {
+                "cached_tokens": 33664,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 34934
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 13,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "11994",
+            "usage": {
+              "completion_tokens": 387,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 35063,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 35450
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 14,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6308",
+            "usage": {
+              "completion_tokens": 154,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 36415,
+              "prompt_tokens_details": {
+                "cached_tokens": 34816,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 36569
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 15,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5099",
+            "usage": {
+              "completion_tokens": 150,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 36692,
+              "prompt_tokens_details": {
+                "cached_tokens": 36480,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 36842
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 16,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9512",
+            "usage": {
+              "completion_tokens": 375,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 36971,
+              "prompt_tokens_details": {
+                "cached_tokens": 36736,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 37346
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 17,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5674",
+            "usage": {
+              "completion_tokens": 138,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 38324,
+              "prompt_tokens_details": {
+                "cached_tokens": 27264,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 38462
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 18,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "7523",
+            "usage": {
+              "completion_tokens": 181,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 38591,
+              "prompt_tokens_details": {
+                "cached_tokens": 33024,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 38772
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 19,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9087",
+            "usage": {
+              "completion_tokens": 375,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 38901,
+              "prompt_tokens_details": {
+                "cached_tokens": 35328,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 39276
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 20,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6077",
+            "usage": {
+              "completion_tokens": 181,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 40253,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 40434
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 21,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5720",
+            "usage": {
+              "completion_tokens": 186,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 40563,
+              "prompt_tokens_details": {
+                "cached_tokens": 40320,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 40749
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 22,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9362",
+            "usage": {
+              "completion_tokens": 376,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 40878,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 41254
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 23,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5109",
+            "usage": {
+              "completion_tokens": 141,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 42231,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 42372
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 24,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5260",
+            "usage": {
+              "completion_tokens": 150,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 42501,
+              "prompt_tokens_details": {
+                "cached_tokens": 41088,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 42651
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 25,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9256",
+            "usage": {
+              "completion_tokens": 378,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 42780,
+              "prompt_tokens_details": {
+                "cached_tokens": 31872,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 43158
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 26,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5665",
+            "usage": {
+              "completion_tokens": 74,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 44001,
+              "prompt_tokens_details": {
+                "cached_tokens": 42240,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 44075
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 27,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8923",
+            "usage": {
+              "completion_tokens": 368,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 44106,
+              "prompt_tokens_details": {
+                "cached_tokens": 42496,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 44474
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 28,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4127",
+            "usage": {
+              "completion_tokens": 31,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 44730,
+              "prompt_tokens_details": {
+                "cached_tokens": 39168,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 44761
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 29,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8379",
+            "usage": {
+              "completion_tokens": 275,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 44887,
+              "prompt_tokens_details": {
+                "cached_tokens": 43008,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 45162
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 30,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8868",
+            "usage": {
+              "completion_tokens": 343,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 49311,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 49654
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 31,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "9161",
+            "usage": {
+              "completion_tokens": 270,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 49764,
+              "prompt_tokens_details": {
+                "cached_tokens": 44672,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 50034
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 32,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4909",
+            "usage": {
+              "completion_tokens": 73,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 50158,
+              "prompt_tokens_details": {
+                "cached_tokens": 44288,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 50231
+            }
+          },
+          {
+            "framework": "openseek",
+            "round": 33,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "7182",
+            "usage": {
+              "completion_tokens": 249,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 50263,
+              "prompt_tokens_details": {
+                "cached_tokens": 49536,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 50512
+            }
+          }
+        ]
+      },
+      "process_attempts": [
+        {
+          "file": "openseek-process.json",
+          "result": {
+            "elapsed_ms": "292709",
+            "status": "exited-zero"
+          }
+        }
+      ],
+      "acceptance": {
+        "framework": "openseek",
+        "checks": [
+          {
+            "check": "native",
+            "status": "passed",
+            "elapsed_ms": "126"
+          },
+          {
+            "check": "pathx-js",
+            "status": "passed",
+            "elapsed_ms": "61"
+          },
+          {
+            "check": "diff-check",
+            "status": "passed",
+            "elapsed_ms": "9"
+          },
+          {
+            "check": "tests-unchanged",
+            "status": "passed",
+            "elapsed_ms": "6"
+          }
+        ],
+        "changed_paths": "pathx/path.mbt\n",
+        "git_status": " M pathx/path.mbt\n",
+        "source_hashes": "b61a87fd56442efcf1cbe2d112ee2af95392a9b4868db74f56a4d868b700b17a  pathx/path.mbt\ne5d34cd548d336b292117dd470b6357c906cc0baddfed95f5d7b9a40412e414c  pathx/path_test.mbt\n"
+      }
+    },
+    {
+      "framework": "dsh",
+      "token_ledger": {
+        "total": {
+          "framework": "dsh",
+          "responses": 16,
+          "input": 156664,
+          "output": 2921,
+          "cached": 79616,
+          "model_elapsed_ms": 89063,
+          "all_attempts_included": true
+        },
+        "rounds": [
+          {
+            "framework": "dsh",
+            "round": 1,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6110",
+            "usage": {
+              "completion_tokens": 235,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 4442,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 4677
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 2,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "2136",
+            "usage": {
+              "completion_tokens": 16,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 443,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 459
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 3,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4844",
+            "usage": {
+              "completion_tokens": 149,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 5113,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 5262
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 4,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "2944",
+            "usage": {
+              "completion_tokens": 39,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 9450,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 9489
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 5,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8350",
+            "usage": {
+              "completion_tokens": 302,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 9502,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 9804
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 6,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5439",
+            "usage": {
+              "completion_tokens": 165,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 9906,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 10071
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 7,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "2843",
+            "usage": {
+              "completion_tokens": 47,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 10110,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 10157
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 8,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6687",
+            "usage": {
+              "completion_tokens": 254,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 10468,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 10722
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 9,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6435",
+            "usage": {
+              "completion_tokens": 234,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 10823,
+              "prompt_tokens_details": {
+                "cached_tokens": 9600,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 11057
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 10,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5904",
+            "usage": {
+              "completion_tokens": 191,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 11096,
+              "prompt_tokens_details": {
+                "cached_tokens": 9984,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 11287
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 11,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "6649",
+            "usage": {
+              "completion_tokens": 248,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 11399,
+              "prompt_tokens_details": {
+                "cached_tokens": 10880,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 11647
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 12,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "5629",
+            "usage": {
+              "completion_tokens": 189,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 11686,
+              "prompt_tokens_details": {
+                "cached_tokens": 11520,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 11875
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 13,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "4760",
+            "usage": {
+              "completion_tokens": 149,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 11902,
+              "prompt_tokens_details": {
+                "cached_tokens": 10624,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 12051
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 14,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8074",
+            "usage": {
+              "completion_tokens": 258,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 13148,
+              "prompt_tokens_details": {
+                "cached_tokens": 11904,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 13406
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 15,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "3767",
+            "usage": {
+              "completion_tokens": 87,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 13516,
+              "prompt_tokens_details": {
+                "cached_tokens": 5120,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 13603
+            }
+          },
+          {
+            "framework": "dsh",
+            "round": 16,
+            "actual_model": "gpt-5.6-sol",
+            "reasoning_effort": "none",
+            "elapsed_ms": "8492",
+            "usage": {
+              "completion_tokens": 358,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens": 13660,
+              "prompt_tokens_details": {
+                "cached_tokens": 9984,
+                "cache_write_tokens": 0
+              },
+              "total_tokens": 14018
+            }
+          }
+        ]
+      },
+      "process_attempts": [
+        {
+          "file": "dsh-process.json",
+          "result": {
+            "elapsed_ms": "106422",
+            "status": "exited-zero"
+          }
+        },
+        {
+          "file": "bootstrap-source-paths-dsh-process.json",
+          "result": {
+            "elapsed_ms": "54",
+            "status": "moonbitlang/async/shell.ShellError.CommandFailed"
+          }
+        },
+        {
+          "file": "bootstrap-native-typert-dsh-process.json",
+          "result": {
+            "elapsed_ms": "1920",
+            "status": "moonbitlang/async/shell.ShellError.CommandFailed"
+          }
+        }
+      ],
+      "acceptance": {
+        "framework": "dsh",
+        "checks": [
+          {
+            "check": "native",
+            "status": "passed",
+            "elapsed_ms": "113"
+          },
+          {
+            "check": "pathx-js",
+            "status": "passed",
+            "elapsed_ms": "59"
+          },
+          {
+            "check": "diff-check",
+            "status": "passed",
+            "elapsed_ms": "9"
+          },
+          {
+            "check": "tests-unchanged",
+            "status": "passed",
+            "elapsed_ms": "6"
+          }
+        ],
+        "changed_paths": "pathx/path.mbt\n",
+        "git_status": " M pathx/path.mbt\n",
+        "source_hashes": "adb94e47c4b118ee46994acb9f107d6173053b42358f5ab54ac95fee3fb622b3  pathx/path.mbt\ne5d34cd548d336b292117dd470b6357c906cc0baddfed95f5d7b9a40412e414c  pathx/path_test.mbt\n"
+      }
+    }
+  ],
+  "pricing": "not measured; custom-model price metadata is not billing",
+  "scope": "one live bug delivery per framework after minimal setup fixes; all observed provider usage included; not a statistical ranking"
+}
