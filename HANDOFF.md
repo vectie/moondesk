@@ -5,6 +5,21 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Residual Pi comparison 2026-11-08
+
+- Existing-log gap76295-47355=28940 is now paired by category. Aligned basic
+  four schemas430/request versus Pi599; nine additional tools992. Main
+  system248 versus Pi502; full skill catalog592 extra. Configuration and
+  capability differences are not all removable implementation overhead.
+- Eight continuous ablations preserve failures/negative savings. Only flat
+  model result headers ship:75840 (-455/0.60%), no new provider/model decisions.
+  Tool headers9259->8804; full bodies20318 unchanged, task/skill/assistant
+  unchanged. Runtime metadata removal and SDK field combinations were rejected.
+  Evidence: /Users/kq/mooncode-pi-residual-20261108; dated section in the Pi
+  input-gap report. Original costs/archive stay intact, no paid rerun.
+- Claw Native1837/1837 (--strip -j2), check/info/fmt pass; interface unchanged.
+  Desk docs-only;135 local links/11 archive hashes verified. No new test items.
+
 ## Measured working-set cleanup 2026-11-07
 
 Latest follow-up: /Users/kq/mooncode-remaining-input-20261107. Same 12 frozen

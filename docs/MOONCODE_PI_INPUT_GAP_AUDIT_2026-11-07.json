@@ -1257,5 +1257,129 @@
       "production_net_lines": -84,
       "tests_net_lines": -4
     }
+  },
+  "residual_gap_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "frozen_responses": 12,
+    "historical_calls": 15,
+    "original_cost_hashes_checked": 3,
+    "baseline": 76295,
+    "final": 75840,
+    "net_saved": 455,
+    "pi_same_counter": 47355,
+    "initial_gap": 28940,
+    "final_gap": 28485,
+    "baseline_gap_parts": {
+      "schema": 9876,
+      "system_and_catalog": 4056,
+      "loaded_skill": 5027,
+      "task": 504,
+      "assistant": 2297,
+      "tools": 7180
+    },
+    "normalized": {
+      "mooncode_schema_per_request": 1422,
+      "mooncode_shared_four_tools": 430,
+      "mooncode_extra_nine_tools": 992,
+      "pi_four_tools": 599,
+      "mooncode_primary_system": 248,
+      "mooncode_skill_catalog": 592,
+      "pi_system": 502,
+      "baseline_total": 76295,
+      "pi_total": 47355
+    },
+    "variants": [
+      {
+        "variant": "baseline",
+        "tokens": 76295,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "runtime",
+        "tokens": 77886,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "flat",
+        "tokens": 75840,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "sdk",
+        "tokens": 76067,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "runtime_flat",
+        "tokens": 77423,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "runtime_sdk",
+        "tokens": 77658,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "flat_sdk",
+        "tokens": 78057,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      },
+      {
+        "variant": "runtime_flat_sdk",
+        "tokens": 77262,
+        "lost_edits": [],
+        "lost_skill": [],
+        "missing_final_verdict": []
+      }
+    ],
+    "final_components": {
+      "schema": 17064,
+      "system:planner.system": 10080,
+      "user:user.task_contract": 4608,
+      "skill": 5027,
+      "assistant": 9939,
+      "tool_headers": 8804,
+      "tool_bodies": 20318
+    },
+    "checks": {
+      "task_and_system_identical": true,
+      "complete_skill_identical": true,
+      "assistant_text_and_calls_identical": true,
+      "latest_results_equal_after_unwrap_and_duplicate_name_removal": true,
+      "observed_edit_inputs_retained": true,
+      "final_three_verdicts_retained": true
+    },
+    "limits": "Frozen choices, local cl100k estimate. No newly measured provider/cache/cash usage, avoided turns, rework or autonomous quality. Four versus thirteen tools and no skill catalog versus seven entries are configuration/capability differences, not entirely removable waste.",
+    "evidence_root": "/Users/kq/mooncode-pi-residual-20261108",
+    "regression": {
+      "native_passed": 1837,
+      "native_total": 1837,
+      "native_flags": [
+        "--strip",
+        "-j",
+        "2"
+      ],
+      "check": true,
+      "info": true,
+      "fmt": true,
+      "public_interface_changes": false,
+      "production_net_lines": -1,
+      "tests_net_lines": 1
+    }
   }
 }
