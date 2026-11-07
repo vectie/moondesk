@@ -862,5 +862,30 @@
   ],
   "original_log_sha256": "e687c9cacc9c3f67da379e374513bc03102b009484125755c37271f606c9112e  /Users/kq/mooncode-live-peers-20261107/mooncode-journal.jsonl\nea7b1abf33d4005cb77acbdb68701c02fa0c6f307ee2d50c75dea8acf4c60f12  /Users/kq/mooncode-live-peers-20261107/pia-session.jsonl\n20d24a4ebe5fd4cb5bd69d444159f3fb850f85b02666f7a5d1b3417f2f589c33  /Users/kq/Workspace/moondesk/docs/MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.json\n",
   "replay_limits": "fixed recorded actions and 12 responses; includes original errors; does not predict model decisions, fewer turns, cache hits or actual billing",
-  "mixed_edit": "real previously rejected call replayed after original first edit; exact equality with independently accepted delivered source"
+  "mixed_edit": "real previously rejected call replayed after original first edit; exact equality with independently accepted delivered source",
+  "default_toolchain_followup": {
+    "provider_calls_this_followup": 0,
+    "paid_rerun": false,
+    "root_cause": "Missing /var alias metadata blocked authorized macOS developer selection; private Git attempted unavailable host system config/attributes.",
+    "production_lines_added": 3,
+    "production_lines_removed": 0,
+    "new_runtime_layers": 0,
+    "new_retry_rules": 0,
+    "default_native_tests": {
+      "passed": 108,
+      "total": 108
+    },
+    "default_git_checks": "diff --check, status --short, diff --stat; exit 0, no host config/attributes warnings",
+    "fort_native_tests": {
+      "first_parallel_passed": 299,
+      "total": 300,
+      "final_serial_passed": 300,
+      "deadline_test_unchanged": true
+    },
+    "public_interfaces_changed": false,
+    "original_evidence_files_checked": 3,
+    "prior_fixed_trace_local_estimate": 113335,
+    "new_measured_agent_tokens": null,
+    "evidence_root": "/Users/kq/mooncode-toolchain-20261107"
+  }
 }

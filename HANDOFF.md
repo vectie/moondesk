@@ -5,6 +5,27 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Default toolchain follow-up 2026-11-07
+
+- No paid rerun. The Native/Git errors in the Pi comparison reproduce in Fort:
+  authorized `/private/var/select` still needs `/var` alias metadata. One SBPL
+  line fixes default compiler selection; two private Git environment values
+  skip unavailable host system config/attributes. No toolchain discovery layer.
+- Original executor configuration and real repository: default Exec moon Native
+  108/108 and Shell Git checks pass without model-supplied environment exports.
+  Preserve the 14.2% fixed-trace estimate; this is not a new token/round result.
+  Evidence: /Users/kq/mooncode-toolchain-20261107; updated Pi input-gap report.
+
+## Build-cache cleanup 2026-11-07
+
+- Cleanup inventory/results: /Users/kq/moonsuite-cleanup-20261107. Build trees
+  can contain raw evidence and release bundles; do not remove `_build` wholesale.
+  The live Desk servers use `_build/native/release/build/cmd/main/main.exe`
+  and `ui/rabbita-desk/dist`. Keep final CLI binaries/shared libraries as well.
+- `moonmini` is a symlink to `bunnia`; include canonical aliases, Lepusa and
+  Rabbita when scanning suite caches. MoonRobo `target` and MoonFish objects,
+  databases and exports contain real source/data/evidence, not compiler caches.
+
 ## Pi input-gap audit 2026-11-07
 
 - Paid reruns paused by this request; no new live provider call. The successful
