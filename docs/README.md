@@ -91,6 +91,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     decomposes all 35 requests, identifies the repeated oversized grep result,
     and replays the existing cap with the actual receipt and carried history;
     distinguishes local estimates from billing and unresolved model decisions.
+    [Resource fix and framework comparison](MOONCODE_RESOURCE_AND_FRAMEWORK_COMPARISON_2026-11-07.md)
+    removes whole-workspace retention behind tiny manifests and compares actual
+    output-retention kernels; records missing common-model live qualification.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

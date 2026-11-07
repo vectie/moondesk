@@ -1,5 +1,7 @@
 # MoonCode：93 万 input 的逐轮构成（2026-11-07）
 
+后续生产修复和 OpenSeek/Pi/DSH 输出对照见[资源与框架对比](MOONCODE_RESOURCE_AND_FRAMEWORK_COMPARISON_2026-11-07.md)：收敛快照留存范围；完整共同模型交付对比仍待运行条件。
+
 **主要来源是一次越过输出上限的 grep 结果在后续请求中反复出现，其次是额外轮次反复携带固定提示、工具定义和已读源码。** 前一份报告的 0.47% 只度量删除旧提示和错误索引去重，不能代表主要缺陷修复的收益。
 
 本轮只读取已有日志和 receipt，执行本地 tokenizer 与真实上下文构造函数；没有启动付费模型、MoonCode canary 或真实 grant publisher / 执行器。既有本地回归沿用测试 fixture。历史实际成本仍为 **935,131 input / 6,169 output，35 次响应**，其中 cached input 84,224。协调对话和本地编译/测试另有资源成本。

@@ -580,6 +580,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 - [x] **收敛资源身份**：读写、scope、并行读取去重、检查输入、formatter selector 与 Moon 命令使用共用的真实路径解析；新文件解析最近的已存在父目录，拒绝越界和 dangling symlink。检查凭据记录 absolute_path，别名改指向同内容的其他文件也使旧检查失效。纯 lexical helper 只承担路径/argv 排版，不提供授权证明。
 - [x] **删除全局工具偏好禁令**：保留 exact grant、既有路径与窄 scope 检查，移除“重定向、sed、inline interpreter 一律不能写文件”等强制改用某个工具的规则及仅服务这些禁令的解析。项目自身明确要求的 `.mbtx` 或编辑方式仍按项目规范执行。
 - [x] **原生写入并发验收**：write/edit/patch 共用文件级稳定锁、内容比较和同目录 staging/rename；不同文件不串行。write 可带 read 返回的 expected_fingerprint，不强制增加读步骤。多文件 patch 只回滚本次已提交成员，恢复也比较当前内容；外部改动被保留，部分恢复返回明确 metadata，测试覆盖过期版本、竞争写入、权限位与未执行成员。
+- [x] **删除快照留存的未公开副本**：Fort 只保留已校验清单文件及祖先目录，完整 stdout artifact 仍独立留存；不再为 .git/index 单文件改动长期保留整仓。原 retention/TTL 回归红→绿，真实本地执行与读取/提升全量299/299；共同模型的整单成本对比仍待完成。
 - [ ] **进程级隔离收尾**：任意 shell/formatter 不参加原生文件锁，现有 grant 没有 per-task writable-path 字段；窄范围快照仍不能归因并隔离执行期间的全部外部变化。保留事实错误与条件恢复，不宣称工作区级事务，也不新增全局工作区锁、人审或文件状态数据库。
 
 保留原子写入、必要的旧内容匹配和实际权限范围。不同写入入口必须报告足够的变更事实以使旧检查失效；不会先删保护，再用“sandbox 应该会挡住”代替验证。
@@ -649,6 +650,8 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 上一轮完成传输/投影减法；本轮再沿 work steps 生成最小图。原始诊断 JSONL/SSE 保留；桌面只用 watch。实际 HTTP 回归覆盖鉴权、snapshot/heartbeat，追加唤醒与相同游标重连不重放；大十进制 revision 经过 metadata adapter 和实际 UI codec。turn 数组保序，单次投影用临时 command-id 索引，避免每条 event/receipt 都遍历全部 turn。等待期间只检查文件 metadata，不逐次解码 journal；初次和等待后的最终读取仍重建完整 canonical snapshot，变更响应仍传完整会话，不宣称增量缓存或常数重建成本。[当前 watch 契约](../../moonclaw/docs/MOONCODE_STREAM_RESUME.md) 取代旧 typed-resume 说明。最小动态图已交付，完整依赖分析继续未勾选，不增加图存储、模型调用、连线或审批流程。
 
 ### 9 Telemetry 模块 减少评测对正常执行的侵入
+
+2026-11-07 [资源修复与框架输出对照](MOONCODE_RESOURCE_AND_FRAMEWORK_COMPARISON_2026-11-07.md)：生产改动收敛 Fort 留存到已校验文件清单，删除私有副本未公开内容，避免仅 .git/index 改动也长期留整仓；不加重试/预算/状态。旧上下文限长原型不合入。Pi/DSH 实际源码保留函数2/2、OpenSeek原样sink隔离1/1；因共同模型和运行环境未齐，完整Agent交付对比仍未完成，不以kernel结果勾选低成本交付。
 
 2026-11-07 [逐轮 input 预算](MOONCODE_INPUT_BUDGET_AUDIT_2026-11-07.md)：完整35轮实际935131 input；本地954652估算中，grep日志六次携带552582（57.9%），源码/测试137625，schema79380。真实Killed receipt回放既有cap，固定动作估算减少509634；持续传递候选历史并包含旧提示/索引清理后为441848。此前0.47%没有测量cap修复。六次已知快照失败后的重试发起轮次用了72734实际input；不能将此与内容构成相加，或宣称离线已减少模型往返。本轮只补账本与度量边界，没有有据可补的新运行时缺陷，不再加策略/提示/测试；低成本自主交付仍未勾选。
 

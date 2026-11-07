@@ -5,6 +5,27 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Resource fix and peer comparison 2026-11-07
+
+- User requested a fix and OpenSeek/Pi/DSH comparison. Production change is in
+  sibling Fort retention: keep only verified manifest files and ancestor dirs,
+  not the whole workspace for a .git/index-only observation. Existing stdout
+  cap stays; no new model prompt, retry rule, budget or recovery state.
+- A saved-context cap prototype was tested then removed; it addressed old
+  projections rather than ongoing disk growth. Do not count prototype lines,
+  tests or token estimates as shipped improvements. Claw source is unchanged.
+- docs/MOONCODE_RESOURCE_AND_FRAMEWORK_COMPARISON_2026-11-07.md records same
+  actual-output retention tests: Pi/DSH direct source functions, OpenSeek
+  byte-identical isolated sink after full workspace dependency resolution failed.
+  These are not full agent/task success or cost measurements.
+- Common-model live comparison remains pending: no DeepSeek/Kimi/GLM env key,
+  OpenSeek CLI cannot select the current Codex model, Pi/DSH deps absent. Existing
+  DSH wlc/Qwen config is a different route. Asked for config path/model name,
+  never a secret in chat; do not label the offline kernels a completed live run.
+- Fort final required-E2E Native 299/299 and release build pass; public APIs
+  unchanged, +38 production lines / +24 lines in one existing retention test.
+  Preserve the unrelated user workbench edits; only stage own retention files.
+
 ## Full input attribution 2026-11-07
 
 - No paid rerun. docs/MOONCODE_INPUT_BUDGET_AUDIT_2026-11-07.md accounts for
