@@ -887,5 +887,50 @@
     "prior_fixed_trace_local_estimate": 113335,
     "new_measured_agent_tokens": null,
     "evidence_root": "/Users/kq/mooncode-toolchain-20261107"
+  },
+  "remaining_input_followup": {
+    "provider_calls": 0,
+    "paid_rerun": false,
+    "original_evidence_hashes_checked": 3,
+    "schema_contract": "Only descriptions changed; all tool names, parameter shapes, types, required fields, enums and strictness unchanged.",
+    "schema": {
+      "tools": 15,
+      "captured_calls_validated": 15,
+      "schema_before": 2093,
+      "schema_after": 1754,
+      "system_prefix_before": 321,
+      "system_prefix_after": 249
+    },
+    "fixed_rounds": 12,
+    "observations_preserved": 95,
+    "before_local_input": 113335,
+    "after_local_input": 108403,
+    "local_input_reduction": 4932,
+    "schema_reduction": 4068,
+    "system_reduction": 864,
+    "full_test_read": {
+      "path": "pathx/path_test.mbt",
+      "line_count": 181,
+      "appearances": 10,
+      "output_chars": 7388,
+      "changed_by_this_followup": false
+    },
+    "pi_targeted_grep": {
+      "appearances": 11,
+      "output_chars": 3085,
+      "output_lines": 42,
+      "source": "original Pi first-round grep, includes source callers and test assertions"
+    },
+    "saved_rounds_claimed": 0,
+    "read_reduction_claimed": 0,
+    "validation": {
+      "native_passed": 1843,
+      "native_total": 1843,
+      "public_interfaces_changed": false,
+      "production_net_lines": -12,
+      "tests_net_lines": 0
+    },
+    "limits": "Fixed recorded actions, results and 12 responses. Search/range guidance is not an observed change in model behavior. No new measured provider usage, cache or cash savings.",
+    "evidence_root": "/Users/kq/mooncode-input-followup-20261107"
   }
 }

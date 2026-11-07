@@ -5,6 +5,22 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Remaining input follow-up 2026-11-07
+
+- No paid rerun. Deduplicate tool descriptions and compact the existing main
+  prompt; guide targeted implementation/caller/test search and range reads,
+  expanding as needed. No router, new tool, truncation, retry or completion gate.
+- All tool ABI fields unchanged apart from descriptions; 15 captured calls
+  validate. Current Book keeps 15 tools. Fixed producer carry replay retains
+  12 responses / 95 observations: 113335 -> 108403 local tokens (4.35%). Schema
+  contributes 4068, main prompt 864; all other messages are exactly equal.
+- Full test read was 181 lines/7388 chars, carried ten times; Pi's initial grep
+  was 42 lines/3085 chars including callers. Full tests/skills remain in replay.
+  Do not claim measured behavior, fewer rounds, new billing or a new ratio.
+  Evidence: /Users/kq/mooncode-input-followup-20261107; prior cost hashes intact.
+- Claw full Native 1843/1843, check/info/fmt pass; public interfaces unchanged.
+  Production net -12 lines, product tests unchanged; private audits removed.
+
 ## Default toolchain follow-up 2026-11-07
 
 - No paid rerun. The Native/Git errors in the Pi comparison reproduce in Fort:
