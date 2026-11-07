@@ -2,6 +2,8 @@
 
 2026-11-07。用户明确授权复用 MoonCode 现有 Codex 配置做真实交付比较。本次不再比较输出截断函数。四套运行都自主修改完整 Git 仓库、实际执行全仓 Native 测试并交付；随后独立验收全部通过。没有人工修改 Agent 的业务代码，没有增加产品功能、运行状态、审批流程或测试框架。
 
+后续[Pi / MoonCode input 差额审计](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md)使用本报告的原日志完成呈现减法与参数返工修复，没有付费重跑；以下数字保留为改动前的实际观测，不以回放估算替换。
+
 ## 条件与复现材料
 
 - 实际模型统一为 **`gpt-5.6-sol`，reasoning effort `none`**，复用 MoonClaw 已有 `codex/gpt-5.6-sol` OAuth 路由、刷新和 Responses 编解码；不需要另一个厂商的密钥。

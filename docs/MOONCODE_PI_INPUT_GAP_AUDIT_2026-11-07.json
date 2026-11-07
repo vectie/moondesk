@@ -1,0 +1,866 @@
+{
+  "date": "2026-11-07",
+  "provider_calls_this_audit": 0,
+  "scope": "12 successful delivery responses each; original Pi adapter charges remain in the full-comparison ledger",
+  "actual_success_input_gap": 78827,
+  "estimator": "existing cl100k_base Counter; not provider billing",
+  "totals": [
+    {
+      "peer": "mooncode",
+      "actual_input": 124777,
+      "local_estimate": 132150,
+      "parts": {
+        "schema": 27216,
+        "system": 13431,
+        "task": 6432,
+        "assistant": 9939,
+        "metadata": 11326,
+        "message": 2109,
+        "skill_output": 4807,
+        "output_encoding": 7938,
+        "envelope": 3365,
+        "file_output": 31256,
+        "command_output": 11720,
+        "notes": 2611
+      }
+    },
+    {
+      "peer": "pia",
+      "actual_input": 45950,
+      "local_estimate": 47355,
+      "parts": {
+        "schema": 7188,
+        "system": 6024,
+        "task": 4104,
+        "assistant": 7642,
+        "raw_tool_output": 22397,
+        "envelope": 0
+      }
+    }
+  ],
+  "per_round": [
+    {
+      "peer": "mooncode",
+      "round": 1,
+      "actual_input": 3175,
+      "estimated": 3849,
+      "parts": {
+        "schema": 2268,
+        "system": 1045,
+        "task": 536
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "read_skill"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 2,
+      "actual_input": 3929,
+      "estimated": 4605,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 38,
+        "metadata": 130,
+        "message": 7,
+        "skill_output": 437,
+        "output_encoding": 27,
+        "envelope": 36
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "read",
+        "read",
+        "moon_ide"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 3,
+      "actual_input": 8015,
+      "estimated": 8659,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 192,
+        "metadata": 404,
+        "message": 107,
+        "skill_output": 437,
+        "output_encoding": 613,
+        "envelope": 143,
+        "file_output": 2348,
+        "command_output": 331,
+        "notes": 154
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "read",
+        "moon_cmd"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 4,
+      "actual_input": 10244,
+      "estimated": 10871,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 321,
+        "metadata": 688,
+        "message": 143,
+        "skill_output": 437,
+        "output_encoding": 776,
+        "envelope": 214,
+        "file_output": 3212,
+        "command_output": 943,
+        "notes": 207
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 5,
+      "actual_input": 10678,
+      "estimated": 11306,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 568,
+        "metadata": 815,
+        "message": 166,
+        "skill_output": 437,
+        "output_encoding": 779,
+        "envelope": 249,
+        "file_output": 3212,
+        "command_output": 943,
+        "notes": 207
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "shell"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 6,
+      "actual_input": 11381,
+      "estimated": 11993,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 737,
+        "metadata": 973,
+        "message": 187,
+        "skill_output": 437,
+        "output_encoding": 801,
+        "envelope": 284,
+        "file_output": 3212,
+        "command_output": 1185,
+        "notes": 247
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 7,
+      "actual_input": 11688,
+      "estimated": 12300,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 949,
+        "metadata": 977,
+        "message": 201,
+        "skill_output": 437,
+        "output_encoding": 804,
+        "envelope": 319,
+        "file_output": 3212,
+        "command_output": 1185,
+        "notes": 286
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 8,
+      "actual_input": 12084,
+      "estimated": 12692,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 1152,
+        "metadata": 1105,
+        "message": 224,
+        "skill_output": 437,
+        "output_encoding": 807,
+        "envelope": 354,
+        "file_output": 3212,
+        "command_output": 1185,
+        "notes": 286
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "shell"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 9,
+      "actual_input": 12549,
+      "estimated": 13142,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 1318,
+        "metadata": 1303,
+        "message": 241,
+        "skill_output": 437,
+        "output_encoding": 811,
+        "envelope": 389,
+        "file_output": 3212,
+        "command_output": 1215,
+        "notes": 286
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "shell"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 10,
+      "actual_input": 13088,
+      "estimated": 13665,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 1475,
+        "metadata": 1499,
+        "message": 258,
+        "skill_output": 437,
+        "output_encoding": 816,
+        "envelope": 424,
+        "file_output": 3212,
+        "command_output": 1328,
+        "notes": 286
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "shell"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 11,
+      "actual_input": 13503,
+      "estimated": 14073,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 1540,
+        "metadata": 1638,
+        "message": 279,
+        "skill_output": 437,
+        "output_encoding": 822,
+        "envelope": 459,
+        "file_output": 3212,
+        "command_output": 1430,
+        "notes": 326
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "shell"
+      ]
+    },
+    {
+      "peer": "mooncode",
+      "round": 12,
+      "actual_input": 14443,
+      "estimated": 14995,
+      "parts": {
+        "schema": 2268,
+        "system": 1126,
+        "task": 536,
+        "assistant": 1649,
+        "metadata": 1794,
+        "message": 296,
+        "skill_output": 437,
+        "output_encoding": 882,
+        "envelope": 494,
+        "file_output": 3212,
+        "command_output": 1975,
+        "notes": 326
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "finish"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 1,
+      "actual_input": 1294,
+      "estimated": 1443,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash",
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 2,
+      "actual_input": 2336,
+      "estimated": 2474,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 91,
+        "raw_tool_output": 940,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 3,
+      "actual_input": 3290,
+      "estimated": 3439,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 127,
+        "raw_tool_output": 1869,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 4,
+      "actual_input": 3530,
+      "estimated": 3666,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 264,
+        "raw_tool_output": 1959,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 5,
+      "actual_input": 3716,
+      "estimated": 3851,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 435,
+        "raw_tool_output": 1973,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 6,
+      "actual_input": 3955,
+      "estimated": 4079,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 574,
+        "raw_tool_output": 2062,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 7,
+      "actual_input": 4103,
+      "estimated": 4225,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 706,
+        "raw_tool_output": 2076,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 8,
+      "actual_input": 4353,
+      "estimated": 4465,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 846,
+        "raw_tool_output": 2176,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "edit"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 9,
+      "actual_input": 4487,
+      "estimated": 4594,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 961,
+        "raw_tool_output": 2190,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 10,
+      "actual_input": 4653,
+      "estimated": 4746,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 1097,
+        "raw_tool_output": 2206,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 11,
+      "actual_input": 4898,
+      "estimated": 4977,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 1234,
+        "raw_tool_output": 2300,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": [
+        "bash",
+        "bash"
+      ]
+    },
+    {
+      "peer": "pia",
+      "round": 12,
+      "actual_input": 5335,
+      "estimated": 5396,
+      "parts": {
+        "schema": 599,
+        "system": 502,
+        "task": 342,
+        "assistant": 1307,
+        "raw_tool_output": 2646,
+        "envelope": 0
+      },
+      "duplicate_tokens_within_round": 0,
+      "actions": []
+    }
+  ],
+  "carry_replay": [
+    {
+      "round": 1,
+      "before": 3849,
+      "tool_projection_only": 3849,
+      "without_index": 3849,
+      "without_empty_context": 3697,
+      "after": 3522,
+      "observations": 0
+    },
+    {
+      "round": 2,
+      "before": 4605,
+      "tool_projection_only": 4574,
+      "without_index": 4574,
+      "without_empty_context": 4422,
+      "after": 4247,
+      "observations": 1
+    },
+    {
+      "round": 3,
+      "before": 8659,
+      "tool_projection_only": 7929,
+      "without_index": 7775,
+      "without_empty_context": 7623,
+      "after": 7448,
+      "observations": 4
+    },
+    {
+      "round": 4,
+      "before": 10871,
+      "tool_projection_only": 9870,
+      "without_index": 9663,
+      "without_empty_context": 9511,
+      "after": 9336,
+      "observations": 6
+    },
+    {
+      "round": 5,
+      "before": 11306,
+      "tool_projection_only": 10236,
+      "without_index": 10029,
+      "without_empty_context": 9877,
+      "after": 9702,
+      "observations": 7
+    },
+    {
+      "round": 6,
+      "before": 11993,
+      "tool_projection_only": 10824,
+      "without_index": 10577,
+      "without_empty_context": 10425,
+      "after": 10250,
+      "observations": 8
+    },
+    {
+      "round": 7,
+      "before": 12300,
+      "tool_projection_only": 11124,
+      "without_index": 10838,
+      "without_empty_context": 10686,
+      "after": 10511,
+      "observations": 9
+    },
+    {
+      "round": 8,
+      "before": 12692,
+      "tool_projection_only": 11446,
+      "without_index": 11160,
+      "without_empty_context": 11008,
+      "after": 10833,
+      "observations": 10
+    },
+    {
+      "round": 9,
+      "before": 13142,
+      "tool_projection_only": 11815,
+      "without_index": 11529,
+      "without_empty_context": 11377,
+      "after": 11202,
+      "observations": 11
+    },
+    {
+      "round": 10,
+      "before": 13665,
+      "tool_projection_only": 12256,
+      "without_index": 11970,
+      "without_empty_context": 11818,
+      "after": 11643,
+      "observations": 12
+    },
+    {
+      "round": 11,
+      "before": 14073,
+      "tool_projection_only": 12581,
+      "without_index": 12255,
+      "without_empty_context": 12103,
+      "after": 11928,
+      "observations": 13
+    },
+    {
+      "round": 12,
+      "before": 14995,
+      "tool_projection_only": 13366,
+      "without_index": 13040,
+      "without_empty_context": 12888,
+      "after": 12713,
+      "observations": 14
+    }
+  ],
+  "exposures": [
+    {
+      "peer": "mooncode",
+      "call_id": "call_9bd1b527c2004754a1499d74d2382f5d",
+      "tool": "read_skill",
+      "characters": 2654,
+      "estimated_tokens": 637,
+      "appearances": 11
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_d464efaa048a420a87e11f677b297e31",
+      "tool": "read",
+      "characters": 349,
+      "estimated_tokens": 108,
+      "appearances": 10
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_3bf3cb350a4d4a5586c24d7e33b64bf1",
+      "tool": "read",
+      "characters": 8655,
+      "estimated_tokens": 3052,
+      "appearances": 10
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_763807f8c4df441ab438b789c57eb2a4",
+      "tool": "moon_ide",
+      "characters": 2035,
+      "estimated_tokens": 586,
+      "appearances": 10
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_43b8a8561a93492391ca4395dad2b5c7",
+      "tool": "read",
+      "characters": 4102,
+      "estimated_tokens": 1170,
+      "appearances": 9
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_85ffbbc15c924b7d9a9a007e39cf17fb",
+      "tool": "moon_cmd",
+      "characters": 3728,
+      "estimated_tokens": 860,
+      "appearances": 9
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_8f49d15db18c416a884aaa5d90c542e1",
+      "tool": "edit",
+      "characters": 543,
+      "estimated_tokens": 188,
+      "appearances": 8
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_d4c9fd4d498c410793bde5f5a4cf6200",
+      "tool": "shell",
+      "characters": 1519,
+      "estimated_tokens": 478,
+      "appearances": 7
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_590a7bd49c644a1fba0c7311e4d54870",
+      "tool": "edit",
+      "characters": 198,
+      "estimated_tokens": 56,
+      "appearances": 6
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_bac4cf74395d4089834291974d8607c2",
+      "tool": "edit",
+      "characters": 543,
+      "estimated_tokens": 189,
+      "appearances": 5
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_0366daeb03584f91bc3db79e7acde629",
+      "tool": "shell",
+      "characters": 980,
+      "estimated_tokens": 284,
+      "appearances": 4
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_cdb5df3848d54df1949cc4f446b82e32",
+      "tool": "shell",
+      "characters": 1283,
+      "estimated_tokens": 366,
+      "appearances": 3
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_47eaef5abafb4975a77599454a694553",
+      "tool": "shell",
+      "characters": 1261,
+      "estimated_tokens": 303,
+      "appearances": 2
+    },
+    {
+      "peer": "mooncode",
+      "call_id": "call_0b980c17efbf455185b01c4d4c25d96a",
+      "tool": "shell",
+      "characters": 2976,
+      "estimated_tokens": 813,
+      "appearances": 1
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_b19b1d0afc9e49e590e8faa4ef996573",
+      "tool": "bash",
+      "characters": 3085,
+      "estimated_tokens": 914,
+      "appearances": 11
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_0e00b4a720f0485c884d29f42a7436c8",
+      "tool": "bash",
+      "characters": 75,
+      "estimated_tokens": 26,
+      "appearances": 11
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_709a475a733b457dbd89369e6812f393",
+      "tool": "read",
+      "characters": 3714,
+      "estimated_tokens": 929,
+      "appearances": 10
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_dda5255c93a04029a3733fb1e39ab417",
+      "tool": "bash",
+      "characters": 263,
+      "estimated_tokens": 90,
+      "appearances": 9
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_2bf14d7510ac4a6e973b1c1570204302",
+      "tool": "edit",
+      "characters": 51,
+      "estimated_tokens": 14,
+      "appearances": 8
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_c7abe22f239a463f9daa07f5c16266c8",
+      "tool": "bash",
+      "characters": 257,
+      "estimated_tokens": 89,
+      "appearances": 7
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_52d7ab1790f44a6685297ab85c720b07",
+      "tool": "edit",
+      "characters": 51,
+      "estimated_tokens": 14,
+      "appearances": 6
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_a8e5d00204b2426fa3674b2dc3f0d535",
+      "tool": "bash",
+      "characters": 306,
+      "estimated_tokens": 100,
+      "appearances": 5
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_16aded40730a48b294781b9e09137581",
+      "tool": "edit",
+      "characters": 51,
+      "estimated_tokens": 14,
+      "appearances": 4
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_cf042f7d63894fd89204ea35b31f574e",
+      "tool": "bash",
+      "characters": 40,
+      "estimated_tokens": 16,
+      "appearances": 3
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_6bb97f3e7742439ca1c38f130e326648",
+      "tool": "bash",
+      "characters": 350,
+      "estimated_tokens": 94,
+      "appearances": 2
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_6306175cd77e4842aed8f10380609682",
+      "tool": "bash",
+      "characters": 1208,
+      "estimated_tokens": 339,
+      "appearances": 1
+    },
+    {
+      "peer": "pia",
+      "call_id": "call_1e2d2af73f444983ac8f0a4072886721",
+      "tool": "bash",
+      "characters": 18,
+      "estimated_tokens": 7,
+      "appearances": 1
+    }
+  ],
+  "original_log_sha256": "e687c9cacc9c3f67da379e374513bc03102b009484125755c37271f606c9112e  /Users/kq/mooncode-live-peers-20261107/mooncode-journal.jsonl\nea7b1abf33d4005cb77acbdb68701c02fa0c6f307ee2d50c75dea8acf4c60f12  /Users/kq/mooncode-live-peers-20261107/pia-session.jsonl\n20d24a4ebe5fd4cb5bd69d444159f3fb850f85b02666f7a5d1b3417f2f589c33  /Users/kq/Workspace/moondesk/docs/MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.json\n",
+  "replay_limits": "fixed recorded actions and 12 responses; includes original errors; does not predict model decisions, fewer turns, cache hits or actual billing",
+  "mixed_edit": "real previously rejected call replayed after original first edit; exact equality with independently accepted delivered source"
+}

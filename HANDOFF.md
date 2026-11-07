@@ -5,6 +5,28 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Pi input-gap audit 2026-11-07
+
+- Paid reruns paused by this request; no new live provider call. The successful
+  Pi and MoonCode deliveries both have 12 responses: 45950 vs 124777 input.
+  Do not explain the 2.7155 ratio as more responses or hide Pi adapter costs.
+- docs/MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md/.json reconcile all 24 requests.
+  Local cl100k totals 47355/132150 differ from billing. Schema, full test reads,
+  result envelopes/JSON escaping and command diagnostics account for the gap;
+  exact duplicate messages within a request are zero. Original journals intact.
+- Claw reuses existing producer/compiler/Book MCP configuration and atomic
+  editing. Removes the extra read/error index and empty context, sends raw
+  output after a JSON reference header, omits MCP schemas only when known
+  unconfigured, and applies top-level edit then edits instead of rejecting both.
+  No new router, gate, retry, model instruction strategy or runtime layer.
+- Fixed 12-response carry replay preserves 95 observations, estimates
+  132150 -> 113335 (14.2%); not new paid usage or fewer future decisions. The
+  actual formerly rejected mixed edit produces the exact accepted source.
+  Evidence/scripts: /Users/kq/mooncode-pi-gap-20261107. Low-cost goal stays open.
+- Claw full Native 1843/1843, pruner 18/18; interfaces unchanged. Production
+  MoonBit -31 lines / tests -22, temporary audit entries removed. Original
+  paid log and ledger hashes checked, plus 129 local links / 11 archive hashes.
+
 ## Full four-framework delivery 2026-11-07
 
 - User explicitly authorized live peers through the existing Codex OAuth route.

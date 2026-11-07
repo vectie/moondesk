@@ -98,6 +98,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     the existing Codex route, identical full repositories, four autonomous
     deliveries and independent acceptance, all observed tokens, setup failures,
     rework and timing, with per-round machine-readable records.
+    [Pi input-gap audit](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md) then compares
+    both successful 12-response traces, removes repeated result/context data
+    and an edit rejection, and verifies the changes offline without paid reruns.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):
