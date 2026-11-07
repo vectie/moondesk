@@ -78,7 +78,7 @@ test "adapter serializes current v1 capability with transport parity" {
   let tools = json_string_array_items(payload, "tools")
   for
     tool in [
-      "read_result", "read", "edit", "write", "shell", "moon_check", "finish",
+      "read_result", "read", "edit", "write", "shell", "moon_cmd", "finish",
     ] {
     assert_true(tools.contains(tool))
   }

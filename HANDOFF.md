@@ -5,6 +5,25 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Measured working-set cleanup 2026-11-07
+
+- No paid rerun. Current journal/compiler/skill-prefix reuse: 108403 -> 78258
+  fixed-trace local input, 12 responses. Steps: 671 skill receipt, 28322 working
+  set, 1152 redundant check schema; full test result accounts for 21789.
+- Default working window 12288, explicit existing payload can expand it. Smaller
+  measured settings lose recorded edit inputs; full skill/initial task and final
+  verdict stay. First whole-test read is unchanged; old presentations use refs.
+- Remove moon_check/fake watcher and duplicate check after SDK actions. Run-tests
+  now runs one actual test; builds no longer add check. Desk/Claw core inventories
+  and diagnostic contracts aligned. No new state, layer, approval or hardening.
+- All 15 canonical results recovered, 553 local 20-line reads/55.7s for exhaustive
+  metadata; original tools replayed zero. Future model recall/quality/cost unknown.
+  Small-field removal saved only 82 after real compaction and was reverted.
+  Evidence: /Users/kq/mooncode-cost-components-20261107; old costs/archive intact.
+- Final Native: Claw 1837/1837, Desk 1726/1726; info/fmt pass. MoonBit
+  production net -980 lines across both, tests -251; only obsolete exports
+  removed. Recorded first-run failures and fixed event-lane/test migrations.
+
 ## Remaining input follow-up 2026-11-07
 
 - No paid rerun. Deduplicate tool descriptions and compact the existing main
