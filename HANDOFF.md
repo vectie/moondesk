@@ -5,6 +5,30 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Source ABI and Skill prefix cleanup 2026-11-08
+
+- Runtime now uses array-only edit `{path,edits[]}` and SDK `args[]/paths[]`.
+  Scalar aliases, the kind/reason test-update gate/metadata and unused argument
+  collectors are deleted. No compatibility layer; grant/path/atomicity remain.
+- Existing YAML parser separates only standard Skill routing frontmatter from
+  the model prefix. Markdown body is complete, canonical file/hash unchanged;
+  custom/unknown frontmatter, plain text and reference files remain verbatim.
+- 25 main groups +10 full-load groups separate code/window effects. Main at9472:
+  baseline61154, edit60799, SDK60685, Skill60615, all60749; isolated gains do not
+  add. At10240 all63304 is worse than62544, so calibration is explicitly charged.
+- Old9728 passes both cases; old9472 loses a custom-branch edit. New9472 passes
+  both; new9216 loses one, rejected. Default9472 uses the existing compiler and
+  override, not a new stop/budget gate. Original62544 ->60749 (-1795/2.87%), local
+  Pi ratio1.2828. Full conditional load68133 ->62623/13 requests (5510 saved);
+  independent fixture, not interchangeable with prior68xxx evidence roots.
+- Final default producer1warmup+7samples all60749, budget7104, original Markdown,
+  edit literals and verdicts intact. Original calls/responses are mechanically
+  migrated only in private fixtures; no model choices or original failures removed.
+  Actual billed cost/new autonomous quality are unknown; no provider rerun.
+- Full Native1837/1837 and focused checks pass; private unreachable helper cleanup
+  also check/info/fmt. No added test items or public mbti changes. All sources,
+  candidate groups, failure windows and cost data: /Users/kq/mooncode-abi-20261108.
+
 ## Measured input benchmark 2026-11-08
 
 - /Users/kq/mooncode-input-benchmark-20261108: actual current producer/compiler,

@@ -104,7 +104,10 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Input benchmark](MOONCODE_INPUT_BENCHMARK_2026-11-08.md) separates current
     producer replay from original provider usage, calibrates both estimators,
     measures schemas/argument history/result carrying, and preserves a negative
-    finish-schema ablation. The1.32 ratio is not new billed delivery cost.
+    finish-schema ablation. The source follow-up narrows edit/SDK contracts,
+    separates Skill routing metadata and recalibrates the existing window:
+    60,749 fixed-trace input, with full loading costs and rejected windows.
+    These ratios are not new billed delivery costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):

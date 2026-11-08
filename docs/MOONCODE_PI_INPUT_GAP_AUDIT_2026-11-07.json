@@ -1908,5 +1908,371 @@
     },
     "evidence_root": "/Users/kq/mooncode-input-benchmark-20261108",
     "limits": "One observed bug trace per framework; current MoonCode replays frozen responses8 times. Pi original requests are counted, its current runtime is not rerun. Original provider usage calibrates old traces only, not current code. Native local timings are not provider latency. Schema partition is cost attribution, not a valid ability-preserving execution ablation. No synthetic discovery/recall/repair calls in this benchmark; no conclusions about unobserved autonomous decisions, new billed cost or future turns."
+  },
+  "abi_source_fix_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "baseline": 62544,
+    "final": 60749,
+    "saved": 1795,
+    "saved_percent": 2.869979534407777,
+    "same_counter_pi": 47355,
+    "ratio": 1.2828423608911415,
+    "default_window": 9472,
+    "main_requests": 12,
+    "warmups": 1,
+    "measured_replays": 7,
+    "all_8_stable": true,
+    "runtime_lines_net": -45,
+    "test_lines_net": 19,
+    "new_test_items": 0,
+    "native": "1837/1837",
+    "public_mbti_changed": false,
+    "components": {
+      "schema": 12478,
+      "system": 4332,
+      "task": 4608,
+      "skill": 4587,
+      "assistant_content": 0,
+      "assistant_ids": 1976,
+      "assistant_functions": 135,
+      "assistant_arguments": 7656,
+      "tool_headers": 7992,
+      "tool_bodies": 16985
+    },
+    "ordered_main_steps": [
+      {
+        "implementation": "old",
+        "window": 10240,
+        "input": 62544
+      },
+      {
+        "implementation": "old",
+        "window": 9728,
+        "input": 62112
+      },
+      {
+        "implementation": "new",
+        "window": 9728,
+        "input": 61181
+      },
+      {
+        "implementation": "new",
+        "window": 9472,
+        "input": 60749
+      }
+    ],
+    "conditional_load": {
+      "fixture": "same profile-common path for both; synthetic profile request, not observed new choices",
+      "requests": 13,
+      "before": 68133,
+      "after": 62623,
+      "saved": 5510,
+      "all_requests_receipts_and_carry_counted": true
+    },
+    "matrix": [
+      {
+        "variant": "baseline",
+        "window": 10240,
+        "input": 62544,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9984,
+        "input": 62544,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9728,
+        "input": 62112,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9472,
+        "input": 61154,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9216,
+        "input": 59558,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "edit",
+        "window": 10240,
+        "input": 63579,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "edit",
+        "window": 9984,
+        "input": 62189,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "edit",
+        "window": 9728,
+        "input": 62189,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "edit",
+        "window": 9472,
+        "input": 60799,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "edit",
+        "window": 9216,
+        "input": 59203,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk",
+        "window": 10240,
+        "input": 63465,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk",
+        "window": 9984,
+        "input": 62075,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk",
+        "window": 9728,
+        "input": 62075,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk",
+        "window": 9472,
+        "input": 60685,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk",
+        "window": 9216,
+        "input": 59435,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "skill",
+        "window": 10240,
+        "input": 63395,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "skill",
+        "window": 9984,
+        "input": 62005,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "skill",
+        "window": 9728,
+        "input": 62005,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "skill",
+        "window": 9472,
+        "input": 60615,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "skill",
+        "window": 9216,
+        "input": 59019,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 10240,
+        "input": 63304,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9984,
+        "input": 61181,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9728,
+        "input": 61181,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9472,
+        "input": 60749,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9216,
+        "input": 59791,
+        "lost_edits": [],
+        "lost_verdicts": []
+      }
+    ],
+    "profile_matrix": [
+      {
+        "variant": "baseline",
+        "window": 10240,
+        "input": 68133,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9984,
+        "input": 65579,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9728,
+        "input": 64414,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9472,
+        "input": 63107,
+        "requests": 13,
+        "lost_edits": [
+          7
+        ],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "window": 9216,
+        "input": 61711,
+        "requests": 13,
+        "lost_edits": [
+          6,
+          7
+        ],
+        "lost_verdicts": [
+          12
+        ]
+      },
+      {
+        "variant": "all",
+        "window": 10240,
+        "input": 67300,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9984,
+        "input": 66342,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9728,
+        "input": 64746,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9472,
+        "input": 62623,
+        "requests": 13,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "window": 9216,
+        "input": 61946,
+        "requests": 13,
+        "lost_edits": [
+          7
+        ],
+        "lost_verdicts": []
+      }
+    ],
+    "timings": {
+      "build": "Native debug, --strip -j2",
+      "warmups": 1,
+      "measured_replays": 7,
+      "frames_per_replay": 12,
+      "stable_input_all_8_replays": true,
+      "compiler_wall_ms_per_12_frames": {
+        "n": 7,
+        "min": 330,
+        "median": 334,
+        "p95_nearest_rank": 338,
+        "max": 338
+      },
+      "fixture_replay_wall_ms_per_12_frames_including_io_and_asserts": {
+        "n": 7,
+        "min": 606,
+        "median": 612,
+        "p95_nearest_rank": 621,
+        "max": 621
+      },
+      "first_replay_not_app_cold_start": {
+        "repetition": 0,
+        "wall_ms": 697
+      }
+    },
+    "checks": {
+      "instruction_markdown_verbatim": true,
+      "raw_canonical_skills_unchanged": true,
+      "custom_frontmatter_and_reference_resources_verbatim": true,
+      "edit_order_and_code_literals_preserved": true,
+      "exact_sdk_argv_preserved": true,
+      "failed_historical_results_kept": true,
+      "project_grants_atomicity_and_paths_unchanged": true
+    },
+    "limits": "Frozen original responses and observations; only offline parameters/response argument shapes mechanically migrated. No new autonomous model decisions, success rate, output quality, provider usage or cash measured. Existing working-window recalibration is part of totals; individual/static gains do not add. All losing groups retained; original paid logs/costs untouched.",
+    "evidence_root": "/Users/kq/mooncode-abi-20261108"
   }
 }
