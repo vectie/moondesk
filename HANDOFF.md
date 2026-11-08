@@ -5,6 +5,29 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Measured input benchmark 2026-11-08
+
+- /Users/kq/mooncode-input-benchmark-20261108: actual current producer/compiler,
+  one warmup+7 measured12-frame frozen replays, all62544. Pi recorded47355, not a
+  new Pi execution.1.32 is a local input-shape ratio, not new provider billing.
+- Calibrate original request snapshots: MC132150 local/124777 actual (+5.91%),
+  Pi47355/45950 (+3.06%). Cached reads18176/16000. Current billing/cache unknown.
+- Basic4 schema5160 vsPi7188; control4 costs3900, SDK/IDE4070, full Skill5126.
+  Recarried tool bodies12129 vsPi19751 (7622 less). Full test2348 appears once.
+  Both have3 edits: weighted argument history3854 vs2246,1608 of assistant gap.
+  Original actual catalog/pack/result queries0; Skill1. No synthetic calls in
+  the primary benchmark. Main scoped claims/commands are in the dated doc.
+- Controlled finish-schema/prose adapter ablation:63274,730 worse. Exact delta
+  schema-624/system-36/headers+195/bodies+1195 = outline331+source864 carried one
+  more round. Reverted; no production changes based on raw schema shrinkage.
+- Main benchmark/ablation/component check Native1/1 each; no full-suite rerun
+  or new paid autonomous quality claims. Median compiler343ms/12 frames; p95636
+  (7 samples, includes slowest). Preserve all samples, not just earlier faster runs.
+- Harness pitfalls: separate async tests ran concurrently and read missing
+  output; aggregate in the producer test after writing. MC normalized metrics
+  use cache_read_tokens, Pi prompt_tokens_details.cached_tokens; absent is null,
+  never silently0. Failures and prior reports are archived. Runtime unchanged.
+
 ## Result receipts and recall costs 2026-11-08
 
 - Same12 frozen responses, no provider, unchanged10240 window.62730 ->62508

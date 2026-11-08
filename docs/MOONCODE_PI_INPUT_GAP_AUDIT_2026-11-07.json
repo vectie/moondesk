@@ -1694,5 +1694,219 @@
     },
     "evidence_root": "/Users/kq/mooncode-receipts-20261108",
     "limits": "Local cl100k projections, not new provider billing/cash/cache/quality. Frozen12 model responses. Conditional calls are synthetic, not observed model choices; all issuing requests, receipts, later carrying and repairs are charged. Old repair gets an oracle JSON output line. Conditional journal copies rebind captured model-facing refs; paid originals stay unchanged. Full-test content still appears once. Runtime metadata/status removals have negative net benefits and are not shipped."
+  },
+  "input_benchmark_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "benchmark": "Actual producer input-construction replay + original trace accounting; not a new autonomous task benchmark",
+    "warmup_replays": 1,
+    "measured_replays": 7,
+    "frames_per_replay": 12,
+    "same_input_all_8_replays": true,
+    "cases": [
+      {
+        "peer": "current_mooncode",
+        "input": 62544,
+        "recorded_provider_input": null,
+        "estimate_error_percent": null,
+        "recorded_cached_input": null,
+        "parts": {
+          "schema": 13130,
+          "system": 4332,
+          "task": 4608,
+          "skill": 5126,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7828,
+          "tool_headers": 8093,
+          "tool_bodies": 17316
+        },
+        "schema_partition": {
+          "basic_four": 5160,
+          "control_and_recovery": 3900,
+          "sdk_and_ide": 4070
+        },
+        "assistant_argument_tokens_by_tool": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 522,
+          "edit": 3854,
+          "shell": 2194
+        },
+        "call_plan_source": "frozen original trace; not new model choices",
+        "calls": {
+          "read_skill": 1,
+          "read": 3,
+          "moon_ide": 1,
+          "moon_cmd": 1,
+          "edit": 3,
+          "shell": 5,
+          "finish": 1
+        },
+        "load_or_recall_calls": [
+          {
+            "tool": "read_skill",
+            "arguments": {
+              "name": "moonbit-agent-guide",
+              "path": "SKILL.md"
+            }
+          }
+        ],
+        "same_request_exact_duplicate_tokens": 0,
+        "first_tool_body_exposures": 5187,
+        "recarried_tool_body_tokens": 12129
+      },
+      {
+        "peer": "recorded_pi",
+        "input": 47355,
+        "recorded_provider_input": 45950,
+        "estimate_error_percent": 3.0576713819368884,
+        "recorded_cached_input": 16000,
+        "parts": {
+          "schema": 7188,
+          "system": 6024,
+          "task": 4104,
+          "assistant_content": 0,
+          "assistant_ids": 1580,
+          "assistant_functions": 78,
+          "assistant_arguments": 5984,
+          "tool_headers": 0,
+          "tool_bodies": 22397
+        },
+        "schema_partition": {
+          "basic_four": 7188,
+          "control_and_recovery": 0,
+          "sdk_and_ide": 0
+        },
+        "assistant_argument_tokens_by_tool": {
+          "bash": 3568,
+          "read": 170,
+          "edit": 2246
+        },
+        "call_plan_source": "original observed trace",
+        "calls": {
+          "bash": 9,
+          "read": 1,
+          "edit": 3
+        },
+        "load_or_recall_calls": [],
+        "same_request_exact_duplicate_tokens": 0,
+        "first_tool_body_exposures": 2646,
+        "recarried_tool_body_tokens": 19751
+      },
+      {
+        "peer": "recorded_mooncode",
+        "input": 132150,
+        "recorded_provider_input": 124777,
+        "estimate_error_percent": 5.908941551728275,
+        "recorded_cached_input": 18176,
+        "parts": {
+          "schema": 27216,
+          "system": 13431,
+          "task": 9043,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7828,
+          "tool_headers": 24738,
+          "tool_bodies": 47783
+        },
+        "schema_partition": {
+          "basic_four": 5556,
+          "control_and_recovery": 15948,
+          "sdk_and_ide": 5712
+        },
+        "assistant_argument_tokens_by_tool": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 522,
+          "edit": 3854,
+          "shell": 2194
+        },
+        "call_plan_source": "original observed trace",
+        "calls": {
+          "read_skill": 1,
+          "read": 3,
+          "moon_ide": 1,
+          "moon_cmd": 1,
+          "edit": 3,
+          "shell": 5,
+          "finish": 1
+        },
+        "load_or_recall_calls": [
+          {
+            "tool": "read_skill",
+            "arguments": {
+              "name": "moonbit-agent-guide",
+              "path": "SKILL.md"
+            }
+          }
+        ],
+        "same_request_exact_duplicate_tokens": 0,
+        "first_tool_body_exposures": 5624,
+        "recarried_tool_body_tokens": 42159
+      }
+    ],
+    "timings": {
+      "build": "Native debug, --strip -j2",
+      "warmups": 1,
+      "measured_replays": 7,
+      "frames_per_replay": 12,
+      "stable_input_all_8_replays": true,
+      "compiler_wall_ms_per_12_frames": {
+        "n": 7,
+        "min": 337,
+        "median": 343,
+        "p95_nearest_rank": 636,
+        "max": 636
+      },
+      "fixture_replay_wall_ms_per_12_frames_including_io_and_asserts": {
+        "n": 7,
+        "min": 619,
+        "median": 631,
+        "p95_nearest_rank": 1194,
+        "max": 1194
+      },
+      "first_replay_not_app_cold_start": {
+        "repetition": 0,
+        "wall_ms": 740
+      }
+    },
+    "finish_schema_ablation": {
+      "candidate": "hide default finish schema and use existing prose->finish normalization; adjust prompt accordingly",
+      "base": 62544,
+      "input": 63274,
+      "net_saved": -730,
+      "fixed_message_schema_removal_delta_not_net": 624,
+      "requests": 12,
+      "frozen_decisions": true,
+      "new_provider_calls": 0,
+      "finish_answer_bytes_preserved": true,
+      "task_edit_inputs_full_skill_final_verdict_retained": true,
+      "production_changed": false,
+      "limits": "Input-construction ablation only. Last observed function response is mechanically normalized through the existing prose adapter; no new autonomous model behavior or outcome is observed."
+    },
+    "ablation_component_deltas": {
+      "schema": -624,
+      "system": -36,
+      "user": 0,
+      "skill": 0,
+      "assistant": 0,
+      "tool_headers": 195,
+      "tool_bodies": 1195
+    },
+    "original_log_sha256": "e687c9cacc9c3f67da379e374513bc03102b009484125755c37271f606c9112e  /Users/kq/mooncode-live-peers-20261107/mooncode-journal.jsonl\nea7b1abf33d4005cb77acbdb68701c02fa0c6f307ee2d50c75dea8acf4c60f12  /Users/kq/mooncode-live-peers-20261107/pia-session.jsonl\n20d24a4ebe5fd4cb5bd69d444159f3fb850f85b02666f7a5d1b3417f2f589c33  /Users/kq/Workspace/moondesk/docs/MOONCODE_FULL_DELIVERY_COMPARISON_2026-11-07.json\n",
+    "checks": {
+      "main_native_benchmark": "1/1",
+      "ablation_native_benchmark": "1/1",
+      "ablation_component_check": "1/1",
+      "production_code_changed": false,
+      "new_product_test_items": 0
+    },
+    "evidence_root": "/Users/kq/mooncode-input-benchmark-20261108",
+    "limits": "One observed bug trace per framework; current MoonCode replays frozen responses8 times. Pi original requests are counted, its current runtime is not rerun. Original provider usage calibrates old traces only, not current code. Native local timings are not provider latency. Schema partition is cost attribution, not a valid ability-preserving execution ablation. No synthetic discovery/recall/repair calls in this benchmark; no conclusions about unobserved autonomous decisions, new billed cost or future turns."
   }
 }

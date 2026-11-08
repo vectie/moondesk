@@ -101,6 +101,10 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     [Pi input-gap audit](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md) then compares
     both successful 12-response traces, removes repeated result/context data
     and an edit rejection, and verifies the changes offline without paid reruns.
+    [Input benchmark](MOONCODE_INPUT_BENCHMARK_2026-11-08.md) separates current
+    producer replay from original provider usage, calibrates both estimators,
+    measures schemas/argument history/result carrying, and preserves a negative
+    finish-schema ablation. The1.32 ratio is not new billed delivery cost.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):
