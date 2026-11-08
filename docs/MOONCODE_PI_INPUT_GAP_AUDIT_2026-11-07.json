@@ -1381,5 +1381,93 @@
       "production_net_lines": -1,
       "tests_net_lines": 1
     }
+  },
+  "on_demand_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "frozen_observed_responses": 12,
+    "observed_calls": 15,
+    "original_hashes_checked": 3,
+    "baseline": 75840,
+    "final": 62730,
+    "saved": 13110,
+    "selected_window": 10240,
+    "ordered_steps": [
+      {
+        "change": "existing window only, full baseline tools/catalog",
+        "input": 68383,
+        "saved": 7457
+      },
+      {
+        "change": "on-demand skill descriptions / discovery ABI",
+        "input": 65247,
+        "saved": 3136
+      },
+      {
+        "change": "Skill declared tool selection",
+        "input": 62730,
+        "saved": 2517
+      }
+    ],
+    "matched_factors": [
+      {
+        "variant": "baseline",
+        "input": 68383
+      },
+      {
+        "variant": "index",
+        "input": 65247
+      },
+      {
+        "variant": "tools",
+        "input": 67088
+      },
+      {
+        "variant": "both",
+        "input": 62730
+      }
+    ],
+    "conditional_unannotated_skill": {
+      "kind": "synthetic branch with one chosen profile load; not a newly observed model response",
+      "projected_requests": 13,
+      "input": 68626,
+      "saved_vs_baseline": 7214,
+      "window_9216_rejected": "lost edit inputs in rounds6/7 and final verdict"
+    },
+    "checks": {
+      "all_observed_calls_in_selected_schemas": true,
+      "task_and_primary_prompt_unchanged": true,
+      "complete_skill_instructions_retained_except_added_declaration": true,
+      "assistant_history_unchanged": true,
+      "latest_non_skill_result_data_unchanged": true,
+      "full_descriptions_retrievable_for_all_ids": true,
+      "observed_edit_inputs_and_final_verdicts_retained": true
+    },
+    "limits": "Local cl100k projection; real choices frozen. No measured new provider/cache/cash, model-turn savings or autonomous quality. Discovery may add model requests; one unannotated-profile branch is explicitly charged in projected input. Existing pressure projection remains lossy. Native skill resource update includes declaration/version metadata and is accounted.",
+    "evidence_root": "/Users/kq/mooncode-on-demand-20261108",
+    "component_totals": {
+      "schema": 13094,
+      "system:planner.system": 4332,
+      "user:user.task_contract": 4608,
+      "skill": 5126,
+      "assistant": 9939,
+      "tool_headers": 8315,
+      "tool_bodies": 17316
+    },
+    "matrix_path": "/Users/kq/mooncode-on-demand-20261108/matrix-summary.json",
+    "non_skill_results_checked": 13,
+    "regression": {
+      "native_passed": 1837,
+      "native_total": 1837,
+      "final_focused": 6,
+      "check": true,
+      "info": true,
+      "fmt": true,
+      "new_test_items": 0,
+      "public_interface_changes": false,
+      "handwritten_runtime_net_lines": 27,
+      "generated_asset_net_lines": 15,
+      "test_net_lines": 67
+    }
   }
 }

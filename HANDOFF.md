@@ -5,6 +5,23 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## On-demand tools and skills 2026-11-08
+
+- Reuse existing Skill declarations/loading, native selector and journal;
+  default8 tools without MCP,10 after bundled MoonBit guide, all13 through
+  mooncode-tools. Default directory is IDs; full descriptions remain queryable.
+- Same-log actual producer62730 vs75840 (-13110/17.3%); matched10240 window
+  separates7457 window-only,3136 index and2517 tool selection. Full task,
+  primary prompt, old skill instructions and all observed calls remain usable.
+- Conditional custom/unannotated Skill branch charges an extra profile request
+  (13 projected requests,68626); not a new observed model turn or free discovery.
+  9216 loses facts there, so default10240. No new state/authority gate or paid run.
+- Evidence /Users/kq/mooncode-on-demand-20261108; old costs/archive unchanged.
+  Disk-full failure retained; completed script caches only reclaimed before
+  full matrix retry. Current installed .system guide has the new declaration.
+- Claw Native1837/1837, focused6/6, check/info/fmt pass; interfaces unchanged.
+  Handwritten runtime+27 lines, generated assets+15, tests+67; no new test items.
+
 ## Residual Pi comparison 2026-11-08
 
 - Existing-log gap76295-47355=28940 is now paired by category. Aligned basic
