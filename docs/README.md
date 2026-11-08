@@ -111,6 +111,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     with full loading/recall costs and a rejected SDK-deferral candidate.
     Fixing the derived-prefix boundary and reusing text completion then yields
     49,552 at that same window, with 18 ablations and fully charged recovery cases.
+    SDK target flags and one checkpoint marker reduce this to 49,166; ten further
+    ablations and fourteen conditional cases retain rejected header reductions
+    and charge all proof recovery. Same-counter Pi is 47,355 (ratio 1.0382).
     These ratios are not new billed delivery costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.

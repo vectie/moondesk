@@ -5,6 +5,29 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## SDK args and checkpoint framing 2026-11-09
+
+- Same9472/7104: ten main ablations, fourteen conditional groups. SDK target
+  uses existing args flags, net233 (schema242 minus argument6/checkpoint3);
+  one checkpoint marker/no message count saves153. Selected49166, net386,
+  Pi47355 ratio1.0382, residual1811. Eight verified replays/96frames retain
+  original tasks, completeSkill, edit literals and final108/108 verdicts.
+- No result headers removed. Status alone72/generic success alone104 save,
+  but selected+either loses proof. Full recovery55092/13 and55085/13 costs
+  more than baseline49552. Profile/recall/directory+recall54298/53653/57720
+  ->53912/53229/57296, all issuing requests/receipts/carry/recovery charged.
+- SDK fallback/eval/tests migrated; target event reads existing args flags,
+  both --target value and --target=value tested against actual argv.
+  MoonIDE target, program_args, grants, paths and canonical results unchanged.
+- Evidence /Users/kq/mooncode-residual4-20261108 crossed midnight; date is9.
+  Initial96frames passed but summary loop retained1 iteration; preserved
+  failed driver/data, fixed global replacement and wrote production-verified.
+  Do not overwrite original timing data; replayer uses timestamp run dirs.
+  No provider call, new state/layer/confirmation or smaller context window.
+- Native1836/1836, focused pruner17/SDK13/Skill3/tools3, info/fmt pass;
+  mbti unchanged. Runtime-7/test+28 lines, no new test items. Measured compiler
+  median/p95488/499ms per12frames, fixture794/821; no speed comparison claim.
+
 ## Checkpoint prefix and default return 2026-11-08
 
 - Fixed generated checkpoints being protected as pre-assistant instructions

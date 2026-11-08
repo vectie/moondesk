@@ -3663,5 +3663,769 @@
     },
     "limits": "Frozen original model responses; terminal function response mechanically represented as identical text and decoded through the existing finish adapter. Auto choice and fewer default schemas change the next model's options; future completion/quality/rework/rounds/provider billing/cache are unmeasured. Conditional profile/recall/metadata branches are constructed choices with every request/receipt/carry/repair counted. Baseline/main task are not replaced by scenario-specific user requests. Metadata inspection chooses a full first12k JSON page then20-line tail reads using returned line_count, not oracle line numbers; canonical metadata larger than cap caused an initial harness assertion failure, retained as a failure note. No extra runtime states, layers, confirmation or budget calibration.",
     "evidence_root": "/Users/kq/mooncode-residual3-20261108"
+  },
+  "sdk_target_framing_2026_11_09": {
+    "date": "2026-11-09",
+    "base_revision": "d6a354de",
+    "desk_base_revision": "375fd6ef",
+    "provider_calls": 0,
+    "base_input": 49552,
+    "input": 49166,
+    "saved": 386,
+    "saved_percent": 0.7789796577332903,
+    "pi_input": 47355,
+    "ratio": 1.0382430577552528,
+    "remaining_gap": 1811,
+    "default_window": 9472,
+    "input_budget": 7104,
+    "replays": 8,
+    "warmups": 1,
+    "measured_replays": 7,
+    "frames": 96,
+    "runtime_lines_net": -7,
+    "test_lines_net": 28,
+    "new_test_items": 0,
+    "native": "1836/1836",
+    "mbti_changed": false,
+    "main_parts": {
+      "schema": 10568,
+      "system": 4296,
+      "task": 7569,
+      "skill": 3850,
+      "assistant_content": 0,
+      "assistant_ids": 788,
+      "assistant_functions": 48,
+      "assistant_arguments": 3903,
+      "tool_headers": 4523,
+      "tool_bodies": 13621
+    },
+    "pi_parts": {
+      "schema": 7188,
+      "system": 6024,
+      "task": 4104,
+      "assistant_content": 0,
+      "assistant_ids": 1580,
+      "assistant_functions": 78,
+      "assistant_arguments": 5984,
+      "tool_headers": 0,
+      "tool_bodies": 22397
+    },
+    "schema_partition": {
+      "basic_four": 5256,
+      "control_and_recovery": 1836,
+      "sdk_and_ide": 3476
+    },
+    "variants": [
+      {
+        "variant": "baseline",
+        "input": 49552,
+        "saved": 0,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "sdk",
+        "input": 49319,
+        "saved": 233,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7722,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3903,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "frame",
+        "input": 49399,
+        "saved": 153,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7566,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "status",
+        "input": 49480,
+        "saved": 72,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4451,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "sdk-frame",
+        "input": 49166,
+        "saved": 386,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7569,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3903,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "sdk-status",
+        "input": 49247,
+        "saved": 305,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7722,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3903,
+          "tool_headers": 4451,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "frame-status",
+        "input": 49327,
+        "saved": 225,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7566,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4451,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "all",
+        "input": 51627,
+        "saved": -2075,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7291,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4582,
+          "tool_headers": 4951,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "terminal",
+        "input": 49448,
+        "saved": 104,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4419,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "sdk-frame-terminal",
+        "input": 51616,
+        "saved": -2064,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7291,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4582,
+          "tool_headers": 4940,
+          "tool_bodies": 15143
+        }
+      }
+    ],
+    "branches": [
+      {
+        "variant": "baseline",
+        "scenario": "main",
+        "input": 49552,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "profile",
+        "input": 54298,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "recall",
+        "input": 53653,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "combined",
+        "input": 57720,
+        "requests": 14,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk-frame",
+        "scenario": "main",
+        "input": 49166,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk-frame",
+        "scenario": "profile",
+        "input": 53912,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk-frame",
+        "scenario": "recall",
+        "input": 53229,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk-frame",
+        "scenario": "combined",
+        "input": 57296,
+        "requests": 14,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "frame-status",
+        "scenario": "main",
+        "input": 49327,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "frame-status",
+        "scenario": "profile",
+        "input": 54069,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "frame-status",
+        "scenario": "recall",
+        "input": 53403,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "frame-status",
+        "scenario": "combined",
+        "input": 57470,
+        "requests": 14,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "all",
+        "scenario": "main",
+        "input": 55092,
+        "requests": 13,
+        "repairs": 1,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "sdk-frame-terminal",
+        "scenario": "main",
+        "input": 55085,
+        "requests": 13,
+        "repairs": 1,
+        "lost_edits": [],
+        "lost_verdicts": []
+      }
+    ],
+    "rounds": [
+      {
+        "round": 1,
+        "base_input": 1333,
+        "input": 1333,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 591,
+          "system": 358,
+          "task": 384
+        },
+        "parts": {
+          "schema": 591,
+          "system": 358,
+          "task": 384
+        }
+      },
+      {
+        "round": 2,
+        "base_input": 2120,
+        "input": 2098,
+        "net_saved": 22,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 22,
+          "assistant_functions": 2,
+          "assistant_arguments": 14,
+          "tool_headers": 61,
+          "tool_bodies": 0
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 22,
+          "assistant_functions": 2,
+          "assistant_arguments": 14,
+          "tool_headers": 61,
+          "tool_bodies": 0
+        }
+      },
+      {
+        "round": 3,
+        "base_input": 5299,
+        "input": 5277,
+        "net_saved": 22,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 84,
+          "assistant_functions": 7,
+          "assistant_arguments": 101,
+          "tool_headers": 407,
+          "tool_bodies": 2679
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 84,
+          "assistant_functions": 7,
+          "assistant_arguments": 101,
+          "tool_headers": 407,
+          "tool_bodies": 2679
+        }
+      },
+      {
+        "round": 4,
+        "base_input": 4086,
+        "input": 4048,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 42,
+          "assistant_functions": 3,
+          "assistant_arguments": 71,
+          "tool_headers": 269,
+          "tool_bodies": 1476
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 42,
+          "assistant_functions": 3,
+          "assistant_arguments": 72,
+          "tool_headers": 269,
+          "tool_bodies": 1476
+        }
+      },
+      {
+        "round": 5,
+        "base_input": 4445,
+        "input": 4407,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 63,
+          "assistant_functions": 4,
+          "assistant_arguments": 296,
+          "tool_headers": 381,
+          "tool_bodies": 1476
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 63,
+          "assistant_functions": 4,
+          "assistant_arguments": 297,
+          "tool_headers": 381,
+          "tool_bodies": 1476
+        }
+      },
+      {
+        "round": 6,
+        "base_input": 4987,
+        "input": 4949,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 85,
+          "assistant_functions": 5,
+          "assistant_arguments": 442,
+          "tool_headers": 512,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 85,
+          "assistant_functions": 5,
+          "assistant_arguments": 443,
+          "tool_headers": 512,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 7,
+        "base_input": 5241,
+        "input": 5203,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 107,
+          "assistant_functions": 6,
+          "assistant_arguments": 631,
+          "tool_headers": 554,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 107,
+          "assistant_functions": 6,
+          "assistant_arguments": 632,
+          "tool_headers": 554,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 8,
+        "base_input": 5545,
+        "input": 5507,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 125,
+          "assistant_functions": 7,
+          "assistant_arguments": 804,
+          "tool_headers": 666,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 125,
+          "assistant_functions": 7,
+          "assistant_arguments": 805,
+          "tool_headers": 666,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 9,
+        "base_input": 5907,
+        "input": 5869,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 588,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 144,
+          "assistant_functions": 8,
+          "assistant_arguments": 950,
+          "tool_headers": 832,
+          "tool_bodies": 1748
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 144,
+          "assistant_functions": 8,
+          "assistant_arguments": 951,
+          "tool_headers": 832,
+          "tool_bodies": 1748
+        }
+      },
+      {
+        "round": 10,
+        "base_input": 3084,
+        "input": 3046,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 1013,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 20,
+          "assistant_functions": 1,
+          "assistant_arguments": 136,
+          "tool_headers": 164,
+          "tool_bodies": 113
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 997,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 20,
+          "assistant_functions": 1,
+          "assistant_arguments": 136,
+          "tool_headers": 164,
+          "tool_bodies": 113
+        }
+      },
+      {
+        "round": 11,
+        "base_input": 3363,
+        "input": 3325,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 1013,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 37,
+          "assistant_functions": 2,
+          "assistant_arguments": 183,
+          "tool_headers": 276,
+          "tool_bodies": 215
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 997,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 37,
+          "assistant_functions": 2,
+          "assistant_arguments": 183,
+          "tool_headers": 276,
+          "tool_bodies": 215
+        }
+      },
+      {
+        "round": 12,
+        "base_input": 4142,
+        "input": 4104,
+        "net_saved": 38,
+        "base_parts": {
+          "schema": 929,
+          "system": 358,
+          "task": 1013,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 59,
+          "assistant_functions": 3,
+          "assistant_arguments": 269,
+          "tool_headers": 401,
+          "tool_bodies": 760
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 997,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 59,
+          "assistant_functions": 3,
+          "assistant_arguments": 269,
+          "tool_headers": 401,
+          "tool_bodies": 760
+        }
+      }
+    ],
+    "timings": {
+      "compiler_ms_per_12_frames": {
+        "n": 7,
+        "median": 488,
+        "p95_nearest_rank": 499,
+        "min": 459,
+        "max": 499
+      },
+      "fixture_ms_per_12_frames": {
+        "n": 7,
+        "median": 794,
+        "p95_nearest_rank": 821,
+        "min": 761,
+        "max": 821
+      }
+    },
+    "checks": {
+      "original_task_bytes_equal_all_12": true,
+      "complete_skill_instructions_retained": true,
+      "edit_literals_preserved": true,
+      "final_verdicts_preserved": true,
+      "at_most_one_checkpoint": true,
+      "native_argv_and_both_target_event_forms": true,
+      "canonical_results_unchanged": true,
+      "original_paid_hashes_checked": true
+    },
+    "limits": "Frozen original decisions, cl100k local counts; argument target mechanically moved to CLI args with exact argv retained. No provider/cache/billing/quality/round-count improvement measured. Conditional paths charge every issuing request/receipt/carry/proof repair. Result header deletions rejected after combined losses and recovery costs. Initial production run had96 valid frames but stable summary loop recorded only one: preserved; verified rerun in separate directory. No added states/layers/human step or smaller window.",
+    "evidence_root": "/Users/kq/mooncode-residual4-20261108"
   }
 }
