@@ -2950,5 +2950,718 @@
       "baseline60749",
       "production8x51208"
     ]
+  },
+  "checkpoint_return_2026_11_08": {
+    "date": "2026-11-08",
+    "base_revision": "cc5b288b",
+    "provider_calls": 0,
+    "base_input": 51208,
+    "input": 49552,
+    "saved": 1656,
+    "saved_percent": 3.2338697078581475,
+    "pi_input": 47355,
+    "ratio": 1.0463942561503536,
+    "remaining_gap": 2197,
+    "default_window": 9472,
+    "input_budget": 7104,
+    "replays": 8,
+    "warmups": 1,
+    "measured_replays": 7,
+    "frames": 96,
+    "runtime_lines_net": -6,
+    "test_lines_net": 8,
+    "new_test_items": 0,
+    "native": "1836/1836",
+    "mbti_changed": false,
+    "main_parts": {
+      "schema": 10810,
+      "system": 4296,
+      "task": 7719,
+      "skill": 3850,
+      "assistant_content": 0,
+      "assistant_ids": 788,
+      "assistant_functions": 48,
+      "assistant_arguments": 3897,
+      "tool_headers": 4523,
+      "tool_bodies": 13621
+    },
+    "pi_parts": {
+      "schema": 7188,
+      "system": 6024,
+      "task": 4104,
+      "assistant_content": 0,
+      "assistant_ids": 1580,
+      "assistant_functions": 78,
+      "assistant_arguments": 5984,
+      "tool_headers": 0,
+      "tool_bodies": 22397
+    },
+    "schema_partition": {
+      "basic_four": 5256,
+      "control_and_recovery": 1836,
+      "sdk_and_ide": 3718
+    },
+    "argument_tokens": {
+      "read_skill": 28,
+      "read": 207,
+      "moon_ide": 36,
+      "moon_cmd": 270,
+      "edit": 2038,
+      "shell": 1318
+    },
+    "variants": [
+      {
+        "variant": "baseline",
+        "input": 51208,
+        "net_saved": 0,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "boundary",
+        "input": 50728,
+        "net_saved": 480,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8235,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "framing",
+        "input": 50521,
+        "net_saved": 687,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8028,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "task-hash",
+        "input": 51048,
+        "net_saved": 160,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4363,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "boundary-framing",
+        "input": 50212,
+        "net_saved": 996,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "all",
+        "input": 50052,
+        "net_saved": 1156,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4363,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "framing-fixed",
+        "input": 50521,
+        "net_saved": 687,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8028,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "natural-return",
+        "input": 50548,
+        "net_saved": 660,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "nonce",
+        "input": 50805,
+        "net_saved": 403,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4120,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "status",
+        "input": 51136,
+        "net_saved": 72,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4451,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "root-framing-fixed",
+        "input": 50212,
+        "net_saved": 996,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "candidate",
+        "input": 51459,
+        "net_saved": -251,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7442,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4575,
+          "tool_headers": 4397,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "rf-status",
+        "input": 50140,
+        "net_saved": 1068,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4451,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "rf-hash",
+        "input": 50052,
+        "net_saved": 1156,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4363,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "rf-nonce",
+        "input": 49809,
+        "net_saved": 1399,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4120,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "rf-meta",
+        "input": 52119,
+        "net_saved": -911,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 7442,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4575,
+          "tool_headers": 4397,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "b-natural",
+        "input": 50068,
+        "net_saved": 1140,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 8235,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "rf-natural",
+        "input": 49552,
+        "net_saved": 1656,
+        "lost_edits": [],
+        "lost_skills": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10810,
+          "system": 4296,
+          "task": 7719,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      }
+    ],
+    "branches": [
+      {
+        "variant": "baseline",
+        "scenario": "main",
+        "input": 51208,
+        "requests": 12,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "profile",
+        "input": 54576,
+        "requests": 13,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "recall",
+        "input": 55582,
+        "requests": 13,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "combined",
+        "input": 60206,
+        "requests": 14,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "baseline",
+        "scenario": "metadata",
+        "input": 51208,
+        "requests": 12,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-natural",
+        "scenario": "main",
+        "input": 49552,
+        "requests": 12,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-natural",
+        "scenario": "profile",
+        "input": 54298,
+        "requests": 13,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-natural",
+        "scenario": "recall",
+        "input": 53653,
+        "requests": 13,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-natural",
+        "scenario": "combined",
+        "input": 57720,
+        "requests": 14,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-natural",
+        "scenario": "metadata",
+        "input": 49552,
+        "requests": 12,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "candidate",
+        "scenario": "main",
+        "input": 54956,
+        "requests": 13,
+        "repairs": 1,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-nonce",
+        "scenario": "metadata",
+        "input": 49809,
+        "requests": 12,
+        "repairs": 0,
+        "metadata_reads": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "rf-hash",
+        "scenario": "metadata",
+        "input": 66876,
+        "requests": 15,
+        "repairs": 1,
+        "metadata_reads": 2,
+        "lost_edits": [],
+        "lost_verdicts": []
+      }
+    ],
+    "rounds": [
+      {
+        "round": 1,
+        "base_input": 1388,
+        "input": 1333,
+        "net_saved": 55,
+        "base_checkpoints": 0,
+        "checkpoints": 0,
+        "base_checkpoint_tokens": 0,
+        "checkpoint_tokens": 0
+      },
+      {
+        "round": 2,
+        "base_input": 2175,
+        "input": 2120,
+        "net_saved": 55,
+        "base_checkpoints": 0,
+        "checkpoints": 0,
+        "base_checkpoint_tokens": 0,
+        "checkpoint_tokens": 0
+      },
+      {
+        "round": 3,
+        "base_input": 5354,
+        "input": 5299,
+        "net_saved": 55,
+        "base_checkpoints": 0,
+        "checkpoints": 0,
+        "base_checkpoint_tokens": 0,
+        "checkpoint_tokens": 0
+      },
+      {
+        "round": 4,
+        "base_input": 4198,
+        "input": 4086,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 5,
+        "base_input": 4557,
+        "input": 4445,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 6,
+        "base_input": 5099,
+        "input": 4987,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 7,
+        "base_input": 5353,
+        "input": 5241,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 8,
+        "base_input": 5657,
+        "input": 5545,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 9,
+        "base_input": 6019,
+        "input": 5907,
+        "net_saved": 112,
+        "base_checkpoints": 1,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 261,
+        "checkpoint_tokens": 204
+      },
+      {
+        "round": 10,
+        "base_input": 3357,
+        "input": 3084,
+        "net_saved": 273,
+        "base_checkpoints": 2,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 847,
+        "checkpoint_tokens": 629
+      },
+      {
+        "round": 11,
+        "base_input": 3636,
+        "input": 3363,
+        "net_saved": 273,
+        "base_checkpoints": 2,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 847,
+        "checkpoint_tokens": 629
+      },
+      {
+        "round": 12,
+        "base_input": 4415,
+        "input": 4142,
+        "net_saved": 273,
+        "base_checkpoints": 2,
+        "checkpoints": 1,
+        "base_checkpoint_tokens": 847,
+        "checkpoint_tokens": 629
+      }
+    ],
+    "timings": {
+      "compiler_ms_per_12_frames": {
+        "n": 7,
+        "median": 410,
+        "p95_nearest_rank": 416,
+        "min": 403,
+        "max": 416
+      },
+      "fixture_ms_per_12_frames": {
+        "n": 7,
+        "median": 671,
+        "p95_nearest_rank": 674,
+        "min": 661,
+        "max": 674
+      },
+      "first_replay_not_app_cold_start": {
+        "repetition": 0,
+        "wall_ms": 786
+      }
+    },
+    "checks": {
+      "original_task_bytes_equal_all_12": true,
+      "complete_current_and_custom_skill_instructions_retained": true,
+      "edit_literals_preserved": true,
+      "all_final_verdicts_preserved": true,
+      "at_most_one_checkpoint_per_final_request": true,
+      "native_auto_choice_and_text_finish_adapter_verified": true,
+      "metadata_and_canonical_results_unchanged": true,
+      "original_paid_hashes_checked": true
+    },
+    "limits": "Frozen original model responses; terminal function response mechanically represented as identical text and decoded through the existing finish adapter. Auto choice and fewer default schemas change the next model's options; future completion/quality/rework/rounds/provider billing/cache are unmeasured. Conditional profile/recall/metadata branches are constructed choices with every request/receipt/carry/repair counted. Baseline/main task are not replaced by scenario-specific user requests. Metadata inspection chooses a full first12k JSON page then20-line tail reads using returned line_count, not oracle line numbers; canonical metadata larger than cap caused an initial harness assertion failure, retained as a failure note. No extra runtime states, layers, confirmation or budget calibration.",
+    "evidence_root": "/Users/kq/mooncode-residual3-20261108"
   }
 }

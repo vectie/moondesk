@@ -109,6 +109,8 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     The complete-exchange follow-up deletes the result-clearing path and
     merges file/result reading: 51,208 fixed-trace input at the unchanged window,
     with full loading/recall costs and a rejected SDK-deferral candidate.
+    Fixing the derived-prefix boundary and reusing text completion then yields
+    49,552 at that same window, with 18 ablations and fully charged recovery cases.
     These ratios are not new billed delivery costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
