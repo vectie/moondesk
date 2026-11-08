@@ -42,7 +42,7 @@
 | 维度 | 功能与所有者 | 接口、输入 → 输出 | 运行逻辑 | 实现与边界 |
 | --- | --- | --- | --- | --- |
 | Process / Thread | 被 claim 的 prompt/package command 是逻辑交付任务；service 拥有主执行协程，工具子协程属于调用它的 TaskGroup。Session 保存队列、会话与 Book 绑定。 | `/turns`、`start_runtime_service`、`runtime_loop_execute`、`runtime_turn_execute`；命令/修订 → 结果、可恢复位置或终态 receipt。 | service 取得 session 所有权，loop 取队列，turn 解释当前 command；独立只读调用 fork/join，取消沿已有 task group 传播。 | **已实现限定范围**。不是每个 turn 一个线程，也没有独立地址空间或持久调用栈。普通命令默认一个主 Agent；显式 worker 不构成默认常驻团队。 |
-| Memory | Context compiler 拥有“本轮模型工作集”，journal 拥有原始执行记录，文件拥有文件内容。 | `compile_context` / `Pruner::compile_messages`；任务、消息、schema、窗口 → messages + metrics；`read_result(evidence_ref, end_ref?, lines?)` → 保留的原始结果或范围目录。 | 按压力保留指令/任务与最新完整交换，压缩旧消息，保留精确/首尾来源句柄，需要时补读。 | **已实现限定范围**。摘要有损；未保留的 stdout、旧文件版本不能恢复。补读扫描 session journal；不是新 memory store、自动 RAG 或新的模型轮次。 |
+| Memory | Context compiler 拥有“本轮模型工作集”，journal 拥有原始执行记录，文件拥有文件内容。 | `compile_context` / `Pruner::compile_messages`；任务、消息、schema、窗口 → messages + metrics；`read_result(evidence_ref, details?, end_ref?, lines?)` → 保存的 output 行、完整 JSON 或范围目录。 | 按压力保留指令/任务与最新完整交换，压缩旧消息，保留精确/首尾来源句柄，需要时补读。 | **已实现限定范围**。摘要有损；未保留的 stdout、旧文件版本不能恢复。补读扫描 session journal；没有新 memory store 或自动 RAG，主动补读的请求成本另计。 |
 | Filesystem | Workspace 拥有选定 MoonBook 的真实路径、文件内容与本地条件写入。 | `workspace_path(book_root,path)` → canonical/relative identity；`workspace_replace(root,absolute,expected,content)` → 成功或 stale/error；read/edit/write/patch 为工具入口。 | 解析真实资源，在同一资源锁内比较旧内容，用同目录临时文件及 rename 替换；patch 复用既有回滚。 | **原生文件路径已实现**。同一资源的协作式互斥和过期检查，不是完整 VFS、MVCC、多文件事务或不可变版本库。shell、外部编辑器不参与此文件锁。 |
 | I/O | provider transport 负责模型协议；catalog/executor 负责工具 ABI；grant/executor 边界负责实际执行授权。 | 模型消息 → provider response；`tool + arguments` → canonical result `{ok,is_error,message,output,metadata}` → execution/event → journal/model/UI。 | schema 校验、绑定既有执行条件、运行、返回规范结果；工具错误交回同一 Agent。用户输入、steering、审批和取消沿命令路径进入。 | **主线已实现**。Function Calling 是调用形状，MCP 是接入协议；都不自动提供权限、幂等或结果正确性。控制事件与已执行效果有区别；工具成功不等于交付完成。 |
 | Synchronization | execution lease 保护 session 执行者；lifecycle gate 保护归档/恢复；journal lock 保护追加/claim 顺序；file lock 保护真实文件；batch join 保护工具生命周期。 | `open_session_execution_lease`、lifecycle/session lock、`workspace_file_lock`、`TaskGroup`；资源/操作 → 所有权、等待、busy 或有序结果。 | 外部入口持有 lifecycle shared gate + execution exclusive lease，内部 loop/turn 借用，不重入获取。不同 session 可运行；独立读并发，普通修改按调用顺序执行。 | **局部同步已实现**。这些锁不能合并成全 Book 大锁；本地提交序号不是跨服务时钟。进程工具与原生文件工具仍不具有统一写事务。 |
@@ -570,7 +570,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有 RAG 已有文本/embedding 混合排序，优先复用；只有具体检索失败需要时才增加 query 改写或 rerank。
 
-本轮边界：[Context/Journal 运行契约](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md) 描述默认窗口预算、单一 compiler 与恢复。按需补读文件、已安装 skill 和可用 artifact/backend 复用现有入口；只读 `read_result` 已按 evidence ID 补读当前 session 日志中的规范结果；提供 `end_ref` 可列出压缩范围中的结果，再按单个 ID 取原文。返回 JSON 行号与截断标记。它按需扫描现有 journal，不是新索引；只保证实际保留的结果可回取，不保证工具本来就截掉的内容可恢复。摘要不是原文，不能通过重跑写入或外部效果来恢复旧输出。窗口估算使用现有 cl100k tokenizer，保留完整前缀和最新批次仍可能超预算；不声称任何输入都能装入窗口。tokenizer 词表延迟初始化一次，每轮计数仍与输入/schema 大小相关。
+本轮边界：[Context/Journal 运行契约](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md) 描述默认窗口预算、单一 compiler 与恢复。按需补读文件、已安装 skill 和可用 artifact/backend 复用现有入口；`read_result` 按 evidence ID 默认读取已保存 output 的原文行，`details=true` 读取完整 canonical JSON／JSON 行，`end_ref` 列出压缩范围。回执区分检索成功和原结果的成功／截断。它按需扫描现有 journal，不是新索引；只保证实际保留的结果可回取，不保证工具本来就截掉的内容可恢复。摘要不是原文，不能通过重跑写入或外部效果来恢复旧输出。窗口估算使用现有 cl100k tokenizer，保留完整前缀和最新批次仍可能超预算；不声称任何输入都能装入窗口。tokenizer 词表延迟初始化一次，每轮计数仍与输入/schema 大小相关。
 
 ### 4 Workspace 模块 减少文件策略与存储责任混杂
 
@@ -689,6 +689,7 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 - [x] **剩余输入按构成复测**：[逐项账本](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md#剩余输入复测)严格合计 schema、目录、任务、技能、assistant 和工具头／正文。删除恒定拒绝的 browser 空实现，目录保留全字段紧凑序列化，句柄删除重复泛用正文；78258→76295，净省1963（2.51%）。记录单删反增与正文多留3002的交互，窗口不再缩小，不宣称少轮次或新自主质量。
 - [x] **按相同职责与配置归因余差**：[11 月 8 日对齐](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md#11-月-8-日剩余差额归因)确认基础四工具430／轮低于 Pi599，额外九工具992；主提示248低于 Pi502，另有592技能目录。八组连续消融仅合入扁平结果头：76295→75840，净省455，正文与任务／技能／assistant 不变。不为单例比值删除可用能力，不将配置差异等同实现浪费，实际低成本交付仍待验证。
 - [x] **保留能力、按需携带**：[加载与同窗口净收益](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md#按需携带工具与技能)复用 Skill.allowed_tools／原目录／原选择器／journal。无 MCP 默认8工具，声明加载后10或完整13；目录默认ID、完整说明按需读。75,840→62,730，其中7,457为既有窗口调整，3,136目录、2,517工具选择；额外补读的13请求条件分支68,626。恢复与原授权边界验证，不新建状态或检索层，不宣称付费实测效果。
+- [x] **补读按完整成本比较**：[结果包装与补读全成本](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md#结果包装与补读全成本)。保留 location，Skill 回执精简净省222；正文补读修复的 schema 另收36，原12轮最终62,544，仍约Pi1.32倍。条件补读含恢复结论73469→69381，查询目录＋补读77907→73895；额外请求与后续携带全部计入。拒绝删字段后反增输入及丢结论的低数值。15份原output和15份canonical JSON均可恢复，不新增状态、自动检索或人工确认；条件分支不冒充新交付。
 
 2026-11-06 已完成[首个真实 bug 交付观测](MOONCODE_LIVE_BUGFIX_2026-11-06.md)：真实模型修复已有名称问题，独立验收通过，但未配置进程执行器导致自主测试需要接管；记录 16 次响应、实际 tokens、返工与耗时，并仅修复真实日志暴露的 edit/projection bug。单例与历史回放不能证明修复后的线上成功率或成本下降，本项继续不勾选。
 
@@ -758,7 +759,7 @@ Task、Completion、Execution、Context/Journal 及 Tools/Workspace 的已勾选
 - **Step 1 / Pi、OpenSeek**：initial/follow-up 各自准备消息，共用一个 `mooncode_runtime_model_round`；请求、响应解码、上下文编译和观察记录只有一份。follow-up 同样采用用户选定的 reasoning effort。空响应恢复仍走原 loop。
 - **Step 2 / DSH**：read/edit/shell 和 checkpoint 共用 execution envelope；模型、完成检查与补读共用 `mooncode_tool_result_value`。执行结果与 journal 的字段各有边界，不增加插件注册层。结果 ID 复用已有 operation ID；开始/完成用明确 tool-call ID 关联，删除按工具名/路径猜测匹配的分支。
 - **Step 3 / OpenSeek、DSH PTC**：共用 prompt 内置“独立观察批量执行，明确片段用项目脚本，遇到新不确定性再回模型”。沿用 shell、项目语言和 `.mbtx`；已有 MoonFort fixture 桥接的真实本地执行用例 现在验证脚本读入修复后的文件、生成产物并返回结构化 JSON，再在同一个任务检查/交付。没有新增工具 SDK、语言或持久解释器。
-- **Step 4 / Pi、DSH、pi-durable**：`read_result` 读取当前会话的已提交原始结果，支持精确 ID、范围目录、JSON 行选取和输出限额。重复上下文压缩保留首尾句柄。回归验证文件后来变化不改变历史结果，读取旧结果不执行原工具；包含 patch 类结果和跨 session 不可见行为。
+- **Step 4 / Pi、DSH、pi-durable**：`read_result` 读取当前会话已保存 output 的原文行；`details=true` 支持完整 JSON 及 JSON 行选取，范围目录与输出限额保留。重复上下文压缩保留首尾句柄。回归验证文件后来变化不改变历史结果，读取旧结果不执行原工具；包含 patch 类结果和跨 session 不可见行为。
 - **Step 5 / DSH、Pi**：`work.graph` 是 existing work steps 的一次临时投影；批次选择、调用、文件、检查输入版本、明确的补读关系来自已有事实。MoonDesk 同一工作位置按分支画图，复用卡片与打开文件动作，删除被替代的重复 detail/evidence 展示。图没有持久状态，不参与完成判定。
 
 局部修复沿用编辑/检查/finish 与重启回归；跨文件片段另做一次临时测量：三个已知 JSON 文件改同一字段，6 次 native read/write 为 **4 ms**；同等结果的 `.mbtx` 经 MoonFort fixture 桥接首次执行 **512 ms**、再次执行 **204 ms**，含 MoonBit 编译/启动与 fixture 桥接开销；此 fixture 的隔离回执标记为 Degraded，不是生产隔离或真实 MoonFort 部署的性能测量。脚本还检查落盘内容并返回结构化路径；native 数字仅含六次工具调用，未额外包含相同检查，不能把它们当成交付质量对等的端到端胜负比较。测量不含模型生成脚本的耗时/tokens，也不代表脚本一定更快。小型已知编辑继续直接用工具；模型往返成本高、片段较长时再选择程序。

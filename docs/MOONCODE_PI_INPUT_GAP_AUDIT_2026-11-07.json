@@ -1469,5 +1469,230 @@
       "generated_asset_net_lines": 15,
       "test_net_lines": 67
     }
+  },
+  "receipt_and_recall_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "window": 10240,
+    "frozen_observed_responses": 12,
+    "original_hashes_checked": 3,
+    "same_counter_pi": 47355,
+    "baseline": 62730,
+    "receipt_only": 62508,
+    "final": 62544,
+    "saved": 186,
+    "ratio_before": 1.3246753246753247,
+    "ratio_after": 1.320747545137789,
+    "ordered_changes": [
+      {
+        "change": "loaded Skill receipt dedup retaining location",
+        "net_saved": 222
+      },
+      {
+        "change": "saved-output line recall with details mode",
+        "normal_path_net_saved": -36,
+        "schema_added_per_request": 3,
+        "recall_path_net_saved": 3866,
+        "discovery_and_recall_path_net_saved": 3790
+      }
+    ],
+    "component_totals": {
+      "schema": 13130,
+      "system:planner.system": 4332,
+      "user:user.task_contract": 4608,
+      "skill": 5126,
+      "assistant": 9939,
+      "tool_headers": 8093,
+      "tool_bodies": 17316
+    },
+    "normal_and_unrepaired_branches": [
+      {
+        "variant": "old",
+        "branches": {
+          "normal": 62730,
+          "discovery": 67212,
+          "recall": 66733,
+          "combined": 71176
+        },
+        "issues": [
+          {
+            "branch": "recall",
+            "round": 11,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "recall",
+            "round": 12,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "combined",
+            "round": 11,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "combined",
+            "round": 12,
+            "lost_edits": 0,
+            "verdict": false
+          }
+        ]
+      },
+      {
+        "variant": "receipt",
+        "branches": {
+          "normal": 62508,
+          "discovery": 66990,
+          "recall": 66511,
+          "combined": 70954
+        },
+        "issues": [
+          {
+            "branch": "recall",
+            "round": 11,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "recall",
+            "round": 12,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "combined",
+            "round": 11,
+            "lost_edits": 0,
+            "verdict": false
+          },
+          {
+            "branch": "combined",
+            "round": 12,
+            "lost_edits": 0,
+            "verdict": false
+          }
+        ]
+      },
+      {
+        "variant": "recall",
+        "branches": {
+          "normal": 62766,
+          "discovery": 67251,
+          "recall": 69603,
+          "combined": 74117
+        },
+        "issues": []
+      },
+      {
+        "variant": "selected",
+        "branches": {
+          "normal": 62544,
+          "discovery": 67029,
+          "recall": 69381,
+          "combined": 73895
+        },
+        "issues": []
+      }
+    ],
+    "fully_charged_repaired_branches": [
+      {
+        "variant": "old",
+        "branch": "recall",
+        "input": 73469,
+        "projected_requests": 14,
+        "extra_requests": 2
+      },
+      {
+        "variant": "old",
+        "branch": "combined",
+        "input": 77907,
+        "projected_requests": 15,
+        "extra_requests": 3
+      },
+      {
+        "variant": "receipt",
+        "branch": "recall",
+        "input": 73247,
+        "projected_requests": 14,
+        "extra_requests": 2
+      },
+      {
+        "variant": "receipt",
+        "branch": "combined",
+        "input": 77685,
+        "projected_requests": 15,
+        "extra_requests": 3
+      },
+      {
+        "variant": "selected",
+        "branch": "recall",
+        "input": 69381,
+        "projected_requests": 13,
+        "extra_requests": 1
+      },
+      {
+        "variant": "selected",
+        "branch": "combined",
+        "input": 73895,
+        "projected_requests": 14,
+        "extra_requests": 2
+      }
+    ],
+    "custom_unannotated_skill": [
+      {
+        "variant": "old",
+        "input": 68635,
+        "projected_requests": 13
+      },
+      {
+        "variant": "selected",
+        "input": 68136,
+        "projected_requests": 13
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "candidate": "runtime metadata removed",
+        "input": 63615,
+        "baseline": 62730
+      },
+      {
+        "candidate": "all loaded Skill metadata removed including relative-reference base",
+        "input": 62456,
+        "baseline": 62730
+      },
+      {
+        "candidate": "runtime metadata plus Skill location-only",
+        "input": 63393,
+        "baseline": 62730
+      },
+      {
+        "candidate": "equal status/exit_code alias removed",
+        "input": 63806,
+        "baseline": 62544
+      }
+    ],
+    "canonical_recall": {
+      "recovered": 15,
+      "read_result_calls": 553,
+      "elapsed_ms": "52190",
+      "journal_unchanged": true,
+      "original_tools_executed": 0
+    },
+    "additional_raw_output_reads": 15,
+    "checks": {
+      "native": "1837/1837",
+      "check_info_fmt": true,
+      "public_interfaces_changed": false,
+      "non_skill_results_task_skill_and_assistant_history_retained": true,
+      "full_original_outputs_match": 15,
+      "original_operations_replayed": 0,
+      "product_test_items_added": 0
+    },
+    "evidence_root": "/Users/kq/mooncode-receipts-20261108",
+    "limits": "Local cl100k projections, not new provider billing/cash/cache/quality. Frozen12 model responses. Conditional calls are synthetic, not observed model choices; all issuing requests, receipts, later carrying and repairs are charged. Old repair gets an oracle JSON output line. Conditional journal copies rebind captured model-facing refs; paid originals stay unchanged. Full-test content still appears once. Runtime metadata/status removals have negative net benefits and are not shipped."
   }
 }

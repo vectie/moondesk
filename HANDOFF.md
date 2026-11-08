@@ -5,6 +5,25 @@ their resolution here; keep task-specific evidence in `docs/`.
 
 Work directly on `main`; do not create a branch unless the user requests one.
 
+## Result receipts and recall costs 2026-11-08
+
+- Same12 frozen responses, no provider, unchanged10240 window.62730 ->62508
+  Skill-receipt dedup ->62544 with recall schema (+36), only186 saved: Pi47355
+  comparison remains1.32x. Full test appears once2348; outline1986/source5184/
+  original SDK failure4896/Shell2902. Preserve full skills, source and failures.
+- read_result defaults to saved output lines; details=true retains canonical
+  JSON paging.15 original outputs plus15 canonical results/553 pages verified
+  without operation replay. Keep Skill location for relative resource paths.
+- Fully priced recall73469/14 ->69381/13; directory+recall77907/15 ->73895/14,
+  including repairing lost final verdicts. Directory query adds4485; unannotated
+  Skill pair68635 ->68136/13 each, sharing a common fixture path. These are
+  synthetic branches, not newly observed model decisions, billing or turn savings.
+- Runtime metadata removal and equal status alias removal increased input:
+  rejected. All evidence/failures: /Users/kq/mooncode-receipts-20261108; dated Pi
+  report/ledger updated. No new state, architecture or approval; code on main.
+- Claw Native1837/1837, recall1/1, Skill3/3, check/info/fmt pass; .mbti unchanged.
+  Runtime net+20/test+23 lines, no added test items. No new paid quality results.
+
 ## On-demand tools and skills 2026-11-08
 
 - Reuse existing Skill declarations/loading, native selector and journal;
