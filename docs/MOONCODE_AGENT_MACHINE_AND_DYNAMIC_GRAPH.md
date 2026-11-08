@@ -42,7 +42,7 @@
 | 维度 | 功能与所有者 | 接口、输入 → 输出 | 运行逻辑 | 实现与边界 |
 | --- | --- | --- | --- | --- |
 | Process / Thread | 被 claim 的 prompt/package command 是逻辑交付任务；service 拥有主执行协程，工具子协程属于调用它的 TaskGroup。Session 保存队列、会话与 Book 绑定。 | `/turns`、`start_runtime_service`、`runtime_loop_execute`、`runtime_turn_execute`；命令/修订 → 结果、可恢复位置或终态 receipt。 | service 取得 session 所有权，loop 取队列，turn 解释当前 command；独立只读调用 fork/join，取消沿已有 task group 传播。 | **已实现限定范围**。不是每个 turn 一个线程，也没有独立地址空间或持久调用栈。普通命令默认一个主 Agent；显式 worker 不构成默认常驻团队。 |
-| Memory | Context compiler 拥有“本轮模型工作集”，journal 拥有原始执行记录，文件拥有文件内容。 | `compile_context` / `Pruner::compile_messages`；任务、消息、schema、窗口 → messages + metrics；`read_result(evidence_ref, details?, end_ref?, lines?)` → 保存的 output 行、完整 JSON 或范围目录。 | 按压力保留指令/任务与最新完整交换，压缩旧消息，保留精确/首尾来源句柄，需要时补读。 | **已实现限定范围**。摘要有损；未保留的 stdout、旧文件版本不能恢复。补读扫描 session journal；没有新 memory store 或自动 RAG，主动补读的请求成本另计。 |
+| Memory | Context compiler 拥有“本轮模型工作集”，journal 拥有原始执行记录，文件拥有文件内容。 | `compile_context` / `Pruner::compile_messages`；任务、消息、schema、窗口 → messages + metrics；`read(path?, evidence_ref?, details?, end_ref?, lines?)` → 保存的 output 行、完整 JSON 或范围目录。 | 按压力保留指令/任务与最新完整交换，压缩旧消息，保留精确/首尾来源句柄，需要时补读。 | **已实现限定范围**。摘要有损；未保留的 stdout、旧文件版本不能恢复。补读扫描 session journal；没有新 memory store 或自动 RAG，主动补读的请求成本另计。 |
 | Filesystem | Workspace 拥有选定 MoonBook 的真实路径、文件内容与本地条件写入。 | `workspace_path(book_root,path)` → canonical/relative identity；`workspace_replace(root,absolute,expected,content)` → 成功或 stale/error；read/edit/write/patch 为工具入口。 | 解析真实资源，在同一资源锁内比较旧内容，用同目录临时文件及 rename 替换；patch 复用既有回滚。 | **原生文件路径已实现**。同一资源的协作式互斥和过期检查，不是完整 VFS、MVCC、多文件事务或不可变版本库。shell、外部编辑器不参与此文件锁。 |
 | I/O | provider transport 负责模型协议；catalog/executor 负责工具 ABI；grant/executor 边界负责实际执行授权。 | 模型消息 → provider response；`tool + arguments` → canonical result `{ok,is_error,message,output,metadata}` → execution/event → journal/model/UI。 | schema 校验、绑定既有执行条件、运行、返回规范结果；工具错误交回同一 Agent。用户输入、steering、审批和取消沿命令路径进入。 | **主线已实现**。Function Calling 是调用形状，MCP 是接入协议；都不自动提供权限、幂等或结果正确性。控制事件与已执行效果有区别；工具成功不等于交付完成。 |
 | Synchronization | execution lease 保护 session 执行者；lifecycle gate 保护归档/恢复；journal lock 保护追加/claim 顺序；file lock 保护真实文件；batch join 保护工具生命周期。 | `open_session_execution_lease`、lifecycle/session lock、`workspace_file_lock`、`TaskGroup`；资源/操作 → 所有权、等待、busy 或有序结果。 | 外部入口持有 lifecycle shared gate + execution exclusive lease，内部 loop/turn 借用，不重入获取。不同 session 可运行；独立读并发，普通修改按调用顺序执行。 | **局部同步已实现**。这些锁不能合并成全 Book 大锁；本地提交序号不是跨服务时钟。进程工具与原生文件工具仍不具有统一写事务。 |
@@ -570,7 +570,7 @@ Session lease 保护 session 的执行所有权，journal 锁保护提交顺序�
 
 现有 RAG 已有文本/embedding 混合排序，优先复用；只有具体检索失败需要时才增加 query 改写或 rerank。
 
-本轮边界：[Context/Journal 运行契约](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md) 描述默认窗口预算、单一 compiler 与恢复。按需补读文件、已安装 skill 和可用 artifact/backend 复用现有入口；`read_result` 按 evidence ID 默认读取已保存 output 的原文行，`details=true` 读取完整 canonical JSON／JSON 行，`end_ref` 列出压缩范围。回执区分检索成功和原结果的成功／截断。它按需扫描现有 journal，不是新索引；只保证实际保留的结果可回取，不保证工具本来就截掉的内容可恢复。摘要不是原文，不能通过重跑写入或外部效果来恢复旧输出。窗口估算使用现有 cl100k tokenizer，保留完整前缀和最新批次仍可能超预算；不声称任何输入都能装入窗口。tokenizer 词表延迟初始化一次，每轮计数仍与输入/schema 大小相关。
+本轮边界：[Context/Journal 运行契约](../../moonclaw/docs/LONG_CONTEXT_COMPACTION.md) 描述默认窗口预算、单一 compiler 与恢复。按需补读文件、已安装 skill 和可用 artifact/backend 复用现有入口；`read(evidence_ref=...)` 按 evidence ID 默认读取已保存 output 的原文行，`details=true` 读取完整 canonical JSON／JSON 行，`end_ref` 列出压缩范围。回执区分检索成功和原结果的成功／截断。它按需扫描现有 journal，不是新索引；只保证实际保留的结果可回取，不保证工具本来就截掉的内容可恢复。摘要不是原文，不能通过重跑写入或外部效果来恢复旧输出。窗口估算使用现有 cl100k tokenizer，保留完整前缀和最新批次仍可能超预算；不声称任何输入都能装入窗口。tokenizer 词表延迟初始化一次，每轮计数仍与输入/schema 大小相关。
 
 ### 4 Workspace 模块 减少文件策略与存储责任混杂
 
@@ -692,6 +692,7 @@ MoonBit 生产代码净减 1122 行，测试净减 1069 行，搬移的 Completi
 - [x] **补读按完整成本比较**：[结果包装与补读全成本](MOONCODE_PI_INPUT_GAP_AUDIT_2026-11-07.md#结果包装与补读全成本)。保留 location，Skill 回执精简净省222；正文补读修复的 schema 另收36，原12轮最终62,544，仍约Pi1.32倍。条件补读含恢复结论73469→69381，查询目录＋补读77907→73895；额外请求与后续携带全部计入。拒绝删字段后反增输入及丢结论的低数值。15份原output和15份canonical JSON均可恢复，不新增状态、自动检索或人工确认；条件分支不冒充新交付。
 - [x] **用 benchmark 校准差额归因**：[输入 benchmark](MOONCODE_INPUT_BENCHMARK_2026-11-08.md)真实 producer 1次预热＋7次测量，均62,544；Pi原请求47,355。原usage校准偏差+5.91%／+3.06%，新版真实费用未知。基础schema5,160低于Pi7,188；额外控制3,900、SDK4,070、完整Skill5,126；后续正文比Pi少7,622，3次edit参数累计多1,608。finish schema消融静态省624、连续回放反增730，分项精确对应多保留outline／源码，已恢复源码。主benchmark不掺构造补读；不把1.32当成自主交付实测，不新增运行时策略。
 - [x] **源码收敛并复测**：[ABI／Skill 修复](MOONCODE_INPUT_BENCHMARK_2026-11-08.md#源码修复与复测)。edit仅edits数组，SDK仅args／paths数组；删除标量兼容拼接、test-update理由门槛和无调用收集函数。既有YAML parser分离路由元数据，完整Markdown／自定义字段／原文件保留。25组主矩阵及10组加载矩阵后，以现有窗口9472复测：1预热＋7测量均60,749，额外加载62,623／13请求；源码与窗口净收益分列，失败窗口保留。原子编辑、真实grant和版本证据沿用；Native1837/1837，无新增状态、包、确认或测试项，仍非新付费交付实测。
+- [x] **同窗口删除重复压缩与读取契约**：[完整8组消融及补读成本](MOONCODE_INPUT_BENCHMARK_2026-11-08.md#整段历史压缩与读取接口收敛)。复用完整交换checkpoint，删单独清空结果路径与指标；文件／结果共用read ABI，bundled Skill删重复通用指导。窗口9472不变，正式1预热＋7测量均51208（比60749少15.7%，本地Pi1.0814）；加载／补读全部计入，SDK延迟反增4180未合入。runtime净减125／assets减5／tests减51行，删1项过时用例，Native1836/1836。无新增状态、层、确认或付费模型调用，未宣称新自主质量。
 
 2026-11-06 已完成[首个真实 bug 交付观测](MOONCODE_LIVE_BUGFIX_2026-11-06.md)：真实模型修复已有名称问题，独立验收通过，但未配置进程执行器导致自主测试需要接管；记录 16 次响应、实际 tokens、返工与耗时，并仅修复真实日志暴露的 edit/projection bug。单例与历史回放不能证明修复后的线上成功率或成本下降，本项继续不勾选。
 

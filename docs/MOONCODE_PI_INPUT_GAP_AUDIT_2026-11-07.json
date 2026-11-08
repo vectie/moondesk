@@ -2274,5 +2274,681 @@
     },
     "limits": "Frozen original responses and observations; only offline parameters/response argument shapes mechanically migrated. No new autonomous model decisions, success rate, output quality, provider usage or cash measured. Existing working-window recalibration is part of totals; individual/static gains do not add. All losing groups retained; original paid logs/costs untouched.",
     "evidence_root": "/Users/kq/mooncode-abi-20261108"
+  },
+  "exchange_compaction_2026_11_08": {
+    "date": "2026-11-08",
+    "provider_calls": 0,
+    "base_revision": "697c74ce",
+    "base_input": 60749,
+    "final_input": 51208,
+    "saved": 9541,
+    "saved_percent": 15.705608322770745,
+    "pi_input": 47355,
+    "ratio": 1.0813641642909935,
+    "same_default_window": 9472,
+    "input_budget": 7104,
+    "warmups": 1,
+    "measured_replays": 7,
+    "frames": 96,
+    "all_8_stable": true,
+    "runtime_lines_net": -125,
+    "generated_asset_lines_net": -5,
+    "test_lines_net": -51,
+    "test_items_removed": 1,
+    "native": "1836/1836",
+    "read_tools": "one read(path|evidence_ref) ABI; no read_result alias",
+    "public_mbti_change": "remove obsolete CompileResult.redacted_tool_results only",
+    "main_parts": {
+      "schema": 11434,
+      "system": 4332,
+      "task": 8715,
+      "skill": 3850,
+      "assistant_content": 0,
+      "assistant_ids": 788,
+      "assistant_functions": 48,
+      "assistant_arguments": 3897,
+      "tool_headers": 4523,
+      "tool_bodies": 13621
+    },
+    "pi_parts": {
+      "schema": 7188,
+      "system": 6024,
+      "task": 4104,
+      "assistant_content": 0,
+      "assistant_ids": 1580,
+      "assistant_functions": 78,
+      "assistant_arguments": 5984,
+      "tool_headers": 0,
+      "tool_bodies": 22397
+    },
+    "main_minus_pi_by_part": {
+      "schema": 4246,
+      "system": -1692,
+      "task": 4611,
+      "skill": 3850,
+      "assistant_content": 0,
+      "assistant_ids": -792,
+      "assistant_functions": -30,
+      "assistant_arguments": -2087,
+      "tool_headers": 4523,
+      "tool_bodies": -8776
+    },
+    "schema_partition": {
+      "basic_four": 5256,
+      "control_and_recovery": 2460,
+      "sdk_and_ide": 3718
+    },
+    "main_arguments_by_tool": {
+      "read_skill": 28,
+      "read": 207,
+      "moon_ide": 36,
+      "moon_cmd": 270,
+      "edit": 2038,
+      "shell": 1318
+    },
+    "pi_arguments_by_tool": {
+      "bash": 3568,
+      "read": 170,
+      "edit": 2246
+    },
+    "main_results": {
+      "call_9bd1b527c2004754a1499d74d2382f5d": {
+        "tool": "read_skill",
+        "arguments": {
+          "name": "moonbit-agent-guide",
+          "path": "SKILL.md"
+        },
+        "body_rounds": [],
+        "first_body_tokens": 0,
+        "cumulative_body_tokens": 0,
+        "cumulative_header_tokens": 122
+      },
+      "call_d464efaa048a420a87e11f677b297e31": {
+        "tool": "read",
+        "arguments": {
+          "path": "AGENTS.md",
+          "start_line": 1,
+          "end_line": 200,
+          "max_output_chars": 20000
+        },
+        "body_rounds": [],
+        "first_body_tokens": 0,
+        "cumulative_body_tokens": 0,
+        "cumulative_header_tokens": 94
+      },
+      "call_3bf3cb350a4d4a5586c24d7e33b64bf1": {
+        "tool": "read",
+        "arguments": {
+          "path": "pathx/path_test.mbt",
+          "start_line": 1,
+          "end_line": 240,
+          "max_output_chars": 30000
+        },
+        "body_rounds": [
+          3
+        ],
+        "first_body_tokens": 2348,
+        "cumulative_body_tokens": 2348,
+        "cumulative_header_tokens": 124
+      },
+      "call_763807f8c4df441ab438b789c57eb2a4": {
+        "tool": "moon_ide",
+        "arguments": {
+          "action": "outline",
+          "query": "",
+          "path": "pathx",
+          "loc": "",
+          "target": "native",
+          "no_check": false,
+          "timeout_ms": 120000,
+          "max_output_chars": 20000
+        },
+        "body_rounds": [
+          3
+        ],
+        "first_body_tokens": 331,
+        "cumulative_body_tokens": 331,
+        "cumulative_header_tokens": 128
+      },
+      "call_43b8a8561a93492391ca4395dad2b5c7": {
+        "tool": "read",
+        "arguments": {
+          "path": "pathx/path.mbt",
+          "start_line": 1,
+          "end_line": 130,
+          "max_output_chars": 20000
+        },
+        "body_rounds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "first_body_tokens": 864,
+        "cumulative_body_tokens": 5184,
+        "cumulative_header_tokens": 726
+      },
+      "call_85ffbbc15c924b7d9a9a007e39cf17fb": {
+        "tool": "moon_cmd",
+        "arguments": {
+          "command": "test",
+          "cwd": "",
+          "target": "native",
+          "args": [
+            "--frozen"
+          ],
+          "paths": [
+            "pathx"
+          ],
+          "program_args": [],
+          "expected_exit_code": 2,
+          "timeout_ms": 120000,
+          "max_output_chars": 30000
+        },
+        "body_rounds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "first_body_tokens": 612,
+        "cumulative_body_tokens": 3672,
+        "cumulative_header_tokens": 888
+      },
+      "call_8f49d15db18c416a884aaa5d90c542e1": {
+        "tool": "edit",
+        "arguments": {
+          "path": "pathx/path.mbt",
+          "edits": [
+            {
+              "old_string": "pub fn basename(path : StringView) -> StringView {\n  let path = match path {\n    [.. path, '/'] => path\n    path => path\n  }\n  fn scan(current : StringView) -> StringView {\n    match current {\n      [] => path\n      [.., '/'] as view => path.view(start_offset=view.end_offset())\n      [.. view, _] => scan(view)\n    }\n  }\n  scan(path.view())\n}",
+              "new_string": "pub fn basename(path : StringView) -> StringView {\n  let trimmed = path.trim_end(chars=\"/\")\n  if trimmed.is_empty() {\n    return if path.is_empty() { path } else { path.view(end_offset=1) }\n  }\n  match trimmed.rev_find(\"/\") {\n    None => trimmed\n    Some(index) => trimmed.view(start_offset=index + 1)\n  }\n}",
+              "replace_all": false
+            }
+          ]
+        },
+        "body_rounds": [],
+        "first_body_tokens": 0,
+        "cumulative_body_tokens": 0,
+        "cumulative_header_tokens": 560
+      },
+      "call_d4c9fd4d498c410793bde5f5a4cf6200": {
+        "tool": "shell",
+        "arguments": {
+          "cmd": "export MOON_HOME=/Users/kq/.moon MOON_CC=/Library/Developer/CommandLineTools/usr/bin/clang MOON_AR=/Library/Developer/CommandLineTools/usr/bin/ar DEVELOPER_DIR=/Library/Developer/CommandLineTools SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk GIT_CONFIG_NOSYSTEM=1 PATH=/Library/Developer/CommandLineTools/usr/bin:/Users/kq/.moon/bin:/usr/bin:/bin:/usr/sbin:/sbin; moon fmt pathx/path.mbt && moon test pathx --target native --frozen",
+          "cwd": ".",
+          "timeout_ms": 120000,
+          "max_output_chars": 30000,
+          "background": false,
+          "verification_kind": "test"
+        },
+        "body_rounds": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "first_body_tokens": 242,
+        "cumulative_body_tokens": 968,
+        "cumulative_header_tokens": 524
+      },
+      "call_590a7bd49c644a1fba0c7311e4d54870": {
+        "tool": "edit",
+        "arguments": {
+          "path": "pathx/path.mbt",
+          "edits": [
+            {
+              "old_string": "fn StringView::end_offset(self : StringView) -> Int32 {\n  self.start_offset() + self.length()\n}\n\n///|\n/// Path component separator",
+              "new_string": "/// Path component separator",
+              "replace_all": false
+            },
+            {
+              "old_string": "  let basename = basename(path)\n  match basename {\n    \"\" => return path.to_owned()\n    \".\" => return path.to_owned()\n    \"..\" => return path.to_owned()",
+              "new_string": "  let basename = basename(path)\n  match basename {\n    \"\" => return path.to_owned()\n    \"/\" if path.trim_end(chars=\"/\").is_empty() => return path.to_owned()\n    \".\" => return path.to_owned()\n    \"..\" => return path.to_owned()",
+              "replace_all": false
+            }
+          ]
+        },
+        "body_rounds": [],
+        "first_body_tokens": 0,
+        "cumulative_body_tokens": 0,
+        "cumulative_header_tokens": 126
+      },
+      "call_bac4cf74395d4089834291974d8607c2": {
+        "tool": "edit",
+        "arguments": {
+          "path": "pathx/path.mbt",
+          "edits": [
+            {
+              "old_string": "fn StringView::end_offset(self : StringView) -> Int32 {\n  self.start_offset() + self.length()\n}\n\n///|\n/// Path component separator",
+              "new_string": "/// Path component separator",
+              "replace_all": false
+            },
+            {
+              "old_string": "  match basename {\n    \"\" => return path.to_owned()\n    \".\" => return path.to_owned()\n    \"..\" => return path.to_owned()",
+              "new_string": "  match basename {\n    \"\" => return path.to_owned()\n    \"/\" if path.trim_end(chars=\"/\").is_empty() => return path.to_owned()\n    \".\" => return path.to_owned()\n    \"..\" => return path.to_owned()",
+              "replace_all": false
+            }
+          ]
+        },
+        "body_rounds": [],
+        "first_body_tokens": 0,
+        "cumulative_body_tokens": 0,
+        "cumulative_header_tokens": 224
+      },
+      "call_0366daeb03584f91bc3db79e7acde629": {
+        "tool": "shell",
+        "arguments": {
+          "cmd": "export MOON_HOME=/Users/kq/.moon MOON_CC=/Library/Developer/CommandLineTools/usr/bin/clang MOON_AR=/Library/Developer/CommandLineTools/usr/bin/ar DEVELOPER_DIR=/Library/Developer/CommandLineTools SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk GIT_CONFIG_NOSYSTEM=1 PATH=/Library/Developer/CommandLineTools/usr/bin:/Users/kq/.moon/bin:/usr/bin:/bin:/usr/sbin:/sbin; moon fmt pathx/path.mbt && moon test pathx --target native --frozen",
+          "cwd": ".",
+          "timeout_ms": 120000,
+          "max_output_chars": 30000,
+          "background": false,
+          "verification_kind": "test"
+        },
+        "body_rounds": [
+          9
+        ],
+        "first_body_tokens": 30,
+        "cumulative_body_tokens": 30,
+        "cumulative_header_tokens": 166
+      },
+      "call_cdb5df3848d54df1949cc4f446b82e32": {
+        "tool": "shell",
+        "arguments": {
+          "cmd": "export MOON_HOME=/Users/kq/.moon MOON_CC=/Library/Developer/CommandLineTools/usr/bin/clang MOON_AR=/Library/Developer/CommandLineTools/usr/bin/ar DEVELOPER_DIR=/Library/Developer/CommandLineTools SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk GIT_CONFIG_NOSYSTEM=1 PATH=/Library/Developer/CommandLineTools/usr/bin:/Users/kq/.moon/bin:/usr/bin:/bin:/usr/sbin:/sbin; moon test --target native --frozen",
+          "cwd": ".",
+          "timeout_ms": 600000,
+          "max_output_chars": 50000,
+          "background": false,
+          "verification_kind": "test"
+        },
+        "body_rounds": [
+          10,
+          11,
+          12
+        ],
+        "first_body_tokens": 113,
+        "cumulative_body_tokens": 339,
+        "cumulative_header_tokens": 492
+      },
+      "call_47eaef5abafb4975a77599454a694553": {
+        "tool": "shell",
+        "arguments": {
+          "cmd": "git diff --check && git status --short && git diff -- pathx/path.mbt",
+          "cwd": ".",
+          "timeout_ms": 120000,
+          "max_output_chars": 30000,
+          "background": false,
+          "verification_kind": "check"
+        },
+        "body_rounds": [
+          11,
+          12
+        ],
+        "first_body_tokens": 102,
+        "cumulative_body_tokens": 204,
+        "cumulative_header_tokens": 224
+      },
+      "call_0b980c17efbf455185b01c4d4c25d96a": {
+        "tool": "shell",
+        "arguments": {
+          "cmd": "export DEVELOPER_DIR=/Library/Developer/CommandLineTools GIT_CONFIG_NOSYSTEM=1 PATH=/Library/Developer/CommandLineTools/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin; git diff --check && git status --short && git diff -- pathx/path.mbt",
+          "cwd": ".",
+          "timeout_ms": 120000,
+          "max_output_chars": 30000,
+          "background": false,
+          "verification_kind": "check"
+        },
+        "body_rounds": [
+          12
+        ],
+        "first_body_tokens": 545,
+        "cumulative_body_tokens": 545,
+        "cumulative_header_tokens": 125
+      }
+    },
+    "variants": [
+      {
+        "variant": "baseline",
+        "input": 60749,
+        "saved_vs_60749": 0,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 12478,
+          "system": 4332,
+          "task": 4608,
+          "skill": 4587,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7656,
+          "tool_headers": 7992,
+          "tool_bodies": 16985
+        },
+        "arguments": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 405,
+          "edit": 3799,
+          "shell": 2194
+        }
+      },
+      {
+        "variant": "merge-read",
+        "input": 60137,
+        "saved_vs_60749": 612,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 4608,
+          "skill": 4587,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7656,
+          "tool_headers": 8093,
+          "tool_bodies": 17316
+        },
+        "arguments": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 405,
+          "edit": 3799,
+          "shell": 2194
+        }
+      },
+      {
+        "variant": "skill",
+        "input": 60444,
+        "saved_vs_60749": 305,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 12478,
+          "system": 4332,
+          "task": 4608,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7656,
+          "tool_headers": 8093,
+          "tool_bodies": 17316
+        },
+        "arguments": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 405,
+          "edit": 3799,
+          "shell": 2194
+        }
+      },
+      {
+        "variant": "checkpoint",
+        "input": 52989,
+        "saved_vs_60749": 7760,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 12478,
+          "system": 4332,
+          "task": 8715,
+          "skill": 4587,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        },
+        "arguments": {
+          "read_skill": 28,
+          "read": 207,
+          "moon_ide": 36,
+          "moon_cmd": 270,
+          "edit": 2038,
+          "shell": 1318
+        }
+      },
+      {
+        "variant": "merge-skill",
+        "input": 59400,
+        "saved_vs_60749": 1349,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 4608,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 1976,
+          "assistant_functions": 135,
+          "assistant_arguments": 7656,
+          "tool_headers": 8093,
+          "tool_bodies": 17316
+        },
+        "arguments": {
+          "read_skill": 154,
+          "read": 744,
+          "moon_ide": 360,
+          "moon_cmd": 405,
+          "edit": 3799,
+          "shell": 2194
+        }
+      },
+      {
+        "variant": "checkpoint-merge",
+        "input": 51945,
+        "saved_vs_60749": 8804,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 4587,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        },
+        "arguments": {
+          "read_skill": 28,
+          "read": 207,
+          "moon_ide": 36,
+          "moon_cmd": 270,
+          "edit": 2038,
+          "shell": 1318
+        }
+      },
+      {
+        "variant": "checkpoint-skill",
+        "input": 52252,
+        "saved_vs_60749": 8497,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 12478,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        },
+        "arguments": {
+          "read_skill": 28,
+          "read": 207,
+          "moon_ide": 36,
+          "moon_cmd": 270,
+          "edit": 2038,
+          "shell": 1318
+        }
+      },
+      {
+        "variant": "all",
+        "input": 51208,
+        "saved_vs_60749": 9541,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 11434,
+          "system": 4332,
+          "task": 8715,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3897,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        },
+        "arguments": {
+          "read_skill": 28,
+          "read": 207,
+          "moon_ide": 36,
+          "moon_cmd": 270,
+          "edit": 2038,
+          "shell": 1318
+        }
+      }
+    ],
+    "conditional_branches": [
+      {
+        "variant": "baseline",
+        "branch": "profile",
+        "requests": 13,
+        "input": 62626,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      },
+      {
+        "variant": "baseline",
+        "branch": "recall",
+        "requests": 13,
+        "input": 66292,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      },
+      {
+        "variant": "baseline",
+        "branch": "combined",
+        "requests": 14,
+        "input": 68944,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      },
+      {
+        "variant": "final",
+        "branch": "profile",
+        "requests": 13,
+        "input": 54576,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      },
+      {
+        "variant": "final",
+        "branch": "recall",
+        "requests": 13,
+        "input": 55582,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      },
+      {
+        "variant": "final",
+        "branch": "combined",
+        "requests": 14,
+        "input": 60206,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "repair_requests": 0
+      }
+    ],
+    "rejected_sdk_deferral": {
+      "candidate": "remove bundled guide's SDK/IDE declarations; reuse existing full tool-profile load",
+      "base_input": 51208,
+      "input": 55388,
+      "net_saved": -4180,
+      "requests": 13,
+      "lost_edits": [],
+      "lost_verdicts": [],
+      "limits": "Synthetic additional choice, not an observed provider response. Full guide Markdown equal and source location preserved; issuing request, profile result and all later carrying counted."
+    },
+    "canonical": {
+      "recovered": 15,
+      "read_result_calls": 553,
+      "elapsed_ms": "46958",
+      "journal_unchanged": true,
+      "original_tools_executed": 0
+    },
+    "timing": {
+      "compiler_ms_per_12_frames": {
+        "n": 7,
+        "median": 410,
+        "p95_nearest_rank": 419,
+        "min": 407,
+        "max": 419
+      },
+      "fixture_ms_per_12_frames": {
+        "n": 7,
+        "median": 669,
+        "p95_nearest_rank": 687,
+        "min": 663,
+        "max": 687
+      },
+      "first_replay_not_app_cold_start": {
+        "repetition": 0,
+        "wall_ms": 781
+      }
+    },
+    "limits": "Frozen observed original responses, new ABI parameters mechanically migrated; complete current bundled Skill and unmodified custom Skill instructions retained. Checkpoints are lossy, with old result references; exact saved results are recoverable, not automatically all old call arguments or overwritten source. Conditional choices costed in full but not newly observed model decisions. No new provider usage, billing, cache, quality, autonomous turns or task generalization measured; timings are local Native debug, not provider latency or an interleaved speed comparison.",
+    "evidence_root": "/Users/kq/mooncode-residual2-20261108",
+    "first_official_timing_aggregate": {
+      "compiler_ms_per_12_frames": {
+        "n": 7,
+        "median": 405,
+        "p95_nearest_rank": 419,
+        "min": 400,
+        "max": 419
+      },
+      "fixture_ms_per_12_frames": {
+        "n": 7,
+        "median": 660,
+        "p95_nearest_rank": 686,
+        "min": 655,
+        "max": 686
+      },
+      "first_replay_not_app_cold_start": {
+        "repetition": 0,
+        "wall_ms": 754
+      }
+    },
+    "canonical_total_local_calls": 568,
+    "reproducer_checks": [
+      "baseline60749",
+      "production8x51208"
+    ]
   }
 }

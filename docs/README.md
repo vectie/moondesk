@@ -105,8 +105,10 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     producer replay from original provider usage, calibrates both estimators,
     measures schemas/argument history/result carrying, and preserves a negative
     finish-schema ablation. The source follow-up narrows edit/SDK contracts,
-    separates Skill routing metadata and recalibrates the existing window:
-    60,749 fixed-trace input, with full loading costs and rejected windows.
+    separates Skill routing metadata and recalibrates the existing window.
+    The complete-exchange follow-up deletes the result-clearing path and
+    merges file/result reading: 51,208 fixed-trace input at the unchanged window,
+    with full loading/recall costs and a rejected SDK-deferral candidate.
     These ratios are not new billed delivery costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.

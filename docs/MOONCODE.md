@@ -104,7 +104,7 @@ Native receipt answers now read the same nested result shape as the producer,
 including after recovery. Runtime checkpoint references no longer duplicate
 execution headers; the desktop does not decode that private recovery format.
 The desktop continues to consume canonical conversation facts. Compaction does
-not erase journaled results or create a new confirmation step. The read-only `read_result` tool recovers retained session results by evidence ID,
+not erase journaled results or create a new confirmation step. The read-only `read(evidence_ref=...)` operation recovers retained session results by evidence ID,
 or lists the first/last range preserved in a compacted span. It never repeats
 an effect and cannot recover output never retained by its original tool.
 
