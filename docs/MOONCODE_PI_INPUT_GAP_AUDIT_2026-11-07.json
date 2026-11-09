@@ -7176,5 +7176,176 @@
         }
       }
     ]
+  },
+  "long_task_notice_lifecycle_2026_11_09": {
+    "date": "2026-11-09",
+    "claw_base": "aabcc772",
+    "desk_base": "67c9e2d1",
+    "provider_calls": 0,
+    "change": "Expire consumed steering/rejection/replan notices in existing followup builder; task updates stay in canonical task and are replayed from existing applied events.",
+    "window": 9472,
+    "budget": 7104,
+    "paired_runs": [
+      {
+        "scenario": "plain",
+        "steps": 128,
+        "request_frames": 129,
+        "old": {
+          "scenario": "plain",
+          "steps": 128,
+          "input": 716036,
+          "unfit": 0,
+          "max_internal_tokens": 7100,
+          "compactions": 27,
+          "restores": 4,
+          "elapsed_ms": 9333
+        },
+        "fixed": {
+          "scenario": "plain",
+          "steps": 128,
+          "input": 716036,
+          "unfit": 0,
+          "max_internal_tokens": 7100,
+          "compactions": 27,
+          "restores": 4,
+          "elapsed_ms": 9363
+        },
+        "initial_input_old": 1027,
+        "initial_input_fixed": 1027,
+        "total_input_old": 717063,
+        "total_input_fixed": 717063,
+        "saved": 0
+      },
+      {
+        "scenario": "steer",
+        "steps": 128,
+        "request_frames": 129,
+        "old": {
+          "scenario": "steer",
+          "steps": 128,
+          "input": 2031917,
+          "unfit": 102,
+          "max_internal_tokens": 31848,
+          "compactions": 104,
+          "restores": 4,
+          "elapsed_ms": 35552
+        },
+        "fixed": {
+          "scenario": "steer",
+          "steps": 128,
+          "input": 719162,
+          "unfit": 0,
+          "max_internal_tokens": 7090,
+          "compactions": 27,
+          "restores": 4,
+          "elapsed_ms": 9457
+        },
+        "initial_input_old": 1027,
+        "initial_input_fixed": 1027,
+        "total_input_old": 2032944,
+        "total_input_fixed": 720189,
+        "saved": 1312755
+      },
+      {
+        "scenario": "guidance",
+        "steps": 128,
+        "request_frames": 129,
+        "old": {
+          "scenario": "guidance",
+          "steps": 128,
+          "input": 2022617,
+          "unfit": 102,
+          "max_internal_tokens": 31773,
+          "compactions": 104,
+          "restores": 4,
+          "elapsed_ms": 37427
+        },
+        "fixed": {
+          "scenario": "guidance",
+          "steps": 128,
+          "input": 716044,
+          "unfit": 0,
+          "max_internal_tokens": 7100,
+          "compactions": 27,
+          "restores": 4,
+          "elapsed_ms": 9458
+        },
+        "initial_input_old": 1027,
+        "initial_input_fixed": 1027,
+        "total_input_old": 2023644,
+        "total_input_fixed": 717071,
+        "saved": 1306573
+      },
+      {
+        "scenario": "finish",
+        "steps": 128,
+        "request_frames": 129,
+        "old": {
+          "scenario": "finish",
+          "steps": 128,
+          "input": 2026276,
+          "unfit": 102,
+          "max_internal_tokens": 31802,
+          "compactions": 104,
+          "restores": 4,
+          "elapsed_ms": 35129
+        },
+        "fixed": {
+          "scenario": "finish",
+          "steps": 128,
+          "input": 716077,
+          "unfit": 0,
+          "max_internal_tokens": 7101,
+          "compactions": 27,
+          "restores": 4,
+          "elapsed_ms": 9384
+        },
+        "initial_input_old": 1027,
+        "initial_input_fixed": 1027,
+        "total_input_old": 2027303,
+        "total_input_fixed": 717104,
+        "saved": 1310199
+      }
+    ],
+    "extended": {
+      "scenario": "extended",
+      "steps": 1024,
+      "recalls": 8,
+      "input": 6065535,
+      "unfit": 0,
+      "max_internal_tokens": 7104,
+      "compactions": 287,
+      "restores": 32,
+      "elapsed_ms": 104888
+    },
+    "extended_initial_input": 1027,
+    "extended_total_input": 6066562,
+    "extended_request_frames": 1025,
+    "cold": {
+      "cold_native_process": true,
+      "restored_results": 1024,
+      "task_updates": 2,
+      "next_request_matches": true,
+      "old_result_read_exact": true,
+      "context": {
+        "applied": false,
+        "input_budget_tokens": 7104,
+        "before_tokens": 6746,
+        "after_tokens": 6746,
+        "compacted_messages": 0,
+        "within_budget": true
+      },
+      "provider_calls": 0
+    },
+    "historical_short_input": 53513,
+    "short_replays": 8,
+    "short_frames": 96,
+    "native": "1836/1836",
+    "runtime_lines_net": 2,
+    "test_lines_net": 28,
+    "new_test_items": 0,
+    "mbti_changed": false,
+    "limits": "Long actions/outputs are deterministic simulated observations through actual request builder/compiler. Existing canonical journal, retained reader, continuation hydration and next-request assembly exercised; fresh Native process validated cold hydration. Not1024 real model calls, actual autonomous deliverable quality, cloud outage or provider billing evidence. Original paired sums were followup-only; measured initial requests are added above. Eight recall slots and subsequent carrying included, no hidden oracle shortens history. First extended fixture only roundtripped projected messages; verified-2 uses correct pre-response plan/after-step position and rebuilds the exact next request. First strict journal equality failed on existing journal_sequence projection; reuse unproject helper in private harness, no production change. No architecture/state/confirmations/extra retention policies or paid reruns.",
+    "evidence_root": "/Users/kq/mooncode-long7-20261109"
   }
 }
