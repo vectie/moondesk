@@ -5524,5 +5524,1657 @@
     },
     "limits": "Frozen original decisions/cl100k local counts, no model calls. Only unwrap the previous checkpoint observation; same96-token observation/768-token checkpoint allowance. All other schema/header/argument candidates rejected after fully charged real-reader proof repairs. Full task/instructions/edit literals/final108 proof retained. Saved9 tokens is not a large cost improvement, fewer model turns, live quality, billing or cache evidence. No new states/layers/human confirmation/window reduction.",
     "evidence_root": "/Users/kq/mooncode-residual5-20261109"
+  },
+  "compaction_boundary_root_cause_2026_11_09": {
+    "date": "2026-11-09",
+    "base_revision": "847f7641",
+    "desk_base_revision": "064a6331",
+    "provider_calls": 0,
+    "base_input": 49157,
+    "input": 53513,
+    "delta_input": 4356,
+    "delta_percent": 8.861403258945828,
+    "pi_input": 47355,
+    "ratio": 1.1300390666244324,
+    "default_window": 9472,
+    "input_budget": 7104,
+    "replays": 8,
+    "warmups": 1,
+    "measured_replays": 7,
+    "frames": 96,
+    "runtime_lines_net": -6,
+    "test_lines_net": 8,
+    "new_test_items": 0,
+    "native": "1836/1836",
+    "mbti_changed": false,
+    "main_parts": {
+      "schema": 10568,
+      "system": 4296,
+      "task": 6453,
+      "skill": 3850,
+      "assistant_content": 0,
+      "assistant_ids": 1094,
+      "assistant_functions": 63,
+      "assistant_arguments": 6540,
+      "tool_headers": 6212,
+      "tool_bodies": 14437
+    },
+    "pi_parts": {
+      "schema": 7188,
+      "system": 6024,
+      "task": 4104,
+      "assistant_content": 0,
+      "assistant_ids": 1580,
+      "assistant_functions": 78,
+      "assistant_arguments": 5984,
+      "tool_headers": 0,
+      "tool_bodies": 22397
+    },
+    "variants": [
+      {
+        "variant": "old",
+        "input": 49157,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7560,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 788,
+          "assistant_functions": 48,
+          "assistant_arguments": 3903,
+          "tool_headers": 4523,
+          "tool_bodies": 13621
+        }
+      },
+      {
+        "variant": "old-null",
+        "input": 51476,
+        "lost_edits": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7285,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4582,
+          "tool_headers": 4806,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "boundary",
+        "input": 51664,
+        "lost_edits": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7252,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4582,
+          "tool_headers": 5027,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "input": 51476,
+        "lost_edits": [],
+        "lost_verdicts": [
+          11,
+          12
+        ],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 7285,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 892,
+          "assistant_functions": 54,
+          "assistant_arguments": 4582,
+          "tool_headers": 4806,
+          "tool_bodies": 15143
+        }
+      },
+      {
+        "variant": "forward",
+        "input": 53513,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 6453,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 1094,
+          "assistant_functions": 63,
+          "assistant_arguments": 6540,
+          "tool_headers": 6212,
+          "tool_bodies": 14437
+        }
+      },
+      {
+        "variant": "forward-null",
+        "input": 55034,
+        "lost_edits": [],
+        "lost_verdicts": [],
+        "parts": {
+          "schema": 10568,
+          "system": 4296,
+          "task": 6399,
+          "skill": 3850,
+          "assistant_content": 0,
+          "assistant_ids": 1136,
+          "assistant_functions": 66,
+          "assistant_arguments": 6612,
+          "tool_headers": 6194,
+          "tool_bodies": 15913
+        }
+      }
+    ],
+    "branches": [
+      {
+        "variant": "old",
+        "scenario": "main",
+        "input": 49157,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "old",
+        "scenario": "profile",
+        "input": 53900,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "old",
+        "scenario": "recall",
+        "input": 53217,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "old",
+        "scenario": "combined",
+        "input": 57284,
+        "requests": 14,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "old-null",
+        "scenario": "main",
+        "input": 54925,
+        "requests": 13,
+        "repairs": 1,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "boundary",
+        "scenario": "main",
+        "input": 55130,
+        "requests": 13,
+        "repairs": 1,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "boundary-null",
+        "scenario": "main",
+        "input": 54925,
+        "requests": 13,
+        "repairs": 1,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "forward",
+        "scenario": "main",
+        "input": 53513,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "forward",
+        "scenario": "profile",
+        "input": 58556,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "forward",
+        "scenario": "recall",
+        "input": 59025,
+        "requests": 13,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "forward",
+        "scenario": "combined",
+        "input": 63092,
+        "requests": 14,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      },
+      {
+        "variant": "forward-null",
+        "scenario": "main",
+        "input": 55034,
+        "requests": 12,
+        "repairs": 0,
+        "lost_edits": [],
+        "lost_verdicts": []
+      }
+    ],
+    "rounds": [
+      {
+        "round": 1,
+        "base_input": 1333,
+        "input": 1333,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 591,
+          "system": 358,
+          "task": 384
+        },
+        "parts": {
+          "schema": 591,
+          "system": 358,
+          "task": 384
+        }
+      },
+      {
+        "round": 2,
+        "base_input": 2098,
+        "input": 2098,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 22,
+          "assistant_functions": 2,
+          "assistant_arguments": 14,
+          "tool_headers": 61,
+          "tool_bodies": 0
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 22,
+          "assistant_functions": 2,
+          "assistant_arguments": 14,
+          "tool_headers": 61,
+          "tool_bodies": 0
+        }
+      },
+      {
+        "round": 3,
+        "base_input": 5277,
+        "input": 5277,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 84,
+          "assistant_functions": 7,
+          "assistant_arguments": 101,
+          "tool_headers": 407,
+          "tool_bodies": 2679
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 384,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 84,
+          "assistant_functions": 7,
+          "assistant_arguments": 101,
+          "tool_headers": 407,
+          "tool_bodies": 2679
+        }
+      },
+      {
+        "round": 4,
+        "base_input": 4048,
+        "input": 4048,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 42,
+          "assistant_functions": 3,
+          "assistant_arguments": 72,
+          "tool_headers": 269,
+          "tool_bodies": 1476
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 42,
+          "assistant_functions": 3,
+          "assistant_arguments": 72,
+          "tool_headers": 269,
+          "tool_bodies": 1476
+        }
+      },
+      {
+        "round": 5,
+        "base_input": 4407,
+        "input": 4407,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 63,
+          "assistant_functions": 4,
+          "assistant_arguments": 297,
+          "tool_headers": 381,
+          "tool_bodies": 1476
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 63,
+          "assistant_functions": 4,
+          "assistant_arguments": 297,
+          "tool_headers": 381,
+          "tool_bodies": 1476
+        }
+      },
+      {
+        "round": 6,
+        "base_input": 4949,
+        "input": 4949,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 85,
+          "assistant_functions": 5,
+          "assistant_arguments": 443,
+          "tool_headers": 512,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 85,
+          "assistant_functions": 5,
+          "assistant_arguments": 443,
+          "tool_headers": 512,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 7,
+        "base_input": 5203,
+        "input": 5203,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 107,
+          "assistant_functions": 6,
+          "assistant_arguments": 632,
+          "tool_headers": 554,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 107,
+          "assistant_functions": 6,
+          "assistant_arguments": 632,
+          "tool_headers": 554,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 8,
+        "base_input": 5507,
+        "input": 5507,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 125,
+          "assistant_functions": 7,
+          "assistant_arguments": 805,
+          "tool_headers": 666,
+          "tool_bodies": 1718
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 125,
+          "assistant_functions": 7,
+          "assistant_arguments": 805,
+          "tool_headers": 666,
+          "tool_bodies": 1718
+        }
+      },
+      {
+        "round": 9,
+        "base_input": 5869,
+        "input": 5869,
+        "net_saved": 0,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 144,
+          "assistant_functions": 8,
+          "assistant_arguments": 951,
+          "tool_headers": 832,
+          "tool_bodies": 1748
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 571,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 144,
+          "assistant_functions": 8,
+          "assistant_arguments": 951,
+          "tool_headers": 832,
+          "tool_bodies": 1748
+        }
+      },
+      {
+        "round": 10,
+        "base_input": 3043,
+        "input": 4495,
+        "net_saved": -1452,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 994,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 20,
+          "assistant_functions": 1,
+          "assistant_arguments": 136,
+          "tool_headers": 164,
+          "tool_bodies": 113
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 625,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 122,
+          "assistant_functions": 6,
+          "assistant_arguments": 1015,
+          "tool_headers": 727,
+          "tool_bodies": 385
+        }
+      },
+      {
+        "round": 11,
+        "base_input": 3322,
+        "input": 4774,
+        "net_saved": -1452,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 994,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 37,
+          "assistant_functions": 2,
+          "assistant_arguments": 183,
+          "tool_headers": 276,
+          "tool_bodies": 215
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 625,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 139,
+          "assistant_functions": 7,
+          "assistant_arguments": 1062,
+          "tool_headers": 839,
+          "tool_bodies": 487
+        }
+      },
+      {
+        "round": 12,
+        "base_input": 4101,
+        "input": 5553,
+        "net_saved": -1452,
+        "base_parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 994,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 59,
+          "assistant_functions": 3,
+          "assistant_arguments": 269,
+          "tool_headers": 401,
+          "tool_bodies": 760
+        },
+        "parts": {
+          "schema": 907,
+          "system": 358,
+          "task": 625,
+          "skill": 350,
+          "assistant_content": 0,
+          "assistant_ids": 161,
+          "assistant_functions": 8,
+          "assistant_arguments": 1148,
+          "tool_headers": 964,
+          "tool_bodies": 1032
+        }
+      }
+    ],
+    "same_raw_input": {
+      "same_input_internal_tokens": 7334,
+      "budget": 7104,
+      "raw_accounted_tokens": 6521,
+      "fixed_accounted_tokens": 4724,
+      "metrics": {
+        "applied": true,
+        "input_budget_tokens": 7104,
+        "before_tokens": 7334,
+        "after_tokens": 5537,
+        "compacted_messages": 4,
+        "within_budget": true
+      },
+      "full_verdict_present": true
+    },
+    "timings": {
+      "compiler_ms_per_12_frames": {
+        "n": 7,
+        "median": 381,
+        "p95_nearest_rank": 386,
+        "min": 375,
+        "max": 386
+      },
+      "fixture_ms_per_12_frames": {
+        "n": 7,
+        "median": 631,
+        "p95_nearest_rank": 642,
+        "min": 624,
+        "max": 642
+      }
+    },
+    "checks": {
+      "original_task_bytes_equal_all_12": true,
+      "complete_skill_instructions_retained": true,
+      "edit_literals_preserved": true,
+      "final_verdicts_preserved": true,
+      "at_most_one_checkpoint_and_marker": true,
+      "retained_results_preserve_complete_tool_batches": true,
+      "fitting_middle_result_regression_fails_before_fix": true,
+      "canonical_results_and_ABI_unchanged": true,
+      "original_paid_hashes_checked": true
+    },
+    "limits": "Frozen original decisions; local cl100k ledger differs from compiler heuristic. Only fix cutoff direction for whole-tool-batch retention, preserving latest complete turn. No metadata/schema deduplication ships. Raw-null7334 estimate ->3758 old drops proof vs5537 fixed retains proof. Main costs4356 more (1452 per final3requests); null counterfactual repaired54925/13 ->55034/12 is109 more, not a cost win. Field deletion may still delay pressure and increase cumulative carrying; monotonic total-input guarantee is not claimed. No new states/layers/pinning/evidence gates, no budget change, provider runs or billing/quality claims.",
+    "evidence_root": "/Users/kq/mooncode-compaction6-20261109",
+    "causal_rounds": [
+      {
+        "round": 1,
+        "old": {
+          "input": 1333,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 1986,
+            "after_tokens": 1986,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 1333,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 1986,
+            "after_tokens": 1986,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 1333,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 1986,
+            "after_tokens": 1986,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 1333,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 1986,
+            "after_tokens": 1986,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 2,
+        "old": {
+          "input": 2098,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 2911,
+            "after_tokens": 2911,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 2098,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 2911,
+            "after_tokens": 2911,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 2098,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 2911,
+            "after_tokens": 2911,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 2098,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 2911,
+            "after_tokens": 2911,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 3,
+        "old": {
+          "input": 5277,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6090,
+            "after_tokens": 6090,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 5266,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6079,
+            "after_tokens": 6079,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 5277,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6090,
+            "after_tokens": 6090,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 5266,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6079,
+            "after_tokens": 6079,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 4,
+        "old": {
+          "input": 4048,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7952,
+            "after_tokens": 4861,
+            "compacted_messages": 6,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 4037,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7930,
+            "after_tokens": 4850,
+            "compacted_messages": 6,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 4048,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7952,
+            "after_tokens": 4861,
+            "compacted_messages": 6,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 4037,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7930,
+            "after_tokens": 4850,
+            "compacted_messages": 6,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 5,
+        "old": {
+          "input": 4407,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5220,
+            "after_tokens": 5220,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 4396,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5209,
+            "after_tokens": 5209,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 4407,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5220,
+            "after_tokens": 5220,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 4396,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5209,
+            "after_tokens": 5209,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 6,
+        "old": {
+          "input": 4949,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5762,
+            "after_tokens": 5762,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 4927,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5740,
+            "after_tokens": 5740,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 4949,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5762,
+            "after_tokens": 5762,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 4927,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5740,
+            "after_tokens": 5740,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 7,
+        "old": {
+          "input": 5203,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6016,
+            "after_tokens": 6016,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 5181,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5994,
+            "after_tokens": 5994,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 5203,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6016,
+            "after_tokens": 6016,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 5181,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5994,
+            "after_tokens": 5994,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 8,
+        "old": {
+          "input": 5507,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6320,
+            "after_tokens": 6320,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 5485,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6298,
+            "after_tokens": 6298,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 5507,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6320,
+            "after_tokens": 6320,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 5485,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6298,
+            "after_tokens": 6298,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 9,
+        "old": {
+          "input": 5869,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6682,
+            "after_tokens": 6682,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "old-null": {
+          "input": 5836,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6649,
+            "after_tokens": 6649,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 5869,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6682,
+            "after_tokens": 6682,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward-null": {
+          "input": 5836,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6649,
+            "after_tokens": 6649,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        }
+      },
+      {
+        "round": 10,
+        "old": {
+          "input": 3043,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7116,
+            "after_tokens": 3856,
+            "compacted_messages": 14,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "old-null": {
+          "input": 6259,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7072,
+            "after_tokens": 7072,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "forward": {
+          "input": 4495,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7116,
+            "after_tokens": 5308,
+            "compacted_messages": 4,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "forward-null": {
+          "input": 6259,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7072,
+            "after_tokens": 7072,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        }
+      },
+      {
+        "round": 11,
+        "old": {
+          "input": 3322,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 4135,
+            "after_tokens": 4135,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "old-null": {
+          "input": 2945,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7334,
+            "after_tokens": 3758,
+            "compacted_messages": 16,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 4774,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 5587,
+            "after_tokens": 5587,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "forward-null": {
+          "input": 4724,
+          "metrics": {
+            "applied": true,
+            "input_budget_tokens": 7104,
+            "before_tokens": 7334,
+            "after_tokens": 5537,
+            "compacted_messages": 4,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        }
+      },
+      {
+        "round": 12,
+        "old": {
+          "input": 4101,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 4914,
+            "after_tokens": 4914,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "old-null": {
+          "input": 3713,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 4526,
+            "after_tokens": 4526,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": false
+        },
+        "forward": {
+          "input": 5553,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6366,
+            "after_tokens": 6366,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        },
+        "forward-null": {
+          "input": 5492,
+          "metrics": {
+            "applied": false,
+            "input_budget_tokens": 7104,
+            "before_tokens": 6305,
+            "after_tokens": 6305,
+            "compacted_messages": 0,
+            "within_budget": true
+          },
+          "full_verdict_present": true
+        }
+      }
+    ],
+    "compiler_traces": [
+      {
+        "variant": "old",
+        "round": 4,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7952,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 2321,
+          "raw_suffix": 8,
+          "minimum_suffix": 9
+        }
+      },
+      {
+        "variant": "old",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 9,
+          "first_count": 4861
+        }
+      },
+      {
+        "variant": "old",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4861
+        }
+      },
+      {
+        "variant": "old",
+        "round": 10,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7116,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 3015,
+          "raw_suffix": 6,
+          "minimum_suffix": 17
+        }
+      },
+      {
+        "variant": "old",
+        "round": 10,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 17,
+          "first_count": 3856
+        }
+      },
+      {
+        "variant": "old",
+        "round": 10,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 17,
+          "final_count": 3856
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 4,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7930,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 2299,
+          "raw_suffix": 8,
+          "minimum_suffix": 9
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 9,
+          "first_count": 4850
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4850
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 11,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7334,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 3233,
+          "raw_suffix": 6,
+          "minimum_suffix": 19
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 11,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 19,
+          "first_count": 3758
+        }
+      },
+      {
+        "variant": "old-null",
+        "round": 11,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 19,
+          "final_count": 3758
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 4,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7952,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 2321,
+          "raw_suffix": 8,
+          "minimum_suffix": 9
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 5,
+          "first_count": 7933
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4861
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 10,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7116,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 3015,
+          "raw_suffix": 6,
+          "minimum_suffix": 17
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 10,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 4,
+          "first_count": 7083
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 10,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 4,
+          "final_count": 7083
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 11,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7362,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 3294,
+          "raw_suffix": 6,
+          "minimum_suffix": 19
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 11,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 4,
+          "first_count": 7362
+        }
+      },
+      {
+        "variant": "boundary",
+        "round": 11,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 19,
+          "final_count": 3775
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 4,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7930,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 2299,
+          "raw_suffix": 8,
+          "minimum_suffix": 9
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 5,
+          "first_count": 7911
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4850
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 11,
+        "stage": "RAW",
+        "metrics": {
+          "origin": 7334,
+          "budget": 7104,
+          "prefix": 3,
+          "protected_tokens": 2812,
+          "recent_target": 3524,
+          "recent_tokens": 3233,
+          "raw_suffix": 6,
+          "minimum_suffix": 19
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 11,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 4,
+          "first_count": 7301
+        }
+      },
+      {
+        "variant": "boundary-null",
+        "round": 11,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 19,
+          "final_count": 3758
+        }
+      },
+      {
+        "variant": "forward",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 9,
+          "first_count": 4861
+        }
+      },
+      {
+        "variant": "forward",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4861
+        }
+      },
+      {
+        "variant": "forward",
+        "round": 10,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 7,
+          "first_count": 5308
+        }
+      },
+      {
+        "variant": "forward",
+        "round": 10,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 7,
+          "final_count": 5308
+        }
+      },
+      {
+        "variant": "forward-null",
+        "round": 4,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 9,
+          "first_count": 4850
+        }
+      },
+      {
+        "variant": "forward-null",
+        "round": 4,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 9,
+          "final_count": 4850
+        }
+      },
+      {
+        "variant": "forward-null",
+        "round": 11,
+        "stage": "ALIGNED",
+        "metrics": {
+          "suffix": 7,
+          "first_count": 5537
+        }
+      },
+      {
+        "variant": "forward-null",
+        "round": 11,
+        "stage": "FINAL",
+        "metrics": {
+          "suffix": 7,
+          "final_count": 5537
+        }
+      }
+    ]
   }
 }

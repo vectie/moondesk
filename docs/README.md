@@ -116,7 +116,9 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
     and charge all proof recovery. Same-counter Pi is 47,355 (ratio 1.0382).
     Unwrapping recursively summarized checkpoints saves a further9 (49,157);
     thirteen ablations and nineteen full-cost branches reject all larger schema
-    and metadata removals. These ratios are not new billed delivery costs.
+    and metadata removals. The cutoff root-cause fix then retains fitting recent
+    exchanges: main53,513 (higher), with same-input proof and every recovery
+    cost shown. These ratios are not new billed delivery costs.
 14. [MOONCODE_DEVELOPER_TOOLS.md](MOONCODE_DEVELOPER_TOOLS.md): optional
     terminal evidence, browser preview, and explicit comparison surfaces.
 15. [MoonCode discussion archive](mooncode-discussion-2026-11-04/README.md):
