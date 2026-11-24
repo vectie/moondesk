@@ -575,7 +575,12 @@ fn render_wiki_office_document(
         ..match model.preview {
           Some(preview) =>
             match preview.renderer {
-              Markdown => render_markdown_document(preview)
+              Markdown =>
+                render_markdown_document(
+                  preview,
+                  workspace=model.selected_workspace_id,
+                  path=model.selected_path,
+                )
               Image =>
                 [img(src=desk_preview_image_source(preview), alt=preview.title)]
               Html =>

@@ -335,6 +335,13 @@ function enhance() {
     historyCursor = -1
     lastSelection = null
   }
+  const route = new URLSearchParams(window.location.search)
+  const linkedPath = route.get('activity') === 'code' ? route.get('path') : ''
+  if (linkedPath && surface.dataset.linkedSourceOpened !== linkedPath &&
+      surface.querySelector('[data-testid="source-path"]')?.value === linkedPath) {
+    surface.dataset.linkedSourceOpened = linkedPath
+    setView(surface, 'source', false)
+  }
   if (!surface.dataset.workbenchInstalled) {
     surface.dataset.workbenchInstalled = 'true'
     surface.addEventListener('keydown', event => {

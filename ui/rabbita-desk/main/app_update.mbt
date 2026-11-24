@@ -74,7 +74,13 @@ fn update(
     LoadedSpecialistCatalog(_, _) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowCollaboration(_, _) =>
       update_app_results(dispatch, msg, model)
-    LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
+    LoadedWorkspaces(_) => {
+      let (command, next) = update_app_results(dispatch, msg, model)
+      let (source_command, opened) = open_initial_code_file(
+        dispatch, model, next,
+      )
+      (@rabbita.batch([command, source_command]), opened)
+    }
     RequestEntries(_, _) => update_app_results(dispatch, msg, model)
     LoadedEntries(_, _, _, _) => update_app_results(dispatch, msg, model)
     RequestPreview(_, _) => update_app_results(dispatch, msg, model)

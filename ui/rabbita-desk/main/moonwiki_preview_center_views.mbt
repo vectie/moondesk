@@ -286,7 +286,14 @@ fn render_preview_body(
               p(class="lead", "Choose an item from the left."),
             ])
           Markdown =>
-            section(class="document-preview", render_markdown_document(preview))
+            section(
+              class="document-preview",
+              render_markdown_document(
+                preview,
+                workspace=model.selected_workspace_id,
+                path=model.selected_path,
+              ),
+            )
           Text =>
             section(class="document-preview", [
               h1(preview.title),
@@ -352,7 +359,11 @@ fn render_markdown_editor(
       ),
       section(
         class="document-preview markdown-live-preview",
-        render_markdown_document(markdown_editor_preview(model)),
+        render_markdown_document(
+          markdown_editor_preview(model),
+          workspace=model.selected_workspace_id,
+          path=model.markdown_editor_path,
+        ),
       ),
     ]),
   ])
@@ -372,6 +383,8 @@ fn markdown_editor_preview(model : Model) -> @desk.DeskPreview {
 ///|
 fn render_markdown_document(
   preview : @desk.DeskPreview,
+  workspace~ : String = "",
+  path~ : String = "",
 ) -> Array[@rabbita.Html] {
   let nodes : Array[@rabbita.Html] = []
   let saw_heading = preview.body
@@ -388,6 +401,8 @@ fn render_markdown_document(
       class="book-markdown-source",
       attrs=@html.Attrs::build()
         .data_set("testid", "mooncode-markdown-source")
+        .data_set("book-workspace", workspace)
+        .data_set("book-path", path)
         .aria_label("Document content"),
       preview.body,
     ),

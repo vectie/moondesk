@@ -1,5 +1,6 @@
 let installed = false
 const renderedSources = new WeakMap()
+const previewTimers = new WeakMap()
 
 // Rabbita owns the light DOM. Rendering into a shadow root keeps Markdown
 // enhancement from removing virtual-DOM children during the next chat update.
@@ -14,6 +15,7 @@ ul, ol { padding-left: 24px; } li + li { margin-top: 4px; }
 blockquote { padding-left: 12px; border-left: 3px solid #a7b1c2; }
 a { color: #2563eb; overflow-wrap: anywhere; }
 a:focus-visible, button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+img { max-width: 100%; height: auto; }
 .mooncode-inline-code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: .9em; }
 .mooncode-code-block { max-width: 100%; overflow: auto; border-radius: 8px; background: #101827; color: #f8fafc; }
 .mooncode-code-toolbar { display: flex; justify-content: space-between; padding: 6px 10px; }
@@ -23,8 +25,34 @@ table { border-collapse: collapse; display: block; overflow-x: auto; }
 th, td { border: 1px solid #a7b1c2; padding: 4px 8px; }
 `
 
-function safeLink(value) {
+// Resolve authored references against the document, never the server URL.
+// The workspace file API remains responsible for realpath confinement.
+export function bookReference(value, context) {
+  if (!context?.workspace || !context?.path) return ''
   const href = String(value || '').trim()
+  if (!href || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('/') || href.startsWith('#') || href.includes('\\')) return ''
+  const [filename, fragment = ''] = href.split('#', 2)
+  let decoded
+  try { decoded = decodeURIComponent(filename) } catch { return '' }
+  if (decoded.includes('?') || decoded.includes('\0') || decoded.includes('\\')) return ''
+  const parts = context.path.split('/').slice(0, -1)
+  for (const part of decoded.split('/')) {
+    if (!part || part === '.') continue
+    if (part === '..') { if (!parts.length) return ''; parts.pop() }
+    else parts.push(part)
+  }
+  const path = parts.join('/')
+  const query = new URLSearchParams({ workspace: context.workspace, path })
+  if (/\.(?:png|jpe?g|gif|webp|svg)$/i.test(path)) return `/api/workspaces/${encodeURIComponent(context.workspace)}/raw?path=${encodeURIComponent(path)}`
+  query.set('activity', /\.(?:pptd|page|json|ya?ml|txt)$/i.test(path) ? 'code' : 'wiki')
+  return `/?${query}${fragment ? '#' + encodeURIComponent(fragment) : ''}`
+}
+
+function safeLink(value, context) {
+  const href = String(value || '').trim()
+  const reference = bookReference(href, context)
+  if (reference) return reference
+  if (context?.workspace && !/^[a-z][a-z0-9+.-]*:/i.test(href) && !href.startsWith('/') && !href.startsWith('#')) return ''
   if (href.startsWith('/') || href.startsWith('#') || href.startsWith('./') || href.startsWith('../')) return href
   try {
     const url = new URL(href)
@@ -34,9 +62,9 @@ function safeLink(value) {
   }
 }
 
-function appendInline(parent, source) {
+function appendInline(parent, source, context) {
   let text = String(source || '')
-  const token = /(`[^`\n]+`|\*\*[^*\n]+\*\*|~~[^~\n]+~~|\[[^\]\n]+\]\([^\s)]+\)|https?:\/\/[^\s<]+)/
+  const token = /(`[^`\n]+`|\*\*[^*\n]+\*\*|~~[^~\n]+~~|!?\[[^\]\n]*\]\([^\s)]+\)|https?:\/\/[^\s<]+)/
   while (text) {
     const match = token.exec(text)
     if (!match) {
@@ -52,21 +80,31 @@ function appendInline(parent, source) {
       parent.append(code)
     } else if (value.startsWith('**')) {
       const strong = document.createElement('strong')
-      appendInline(strong, value.slice(2, -2))
+      appendInline(strong, value.slice(2, -2), context)
       parent.append(strong)
     } else if (value.startsWith('~~')) {
       const deleted = document.createElement('del')
-      appendInline(deleted, value.slice(2, -2))
+      appendInline(deleted, value.slice(2, -2), context)
       parent.append(deleted)
+    } else if (value.startsWith('![')) {
+      const parts = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(value)
+      const href = bookReference(parts?.[2], context)
+      if (href.startsWith('/api/workspaces/')) {
+        const image = document.createElement('img')
+        image.src = href
+        image.alt = parts[1]
+        image.loading = 'lazy'
+        parent.append(image)
+      } else parent.append(document.createTextNode(parts?.[1] || value))
     } else if (value.startsWith('[')) {
-      const parts = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(value)
-      const href = safeLink(parts?.[2])
+      const parts = /^\[([^\]]*)\]\(([^)]+)\)$/.exec(value)
+      const href = safeLink(parts?.[2], context)
       if (href) {
         const link = document.createElement('a')
         link.href = href
-        link.target = '_blank'
+        link.target = bookReference(parts?.[2], context) ? '_self' : '_blank'
         link.rel = 'noopener noreferrer'
-        appendInline(link, parts[1])
+        appendInline(link, parts[1], context)
         parent.append(link)
       } else {
         parent.append(document.createTextNode(parts?.[1] || value))
@@ -137,11 +175,11 @@ function isTableDivider(line) {
   return cells.length > 0 && cells.every(cell => /^\s*:?-{3,}:?\s*$/.test(cell))
 }
 
-function tableRow(line, cellTag) {
+function tableRow(line, cellTag, context) {
   const row = document.createElement('tr')
   for (const value of line.trim().replace(/^\||\|$/g, '').split('|')) {
     const cell = document.createElement(cellTag)
-    appendInline(cell, value.trim())
+    appendInline(cell, value.trim(), context)
     row.append(cell)
   }
   return row
@@ -158,7 +196,7 @@ function startsBlock(lines, index) {
     (index + 1 < lines.length && line.includes('|') && isTableDivider(lines[index + 1]))
 }
 
-function renderBlocks(source) {
+function renderBlocks(source, context) {
   const fragment = document.createDocumentFragment()
   const lines = String(source || '').replace(/\r\n?/g, '\n').split('\n')
   let index = 0
@@ -183,7 +221,7 @@ function renderBlocks(source) {
     const heading = /^(#{1,6})\s+(.+)$/.exec(line)
     if (heading) {
       const element = document.createElement(`h${heading[1].length}`)
-      appendInline(element, heading[2])
+      appendInline(element, heading[2], context)
       fragment.append(element)
       index += 1
       continue
@@ -197,10 +235,10 @@ function renderBlocks(source) {
       const table = document.createElement('table')
       const head = document.createElement('thead')
       const body = document.createElement('tbody')
-      head.append(tableRow(line, 'th'))
+      head.append(tableRow(line, 'th', context))
       index += 2
       while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
-        body.append(tableRow(lines[index], 'td'))
+        body.append(tableRow(lines[index], 'td', context))
         index += 1
       }
       table.append(head, body)
@@ -214,7 +252,7 @@ function renderBlocks(source) {
         index += 1
       }
       const quote = document.createElement('blockquote')
-      quote.append(renderBlocks(quoted.join('\n')))
+      quote.append(renderBlocks(quoted.join('\n'), context))
       fragment.append(quote)
       continue
     }
@@ -232,9 +270,9 @@ function renderBlocks(source) {
           marker.className = 'mooncode-task-marker'
           marker.textContent = task[1].toLowerCase() === 'x' ? '[x] ' : task[1] === '-' ? '[-] ' : '[ ] '
           row.append(marker)
-          appendInline(row, item[2].slice(task[0].length))
+          appendInline(row, item[2].slice(task[0].length), context)
         } else {
-          appendInline(row, item[2])
+          appendInline(row, item[2], context)
         }
         element.append(row)
         index += 1
@@ -249,21 +287,34 @@ function renderBlocks(source) {
       index += 1
     }
     const element = document.createElement('p')
-    appendInline(element, paragraph.join(' '))
+    appendInline(element, paragraph.join(' '), context)
     fragment.append(element)
   }
   return fragment
 }
 
-function renderSource(source) {
+function renderSource(source, immediate = false) {
   if (!(source instanceof HTMLElement)) return
+  // A long dissertation must not rebuild its full preview on every keystroke.
+  // Only the live editor preview waits for a brief typing pause; file views
+  // and streamed answers keep their existing immediate behavior.
+  if (!immediate && source.closest('.markdown-live-preview')) {
+    clearTimeout(previewTimers.get(source))
+    previewTimers.set(source, setTimeout(() => {
+      previewTimers.delete(source)
+      if (source.isConnected) renderSource(source, true)
+    }, 150))
+    return
+  }
   const content = source.textContent || ''
-  if (renderedSources.get(source) === content) return
+  const context = { workspace: source.dataset.bookWorkspace, path: source.dataset.bookPath }
+  const identity = JSON.stringify([content, context])
+  if (renderedSources.get(source) === identity) return
   const root = source.shadowRoot || source.attachShadow({ mode: 'open' })
   const style = document.createElement('style')
   style.textContent = markdownStyle
-  root.replaceChildren(style, renderBlocks(content))
-  renderedSources.set(source, content)
+  root.replaceChildren(style, renderBlocks(content, context))
+  renderedSources.set(source, identity)
 }
 
 function renderPending(root = document) {
@@ -287,6 +338,8 @@ export function installMoonCodeMarkdownRuntime() {
   }).observe(document.getElementById('app') || document.body, {
     childList: true,
     characterData: true,
+    attributes: true,
+    attributeFilter: ['data-book-workspace', 'data-book-path'],
     subtree: true,
   })
 }
