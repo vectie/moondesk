@@ -485,7 +485,54 @@ fn render_wiki_document_viewer(
           },
         ]),
         div(class="wiki-viewer-actions", [
-          if markdown_editor_active(model) {
+          if model.selected_path.to_lower().has_suffix(".docx") &&
+            model.office_editor.document_editing &&
+            model.office_editor.path == model.selected_path {
+            div(class="wiki-document-edit-actions", [
+              button(
+                class="primary-button",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "wiki-docx-save")
+                  .data_set(
+                    "i18n",
+                    if model.office_editor.saving {
+                      "common.saving_ellipsis"
+                    } else {
+                      "document.save"
+                    },
+                  ),
+                disabled=model.office_editor.saving ||
+                  !office_editor_dirty(model.office_editor),
+                flow_system_text(
+                  if model.office_editor.saving {
+                    "Saving…"
+                  } else {
+                    "Save document"
+                  },
+                ),
+              ),
+              button(
+                class="secondary-button",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "wiki-docx-cancel")
+                  .data_set("i18n", "document.cancel_edit"),
+                disabled=model.office_editor.saving,
+                on_click=dispatch(OfficeEditor(OfficeCancelDocumentEdit)),
+                flow_system_text("Cancel editing"),
+              ),
+            ])
+          } else if model.selected_path.to_lower().has_suffix(".docx") {
+            button(
+              class="secondary-button",
+              attrs=@html.Attrs::build().data_set("testid", "wiki-edit-office"),
+              disabled=model.office_editor.loading ||
+                model.office_editor.saving ||
+                model.office_editor.document is None ||
+                model.office_editor.path != model.selected_path,
+              on_click=dispatch(OfficeEditor(OfficeStartDocumentEdit)),
+              flow_system_text("Edit document"),
+            )
+          } else if markdown_editor_active(model) {
             div(class="wiki-document-edit-actions", [
               button(
                 class="moon-icon-button",
@@ -539,6 +586,8 @@ fn render_wiki_document_viewer(
               class="secondary-button moon-icon-button",
               attrs=@html.Attrs::build().aria_label("Choose document"),
               title="Choose document",
+              disabled=model.office_editor.document_editing ||
+                model.office_editor.saving,
               on_click=dispatch(
                 workspace_feature_msg("open-search", first="document"),
               ),
@@ -676,6 +725,9 @@ fn render_wiki_office_document(
   let state = model.office_editor
   match state.document {
     Some(document) if state.path == model.selected_path => {
+      if document.kind == OfficeDocx {
+        return render_wiki_docx(dispatch, state)
+      }
       let selected = if state.selected >= 0 &&
         state.selected < state.draft_items.length() {
         state.selected

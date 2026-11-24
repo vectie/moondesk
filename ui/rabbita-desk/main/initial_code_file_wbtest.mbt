@@ -49,7 +49,7 @@ test "initial Office file opens its real structured editor, never an empty text 
   )
   assert_eq(opened.office_editor.path, "wiki/proposal.docx")
   assert_true(opened.office_editor.loading)
-  assert_true(opened.source_pane.open)
+  assert_true(opened.workspace_mode is MoonWiki)
   assert_true(opened.source_pane.content is Empty)
   let markup = render_test_dom(
     @rabbita.static_cell(

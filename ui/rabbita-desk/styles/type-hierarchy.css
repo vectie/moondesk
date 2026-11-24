@@ -654,3 +654,6 @@ button, summary { font-weight: 400; }
   .workspace-room-new-channel input { min-width: 0; flex: 1 1 160px; }
   .mooncode-compare-form > button[type="submit"] { width: auto; justify-self: end; }
 }
+.wiki-docx-surface { flex: 1; min-height: 0; overflow: auto; background: var(--bg-raised, #fff); }
+.wiki-docx-error { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.wiki-document-edit-actions { display: flex; align-items: center; gap: 8px; }

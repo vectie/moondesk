@@ -202,6 +202,12 @@ fn apply_workspace_office_edit(
 ) -> Result[OfficeDocumentModel, String] {
   let operation = json_string(payload, "operation", default="")
   match operation {
+    "docx-text" => {
+      guard payload is { "edits": Array(edits), .. } else {
+        return Err("DOCX text edits are missing")
+      }
+      office_document_set_docx_texts(document, edits)
+    }
     "docx-paragraph" => {
       let text = json_string(payload, "text", default="")
       let bold = @mooncore.json_bool(payload, "bold", default=false)

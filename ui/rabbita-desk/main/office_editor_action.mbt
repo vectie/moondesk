@@ -23,8 +23,8 @@ fn office_editor_action(
       } else {
         (@rabbita.none, next)
       }
-    OfficeSave | OfficeReplaceConflict =>
-      if office_editor.saving {
+    OfficeSave | OfficeReplaceConflict | OfficeCommitDocument(_) =>
+      if office_editor.saving && !model.office_editor.saving {
         (
           save_office_editor_cmd(
             dispatch,
@@ -128,6 +128,24 @@ fn office_editor_save_body(state : OfficeEditorState) -> Json {
   }
   let item = state.draft_items[state.selected]
   match state.document {
+    Some(document) if document.kind == OfficeDocx && state.document_editing =>
+      {
+        "path": state.path,
+        "baseline": state.saved_baseline,
+        "operation": "docx-text",
+        "edits": state.draft_items
+        .mapi((index, item) => (index, item))
+        .filter(entry => entry.1.text != document.items[entry.0].text)
+        .map(entry => {
+          let item = entry.1
+          (
+            {
+              "paragraph": item.section_index,
+              "run": item.item_index,
+              "text": item.text,
+            } : Json)
+        }),
+      }
     Some(document) =>
       match document.kind {
         OfficeDocx =>

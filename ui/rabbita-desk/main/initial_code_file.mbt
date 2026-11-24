@@ -6,6 +6,20 @@ fn open_initial_code_file(
   previous : Model,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  if previous.loading &&
+    !model.loading &&
+    previous.selected_path.to_lower().has_suffix(".docx") &&
+    has_workspace(model.workspaces, model.selected_workspace_id) &&
+    !work_handoff_active(model) &&
+    (model.workspace_mode == MoonWiki || model.workspace_mode == MoonCode) {
+    let rebound = sync_workspace_editor_context(model)
+    let (command, office_editor) = open_office_path_transition(
+      dispatch,
+      rebound.office_editor,
+      previous.selected_path,
+    )
+    return (command, { ..rebound, workspace_mode: MoonWiki, office_editor, })
+  }
   if !previous.loading ||
     model.loading ||
     model.workspace_mode != MoonCode ||

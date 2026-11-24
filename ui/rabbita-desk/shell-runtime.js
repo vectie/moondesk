@@ -562,6 +562,18 @@ new MutationObserver(loadMoonCodeMarkdownRuntime).observe(
 )
 loadMoonCodeMarkdownRuntime()
 
+let wikiDocxRuntimeLoading = false
+function loadWikiDocxRuntime() {
+  if (wikiDocxRuntimeLoading || !document.querySelector('[data-testid="wiki-docx-document"]')) return
+  wikiDocxRuntimeLoading = true
+  void import('./wiki-docx-runtime.js').then(module => module.installWikiDocxRuntime()).catch(error => {
+    wikiDocxRuntimeLoading = false
+    console.error('Document editor failed to load', error)
+  })
+}
+new MutationObserver(loadWikiDocxRuntime).observe(document.getElementById('app') || document.body, {childList:true,subtree:true})
+loadWikiDocxRuntime()
+
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''
 let mooncodeTranscriptScope = ''

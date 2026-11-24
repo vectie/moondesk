@@ -264,7 +264,7 @@ fn office_int_attribute(xml : String, name : String) -> Int32? {
 fn parse_docx(xml : String) -> Array[DocxParagraph] {
   office_tag_contents(xml, "w:p").map(paragraph => {
     let runs = office_tag_contents(paragraph, "w:r").map(run => {
-      text: office_first_tag_text(run, "w:t").unwrap_or(""),
+      text: office_docx_run_text(run),
       bold: run.contains("<w:b") || run.contains("<b"),
       italic: run.contains("<w:i") || run.contains("<i"),
       underline: run.contains("<w:u") || run.contains("<u"),

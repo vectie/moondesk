@@ -52,6 +52,8 @@ struct OfficeEditorState {
   status : String
   saved_baseline : String
   conflict_baseline : String?
+  document_editing : Bool
+  document_pending : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -66,6 +68,11 @@ enum OfficeEditorMsg {
   )
   OfficeSelect(Int32)
   OfficeEditText(String)
+  OfficeStartDocumentEdit
+  OfficeCancelDocumentEdit
+  OfficeEditParagraph(Int32, String)
+  OfficeDocumentPending(Bool)
+  OfficeCommitDocument(Array[(Int32, String)])
   OfficeEditFormula(String)
   OfficeToggleBold
   OfficeToggleItalic
@@ -101,11 +108,16 @@ fn init_office_editor(workspace_id : String) -> OfficeEditorState {
     status: "",
     saved_baseline: "",
     conflict_baseline: None,
+    document_editing: false,
+    document_pending: false,
   }
 }
 
 ///|
 fn office_editor_dirty(state : OfficeEditorState) -> Bool {
+  if state.document_pending {
+    return true
+  }
   match state.document {
     Some(document) => state.draft_items != document.items
     None => false
@@ -269,8 +281,66 @@ fn update_office_editor(
       }
     OfficeEditText(text) =>
       office_editor_update_selected(state, item => { ..item, text, })
+    OfficeStartDocumentEdit =>
+      if state.loading || state.saving {
+        state
+      } else {
+        { ..state, document_editing: true, }
+      }
+    OfficeCancelDocumentEdit =>
+      if state.saving {
+        state
+      } else {
+        {
+          ..update_office_editor(state, OfficeDiscard),
+          document_editing: false,
+          status: "Opened supported Office subset",
+        }
+      }
+    OfficeEditParagraph(paragraph, text) =>
+      if state.document_editing && !state.loading && !state.saving {
+        office_docx_edit_paragraph(state, paragraph, text)
+      } else {
+        state
+      }
     OfficeEditFormula(formula) =>
       office_editor_update_selected(state, item => { ..item, formula, })
+    OfficeDocumentPending(pending) =>
+      if state.document_editing && !state.saving {
+        {
+          ..state,
+          document_pending: pending,
+          draft_items: if !pending {
+            match state.document {
+              Some(document) => document.items
+              None => state.draft_items
+            }
+          } else {
+            state.draft_items
+          },
+          status: if pending {
+            "Unsaved changes"
+          } else {
+            "Opened supported Office subset"
+          },
+        }
+      } else {
+        state
+      }
+    OfficeCommitDocument(edits) => {
+      if !state.document_editing || state.saving || state.loading {
+        return state
+      }
+      let original = match state.document {
+        Some(document) => document.items
+        None => return state
+      }
+      let draft = edits.fold(
+        init={ ..state, draft_items: original, document_pending: false, },
+        (state, edit) => office_docx_edit_paragraph(state, edit.0, edit.1),
+      )
+      update_office_editor(draft, OfficeSave)
+    }
     OfficeToggleBold =>
       office_editor_update_selected(state, item => { ..item, bold: !item.bold, })
     OfficeToggleItalic =>
@@ -297,13 +367,14 @@ fn update_office_editor(
           {
             ..state,
             draft_items: document.items,
+            document_pending: false,
             conflict_baseline: None,
             status: "Discarded unsaved Office changes",
           }
         _ => state
       }
     OfficeSave =>
-      if office_editor_selected_dirty(state) && !state.saving && !state.loading {
+      if office_editor_dirty(state) && !state.saving && !state.loading {
         { ..state, saving: true, status: "Saving Office bytes...", }
       } else {
         state
@@ -327,6 +398,8 @@ fn update_office_editor(
               },
               saved_baseline: document.baseline,
               saving: false,
+              document_editing: false,
+              document_pending: false,
               status: "Saved Office bytes; close and reopen are available",
               conflict_baseline: None,
             }

@@ -4012,6 +4012,7 @@ function renderDocumentMap(state) {
   const viewer = document.querySelector('.wiki-document-viewer')
   if (!(viewer instanceof HTMLElement)) return
   viewer.querySelector(':scope > .document-review-map')?.remove()
+  if (viewer.querySelector('[data-testid="wiki-docx-document"]')) return
   const markers = reviewMarkers(state)
   if (!markers.length || !state.selected_document) return
   const open = markers.filter(marker => !marker.reviewed)

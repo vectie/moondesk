@@ -7,6 +7,39 @@ fn update_navigation_actions(
   if model.git_review_saving {
     return (@rabbita.none, model)
   }
+  if model.office_editor.document_editing &&
+    office_editor_dirty(model.office_editor) {
+    let leaves_document = match msg {
+      SelectWorkspaceMode(mode) => mode != model.workspace_mode
+      SelectPath(path) | OpenWorkFile(path) | OpenQuickPath(path) =>
+        path != model.selected_path
+      SelectWorkspace(id) => id != model.selected_workspace_id
+      SelectActivity(activity) => activity != model.activity
+      SelectSearchHit(id, path) =>
+        id != model.selected_workspace_id || path != model.selected_path
+      OpenDirectory(_)
+      | OpenMoonBook(_, _)
+      | ReturnToWork
+      | NavigateDeskBack
+      | NavigateDeskForward
+      | OpenDeskLocation => true
+      _ => false
+    }
+    if leaves_document {
+      return (
+        @rabbita.none,
+        {
+          ..model,
+          office_editor: {
+            ..model.office_editor,
+            status: flow_system_text(
+              "Save or cancel your document edits before leaving.",
+            ),
+          },
+        },
+      )
+    }
+  }
   match msg {
     SelectWorkspaceMode(mode) =>
       if markdown_navigation_needs_confirmation(

@@ -3,6 +3,43 @@
 Read this with `AGENTS.md` before starting work. Record concrete pitfalls and
 their resolution here; keep task-specific evidence in `docs/`.
 
+## Wiki Word document editing, 2026-11-25
+
+DOCX belongs in Wiki, including old Code deep links. The normal surface is the
+rendered Word document with Edit / Save / Cancel and an outline derived from
+Word styles. Do not route dissertation users to the structured Office inspector
+or expose paragraph/run coordinates. XLSX/PPTX developer tools are unchanged.
+
+The lazy docx-preview/JSZip route renders figures, tables, equations and notes;
+paragraph edits reuse the native Office draft and baseline-confined atomic save.
+Only changed text nodes are patched in the original XML. The display projection
+materializes cached field results because the renderer otherwise hides runs
+containing field delimiters. This projection is NEVER the saved DOCX. Generated
+note counters are protected and excluded from prose edits; cached text remains.
+Keep DOM ownership in the shadow root. Typing remains local; notify the typed
+model only on dirty/clean transitions, and commit all changed paragraphs once
+on Save. Serializing the complete thesis on each input was visibly slow and
+could interrupt typing. Keep local paragraphs through save failures (caret,
+IME, undo and references). Unsupported equation blocks/notes are read-only.
+
+Verified on .195 with disposable proposal and complete English dissertation
+copies: multi-paragraph save/reopen, Unicode/line breaks, reference-bearing prose,
+96 sections, 15 tables and 9 figures. All 26 ZIP members were compared; only
+word/document.xml changed, with other styles, notes, figures and references intact.
+Private fixtures/logs are under /tmp/moondesk-wiki-docx.cHEXdL. This is not full
+Word authoring, tracked-change acceptance, or an exact pagination qualification.
+
+Deployment pitfall: MACOSX_DEPLOYMENT_TARGET=15.0 on the main link does not
+invalidate already-built C libraries. A cached macOS 26 async dependency imported
+posix_spawn_file_actions_addchdir and crashed on macOS 15 despite a 15.0 Mach-O
+header. The broken install was rolled back. Rebuild in a fresh --target-dir with
+the deployment target set for ALL dependencies; verify the _np symbol and run
+the executable on the destination Mac BEFORE installing. The isolated native-15
+binary passes doctor and the real Word-save service on .195. Keep rollback assets
+and sidecar outside the app; install assets first, index last, then strictly sign.
+Existing unrelated Code-layout/question UI work is preserved, not part of this
+source change. The user confirmed that the corrected native app opens again.
+
 ## Document navigation and Word editing 2026-11-25
 
 Book Markdown has a sticky heading picker from the rendered document, not a
