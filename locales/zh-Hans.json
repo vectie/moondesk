@@ -1937,5 +1937,9 @@
   "work.edit_deliverable": "编辑交付稿",
   "work.delivery_edit_loop": "在这里编辑并保存修订，返回 MoonProj 选择交付版本。",
   "work.return_delivery": "返回 MoonProj 交付任务",
-  "work.refresh_work": "刷新工作记录"
+  "work.refresh_work": "刷新工作记录",
+  "document.sections": "章节",
+  "document.sections_nav": "文档章节",
+  "document.jump_section": "跳转到章节",
+  "document.edit_office": "编辑支持的Office文本"
 }

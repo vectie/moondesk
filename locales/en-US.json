@@ -1937,5 +1937,9 @@
   "work.edit_deliverable": "Edit deliverable",
   "work.delivery_edit_loop": "Edit here, save your revision, then return to MoonProj to choose the delivery version.",
   "work.return_delivery": "Return to MoonProj",
-  "work.refresh_work": "Refresh work"
+  "work.refresh_work": "Refresh work",
+  "document.sections": "Sections",
+  "document.sections_nav": "Document sections",
+  "document.jump_section": "Jump to section",
+  "document.edit_office": "Edit supported Office text"
 }

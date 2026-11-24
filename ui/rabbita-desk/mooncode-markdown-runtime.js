@@ -1,6 +1,9 @@
+import { uiText } from './ui-locale.js'
+
 let installed = false
 const renderedSources = new WeakMap()
 const previewTimers = new WeakMap()
+const outlines = new WeakMap()
 
 // Rabbita owns the light DOM. Rendering into a shadow root keeps Markdown
 // enhancement from removing virtual-DOM children during the next chat update.
@@ -10,6 +13,11 @@ const markdownStyle = `
 :host > :last-child { margin-bottom: 0; }
 p, ul, ol, blockquote, table { margin: 0 0 12px; }
 h1, h2, h3, h4, h5, h6 { margin: 16px 0 8px; line-height: 1.3; }
+h1, h2, h3, h4, h5, h6 { scroll-margin-block-start: 64px; }
+.document-sections { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 8px 0; margin-bottom: 12px; background: var(--bg-raised, #fff); color: var(--ink, #1f2937); font: var(--text-control, 13px)/1.4 var(--font-ui, system-ui); }
+.document-sections select { min-width: 0; flex: 1; max-width: 100%; height: var(--control-height, 32px); border: 1px solid var(--line, #a7b1c2); border-radius: var(--radius-control, 6px); background: inherit; color: inherit; font: inherit; padding-inline: 8px; }
+.document-sections select:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { :host { scroll-behavior: auto; } }
 h1 { font-size: 1.4em; } h2 { font-size: 1.25em; }
 ul, ol { padding-left: 24px; } li + li { margin-top: 4px; }
 blockquote { padding-left: 12px; border-left: 3px solid #a7b1c2; }
@@ -62,6 +70,12 @@ function safeLink(value, context) {
   }
 }
 
+function localBookRoute(href, context) {
+  if (!href.startsWith('/?') || !context?.workspace) return false
+  const query = new URL(href, 'http://book.local').searchParams
+  return query.get('workspace') === context.workspace && ['wiki', 'code'].includes(query.get('activity')) && !!query.get('path')
+}
+
 function appendInline(parent, source, context) {
   let text = String(source || '')
   const token = /(`[^`\n]+`|\*\*[^*\n]+\*\*|~~[^~\n]+~~|!?\[[^\]\n]*\]\([^\s)]+\)|https?:\/\/[^\s<]+)/
@@ -102,7 +116,7 @@ function appendInline(parent, source, context) {
       if (href) {
         const link = document.createElement('a')
         link.href = href
-        link.target = bookReference(parts?.[2], context) ? '_self' : '_blank'
+        link.target = href.startsWith('#') || bookReference(parts?.[2], context) || localBookRoute(href, context) ? '_self' : '_blank'
         link.rel = 'noopener noreferrer'
         appendInline(link, parts[1], context)
         parent.append(link)
@@ -221,6 +235,7 @@ function renderBlocks(source, context) {
     const heading = /^(#{1,6})\s+(.+)$/.exec(line)
     if (heading) {
       const element = document.createElement(`h${heading[1].length}`)
+      element.dataset.sourceLine = String(index)
       appendInline(element, heading[2], context)
       fragment.append(element)
       index += 1
@@ -293,6 +308,110 @@ function renderBlocks(source, context) {
   return fragment
 }
 
+// Heading identities belong to this rendered document, not to another parser
+// or persisted outline. Duplicate titles remain individually navigable.
+function headingIDs(headings) {
+  const used = new Set()
+  for (const heading of headings) {
+    const stem = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}_-]/gu, '') || 'section'
+    let id = stem, suffix = 1
+    while (used.has(id)) id = `${stem}-${++suffix}`
+    used.add(id); heading.id = id; heading.tabIndex = -1
+  }
+}
+
+export function markdownLineOffset(text, line) {
+  let offset = 0
+  for (let index = 0; index < line; index++) {
+    const next = text.indexOf('\n', offset)
+    if (next < 0) return text.length
+    offset = next + 1
+  }
+  return offset
+}
+
+function revealEditorHeading(editor, line) {
+  const start = markdownLineOffset(editor.value, line)
+  const end = editor.value.indexOf('\n', start)
+  editor.focus({ preventScroll: true })
+  editor.setSelectionRange(start, end < 0 ? editor.value.length : end)
+  // Textarea caret APIs don't consistently reveal a wrapped line in WebKit.
+  // Measure only on navigation, never on each keystroke or scroll event.
+  const mirror = document.createElement('div'), marker = document.createElement('span')
+  const computed = editor.ownerDocument.defaultView.getComputedStyle(editor)
+  for (const property of ['font', 'lineHeight', 'letterSpacing', 'padding', 'boxSizing', 'tabSize']) mirror.style[property] = computed[property]
+  mirror.style.cssText += `;position:fixed;visibility:hidden;pointer-events:none;white-space:pre-wrap;overflow-wrap:break-word;width:${editor.clientWidth}px;`
+  mirror.append(document.createTextNode(editor.value.slice(0, start)), marker)
+  marker.textContent = '\u200b'
+  document.body.append(mirror)
+  editor.scrollTop = Math.max(0, marker.offsetTop - mirror.offsetTop - editor.clientHeight / 3)
+  mirror.remove()
+}
+
+function navigateHeading(source, state, heading) {
+  state.select.value = heading.id
+  const editor = source.closest('.markdown-edit-surface')?.querySelector('textarea.markdown-editor')
+  if (editor) revealEditorHeading(editor, Number(heading.dataset.sourceLine))
+  const reduced = source.ownerDocument.defaultView.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  // Animating through a whole dissertation triggers lazy images along the
+  // route and shifts the destination. Long chapter jumps must land directly.
+  const distance = Math.abs(heading.getBoundingClientRect().top)
+  const viewport = source.ownerDocument.defaultView.innerHeight || 800
+  heading.scrollIntoView?.({ block: 'start', behavior: reduced || distance > viewport * 2 ? 'auto' : 'smooth' })
+  if (!editor) heading.focus({ preventScroll: true })
+}
+
+function installDocumentOutline(source, root) {
+  const headings = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter(heading => !heading.closest('blockquote'))
+  headingIDs(headings)
+  const previous = outlines.get(source)
+  if (previous?.onClick) root.removeEventListener('click', previous.onClick)
+  outlines.delete(source)
+  // Conversations share the renderer, but do not need a document toolbar.
+  if (!source.classList.contains('book-markdown-source') || headings.length < 2) return
+  const nav = document.createElement('nav'), label = document.createElement('label'), select = document.createElement('select')
+  nav.className = 'document-sections'; nav.setAttribute('aria-label', uiText('Document sections'))
+  label.textContent = uiText('Sections'); select.setAttribute('aria-label', uiText('Jump to section'))
+  for (const heading of headings) {
+    const option = document.createElement('option')
+    option.value = heading.id
+    option.textContent = '\u2002'.repeat(Number(heading.tagName[1]) - 1) + heading.textContent
+    select.append(option)
+  }
+  label.append(select); nav.append(label)
+  // One native select remains reachable while reading or editing a long file.
+  label.style.cssText = 'display:flex;align-items:center;gap:8px;width:100%;min-width:0'
+  const state = { headings, nav, select }
+  if (headings.some(heading => heading.id === previous?.select.value)) select.value = previous.select.value
+  select.addEventListener('change', () => {
+    const heading = headings.find(item => item.id === select.value)
+    if (heading) navigateHeading(source, state, heading)
+  })
+  root.prepend(nav); outlines.set(source, state)
+  state.onClick = event => {
+    const anchor = event.target.closest?.('a[href^="#"]')
+    if (!anchor) return
+    let id
+    try { id = decodeURIComponent(anchor.getAttribute('href').slice(1)) } catch { return }
+    const heading = headings.find(item => item.id === id)
+    if (heading) { event.preventDefault(); navigateHeading(source, state, heading) }
+  }
+  root.addEventListener('click', state.onClick)
+}
+
+function syncActiveSection(source) {
+  const state = outlines.get(source)
+  if (!state || !source.getClientRects().length) return
+  const top = state.nav.getBoundingClientRect().bottom + 12
+  let low = 0, high = state.headings.length
+  while (low < high) {
+    const middle = (low + high) >>> 1
+    if (state.headings[middle].getBoundingClientRect().top <= top) low = middle + 1
+    else high = middle
+  }
+  state.select.value = state.headings[Math.max(0, low - 1)].id
+}
+
 function renderSource(source, immediate = false) {
   if (!(source instanceof HTMLElement)) return
   // A long dissertation must not rebuild its full preview on every keystroke.
@@ -314,6 +433,7 @@ function renderSource(source, immediate = false) {
   const style = document.createElement('style')
   style.textContent = markdownStyle
   root.replaceChildren(style, renderBlocks(content, context))
+  installDocumentOutline(source, root)
   renderedSources.set(source, identity)
 }
 
@@ -326,6 +446,16 @@ export function installMoonCodeMarkdownRuntime() {
   if (installed) return
   installed = true
   renderPending()
+  let scrollFrame = false
+  document.addEventListener('scroll', event => {
+    if (event.target?.matches?.('textarea') || scrollFrame) return
+    scrollFrame = true
+    const schedule = globalThis.requestAnimationFrame || (callback => setTimeout(callback, 16))
+    schedule(() => {
+      scrollFrame = false
+      for (const source of document.querySelectorAll('.book-markdown-source')) syncActiveSection(source)
+    })
+  }, { capture: true, passive: true })
   new MutationObserver(records => {
     for (const record of records) {
       const target = record.target instanceof Element ? record.target : record.target.parentElement

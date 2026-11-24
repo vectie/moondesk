@@ -1112,6 +1112,10 @@
 
 .office-editor-nav {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  max-height: min(28vh, 240px);
+  overflow: auto;
+  align-content: start;
+  overscroll-behavior: contain;
 }
 
 .office-nav-item {

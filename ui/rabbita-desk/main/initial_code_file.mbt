@@ -16,9 +16,24 @@ fn open_initial_code_file(
     model.source_pane.saving {
     return (@rabbita.none, model)
   }
-  source_pane_action(
-    dispatch,
-    RequestSource(previous.selected_path),
-    sync_workspace_editor_context(model),
-  )
+  let model = sync_workspace_editor_context(model)
+  if office_editor_path_supported(previous.selected_path) {
+    if office_editor_dirty(model.office_editor) || model.office_editor.saving {
+      return (@rabbita.none, model)
+    }
+    let (command, office_editor) = open_office_path_transition(
+      dispatch,
+      model.office_editor,
+      previous.selected_path,
+    )
+    return (
+      command,
+      {
+        ..model,
+        office_editor,
+        source_pane: { ..model.source_pane, open: true, },
+      },
+    )
+  }
+  source_pane_action(dispatch, RequestSource(previous.selected_path), model)
 }

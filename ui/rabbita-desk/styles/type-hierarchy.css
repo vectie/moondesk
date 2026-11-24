@@ -147,7 +147,10 @@ button, summary { font-weight: 400; }
 .wiki-chat-background-summary { font-size: var(--text-meta); }
 .wiki-chat-background-summary strong { font-weight: 400; }
 .wiki-chat-compose, .wiki-chat-composer { box-shadow: none; }
-.wiki-document-viewer .markdown-edit-surface { display: flex; flex-direction: column; min-height: 100%; gap: 0; }
+.wiki-document-viewer .markdown-edit-surface { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; gap: 0; }
+.wiki-document-viewer .markdown-editor-grid { grid-template-rows: minmax(0,1fr); overflow: hidden; }
+.wiki-document-viewer .markdown-editor { height: 100%; min-height: 0; resize: none; }
+.wiki-document-viewer .markdown-live-preview { box-sizing: border-box; height: 100%; min-height: 0; overflow: auto; }
 .markdown-edit-surface > .site-toolbar { min-height: 28px; font-size: var(--text-meta); padding: 4px 12px; }
 .markdown-editor-grid { flex: 1; min-height: 0; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; align-items: stretch; }
 .markdown-editor { min-height: 360px; padding: 14px 16px; border: 0; border-right: 1px solid var(--line); border-radius: 0; box-shadow: none; font-family: var(--font-mono); font-size: var(--text-control); line-height: 1.6; resize: vertical; }
@@ -629,6 +632,7 @@ button, summary { font-weight: 400; }
   .desk-browser-head .toolbar-actions { flex-wrap: wrap; }
   .desk-file-row { min-height: 44px; }
   .markdown-editor-grid { grid-template-columns: minmax(0,1fr); }
+  .wiki-document-viewer .markdown-editor-grid { grid-template-rows: minmax(0,1fr) minmax(0,1fr); }
   .document-format-toolbar button { flex-basis: 44px; min-width: 44px; min-height: 44px; }
   .document-format-toolbar select { min-height: 44px; }
   .mooncode-schedule-panel[data-popup] { top: var(--shell-header-height); left: 0; right: 0; bottom: 0; width: auto; }

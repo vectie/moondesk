@@ -28,3 +28,34 @@ test "initial code file opens only after its known Book loads" {
   })
   assert_true(missing.source_pane.content is Empty)
 }
+
+///|
+test "initial Office file opens its real structured editor, never an empty text buffer" {
+  let previous = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    loading: true,
+    selected_workspace_id: "book-research",
+    selected_path: "wiki/proposal.docx",
+    source_pane: init_source_pane("book-research", ""),
+  }
+  let ready = {
+    ..previous,
+    loading: false,
+    workspaces: [requested_selection_test_workspace("book-research")],
+  }
+  let (_, opened) = open_initial_code_file(
+    code_mode_test_dispatch, previous, ready,
+  )
+  assert_eq(opened.office_editor.path, "wiki/proposal.docx")
+  assert_true(opened.office_editor.loading)
+  assert_true(opened.source_pane.open)
+  assert_true(opened.source_pane.content is Empty)
+  let markup = render_test_dom(
+    @rabbita.static_cell(
+      render_mooncode_workspace_editors(code_mode_test_dispatch, opened),
+    ),
+  )
+  assert_true(markup.contains("data-testid=\"office-editor\""))
+  assert_true(!markup.contains("data-testid=\"source-editor\""))
+}

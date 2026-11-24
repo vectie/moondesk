@@ -3,6 +3,36 @@
 Read this with `AGENTS.md` before starting work. Record concrete pitfalls and
 their resolution here; keep task-specific evidence in `docs/`.
 
+## Document navigation and Word editing 2026-11-25
+
+Book Markdown has a sticky heading picker from the rendered document, not a
+second parser. Duplicate and Chinese headings are distinct; fenced code and
+quoted headings do not become sections. Reading jumps focus the heading;
+editing jumps select/reveal its source line without changing the draft. Keep
+editor/preview panes bounded to the window: stretching them to thesis height
+makes caret navigation ineffective. Long jumps are direct, because animating
+through lazy images changes document height and misses the target.
+
+Direct Office file links must open the existing structured Office editor, not
+an empty plain-text buffer. Wiki's Edit document opens that same editor and
+loads its selected file, even from the cold Ready to open state. When no source
+file is open, show Office first instead of an empty source pane. Bound the item
+list: 877 runs otherwise push the actual text field 13,000px below the viewport.
+This is limited
+DOCX text/run-style editing, not a Word-layout, equation, comments or tracked-
+changes editor. Markdown changes do not write back to DOCX; Word is not installed
+on the cluster Mac. Keep imported originals untouched and edit separate copies.
+
+Real service/browser checks used the complete 426,994-character English thesis
+and a disposable proposal DOCX. Text save/reopen passed; only word/document.xml
+changed among 26 package members. All 445 original hashes, four Word working
+copies and three full Markdown copies were preserved. No full Word layout
+fidelity or native remote WKWebView interaction is qualified. Existing question-
+UI source/dist/HANDOFF work is excluded from this source commit but preserved
+in the installed UI. Never install a partially completed build: check success,
+copy assets first and switch index last. A local ENOSPC build was rolled back;
+only regenerable task-owned index exports were removed to make build space.
+
 Work directly on `main`; do not create a branch unless the user requests one.
 
 

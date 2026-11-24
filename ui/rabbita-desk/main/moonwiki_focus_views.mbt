@@ -511,6 +511,26 @@ fn render_wiki_document_viewer(
               "edit",
               StartMarkdownEdit,
             )
+          } else if office_editor_path_supported(model.selected_path) {
+            button(
+              class="moon-icon-button",
+              title="Edit supported Office text",
+              attrs=@html.Attrs::build()
+                .aria_label("Edit document")
+                .data_set("testid", "wiki-edit-office"),
+              disabled=model.office_editor.loading ||
+                model.office_editor.saving ||
+                (
+                  office_editor_dirty(model.office_editor) &&
+                  model.office_editor.path != model.selected_path
+                ),
+              on_click=@rabbita.batch([
+                dispatch(OfficeEditor(OfficeOpenPath(model.selected_path))),
+                dispatch(SelectWorkspaceMode(MoonCode)),
+                dispatch(SourcePane(SetOpen(true))),
+              ]),
+              [ui_icon("edit")],
+            )
           } else {
             @html.nothing
           },

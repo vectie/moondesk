@@ -1169,6 +1169,8 @@ fn render_mooncode_workspace_editors(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  let office_only = model.office_editor.path != "" &&
+    model.source_pane.requested_path == ""
   details(
     class="mooncode-workspace-editors",
     attrs=@html.Attrs::build()
@@ -1194,8 +1196,15 @@ fn render_mooncode_workspace_editors(
           },
         ),
         [
-          render_source_editor(dispatch, model.source_pane),
-          @html.node(
+          if office_only {
+            @html.nothing
+          } else {
+            render_source_editor(dispatch, model.source_pane)
+          },
+          if office_only {
+            @html.nothing
+          } else {
+            @html.node(
             "div",
             @html.Attrs::build()
             .class("workspace-editor-splitter")
@@ -1206,7 +1215,8 @@ fn render_mooncode_workspace_editors(
             .aria_label("Resize Source and Office editors")
             .data_set("i18n-aria-label", "code.resize_editors"),
             [span(class="workspace-editor-splitter-grip", "")],
-          ),
+            )
+          },
           details(
             class="workspace-office-disclosure",
             attrs=@html.Attrs::build().open(model.office_editor.path != ""),
