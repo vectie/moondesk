@@ -1200,6 +1200,60 @@ Code/Flow continuation: `docs/UI_CODE_FLOW_AUDIT_2026-11-04.md`.
   artifact identity is unchanged. Reset its review context and invalidate the
   viewer when the refreshed identity changes.
 
+## 2026-11-10 — Obsolete installed build payload cleanup
+
+Local disk exhaustion was dominated by old MoonFish payloads in both the Lepusa
+Desktop workspace and `/Users/kq/moonsuite`, plus compiler caches. Removed 559
+obsolete payloads across the stores; kept active 0.22.358 and two rollback
+payloads. Retain pack.json, receipt.json and UNINSTALL.md at their canonical
+version paths even when pruning old immutable payload directories. Receipts
+are audit evidence, not a reason to retain every old binary/UI bundle forever.
+Product data and live native/UI paths were preserved. MoonDesk 4199/4200 and
+MoonFish 4318/4319 returned HTTP 200; Mac free space rose from 1.3 to 49 GiB.
+Cleanup helpers and private evidence live in LunaNexa under
+`scripts/{clean-local-build-caches,prune-obsolete-moonfish-builds}.mbtx` and
+`output/build-cleanup-20261110/`. No automatic retention policy was enabled.
+
+Follow-up: the user subsequently authorized automatic retention. Codex hourly
+heartbeat `旧构建自动清理` (`automation-2`) now calls LunaNexa's
+`scripts/maintain-local-builds.mbtx clean`. Current plus two actual complete
+older releases are retained per pack; running/recent/newer payloads are kept
+additionally. Provenance stays at canonical version paths. Cache cleanup
+defers during compilation and preserves primary native builds. Generated logs
+are bounded to 30 days under `~/Library/Logs/MoonSuite/build-retention/`;
+remaining space below 20 GiB triggers a failure notification. This scheduler
+requires Codex running locally, not an independent system daemon. A verified
+clean retained newly published 0.22.359 with 358/357 and deferred caches while
+active MoonBit/hardware builds continued.
+
+Schedule correction: the user changed `automation-2` to every 24 hours. Retention
+rules, live-build protections and failure-only notifications are unchanged.
+
+## Local MoonFish host refresh, 2026-11-11
+
+With the current moon.work, the fresh MoonDesk release CLI is
+`_build/native/release/build/vectie/moondesk/cmd/main/main.exe`. The older
+non-workspace `_build/native/release/build/cmd/main/main.exe` coexisted and
+was still configured for the saved (4200) and desktop (4199) MoonFish hosts.
+Both services now use the installed copy in the host's external bin directory.
+The separate 4201 service uses the sidecar inside MoonDesk.app. Rebuilding
+the CLI alone does not replace that sidecar or its packaged Rabbita dist.
+MoonBook discovery accepts the native executable at /opt/homebrew/bin/moonbook.
+
+## Cluster refresh, 2026-11-11
+
+The cluster's current Desk binary/UI is built from 7fd15d83 plus the captured
+local dependency workspace. The active personal workspace and launch profile
+now use `moon/hosted-apps@sha256:84a18bbdd50aae9b714528f19a248efd4364aa8269c1c98a6541412467857dde`.
+The shared user service uses `moon-public/releases/moondesk-20261111-r1` via
+`zz-products-20261111.conf`, preserving its previous environment and workspace.
+Do not confuse this with the local Mac 4199/4200/4201 app installations, which
+this task did not update. Cluster runtime data and previous units/images are
+backed up; old companion/model images were preserved. Relative Vite asset bases
+support both the root service and named gateway path. See MoonTown's
+`docs/project/CLUSTER_REFRESH_20261111.md` for the complete acceptance and the
+remaining stopped-GLM gate on new personal launches.
+
 ## Cluster Mac UI and icon pass, 2026-11-24
 
 The M4/macOS 15 cluster Mac at 192.168.2.195 now has the current app with the
@@ -1286,3 +1340,152 @@ Validation: 1,731 native tests and 2,291 Rabbita JS tests passed; packaging CLI
 remain, plus one existing UI unused function warning; these were not hidden or
 turned into unrelated cleanup. Binary provisioning compares/copies bytes only
 on explicit Install, not startup or render.
+
+## 2026-11-25: hidden MoonCode clarification stalls ordinary requests
+
+On the cluster Mac, the user's `write` turn was waiting in `ask_user` for
+"What file and contents would you like me to write in this MoonBook?".
+The subsequent Python hello-world request was a queued turn, not an answer.
+Question controls lived inside a collapsed task inspector, so the transcript
+looked indefinitely busy with no visible required action. This was not a
+Python execution or provider quota failure.
+
+`mooncode-task-controls-runtime.js` now opens the existing inspector and scrolls
+to each newly observed question once per mount. It preserves composer drafts
+and focus, and does not reopen an intentional collapse on every five-second
+poll. Empty task state stays collapsed. No new polling, backend state, trust,
+or sandbox permission was added. Regression coverage includes answering through
+the canonical question ID. Frontend Node tests: 517 passed, one skipped;
+MoonBit JS tests: 2,293 passed; production Vite build passed. `moon info` and
+`moon fmt` passed with the existing seven unused-symbol warnings; no interface
+changes. UI/UX review kept required actions visible using the existing layout.
+
+The cluster's installed app resources were updated and strict deep codesign
+verification passed. Rollback resources are under
+`/Users/jiaanguo/moonsuite-install-20261124/question-ui-20261125`.
+Testing the alternate Vite origin was refused by the installed backend's origin
+check; do not weaken that check. Test the actual installed resource server
+instead. Remote WKWebView interaction remains unavailable; browser testing uses
+the installed app's actual sidecar/resources over SSH.
+
+UI recovery: used Guide now to preserve the original queued Python message as
+guidance, then sent that exact text as the pending answer. The turn completed,
+created `hello.py` with `print("Hello, World!")`, ran `python3 hello.py`, and
+returned a real final response with exit 0 and stdout `Hello, World!`.
+The command also emitted macOS xcrun cache-denial warnings, and its receipt
+included Python cache artifacts. Those are not a hang or warning-free run;
+keep that distinction in future acceptance reports. No cache artifacts were
+promoted, and no sandbox permissions were broadened.
+
+A fresh conversation (`mooncode-d866e98d37142858`) received only `write me a
+python version hello world`, with no tool/sandbox hints. It inspected the
+existing `hello.py`, ran `python3 hello.py`, and completed with a final answer
+and actual exit 0/stdout `Hello, World!`. ACP tool rounds were noticeably slow;
+completion is verified, but this is not a low-latency acceptance claim. Evidence:
+`/tmp/moondesk-python-plain-prompt-passed.jpg` on the operator machine. Existing
+native windows must quit/reopen to load replaced assets; no remote WKWebView
+refresh was claimed.
+
+## 2026-11-25: readable, unboxed Code conversation
+
+The transcript had two centering owners: a 760px max-width list plus percentage
+padding calculated from its wider parent. On a 1280px window this left replies
+only 400px wide. Workbench layout now owns the column once; replies and composer
+both measure 760px. The assistant's outer border, shadow and padding are gone;
+code blocks retain their useful code/copy surface. The separate composer no
+longer needs a 132px transcript bottom spacer (now 28px).
+
+Removed the automatic suggestions-runtime import rather than adding another
+disclosure. Explicit model/settings/media/attachment/task controls remain.
+The textarea was also fixed at one line: the existing workbench runtime now
+sizes it to its content, bounded by the CSS min/max (40–128px desktop). Cache
+the last draft and width so idle polling does not repeatedly measure/reflow it.
+Clear, restored drafts and window resizing must all update its height without
+changing selection. Narrow input uses 16px type and a 44px minimum.
+
+Build isolation matters: concurrent uncommitted Word edits initially caused
+two MoonBit UI test failures. Do not revert or ship another task's unfinished
+source. Qualified a detached 592abc64 checkout plus only the chat/previous
+question-visibility delta. Final production build passed (~66s), Node 522 passed
+and one skipped, MoonBit JS 2,294 passed; info/fmt passed with existing warnings
+and unchanged interfaces. Focused regressions cover growth/shrink/width changes,
+unchanged-draft measurement avoidance, single column and suggestion removal.
+
+Installed UI-only resources on cluster macOS 15.7.3, stopped/relaunched MoonDesk,
+and verified strict deep codesigning. Original resource rollback:
+`/Users/jiaanguo/moonsuite-install-20261124/clean-chat-ui-20261125/previous-main`;
+the intermediate unboxed build is in `clean-chat-autosize-20261125/previous-main`.
+No native executable, ACP runtime, provider, login, Book trust or quota setting
+changed. Browser checks use the actual installed resources/backend through SSH,
+not native WKWebView automation. Codex window capture was explicitly blocked;
+do not bypass that or claim a captured Codex reference.
+
+UI checks: 1280×720 replies/composer 760px, idle composer 106px (was 154px),
+three-line draft 81px input, long draft capped at 128px, clear back to 40px.
+900×600 leaves 356px for conversation; 375×812 and 812×375 have no page-level
+horizontal overflow. Settings disclosure/Escape and file-panel open/return work.
+No new inference was needed; existing real replies prove the reading layout.
+Screenshots on operator: `/tmp/moondesk-chat-before.jpg`,
+`/tmp/moondesk-chat-after.jpg`, `/tmp/moondesk-chat-multiline.jpg`.
+
+## 2026-11-25: shared adaptive panes and control cleanup
+
+Code, Desk, Book and detail drawers now use one pointer/keyboard/click resize
+control. Desk/Book automatically switch that control from vertical column seams
+to horizontal row seams when their panes stack. Column widths and row heights
+have separate local preferences. Code's composer has a horizontal grip: manual
+height survives draft changes/reload; Reset height restores automatic sizing.
+Use left/right or up/down arrows, Shift for larger steps, and Home/End for bounds.
+Clicking a seam offers size/reset actions, so resizing is not drag-only.
+
+Critical regression found through cross-page UI testing: an unmanaged Code
+divider appended to the main element survived Rabbita reusing that element for
+Packs. Packs' direct-child width rule expanded it into a huge overlay. Never
+append these controls inside the reconciled app tree. Shared controls now live
+in body portals; the lifecycle owner removes departed-page controls and layout
+properties before paint, with new measurements coalesced into a frame. Do not
+restore the intermediate `resizable-columns-20261125` build with that defect.
+
+Popup ownership includes controls targeting a child of a popup, not just its
+outer ID. Otherwise a portal divider is treated as an outside click and closes
+file details during a drag. Regression and real drag confirm the drawer stays
+open. Disclosure tooltips now disappear on activation/open state instead of
+covering the menu's choices. Escape/outside dismissal and draft focus remain.
+
+The shared hierarchy owns select typography, height, chevron, corners, focus and
+menu surfaces. Native option lists retain platform behavior; no custom select
+implementation was added. Removed obsolete Code grid/mobile-scroller rules;
+workbench layout owns pane geometry once. Flow fills the remaining page height
+instead of subtracting a fixed screen-height estimate. Empty Flow and Packs
+have no fake splitters; Packs' detail drawer becomes resizable when opened.
+
+Installed-resource UI checks traversed Code → Packs → Flow → Desk → Book → Code
+without reloading between destinations. No runtime dividers remained inside
+main, and no stray handles/overlays remained on empty Packs/Flow. Actual drags:
+Code navigation 240→300, chat 480→580; Desk rail 240→320; Book chat 486→600;
+Packs drawer 380→480; file details 300→380 while staying open. Row checks:
+Code input 59→139, survives reload at 139, reset to 40; 375px Desk rows 220→280
+and Book chat 319→379. Drafts were preserved then cleared without sending.
+1150px window/420px navigation leaves one useful work pane; closing navigation
+restores a split at the same window width. Normal, short and 375px layouts have
+no horizontal overflow; Flow's canvas ends at the window bottom without extra
+page scrolling. The installed Book has no executable Flow graph: this qualifies
+its empty/loading UI, not node editing or workflow execution.
+
+Final build incorporates the concurrently deployed Word renderer/typing work.
+An initial index-digest guard caught that deployment; do not overwrite it with
+the earlier clean-HEAD frontend. Qualified the integrated source snapshot (41
+changed/new source files), then verified source equality before synchronizing
+the generated dist. Existing Word source/native runtime were preserved.
+Node: 533 passed, one skipped; MoonBit JS: 2,296 passed. Production build ~49s;
+info/fmt pass with seven existing warnings and unchanged interfaces. App strict
+deep signature verification passes. No provider, auth, quota, trust or native
+runtime change was introduced by this layout work, and no inference was sent.
+
+UI-only resources were installed and MoonDesk relaunched on cluster macOS 15.7.3.
+Rollback resources: `moonsuite-install-20261124/shared-layout-polish-20261125/previous-main`
+under `/Users/jiaanguo`. Previous local generated assets are retained in
+`/tmp/moondesk-dist-backup.3h7IVa/dist`. Acceptance uses browser interaction with
+the installed sidecar/resources over SSH, not remote native-window automation.
+Final screenshots: `/tmp/moondesk-layout-cleanup-final.jpg` and
+`/tmp/moondesk-packs-clean.jpg`. No commit/push/release was requested this round.

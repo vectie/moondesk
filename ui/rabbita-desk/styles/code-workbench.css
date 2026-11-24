@@ -9,7 +9,7 @@
 .code-workbench-toolbar button[aria-pressed="true"], .code-workbench-toolbar button[aria-selected="true"] { color: var(--mooncode-accent); background: var(--mooncode-field); border-color: var(--mooncode-line-strong); }
 .code-workbench-toolbar button:focus-visible, .code-context-chip button:focus-visible { outline: 2px solid var(--mooncode-accent); outline-offset: 2px; }
 .code-workbench-status { flex-basis: 100%; font-size: 12px; color: var(--mooncode-muted); }
-.code-workbench { display: grid; grid-template-columns: minmax(260px, 1.2fr) minmax(320px, 1fr); flex: 1 1 0; min-height: 0; min-width: 0; overflow: hidden; }
+.code-workbench { min-width: 0; }
 .code-workbench-work { overflow: auto; min-width: 0; min-height: 0; border-right: 1px solid var(--mooncode-line); background: var(--mooncode-panel); }
 .code-workbench > .mooncode-chat-surface { min-width: 0; min-height: 0; width: 100%; padding: 0; }
 .code-workbench .mooncode-composer { width: calc(100% - 20px); margin: 10px; max-width: none; flex: 0 0 auto; }
@@ -27,7 +27,6 @@
 [data-workbench-view="browser"] .code-workbench-work > :not(.mooncode-developer-tools),
 [data-workbench-view="terminal"] .code-workbench-work > :not(.mooncode-developer-tools),
 [data-workbench-view="compare"] .code-workbench-work > :not(.mooncode-developer-tools) { display: none; }
-[data-workbench-focus="chat"] .code-workbench { grid-template-columns: minmax(0, 1fr); }
 [data-workbench-focus="chat"] .code-workbench-work { display: none; }
 .code-context-tray { display: flex; flex-wrap: wrap; gap: 5px; }
 .code-context-tray:empty { display: none; }
@@ -78,18 +77,11 @@
 .code-workbench .source-editor-tab-close:hover:not(:disabled) { color: var(--mooncode-ink); background: var(--mooncode-panel); }
 .code-context-chip > button:last-child { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; }
 @media (max-width: 1100px) {
-  .code-workbench { grid-template-columns: minmax(220px, 1fr) minmax(290px, 1fr); }
   .code-workbench-toolbar { gap: 4px; padding: 6px; }
 }
 @media (max-width: 780px) {
-  .code-main { display: flex; flex-direction: column; overflow-y: auto; }
-  .code-main .mooncode-rail { flex: 0 0 130px; height: 130px; max-height: 130px; }
-  .mooncode-center:has(.code-workbench) { flex: 1 0 auto; height: auto; overflow: visible; }
-  .code-workbench { display: block; min-height: 380px; overflow: visible; }
-  .code-workbench > .mooncode-chat-surface { height: auto; min-height: 380px; overflow: visible; }
   .code-workbench .mooncode-chat-surface.empty .mooncode-empty { flex: 0 0 auto; padding: 14px; }
   .code-workbench .mooncode-empty h1 { font-size: 22px; }
-  .code-workbench .mooncode-session-surface { flex: 0 0 auto; height: 50dvh; overflow: auto; }
   .code-task-inspector { max-height: 40dvh; }
   .code-workbench-toolbar { position: sticky; top: 0; z-index: 5; }
   [data-workbench-mobile="chat"] .code-workbench-work { display: none; }

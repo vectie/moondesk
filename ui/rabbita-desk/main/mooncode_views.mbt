@@ -1205,16 +1205,16 @@ fn render_mooncode_workspace_editors(
             @html.nothing
           } else {
             @html.node(
-            "div",
-            @html.Attrs::build()
-            .class("workspace-editor-splitter")
-            .data_set("action", "resize-workspace-editors")
-            .data_set("testid", "workspace-editor-splitter")
-            .role("separator")
-            .tabindex(0)
-            .aria_label("Resize Source and Office editors")
-            .data_set("i18n-aria-label", "code.resize_editors"),
-            [span(class="workspace-editor-splitter-grip", "")],
+              "div",
+              @html.Attrs::build()
+              .class("workspace-editor-splitter")
+              .data_set("action", "resize-workspace-editors")
+              .data_set("testid", "workspace-editor-splitter")
+              .role("separator")
+              .tabindex(0)
+              .aria_label("Resize Source and Office editors")
+              .data_set("i18n-aria-label", "code.resize_editors"),
+              [span(class="workspace-editor-splitter-grip", "")],
             )
           },
           details(

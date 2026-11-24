@@ -58,12 +58,12 @@ const startWorkspace = () => {
   void import('./document-editing-runtime.js')
   void import('./mooncode-developer-tools-runtime.js')
   void import('./code-workbench-runtime.js')
+  void import('./workspace-columns-runtime.js').then(module => module.installWorkspaceColumns())
   void import('./review-workflow-runtime.js').then(module => module.installReviewWorkflow())
   void import('./mooncode-setup-runtime.js')
   void import('./mooncode-task-controls-runtime.js').then(module => module.installMoonCodeTaskControls())
   void import('./mooncode-calendar-runtime.js')
   void import('./mooncode-media-tools-runtime.js')
-  void import('./mooncode-suggestions-runtime.js')
   requestAnimationFrame(() => {
     void import('/main.js')
   })

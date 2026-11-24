@@ -40,6 +40,7 @@
 }
 .code-main[data-navigation="closed"] { grid-template-columns: minmax(0, 1fr); }
 .code-main[data-navigation="closed"] > .mooncode-rail { display: none; }
+.code-main[data-resizable-columns][data-navigation="open"] { grid-template-columns: var(--code-navigation-width, 240px) minmax(0, 1fr); }
 .code-main .mooncode-rail {
   height: 100%; min-height: 0; max-height: none; overflow-y: auto;
   border-bottom: 0; border-right: 1px solid var(--mooncode-line); box-shadow: none;
@@ -134,6 +135,7 @@
   font-size: 12px; line-height: 1.5;
 }
 .code-workbench {
+  position: relative;
   display: grid; grid-template-columns: minmax(0, 1fr);
   flex: 1 1 0; min-height: 0; overflow: hidden;
 }
@@ -145,7 +147,7 @@
   justify-content: center; gap: 12px; padding: 24px 0 12vh;
 }
 .code-workbench .mooncode-composer {
-  width: min(640px, calc(100% - 48px)); max-width: 640px;
+  width: min(var(--mooncode-chat-column), calc(100% - 48px)); max-width: var(--mooncode-chat-column);
   margin: 0 auto 16px; padding: 10px 12px; gap: 6px; border-radius: 12px;
   background: var(--mooncode-panel); border-color: var(--mooncode-line);
   box-shadow: 0 2px 8px #00000006;
@@ -157,7 +159,26 @@
 .code-workbench .mooncode-input { min-height: 40px; font-size: 14px; }
 .code-workbench .mooncode-input:focus-visible { outline: 0; }
 .code-workbench .mooncode-session-surface { flex: 1 1 0; min-height: 0; }
-.code-workbench .mooncode-transcript-list { padding-inline: max(24px, calc((100% - 680px) / 2)); }
+.code-workbench .mooncode-transcript-list {
+  /* One centering owner: percentage padding must not shrink an already
+     max-width column for a second time. The composer is outside this scroller. */
+  width: 100%; max-width: none; box-sizing: border-box;
+  padding: 24px max(24px, calc((100% - var(--mooncode-chat-column)) / 2)) 28px;
+  scroll-padding-bottom: 28px; gap: 24px;
+}
+.code-workbench .mooncode-message.assistant {
+  width: 100%; max-width: none; min-width: 0;
+  padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none;
+}
+.code-workbench .mooncode-message.assistant .mooncode-message-body {
+  overflow: visible; white-space: normal; line-height: 1.65;
+}
+.code-workbench .mooncode-message.user {
+  border: 0; background: var(--mooncode-field); box-shadow: none;
+  padding: 10px 14px; border-radius: 12px;
+}
+.code-workbench .mooncode-composer-intent { display: none; }
 .code-workbench-work { border-right: 0; border-left: 1px solid var(--mooncode-line); }
 .code-workbench-work .mooncode-workspace-editors-body { padding: 0; gap: 0; }
 .workspace-office-disclosure { border-top: 1px solid var(--mooncode-line); }
@@ -205,28 +226,46 @@
 .code-workbench .mooncode-runtime-setup .technical-details { flex-basis: 100%; margin: 0; font-size: 11px; }
 .code-workbench .mooncode-runtime-setup .code-capability-summary p { font-size: 12px; }
 
-/* Three columns only when both working panes have a useful reading width. */
-@media (min-width: 1280px) {
-  .mooncode-center[data-workbench-focus="split"] .code-workbench,
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-heading {
-    grid-template-columns: minmax(420px, 1fr) minmax(420px, 1.08fr);
-  }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-toolbar {
-    border-left: 1px solid var(--mooncode-line);
-  }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-tab[aria-pressed="true"] .code-workbench-tab-label { display: inline; }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-actions { margin-left: auto; }
+/* Use the available panel width, including a resized/closed navigation rail. */
+.mooncode-center[data-column-layout="split"][data-workbench-focus="split"] .code-workbench,
+.mooncode-center[data-column-layout="split"][data-workbench-focus="split"] .code-workbench-heading {
+  display: grid; grid-template-columns: var(--code-chat-width) minmax(0, 1fr);
 }
-@media (max-width: 1279px) {
-  .code-workbench { display: flex; flex-direction: column; min-height: 0; }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench > .mooncode-chat-surface { display: none; }
-  .mooncode-center[data-workbench-focus="split"] .code-workbench-work { display: block; flex: 1 1 0; border-left: 0; }
-  .mooncode-center[data-workbench-focus="chat"] .code-workbench > .mooncode-chat-surface { display: flex; }
+.mooncode-center[data-column-layout="split"][data-workbench-focus="split"] .code-workbench-toolbar { border-left: 1px solid var(--mooncode-line); }
+.mooncode-center[data-column-layout="split"][data-workbench-focus="split"] .code-workbench-tab[aria-pressed="true"] .code-workbench-tab-label { display: inline; }
+.mooncode-center[data-column-layout="split"][data-workbench-focus="split"] .code-workbench-actions { margin-left: auto; }
+.mooncode-center[data-column-layout="single"][data-workbench-focus="split"] .code-workbench { display: flex; flex-direction: column; }
+.mooncode-center[data-column-layout="single"][data-workbench-focus="split"] .code-workbench > .mooncode-chat-surface { display: none; }
+.mooncode-center[data-column-layout="single"][data-workbench-focus="split"] .code-workbench-work { display: block; flex: 1 1 0; border-left: 0; }
+.mooncode-center[data-workbench-focus="chat"] .code-workbench > .mooncode-chat-surface { display: flex; }
+.workspace-column-resizer {
+  position: fixed; width: 12px; z-index: 180;
+  padding: 0; border: 0; border-radius: 0; cursor: col-resize; touch-action: none;
+  user-select: none; background: transparent;
 }
+.workspace-column-resizer[hidden] { display: none; }
+.workspace-row-resizer { cursor: row-resize; }
+.workspace-column-resizer::after { content: ""; position: absolute; inset: 0 5px; background: var(--line, #e5e7eb); }
+.workspace-column-resizer:hover::after, .workspace-column-resizer:focus-visible::after,
+.workspace-column-resizer.is-dragging::after { background: var(--accent, #3b5bdb); }
+.workspace-row-resizer::after { inset: 5px 0; }
+[data-column-resize="composer"]::after { inset-inline: calc(50% - 16px); border-radius: 2px; }
+.workspace-column-resizer:focus-visible { outline: 2px solid var(--accent, #3b5bdb); outline-offset: -2px; }
+.is-resizing-workspace, .is-resizing-workspace * { cursor: col-resize !important; user-select: none !important; }
+.is-resizing-workspace iframe { pointer-events: none; }
+.is-resizing-workspace-row, .is-resizing-workspace-row * { cursor: row-resize !important; }
+.code-workbench [data-resizable-composer] .mooncode-input { max-height: min(40dvh, 300px); }
+.code-column-resize-menu { position: fixed; z-index: 190; width: 148px; padding: 4px; border: 1px solid var(--line, #e5e7eb); border-radius: 8px; background: var(--bg-raised, #fff); box-shadow: var(--shadow-popover, 0 4px 12px #00000012); }
+.code-column-resize-menu:not([open]) { display: none; }
+.code-column-resize-menu > summary { display: none; }
+.code-column-resize-menu > button { display: block; width: 100%; min-height: 36px; padding: 6px 10px; text-align: left; border: 0; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.code-column-resize-menu > button:hover { background: var(--bg-soft, #f6f7f8); }
+.code-column-resize-menu > button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 @media (max-width: 1099px) {
   .code-navigation-close { display: inline-flex; }
   .desk-shell .title-bar { grid-template-columns: 160px minmax(0, 1fr) auto auto; }
   .code-main { grid-template-columns: minmax(0, 1fr); }
+  .code-main[data-resizable-columns][data-navigation="open"] { grid-template-columns: minmax(0, 1fr); }
   .code-main[data-navigation="open"] > .mooncode-rail {
     position: absolute; inset: 0 auto 0 0; width: 260px; z-index: 30;
     box-shadow: 12px 0 28px #00000012;
@@ -248,6 +287,8 @@
   .code-workbench-heading .code-workbench-actions { margin-left: auto; }
   .code-workbench .mooncode-chat-surface.empty { padding: 20px 0 8vh; gap: 16px; }
   .code-workbench .mooncode-composer { width: calc(100% - 24px); margin-bottom: 12px; }
+  .code-workbench .mooncode-input { min-height: 44px; font-size: 16px; }
+  .code-workbench .mooncode-transcript-list { padding: 20px 16px 20px; scroll-padding-bottom: 20px; }
   .code-workbench .mooncode-runtime-setup { width: calc(100% - 24px); max-width: none; margin-block: 8px; }
   .code-workbench .mooncode-session-surface { height: auto; }
   .code-workbench-work .source-editor { padding: 10px; }

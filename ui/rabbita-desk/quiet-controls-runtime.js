@@ -61,11 +61,13 @@ export function installQuietControls(doc = document, win = window) {
   }
 
   function showTooltip(control, immediate = false) {
+    const expanded = () => control.getAttribute('aria-expanded') === 'true' || (control.tagName === 'SUMMARY' && control.parentElement?.open)
+    if (expanded()) { hideTooltip(); return }
     if (owner === control && !tooltip.hidden) return
     hideTooltip()
     owner = control
     const show = () => {
-      if (owner !== control || !control.isConnected || !control.getClientRects().length) return hideTooltip()
+      if (owner !== control || !control.isConnected || !control.getClientRects().length || expanded()) return hideTooltip()
       tooltip.textContent = control.getAttribute('aria-label') || control.title
       if (!tooltip.textContent) return hideTooltip()
       previousTitle = control.getAttribute('title')
@@ -94,7 +96,10 @@ export function installQuietControls(doc = document, win = window) {
     // Multiple controls can select content in the same drawer. Switching
     // between them must not dispatch an outside-close before their click.
     const control = target.closest?.('[aria-controls]')
-    return Boolean(panel.id && control?.getAttribute('aria-controls')?.split(/\s+/).includes(panel.id))
+    return Boolean(control?.getAttribute('aria-controls')?.split(/\s+/).some(id => {
+      const controlled = doc.getElementById(id)
+      return id === panel.id || (controlled && panel.contains(controlled))
+    }))
   }
   function onPointerOver(event) {
     if (event.pointerType === 'touch') return
@@ -140,6 +145,7 @@ export function installQuietControls(doc = document, win = window) {
   }
   function onToggle(event) {
     const panel = event.target
+    if (panel.open && owner && panel.contains(owner)) hideTooltip()
     if (!panel.matches?.(popupSelector) || !panel.open) return
     for (const other of popups()) {
       if (other !== panel && !other.contains(panel) && !panel.contains(other)) dismissPopup(other, { document: doc })
@@ -151,6 +157,7 @@ export function installQuietControls(doc = document, win = window) {
   doc.addEventListener('focusout', hideTooltip)
   doc.addEventListener('pointerdown', onPointerDown)
   doc.addEventListener('click', event => {
+    hideTooltip()
     const close = event.target.closest?.('[data-popup-dismiss]')
     const panel = close?.closest('[data-popup]')
     const trigger = panel && triggerFor(panel)

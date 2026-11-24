@@ -56,6 +56,20 @@ body > #moonsuite-language { display: none; }
 .boot-panel p { font-size: var(--text-control); }
 button, input, select, textarea, summary { font-family: var(--font-ui); }
 button, summary { font-weight: 400; }
+/* One native select style, shared by pages and drawers. The option picker keeps
+   platform keyboard/accessibility behavior; no second dropdown implementation. */
+:is(.desk-shell, .work-detail-drawer, .task-start-panel, .specialist-builder, .provider-connection-dialog, .command-palette) select:not([multiple]) {
+  appearance: none; box-sizing: border-box; min-width: 0; max-width: 100%;
+  height: var(--control-height); min-height: var(--control-height);
+  padding: 4px 28px 4px 8px; border: 1px solid var(--line); border-radius: var(--radius-control);
+  color: var(--ink); font: 400 var(--text-control)/20px var(--font-ui);
+  background: var(--bg-raised, #fff) url('../assets/ui-icons/chevron-down.svg') no-repeat right 8px center / 12px;
+  cursor: pointer; box-shadow: none;
+}
+:is(.desk-shell, .work-detail-drawer, .task-start-panel, .specialist-builder, .provider-connection-dialog, .command-palette) select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+:is(.desk-shell, .work-detail-drawer, .task-start-panel, .specialist-builder, .provider-connection-dialog, .command-palette) select:disabled { cursor: default; opacity: .5; }
 /* Role styles cover runtime surfaces as well as the typed workspace. Document
    headings, source editors and terminal output retain their own content scale. */
 :is(.desk-shell, .work-detail-drawer, .task-start-panel, .specialist-builder, .command-palette) :is(button, input, select, summary) {
@@ -208,9 +222,18 @@ button, summary { font-weight: 400; }
 .mooncode-calendar-form input, .mooncode-calendar-form select, .mooncode-calendar-form textarea { padding: 6px 8px; }
 
 /* One visual language for menus, drawers, forms and result cards. */
-.work-book-menu, .work-tools-options, .desk-toolbar-disclosure > .desk-disclosure-body,
-.desk-location-disclosure > .desk-disclosure-body, .pack-output-picker {
+:is(.work-book-menu, .work-tools-options, .desk-disclosure-body, .pack-output-picker, .source-file-action-menu, .mooncode-session-menu-popover, .mooncode-composer-settings-body, .mooncode-media-tools .mooncode-media-body, .primary-nav-compact-menu, .code-column-resize-menu) {
+  box-sizing: border-box; padding: 8px; border: 1px solid var(--line);
   border-radius: var(--radius-popover); box-shadow: var(--shadow-popover);
+  color: var(--ink); background-color: var(--bg-raised, #fff);
+  font: 400 var(--text-control)/20px var(--font-ui);
+}
+:is(.work-book-menu, .work-tools-options, .desk-disclosure-body, .source-file-action-menu, .mooncode-session-menu-popover, .primary-nav-compact-menu, .code-column-resize-menu) > :is(button, a), .work-book-option {
+  min-height: var(--control-height); padding: 4px 8px; border-radius: var(--radius-control);
+  color: var(--ink); font: inherit; text-align: left; box-shadow: none;
+}
+:is(.work-book-menu, .work-tools-options, .source-file-action-menu, .mooncode-session-menu-popover, .primary-nav-compact-menu, .code-column-resize-menu) > :is(button, a):not(:disabled):hover, .work-book-option:hover {
+  background-color: var(--control-hover, #f0f1f3);
 }
 .work-book-option, .work-tools-options button { padding: 4px 8px; border-radius: var(--radius-control); }
 .desk-toolbar-disclosure > .desk-disclosure-body { min-width: 208px; max-width: min(280px, calc(100vw - 32px)); padding: 8px; gap: 8px; box-sizing: border-box; }
@@ -411,11 +434,6 @@ button, summary { font-weight: 400; }
   border: 1px solid var(--line); border-radius: var(--radius-control);
   background: var(--bg-raised); color: var(--ink); font: 400 var(--text-control)/1.6 var(--font-ui); resize: vertical;
 }
-.work-detail-drawer .document-tool-content select:not([multiple]),
-.provider-connection-dialog select:not([multiple]) {
-  appearance: none; height: var(--control-height); padding-right: 28px;
-  background: var(--bg-raised) url('../assets/ui-icons/chevron-down.svg') no-repeat right 8px center / 12px;
-}
 .work-detail-drawer :is(.document-tool-intro,.source-evidence-intro) { margin-bottom: 16px; }
 .work-detail-drawer .document-tool-intro.with-action { flex-wrap: wrap; gap: 8px; }
 .work-detail-drawer .document-tool-intro.with-action > div { flex: 1 1 240px; }
@@ -603,7 +621,6 @@ button, summary { font-weight: 400; }
 .coding-setup-form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: var(--space-2); margin-bottom: var(--space-3); }
 .coding-setup-full-field { grid-column: 1 / -1; }
 .coding-setup :is(input,select) { font: 400 var(--text-control)/20px var(--font-ui); }
-.coding-setup select { appearance: none; height: var(--control-height); padding-right: 28px; background: var(--bg-raised) url('../assets/ui-icons/chevron-down.svg') no-repeat right 8px center / 12px; }
 .coding-setup-skill-grid.is-empty { grid-template-columns: minmax(0,1fr); gap: 0; }
 .coding-setup-skill-grid.is-empty aside { display: flex; flex-direction: row; flex-wrap: wrap; align-items: start; gap: var(--space-2); }
 .coding-setup-skill-grid.is-empty .coding-setup-import-options { min-width: 140px; }

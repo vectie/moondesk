@@ -3,6 +3,7 @@
 const drafts = new Map()
 const pending = new Map()
 const promptDrafts = new Map()
+const promptSizes = new WeakMap()
 let lastSelection = null
 let historyCursor = -1
 let historyDraft = ''
@@ -156,6 +157,20 @@ function saveStored(name, value) {
   try { localStorage.setItem(name, JSON.stringify(value)) } catch { /* Session still works without storage. */ }
 }
 function promptInput() { return document.querySelector('[data-testid="mooncode-input"]') }
+
+// Let the CSS min/max heights bound the draft, including on older WebKit
+// versions without field-sizing. Do not remeasure unchanged drafts on polling.
+export function resizePrompt(input) {
+  if (!input) return
+  const width = input.clientWidth
+  const manual = input.closest('.mooncode-chat-surface')?.style.getPropertyValue('--code-composer-height') || ''
+  const previous = promptSizes.get(input)
+  if (previous?.value === input.value && previous.width === width && previous.manual === manual) return
+  promptSizes.set(input, { value: input.value, width, manual })
+  input.style.height = '0px'
+  input.style.height = `${manual || input.scrollHeight}px`
+}
+
 function writePrompt(value) {
   const input = promptInput()
   if (!input) return
@@ -419,6 +434,7 @@ function enhance() {
     writePrompt(pendingTaskDraft.prompt)
     pendingTaskDraft = null
   }
+  resizePrompt(composerInput)
   const browserToolbar = surface.querySelector('.mooncode-developer-browser-toolbar')
   if (browserToolbar && !browserToolbar.querySelector('[data-pick-code-element]')) {
     const button = document.createElement('button')
@@ -501,6 +517,7 @@ if (typeof document !== 'undefined') {
     const currentKey = key()
     promptDrafts.set(currentKey, event.target.value)
     saveStored(`moondesk.draft.${currentKey}`, event.target.value)
+    resizePrompt(event.target)
   })
   window.addEventListener('moondesk:open-code-session', event => {
     const id = event.detail?.sessionId

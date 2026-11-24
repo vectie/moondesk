@@ -2,7 +2,33 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
-import { contextKey, normalizeCodeContext, composeCodeContext, addContextToList, navigateTabList, initialWorkbenchLayout } from './code-workbench-runtime.js'
+import { contextKey, normalizeCodeContext, composeCodeContext, addContextToList, navigateTabList, initialWorkbenchLayout, resizePrompt } from './code-workbench-runtime.js'
+
+test('prompt grows, shrinks after clearing, and reflows only when its draft or width changes', () => {
+  const dom = new JSDOM('<textarea></textarea>')
+  try {
+    const input = dom.window.document.querySelector('textarea')
+    let reads = 0
+    let width = 720
+    Object.defineProperty(input, 'clientWidth', { get: () => width })
+    Object.defineProperty(input, 'scrollHeight', { get: () => { reads++; return input.value ? 81 : 40 } })
+    input.value = 'First line\nSecond line\nThird line'
+    input.setSelectionRange(9, 12)
+    resizePrompt(input)
+    assert.equal(input.style.height, '81px')
+    assert.equal(input.selectionStart, 9)
+    assert.equal(input.selectionEnd, 12)
+    resizePrompt(input)
+    assert.equal(reads, 1)
+    width = 340
+    resizePrompt(input)
+    assert.equal(reads, 2)
+    input.value = ''
+    resizePrompt(input)
+    assert.equal(input.style.height, '40px')
+    assert.equal(reads, 3)
+  } finally { dom.window.close() }
+})
 
 test('new workspaces start with chat while explicitly opened tools are remembered', () => {
   assert.deepEqual(initialWorkbenchLayout(), { view: 'source', focus: 'chat' })

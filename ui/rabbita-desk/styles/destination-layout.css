@@ -123,6 +123,11 @@
 /* Book: stable rows prevent the composer from consuming the chat viewport. */
 .wiki-focus-main { min-height: 0; height: 100%; background: #fff; }
 .wiki-focus-workspace { min-height: 0; height: 100%; grid-template-columns: minmax(320px, .38fr) minmax(0, .62fr); }
+@media (min-width: 761px) {
+  .wiki-focus-workspace[data-resizable-pane] { grid-template-columns: var(--wiki-chat-width, 38%) minmax(0, 1fr); }
+  .desk-inspector > .desk-details[data-resizable-pane] { width: var(--desk-details-width, 300px); }
+  .pack-home-main > .pack-inspector[data-resizable-pane] { width: var(--pack-inspector-width, 380px); }
+}
 .wiki-chat { display: flex; flex-direction: column; overflow: hidden; background: #fff; }
 .wiki-chat-header, .wiki-viewer-header {
   display: flex; flex: 0 0 auto; flex-direction: row; align-items: center; flex-wrap: nowrap;
@@ -162,7 +167,8 @@
 .wiki-office-nav-item { min-height: 32px; padding: 6px 10px; font-size: 12px; }
 
 /* Flow: edge-to-edge canvas and compact, inspectable status. */
-.flow-main { padding: 0 0 24px; background: #fff; }
+.flow-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; padding: 0; overflow: auto; background: #fff; }
+.flow-main > :not(.flow-composer-infinite) { flex: 0 0 auto; }
 .flow-main .flow-hero {
   width: 100%; min-height: 48px; margin: 0; padding: 6px 16px;
   align-items: center; gap: 12px; border-bottom: 1px solid var(--workspace-line);
@@ -177,7 +183,7 @@
 .flow-state-explanation summary { cursor: pointer; }
 .flow-state-explanation p { max-width: 720px; margin-block: 8px; line-height: 1.5; }
 .flow-main .flow-composer-infinite {
-  width: 100%; margin: 0; height: calc(100dvh - 190px); min-height: 360px;
+  width: 100%; margin: 0; flex: 1 0 320px; height: auto; min-height: 0;
   border: 0; border-bottom: 1px solid var(--workspace-line); border-radius: 0; box-shadow: none;
 }
 .flow-canvas-chrome { min-height: 40px; padding: 4px 16px; gap: 8px; }
@@ -196,7 +202,7 @@
 .flow-main .flow-empty { padding: 16px; font-size: 13px; gap: 8px; }
 
 /* Packs contains installable applications and templates; MoonBooks live in Desk. */
-.pack-home-main { padding: 0 16px 32px; background: #fff; }
+.pack-home-main { min-width: 0; min-height: 0; height: 100%; overflow: auto; padding: 0 16px 32px; background: #fff; }
 .pack-home-main > * { width: 100%; max-width: none; margin-inline: auto; }
 .pack-home-main .pack-home-hero { min-height: 48px; max-width: none; margin-bottom: 12px; flex-direction: row; align-items: center; text-align: left; gap: 12px; border-bottom: 1px solid var(--workspace-line); }
 .pack-home-main .pack-home-hero h1 { margin: 0; font-size: 13px; font-weight: 600; }
@@ -254,6 +260,12 @@
 
 @media (max-width: 760px) {
   .file-desk-main { display: flex; overflow-y: auto; }
+  .file-desk-main[data-resizable-pane="desk"] {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--desk-sidebar-height, 220px) minmax(0, 1fr); overflow: hidden;
+  }
+  .file-desk-main[data-resizable-pane="desk"] > .desk-sidebar { grid-column: 1; grid-row: 1; height: 100%; min-height: 0; overflow-y: auto; }
+  .file-desk-main[data-resizable-pane="desk"] > .desk-browser { grid-column: 1; grid-row: 2; min-height: 0; overflow: hidden; }
   .file-desk-main > .desk-sidebar { flex: 0 0 auto; overflow: visible; }
   .desk-workspace-list { max-height: 176px; overflow-y: auto; }
   .desk-sidebar .desk-folder-outline { display: none; } /* Folder navigation also lives in the browser. */
@@ -265,10 +277,11 @@
   .desk-inspector > .desk-details { width: min(320px, calc(100vw - 16px)); right: -4px; max-height: calc(100dvh - 120px); }
   .wiki-focus-main { overflow-y: auto; }
   .wiki-focus-workspace { height: auto; min-height: 100%; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(320px, 48dvh) minmax(380px, 1fr); overflow: visible; }
+  .wiki-focus-workspace[data-resizable-pane="book"] { height: 100%; min-height: 0; grid-template-rows: var(--wiki-chat-height, 42%) minmax(0, 1fr); overflow: hidden; }
   .wiki-chat-header, .wiki-viewer-header { flex-direction: row; align-items: center; min-height: 48px; }
   .wiki-chat-composer { max-height: 65%; }
   .wiki-viewer-actions { width: auto; }
-  .flow-main .flow-composer-infinite { min-height: 380px; height: calc(100dvh - 220px); }
+  .flow-main .flow-composer-infinite { min-height: 0; height: auto; flex-basis: 240px; }
   .flow-canvas-chrome { flex-direction: row; flex-wrap: wrap; padding: 4px 12px; }
   .flow-canvas-title { flex: 1 1 120px; }
   .flow-canvas-title small { display: none; } /* The canvas retains the full empty/status message. */

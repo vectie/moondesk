@@ -72,3 +72,35 @@ test('switching controls for the same drawer does not dismiss it before activati
     assert.equal(dismissed, 1)
   } finally { dom.window.close() }
 })
+
+test('a portal resizer controlling a drawer child belongs to that popup', () => {
+  const dom = new JSDOM('<div id="app"><details data-popup open><summary>Details</summary><aside id="detail-pane">Contents</aside></details></div><div tabindex="0" role="separator" aria-controls="detail-pane"></div><button id="outside">Outside</button>', { runScripts: 'outside-only', pretendToBeVisual: true })
+  try {
+    const { window } = dom, doc = window.document
+    window.HTMLElement.prototype.getClientRects = () => [{ width: 100, height: 40 }]
+    window.eval(readFileSync(new URL('./quiet-controls-runtime.js', import.meta.url), 'utf8').replaceAll('export ', ''))
+    const divider = doc.querySelector('[role="separator"]'), popup = doc.querySelector('details')
+    divider.dispatchEvent(new window.Event('pointerdown', { bubbles: true }))
+    divider.focus()
+    assert.equal(popup.open, true)
+    doc.getElementById('outside').dispatchEvent(new window.Event('pointerdown', { bubbles: true }))
+    assert.equal(popup.open, false)
+  } finally { dom.window.close() }
+})
+
+test('a disclosure tooltip does not cover its opened menu', () => {
+  const dom = new JSDOM('<details data-popup><summary tabindex="0" class="moon-icon-button" aria-label="Options">Options</summary><input aria-label="Choice"></details>', { runScripts: 'outside-only', pretendToBeVisual: true })
+  try {
+    const { window } = dom, doc = window.document
+    window.HTMLElement.prototype.getClientRects = () => [{ width: 100, height: 40 }]
+    window.eval(readFileSync(new URL('./quiet-controls-runtime.js', import.meta.url), 'utf8').replaceAll('export ', ''))
+    const summary = doc.querySelector('summary'), tooltip = doc.querySelector('.moon-control-tooltip')
+    summary.focus()
+    assert.equal(tooltip.hidden, false)
+    summary.click()
+    assert.equal(doc.querySelector('details').open, true)
+    assert.equal(tooltip.hidden, true)
+    summary.blur(); summary.focus()
+    assert.equal(tooltip.hidden, true)
+  } finally { dom.window.close() }
+})

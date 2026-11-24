@@ -11,6 +11,7 @@ export function installMoonCodeTaskControls() {
     let loading = false
     const drafts = new Map()
     const sections = new Map()
+    const revealedQuestions = new Set()
     let imageInputs = []
     const imageCache = new Map()
     let inspectionFailed = false
@@ -114,6 +115,14 @@ export function installMoonCodeTaskControls() {
         const [label, input] = field('Your answer', '', 2, question.question_id)
         card.append(choices, label, button('Send answer', () => answer(input.value)))
         content.append(card)
+        if (!revealedQuestions.has(question.question_id)) {
+          revealedQuestions.add(question.question_id)
+          const inspector = root.closest('details.code-task-inspector')
+          if (inspector) {
+            inspector.open = true
+            card.scrollIntoView?.({ block: 'nearest' })
+          }
+        }
       }
 
       const queue = section(`Up next${state.queue.length ? ` · ${state.queue.length}` : ''}`, state.queue.length > 0)
