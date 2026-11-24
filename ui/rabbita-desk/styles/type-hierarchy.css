@@ -1,5 +1,9 @@
 /* Shared desktop hierarchy. OpenSeek's restrained 12/13/14/17 scale informs
    the sizing; MoonDesk keeps its book → task → output arrangement. */
+.suite-brand { flex: 0 0 24px; width: 24px; height: 24px; object-fit: contain; }
+.workspace-mode-toggle > .suite-brand { margin-right: 4px; }
+.desk-shell .title-bar .workspace-mode-toggle { grid-template-columns: 24px repeat(5, minmax(58px, auto)); }
+.primary-nav-compact-summary > .suite-brand ~ .moon-icon { display: none; }
 :root {
   --font-ui: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-display: var(--font-ui);

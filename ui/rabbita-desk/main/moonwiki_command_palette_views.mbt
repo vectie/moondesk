@@ -389,12 +389,21 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       attrs=@html.Attrs::build()
         .role("navigation")
         .aria_label("Primary destinations"),
-      primary_navigation_items().map(item => {
-        let (mode, _label, test_id, shortcut) = item
-        render_primary_navigation_button(
-          dispatch, model, mode, test_id, shortcut,
-        )
-      }),
+      [
+        @html.img(
+          class="suite-brand",
+          src="/moondesk.svg",
+          alt="MoonDesk",
+          width=24,
+          height=24,
+        ),
+        ..primary_navigation_items().map(item => {
+          let (mode, _label, test_id, shortcut) = item
+          render_primary_navigation_button(
+            dispatch, model, mode, test_id, shortcut,
+          )
+        }),
+      ],
     ),
     details(
       class="primary-nav-compact",
@@ -418,6 +427,13 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
               flow_system_text("Choose a destination"),
             ),
           [
+            @html.img(
+              class="suite-brand",
+              src="/moondesk.svg",
+              alt="",
+              width=24,
+              height=24,
+            ),
             ui_icon(
               primary_navigation_icon(
                 primary_navigation_mode(model.workspace_mode),

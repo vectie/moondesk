@@ -83,11 +83,17 @@ fn render_desk_workspace_sidebar(
       } else {
         div(class="desk-quick-access-empty", [@html.nothing])
       },
-      render_desk_folder_outline(dispatch, model),
-      details(class="workspace-disclosure", [
-        summary([ui_icon("history"), span("Resume work")]),
-        render_work_resume(dispatch, model),
-      ]),
+      if model.selected_workspace_id == "" {
+        @html.nothing
+      } else {
+        @html.fragment([
+          render_desk_folder_outline(dispatch, model),
+          details(class="workspace-disclosure", [
+            summary([ui_icon("history"), span("Resume work")]),
+            render_work_resume(dispatch, model),
+          ]),
+        ])
+      },
     ],
   )
 }
@@ -1360,113 +1366,127 @@ fn render_desk_file_browser(
           ],
         ),
       ]),
-      div(class="toolbar-actions", [
-        div(class="desk-navigation-actions", [
-          button(
-            class="secondary-button compact-button moon-icon-button",
-            attrs=@html.Attrs::build()
-              .aria_label("Back")
-              .data_set("testid", "desk-back"),
-            title="Back",
-            disabled=desk_workspace_action_disabled(model) ||
-              model.desk_back_stack.length() == 0,
-            on_click=dispatch(NavigateDeskBack),
-            [ui_icon("chevron-left")],
-          ),
-          button(
-            class="secondary-button compact-button moon-icon-button",
-            attrs=@html.Attrs::build()
-              .aria_label("Forward")
-              .data_set("testid", "desk-forward"),
-            title="Forward",
-            disabled=desk_workspace_action_disabled(model) ||
-              model.desk_forward_stack.length() == 0,
-            on_click=dispatch(NavigateDeskForward),
-            [ui_icon("chevron-right")],
-          ),
-          button(
-            class="secondary-button compact-button moon-icon-button",
-            attrs=@html.Attrs::build()
-              .aria_label("Open parent folder")
-              .data_set("testid", "desk-up"),
-            title="Open parent folder",
-            disabled=desk_workspace_action_disabled(model) ||
-              model.current_directory == "",
-            on_click=dispatch(
-              OpenDirectory(parent_path(model.current_directory)),
-            ),
-            [ui_icon("chevron-up")],
-          ),
-          button(
-            class="secondary-button compact-button moon-icon-button",
-            attrs=@html.Attrs::build()
-              .aria_label("Open MoonBook home")
-              .data_set("testid", "desk-root"),
-            title="Open MoonBook home",
-            disabled=desk_workspace_action_disabled(model) ||
-              model.current_directory == "",
-            on_click=dispatch(OpenDirectory("")),
-            [ui_icon("home")],
-          ),
-        ]),
-        div(class="desk-folder-search", [
-          ui_icon("search"),
-          input(
-            class="line-input compact-input desk-filter-input",
-            attrs=@html.Attrs::build()
-              .data_set("testid", "desk-filter-query")
-              .aria_label("Search this folder")
-              .disabled(desk_workspace_action_disabled(model)),
-            value=model.desk_filter_query,
-            placeholder="Search this folder",
-            on_input=fn(value) { dispatch(SetDeskFilterQuery(value)) },
-          ),
-          button(
-            class="secondary-button compact-button moon-icon-button",
-            attrs=@html.Attrs::build()
-              .aria_label("Clear folder search")
-              .data_set("testid", "desk-clear-filter"),
-            title="Clear folder search",
-            disabled=desk_workspace_action_disabled(model) ||
-              model.desk_filter_query.trim().to_owned() == "",
-            on_click=dispatch(SetDeskFilterQuery("")),
-            [ui_icon("close")],
-          ),
-        ]),
-        render_desk_new_item_disclosure(dispatch, model),
-        render_desk_import_disclosure(dispatch, model),
-        desk_disclosure(
-          "desk-toolbar-disclosure desk-view-disclosure",
-          "desk-view-options",
-          "View",
-          [
-            render_desk_density_control(dispatch, model),
+      if model.selected_workspace_id == "" {
+        @html.nothing
+      } else {
+        div(class="toolbar-actions", [
+          div(class="desk-navigation-actions", [
             button(
-              class="secondary-button compact-button",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "desk-sort-source-area",
-              ),
-              title="Sort by source area",
-              on_click=dispatch(SetDeskSort(SortByLayer)),
-              "Sort by source area",
+              class="secondary-button compact-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Back")
+                .data_set("testid", "desk-back"),
+              title="Back",
+              disabled=desk_workspace_action_disabled(model) ||
+                model.desk_back_stack.length() == 0,
+              on_click=dispatch(NavigateDeskBack),
+              [ui_icon("chevron-left")],
             ),
-          ],
-        ),
-      ]),
+            button(
+              class="secondary-button compact-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Forward")
+                .data_set("testid", "desk-forward"),
+              title="Forward",
+              disabled=desk_workspace_action_disabled(model) ||
+                model.desk_forward_stack.length() == 0,
+              on_click=dispatch(NavigateDeskForward),
+              [ui_icon("chevron-right")],
+            ),
+            button(
+              class="secondary-button compact-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Open parent folder")
+                .data_set("testid", "desk-up"),
+              title="Open parent folder",
+              disabled=desk_workspace_action_disabled(model) ||
+                model.current_directory == "",
+              on_click=dispatch(
+                OpenDirectory(parent_path(model.current_directory)),
+              ),
+              [ui_icon("chevron-up")],
+            ),
+            button(
+              class="secondary-button compact-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Open MoonBook home")
+                .data_set("testid", "desk-root"),
+              title="Open MoonBook home",
+              disabled=desk_workspace_action_disabled(model) ||
+                model.current_directory == "",
+              on_click=dispatch(OpenDirectory("")),
+              [ui_icon("home")],
+            ),
+          ]),
+          div(class="desk-folder-search", [
+            ui_icon("search"),
+            input(
+              class="line-input compact-input desk-filter-input",
+              attrs=@html.Attrs::build()
+                .data_set("testid", "desk-filter-query")
+                .aria_label("Search this folder")
+                .disabled(desk_workspace_action_disabled(model)),
+              value=model.desk_filter_query,
+              placeholder="Search this folder",
+              on_input=fn(value) { dispatch(SetDeskFilterQuery(value)) },
+            ),
+            button(
+              class="secondary-button compact-button moon-icon-button",
+              attrs=@html.Attrs::build()
+                .aria_label("Clear folder search")
+                .data_set("testid", "desk-clear-filter"),
+              title="Clear folder search",
+              disabled=desk_workspace_action_disabled(model) ||
+                model.desk_filter_query.trim().to_owned() == "",
+              on_click=dispatch(SetDeskFilterQuery("")),
+              [ui_icon("close")],
+            ),
+          ]),
+          render_desk_new_item_disclosure(dispatch, model),
+          render_desk_import_disclosure(dispatch, model),
+          desk_disclosure(
+            "desk-toolbar-disclosure desk-view-disclosure",
+            "desk-view-options",
+            "View",
+            [
+              render_desk_density_control(dispatch, model),
+              button(
+                class="secondary-button compact-button",
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "desk-sort-source-area",
+                ),
+                title="Sort by source area",
+                on_click=dispatch(SetDeskSort(SortByLayer)),
+                "Sort by source area",
+              ),
+            ],
+          ),
+        ])
+      },
     ]),
-    render_desk_breadcrumb(dispatch, model.current_directory),
-    render_desk_location_bar(dispatch, model),
+    if model.selected_workspace_id == "" {
+      @html.nothing
+    } else {
+      @html.fragment([
+        render_desk_breadcrumb(dispatch, model.current_directory),
+        render_desk_location_bar(dispatch, model),
+      ])
+    },
     render_desk_operation_status(
       "desk-create-status",
       model.desk_new_item_status,
     ),
     div(class=desk_file_table_class(model), [
-      div(class="desk-file-row desk-file-header", [
-        desk_sort_header_button(dispatch, model, SortByName, "Name"),
-        desk_sort_header_button(dispatch, model, SortByKind, "Type"),
-        desk_sort_header_button(dispatch, model, SortByModified, "Modified"),
-        desk_sort_header_button(dispatch, model, SortBySize, "Size"),
-      ]),
+      if model.selected_workspace_id == "" {
+        @html.nothing
+      } else {
+        div(class="desk-file-row desk-file-header", [
+          desk_sort_header_button(dispatch, model, SortByName, "Name"),
+          desk_sort_header_button(dispatch, model, SortByKind, "Type"),
+          desk_sort_header_button(dispatch, model, SortByModified, "Modified"),
+          desk_sort_header_button(dispatch, model, SortBySize, "Size"),
+        ])
+      },
       div(
         class="desk-file-rows",
         attrs=@html.Attrs::build()

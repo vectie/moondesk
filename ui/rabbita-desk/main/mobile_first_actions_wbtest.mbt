@@ -20,7 +20,7 @@ fn mobile_action_markup(model : Model) -> String {
 }
 
 ///|
-test "empty library starts with creation import and receive before file tools" {
+test "empty library offers creation import and receive without inactive file tools" {
   let model = cold_start_test_model(false, "/tmp/moonsuite/books", [])
   let markup = mobile_action_markup(model)
   for
@@ -28,11 +28,13 @@ test "empty library starts with creation import and receive before file tools" {
       "data-testid=\"desk-create-book\"", "data-testid=\"desk-import-book-folder\"",
       "data-testid=\"desk-import-book-archive\"", "data-testid=\"agent-import-choose\"",
     ] {
-    assert_mobile_action_before(markup, control, "data-testid=\"desk-back\"")
+    assert_true(markup.contains(control))
     assert_mobile_action_before(
       markup, control, "data-testid=\"moongate-summary\"",
     )
   }
+  assert_false(markup.contains("data-testid=\"desk-back\""))
+  assert_false(markup.contains("data-testid=\"desk-filter-query\""))
   assert_mobile_action_before(
     markup, "data-testid=\"desk-book-controls\"", "class=\"desk-browser\"",
   )

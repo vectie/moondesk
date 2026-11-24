@@ -275,6 +275,13 @@ test "missing library and failed configured catalog stay distinct" {
 ///|
 test "workspace catalog rendering never turns failure into empty success" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let first_use = cold_start_test_model(false, "/tmp/moonsuite/books", [])
+  let first_use_markup = render_accessibility_test_html(
+    render_desk_mode(dispatch, first_use),
+  )
+  assert_true(first_use_markup.contains("data-testid=\"desk-create-book\""))
+  assert_false(first_use_markup.contains("data-testid=\"desk-filter-query\""))
+  assert_false(first_use_markup.contains("data-testid=\"desk-back\""))
   let failed = {
     ..cold_start_test_model(false, "/tmp/moonsuite/books", []),
     workspace_catalog_state: Some(RecoverableError),
