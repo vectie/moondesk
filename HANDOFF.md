@@ -1132,3 +1132,54 @@ Code/Flow continuation: `docs/UI_CODE_FLOW_AUDIT_2026-11-04.md`.
 - A Flow listing refresh should retain a verified result viewer when its exact
   artifact identity is unchanged. Reset its review context and invalidate the
   viewer when the refreshed identity changes.
+
+## Cluster Mac UI and icon pass, 2026-11-24
+
+The M4/macOS 15 cluster Mac at 192.168.2.195 now has the current app with the
+focused UI follow-up installed. Model weights remain on Vectie, outside the
+app bundles. Working style/UI/UX guidance already matched MoonTown; its root
+`HANDOFF.md` path is an intentional product-specific difference.
+
+The main navigation now shows the canonical MoonDesk mark. Its grid needs a
+24px logo column plus five destination columns: retaining the old five-column
+grid wraps Packs below the 44px application bar. Compact navigation shows the
+brand once, without stacking it beside a second glyph in a 44px target.
+An unselected Book no longer shows inactive file navigation, search, sort,
+folder outline or resume tools. Creation/import and failure recovery remain.
+Both empty name and folder ID disable creation; either explicit identity is
+supported by the existing service. No test Book was created on the Mac.
+
+839 UI tests pass. The production frontend was rebuilt and installed into the
+actual app; signatures verify. Remote served UI inspection confirmed all five
+desktop destinations share one baseline, empty-state controls and input
+availability. Native remote WKWebView interaction was not available here.
+App backups/receipts are retained under the remote user's
+`moonsuite-install-20261124` directory; existing Books and runtime data remain.
+
+Regenerate `assets/moondesk.icns` from its padded macOS SVG with a transparent
+renderer. Quick Look can flatten padding to white despite an alpha channel.
+Mooncast's sibling `scripts/generate_macos_icon.mbtx` verifies all four corner
+alpha values at all ten icon sizes; installed hashes matched those outputs.
+
+Cluster Launchpad follow-up: the installed icon hash still matches. Duplicate
+LaunchServices registrations for staged, rollback and disk-image copies were
+unregistered; canonical `/Applications` copies were re-registered and Dock
+restarted without resetting layout. LaunchServices now lists one current copy
+per product, but Launchpad's database retained two MoonDesk rows referring to
+the same canonical app. A remote screenshot is needed for visual acceptance;
+the database was not edited/reset and all rollback bundles were preserved.
+
+The user's follow-up exposed a separate real icon defect: MoonDesk's supposedly
+macOS-specific SVG was identical to the 512px full-bleed web mark. Transparent
+corner checks cannot detect missing inset padding. It now uses the same 1024px
+canvas, `translate(64 56) scale(1.75)` inset and transparent shadow treatment as
+the other suite icons. The rebuilt ICNS hash is
+`48e00cae788cd2103c8eab9164c0ea5616af3cf7ddf7d06e566dd03c1af7df5e`.
+Installed it on the cluster Mac as `AppIcon-padded-20261124.icns`, changed
+`CFBundleIconFile` to that new basename to avoid reusing the previous cache key,
+and re-signed/strictly verified the bundle. The entire previous bundle remains
+in `moonsuite-install-20261124/MoonDesk-before-padded-icon.bundle`; rename to
+`.app` only when restoring, so this backup is not registered as another app.
+Verify the whole silhouette/inset beside sibling icons, not only corner alpha.
+The exact encoded ICNS was decoded and visually checked; remote Launchpad
+rendering still requires the user's confirmation.
