@@ -140,6 +140,8 @@ pub async fn open_browser_url(String) -> Int
 
 pub async fn pid_is_alive(Int) -> Bool
 
+pub async fn provision_bundled_moonclaw() -> Result[String?, String]
+
 pub async fn reveal_path(String, String) -> Int
 
 pub async fn run_lepusa_operation(String, LepusaOperation) -> Int

@@ -288,6 +288,12 @@ async test "lepusa integration live project uses localhost sidecar service" {
   assert_false(manifest.contains("\"/repo/moondesk\",\"--ui\""))
   assert_true(manifest.contains("\"serve\""))
   assert_true(manifest.contains("\"path\":\"moonflow\",\"executable\":true"))
+  assert_true(
+    manifest.contains(
+      "\"path\":\"moonclaw-runtime/bin/moonclaw\",\"executable\":true",
+    ),
+  )
+  assert_true(manifest.contains("\"path\":\"moonclaw-runtime/moon.mod\""))
   assert_true(manifest.contains("\"lepusa/assets/main\""))
   assert_true(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
   assert_true(manifest.contains("\"/repo/moondesk/assets/moondesk.icns\""))

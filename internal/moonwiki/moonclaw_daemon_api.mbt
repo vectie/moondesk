@@ -39,6 +39,7 @@ async fn handle_moonclaw_models(
   match moonclaw_get_json(daemon, "/v1/moongate-route") {
     Ok(payload) => {
       let ready = moonclaw_models_response_ready(payload)
+      let daemon = moonclaw_model_probe_daemon(daemon, ready)
       let route = moonclaw_moongate_route_evidence(payload)
       send_json(
         conn,
@@ -77,6 +78,18 @@ async fn handle_moonclaw_models(
         ),
       )
   }
+}
+
+///|
+fn moonclaw_model_probe_daemon(daemon : Json, ready : Bool) -> Json {
+  let fields = match daemon {
+    Object(fields) => fields.copy()
+    _ => Map([])
+  }
+  // A successful route probe with no executable model is known-not-ready,
+  // not an unknown daemon status. Keep that distinction in the models DTO.
+  fields["model_ready"] = ToJson::to_json(ready)
+  Json::object(fields)
 }
 
 ///|

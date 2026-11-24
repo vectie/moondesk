@@ -56,6 +56,18 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
     println("failed to prepare workspace root: \{workspace_root}")
     return
   }
+  // Bind service discovery and private control to the same canonical root
+  // (macOS exposes /tmp as a symlink to /private/tmp).
+  let workspace_root = @fs.realpath(workspace_root) catch {
+    _ => {
+      println("failed to resolve workspace root: \{workspace_root}")
+      return
+    }
+  }
+  match @moonwiki.prepare_moonclaw_private_control(workspace_root) {
+    Ok(_) => ()
+    Err(message) => println(message)
+  }
   let server = @moonwiki.Server::new(
     options.host,
     options.port,

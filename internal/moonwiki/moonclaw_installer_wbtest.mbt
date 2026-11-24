@@ -121,3 +121,16 @@ test "managed release version rejects path and control injection" {
   assert_false(moonclaw_release_segment_valid("moonclaw\n0.1.5"))
   assert_false(moonclaw_release_segment_valid(""))
 }
+
+///|
+test "model probe distinguishes missing configuration from unknown runtime" {
+  let candidate : Json = { "running": true, "port": 1515 }
+  assert_true(
+    moonclaw_model_probe_daemon(candidate, false)
+    is { "model_ready": false, .. },
+  )
+  assert_true(
+    moonclaw_model_probe_daemon(candidate, true) is { "model_ready": true, .. },
+  )
+  assert_false(candidate is { "model_ready": _, .. })
+}

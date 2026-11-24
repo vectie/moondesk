@@ -68,6 +68,15 @@ fn lepusa_integration_live_project_json(
     "bundleResources": [
       { "source": sidecar, "path": "moondesk-sidecar", "executable": true },
       {
+        "source": moondesk_moonclaw_build_output(repo_root),
+        "path": "moonclaw-runtime/bin/moonclaw",
+        "executable": true,
+      },
+      {
+        "source": moondesk_moonclaw_module_path(repo_root),
+        "path": "moonclaw-runtime/moon.mod",
+      },
+      {
         "source": moondesk_flow_build_output(repo_root),
         "path": "moonflow",
         "executable": true,

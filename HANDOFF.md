@@ -1183,3 +1183,39 @@ in `moonsuite-install-20261124/MoonDesk-before-padded-icon.bundle`; rename to
 Verify the whole silhouette/inset beside sibling icons, not only corner alpha.
 The exact encoded ICNS was decoded and visually checked; remote Launchpad
 rendering still requires the user's confirmation.
+
+## 2026-11-24 — bundled Code runtime installation
+
+The former Install button always reached `updater_sandbox_unavailable`; desktop
+bundles contained Flow but no MoonClaw. Packaging now requires and includes the
+reviewed sibling MoonClaw executable and module version. Explicit Install copies
+only that app-owned resource into the managed version registry, writes the
+minimal service descriptor, and uses the existing fixed daemon launcher. Same
+version/different bytes are rejected; no download/update fallback was enabled.
+See `docs/MOONCLAW_TRUSTED_UPDATER_PLAN.md` for packaging prerequisites.
+
+Fresh desktop launches also lacked the private control pairing required by
+MoonClaw's authenticated API. Startup now creates/reuses a private workspace-
+bound pair in app-support, without provider credentials or trusted Book roots.
+Do not loosen the daemon's authentication or automatically grant project trust
+to make installation appear ready. The existing explicit operator config takes
+precedence and is validated, never overwritten. Binary copying stays off the
+startup/render path; ordinary startup reads only the small pairing record.
+
+Cluster macOS 15.7.3: updated `/Applications/MoonDesk.app` with the qualified
+15.0-minimum sidecar, bundled clean MoonClaw HEAD runtime, and rebuilt Rabbita
+assets. Strict deep signature verification passed. The previous entire app is
+`/Users/jiaanguo/moonsuite-install-20261124/MoonDesk-before-runtime-fix-20261124.bundle`.
+Browser UI against these actual installed resources passed a clean Install,
+transitioning directly to account/model setup. An empty successful model-route
+probe must include `model_ready=false`: otherwise its reduced daemon DTO erases
+known readiness and shows a misleading unknown status. A regression covers it.
+MoonGate's binding reader/writer also needed version-only managed service
+support; it must never rewrite this descriptor into legacy command/args/cwd.
+No remote native-window acceptance is claimed (only SSH/browser access).
+
+Validation: 1,731 native tests and 2,291 Rabbita JS tests passed; packaging CLI
+48 and focused installer 7 passed. Six pre-existing native unused-symbol warnings
+remain, plus one existing UI unused function warning; these were not hidden or
+turned into unrelated cleanup. Binary provisioning compares/copies bytes only
+on explicit Install, not startup or render.

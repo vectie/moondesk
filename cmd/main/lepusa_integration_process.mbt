@@ -66,7 +66,8 @@ async fn copy_moondesk_sidecar(
       return false
     }
   }
-  copy_moondesk_flow_runtime(repo_root, target, out_dir)
+  copy_moondesk_flow_runtime(repo_root, target, out_dir) &&
+  copy_moondesk_moonclaw_runtime(repo_root, target, out_dir)
 }
 
 ///|

@@ -37,6 +37,8 @@ pub fn moonsuite_suite_json_path(String) -> String
 
 pub fn moonsuite_tmp_root(String) -> String
 
+pub async fn prepare_moonclaw_private_control(String) -> Result[Unit, String]
+
 pub async fn prepare_moonsuite_workspace_root(String) -> Bool
 
 pub fn town_service_config_path(String) -> String

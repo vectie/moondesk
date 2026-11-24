@@ -182,11 +182,8 @@ async fn install_moonclaw_release(workspace_root : String) -> Json {
 }
 
 ///|
-/// MoonDesk intentionally has no local updater fallback. A future updater must
-/// provide authenticated manifest transport, bounded archive handling, and
-/// isolated initialization as one reviewed capability before this can return
-/// success. Until then, supported hosts receive a typed refusal and unsupported
-/// hosts retain their more specific platform result.
+/// The app's own runtime needs no download or updater initialization. Network
+/// releases still require the separate reviewed updater boundary below.
 async fn install_moonclaw_release_for_platform(
   root : String,
   platform_support : MoonClawPlatformSupport,
@@ -201,6 +198,38 @@ async fn install_moonclaw_release_for_platform(
       platform_support.architecture,
       next_action="review_supported_platforms",
     )
+  }
+  match @trusted_host.provision_bundled_moonclaw() {
+    Ok(Some(version)) => {
+      let config_dir = moonsuite_product_dir(root, "moonclaw")
+      @fsx.make_directory(config_dir, recursive=true, exists_ok=true) catch {
+        _ =>
+          return moonclaw_install_failure(
+            root, "runtime_configuration_failed", "Could not create the Code runtime configuration",
+          )
+      }
+      let config : Json = {
+        "kind": "moondesk-moonclaw-service.v1",
+        "version": version,
+      }
+      match
+        moonclaw_write_config_atomically(
+          moonclaw_service_config_path(root),
+          config.stringify() + "\n",
+        ) {
+        Err(message) =>
+          return moonclaw_install_failure(
+            root, "runtime_configuration_failed", message,
+          )
+        Ok(_) => ()
+      }
+      return ensure_moonclaw_daemon_running(root, action="install")
+    }
+    Err(message) =>
+      return moonclaw_install_failure(
+        root, "bundled_runtime_unavailable", message,
+      )
+    Ok(None) => ()
   }
   moonclaw_install_failure(
     root,

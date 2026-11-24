@@ -20,11 +20,11 @@ test "MoonClaw install action exposes progress until lifecycle result" {
   assert_true(installing.moonclaw_installing)
   assert_eq(
     installing.mooncode_composer_status,
-    "Downloading, verifying, and installing MoonClaw…",
+    "Installing bundled Code assistance…",
   )
   assert_eq(
     installing.moonclaw_install_feedback,
-    "Downloading, verifying, and installing MoonClaw…",
+    "Installing bundled Code assistance…",
   )
   let (_, ready) = update_mooncode_session_results(
     code_mode_test_dispatch,
@@ -63,7 +63,7 @@ test "MoonClaw failed start keeps the installed state and exact failure" {
     ..init_model(),
     moonclaw_installing: true,
     moonclaw_operation: "install",
-    moonclaw_install_feedback: "Downloading, verifying, and installing MoonClaw…",
+    moonclaw_install_feedback: "Installing bundled Code assistance…",
   }
   let (_, stopped) = update_mooncode_session_results(
     code_mode_test_dispatch,

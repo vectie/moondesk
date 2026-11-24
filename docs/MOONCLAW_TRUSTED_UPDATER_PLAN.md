@@ -1,6 +1,32 @@
 # MoonClaw managed updater: trust boundary plan
 
-Status: design and dependency audit, 2026-10-05. The installer guard in
+## Bundled runtime provisioning — 2026-11-24
+
+Desktop apps now ship their reviewed MoonClaw executable and module version in
+`Resources/moonclaw-runtime`. Install provisions that exact application-owned
+resource into the managed registry, writes the minimal service binding, and
+starts the existing fixed daemon capability. No network transport, archive,
+initialization command, workspace-supplied executable, provider credential, or
+project trust grant participates. Desktop startup creates/reuses a private
+workspace-bound local control pair (0700 directory, 0600 file), with no trusted
+Book roots. It is passed only to the fixed managed daemon launch. A conflicting binary under the same version is
+rejected rather than overwritten. The app packaging boundary owns the runtime
+artifact's provenance, signature and minimum OS qualification.
+
+This is distinct from the network updater described below. When no bundled
+runtime exists, the original `updater_sandbox_unavailable` refusal and its tests
+remain. This change does not enable a network updater or generic host fallback.
+
+Before packaging, build the sibling MoonClaw command for the same target and
+minimum OS as MoonDesk (`moon build cmd/main --target native --release` in
+`../moonclaw`, with `MACOSX_DEPLOYMENT_TARGET=15.0` on macOS). The default source
+is its release build; `MOONDESK_MOONCLAW_BIN` can select another qualified build.
+Both live-resource manifests and ordinary sidecar copying include the binary
+and `moon.mod`; missing resources fail packaging instead of shipping a broken
+Install button. Provisioning reads/copies the binary only on explicit Install,
+not during dashboard render or ordinary startup.
+
+Network updater status: design and dependency audit, 2026-10-05. The installer guard in
 `internal/moonwiki/moonclaw_installer.mbt` remains enabled. No managed binary,
 service descriptor, active desktop configuration, or credential was changed.
 

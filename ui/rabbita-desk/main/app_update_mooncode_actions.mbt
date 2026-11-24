@@ -2141,7 +2141,7 @@ fn update_mooncode_actions(
             if moonclaw_repair_available(model.moonclaw_daemon) {
               "Repairing the MoonClaw installation…"
             } else {
-              "Downloading, verifying, and installing MoonClaw…"
+              "Installing bundled Code assistance…"
             }
           } else {
             ""
@@ -2150,7 +2150,7 @@ fn update_mooncode_actions(
             if moonclaw_repair_available(model.moonclaw_daemon) {
               "Repairing MoonClaw…"
             } else {
-              "Downloading, verifying, and installing MoonClaw…"
+              "Installing bundled Code assistance…"
             }
           } else {
             "Starting MoonClaw…"
