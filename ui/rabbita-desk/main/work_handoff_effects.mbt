@@ -128,7 +128,7 @@ extern "js" fn handoff_clear_navigation() =
   #|   const guard=globalThis.__moondeskHumanRevisionUnload;if(guard&&globalThis.removeEventListener){globalThis.removeEventListener('beforeunload',guard);delete globalThis.__moondeskHumanRevisionUnload;}
   #|   if (!globalThis.location || !globalThis.history) return;
   #|   const url = new URL(globalThis.location.href);
-  #|   for (const key of ['work_task','work_run','work_mode','work_accepted','command','book_root','return_to','work_output_command','work_output_path','work_output_evidence']) url.searchParams.delete(key);
+  #|   for (const key of ['work_task','work_run','work_mode','work_accepted','work_title','command','book_root','return_to','work_output_command','work_output_path','work_output_evidence']) url.searchParams.delete(key);
   #|   globalThis.history.replaceState(null, '', url.href);
   #| }
 

@@ -1,4 +1,20 @@
 ///|
+test "delivery title is an escaped display hint and never changes captured work identity" {
+  let state = work_handoff_from_query(
+    handoff_desk_query() + "&work_title=Dissertation+%3Cscript%3E",
+  )
+  assert_eq(state.work_title, "Dissertation <script>")
+  assert_eq(state.target, work_handoff_from_query(handoff_desk_query()).target)
+  let model = { ..handoff_desk_ready(), work_handoff: state, }
+  let html = @rabbita.render_to_string(
+    @rabbita.static_cell(render_work_handoff(code_mode_test_dispatch, model)),
+  )
+  assert_true(html.contains("Dissertation &lt;script&gt;"))
+  assert_false(html.contains("Dissertation <script>"))
+  assert_true(html.contains("Return to MoonProj"))
+}
+
+///|
 fn handoff_desk_query() -> String {
   "?activity=code&session=S%2F%E4%B9%A6&command=C%3F0&book_root=%2Fbook%2F&work_task=T%26one&work_run=R&work_mode=inspect&return_to=https%3A%2F%2Fproj.example%2Fcustom%3Ftask%3DT%2526one%26keep%3D1%23run"
 }

@@ -1933,5 +1933,9 @@
   "code.terminal_output_added": "Selected output added to the conversation.",
   "code.terminal_found": "Found “{query}”",
   "code.terminal_not_found": "No match for “{query}”",
-  "flow.step_checking": "Checking same attempt…"
+  "flow.step_checking": "Checking same attempt…",
+  "work.edit_deliverable": "Edit deliverable",
+  "work.delivery_edit_loop": "Edit here, save your revision, then return to MoonProj to choose the delivery version.",
+  "work.return_delivery": "Return to MoonProj",
+  "work.refresh_work": "Refresh work"
 }

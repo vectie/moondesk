@@ -1933,5 +1933,9 @@
   "code.terminal_output_added": "所选输出已附加到对话。",
   "code.terminal_found": "已找到“{query}”",
   "code.terminal_not_found": "未找到“{query}”",
-  "flow.step_checking": "正在核对同一次尝试…"
+  "flow.step_checking": "正在核对同一次尝试…",
+  "work.edit_deliverable": "编辑交付稿",
+  "work.delivery_edit_loop": "在这里编辑并保存修订，返回 MoonProj 选择交付版本。",
+  "work.return_delivery": "返回 MoonProj 交付任务",
+  "work.refresh_work": "刷新工作记录"
 }

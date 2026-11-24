@@ -24,6 +24,7 @@ struct WorkHandoffCanonical {
 ///|
 struct WorkHandoffState {
   target : WorkHandoffTarget?
+  work_title : String
   generation : Int32
   phase : String
   message : String
@@ -61,6 +62,7 @@ enum WorkHandoffMsg {
 fn empty_work_handoff() -> WorkHandoffState {
   {
     target: None,
+    work_title: "",
     generation: 0,
     phase: "inactive",
     message: "",
@@ -138,6 +140,7 @@ fn work_handoff_from_query(query : String) -> WorkHandoffState {
   {
     ..empty_work_handoff(),
     target: Some(target),
+    work_title: handoff_text(json, "work_title"),
     output_hint,
     human_revision: work_human_revision_restore(
       target,
@@ -252,7 +255,7 @@ extern "js" fn work_handoff_query_json(query : String) -> String =
   #| query => {
   #|   const params = new URLSearchParams(query), out = {};
   #|   out.present = ['work_task','work_run','work_mode','command','book_root','return_to'].some(key => params.has(key)) ? 'yes' : 'no';
-  #|   for (const key of ['work_task','work_run','session','command','book_root','return_to','work_mode','work_accepted','work_output_command','work_output_path','work_output_evidence']) out[key] = params.get(key) || '';
+  #|   for (const key of ['work_task','work_run','session','command','book_root','return_to','work_mode','work_accepted','work_output_command','work_output_path','work_output_evidence','work_title']) out[key] = params.get(key) || '';
   #|   return JSON.stringify(out);
   #| }
 
@@ -267,8 +270,3 @@ extern "js" fn handoff_safe_return(value : String, task : String) -> String =
   #| (value, task) => {
   #|   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && url.searchParams.get('task') === task ? url.href : ''; } catch (_) { return ''; }
   #| }
-
-///|
-#cfg(target="js")
-extern "js" fn handoff_return_host(value : String) -> String =
-  #| value => { try { return new URL(value).host; } catch (_) { return ''; } }

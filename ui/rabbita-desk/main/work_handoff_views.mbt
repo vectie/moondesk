@@ -32,21 +32,33 @@ fn render_work_handoff(
         [
           h2(
             if state.human_revision.enabled && !(state.output_hint is Null) {
-              "MoonProj work · human-edited output"
+              "Edit deliverable"
             } else if state.continuation.enabled {
               "MoonProj work · fresh human follow-up"
             } else {
               "MoonProj work · inspection only"
             },
           ),
+          if state.work_title.is_empty() {
+            @html.nothing
+          } else {
+            p(
+              attrs=@html.Attrs::build().data_set("i18n-scope", "content"),
+              state.work_title,
+            )
+          },
+          if state.human_revision.enabled && !(state.output_hint is Null) {
+            p(
+              attrs=@html.Attrs::build().data_set(
+                "i18n", "work.delivery_edit_loop",
+              ),
+              "Edit here, save your revision, then return to MoonProj to choose the delivery version.",
+            )
+          } else {
+            @html.nothing
+          },
           p(state.message),
           render_work_human_revision_pending(dispatch, state),
-          p(
-            "Task: " +
-            target.task_id +
-            " · Original command: " +
-            target.command_id,
-          ),
           details(class="technical-details", [
             summary("Work identity and navigation"),
             p("MoonProj task / run: " + target.task_id + " / " + target.run_id),
@@ -72,8 +84,10 @@ fn render_work_handoff(
           } else {
             a(
               href=return_url,
-              attrs=@html.Attrs::build().rel("noreferrer"),
-              "Return to MoonProj · " + handoff_return_host(return_url),
+              attrs=@html.Attrs::build()
+                .rel("noreferrer")
+                .data_set("i18n", "work.return_delivery"),
+              "Return to MoonProj",
             )
           },
           button(
@@ -83,7 +97,7 @@ fn render_work_handoff(
               ["opening", "saving"].contains(state.human_revision.phase),
             ),
             on_click=dispatch(WorkHandoff(Resolve)),
-            "Refresh exact work",
+            "Refresh work",
           ),
           button(on_click=dispatch(WorkHandoff(Exit)), "Exit inspection"),
         ],
