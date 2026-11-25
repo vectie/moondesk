@@ -1,0 +1,167 @@
+/* MoonDesk purposeful focus-guiding motion & embedded-workspace refinement.
+   GPU-composited properties (transform, opacity) only; no smooth scrolling on
+   document/editor panes so long jumps to lazy images stay exact. */
+
+:root {
+  --md-ease: cubic-bezier(.22, 1, .36, 1);
+  --md-fast: 140ms;
+  --md-enter: 210ms;
+}
+
+/* 1. Clean embedded mode when MoonDesk is hosted inside MoonProj */
+html[data-embedded="moonproj"] .title-bar {
+  padding: 5px 12px;
+  gap: 6px 10px;
+  border-bottom: 1px solid var(--line);
+}
+html[data-embedded="moonproj"] .title-bar .title-copy {
+  display: none;
+}
+html[data-embedded="moonproj"] .title-bar .workspace-mode-toggle {
+  grid-column: 1 / span 2;
+}
+html[data-embedded="moonproj"] .title-bar .mode-button {
+  min-height: 30px;
+  padding: 4px 10px;
+}
+html[data-embedded="moonproj"] .title-bar > .command-button {
+  min-height: 30px;
+}
+
+/* 2. Sliding active mode indicator inside .workspace-mode-toggle */
+.title-bar .workspace-mode-toggle {
+  position: relative;
+}
+.md-mode-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 7px;
+  background: var(--bg-raised, #fff);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--ink) 12%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    transform 210ms var(--md-ease),
+    width 210ms var(--md-ease),
+    opacity 140ms ease;
+  will-change: transform, width;
+}
+.title-bar .workspace-mode-toggle .mode-button {
+  position: relative;
+  z-index: 1;
+}
+.title-bar .workspace-mode-toggle[data-indicator-ready="true"] .mode-button.active {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 3. Calm destination, inspector & disclosure transitions */
+.file-desk-main[data-md-entering="true"],
+.wiki-workspace[data-md-entering="true"],
+.mooncode-pane[data-md-entering="true"],
+.flow-workspace[data-md-entering="true"] {
+  animation: md-surface-enter var(--md-enter) var(--md-ease) both;
+}
+
+.desk-toolbar-disclosure[open] > .desk-disclosure-body,
+.source-file-actions[open] > .source-file-action-menu {
+  animation: md-popover-enter 160ms var(--md-ease) both;
+  transform-origin: top right;
+}
+
+.desk-inspector[open] > .desk-details {
+  animation: md-drawer-slide 200ms var(--md-ease) both;
+}
+
+.workspace-disclosure > summary::after,
+.desk-toolbar-disclosure > summary > .moon-icon:last-child,
+.desk-location-disclosure > summary > .moon-icon:last-child,
+.primary-nav-compact > summary > .moon-icon:last-child {
+  transition: transform 160ms var(--md-ease);
+}
+
+/* 4. Tactile row & active-selection focus cues */
+.desk-workspace-row,
+.desk-file-row,
+.desk-folder-row,
+.breadcrumb-chip,
+.moon-icon-button,
+.mooncode-session-row {
+  transition:
+    background-color var(--md-fast) ease,
+    border-color var(--md-fast) ease,
+    color var(--md-fast) ease,
+    transform var(--md-fast) var(--md-ease);
+}
+
+.desk-workspace-row.active,
+.mooncode-session-row.active {
+  position: relative;
+}
+.desk-workspace-row.active::before,
+.mooncode-session-row.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2.5px;
+  border-radius: 999px;
+  background: var(--accent, #087f8c);
+}
+
+.desk-file-row:not(.desk-file-header):active,
+.desk-workspace-row:active {
+  transform: scale(.995);
+}
+
+/* 5. Live running status beacon (calm, low-amplitude) */
+.service-status-dot.status-running,
+.service-status-dot.is-running,
+.mooncode-status-running .status-dot {
+  position: relative;
+  animation: md-live-pulse 2.4s ease-in-out infinite;
+}
+
+/* Keyframes */
+@keyframes md-surface-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes md-popover-enter {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes md-drawer-slide {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes md-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .62; transform: scale(1.18); }
+}
+
+/* Strict reduced-motion safety */
+@media (prefers-reduced-motion: reduce) {
+  .md-mode-indicator,
+  .file-desk-main,
+  .wiki-workspace,
+  .mooncode-pane,
+  .flow-workspace,
+  .desk-disclosure-body,
+  .source-file-action-menu,
+  .desk-details,
+  .desk-workspace-row,
+  .desk-file-row,
+  .desk-folder-row,
+  .breadcrumb-chip,
+  .moon-icon-button,
+  .mooncode-session-row,
+  .service-status-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}

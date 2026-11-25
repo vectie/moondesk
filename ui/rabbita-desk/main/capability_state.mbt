@@ -181,7 +181,7 @@ fn code_capability_title(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "Code assistance is ready"
     InstalledStopped => "Code assistance is stopped"
-    InstalledNeedsConfiguration => "Code assistance needs an account or model"
+    InstalledNeedsConfiguration => "Configure models in MoonGate"
     NotInstalled => "Code assistance is not installed"
     Misconfigured => "Code assistance needs configuration"
     UnsupportedPlatform => "Code assistance is not supported here"
@@ -234,7 +234,7 @@ fn code_capability_detail(state : CapabilityState) -> String {
     DetectedRunning => "You can start or continue Code conversations."
     InstalledStopped => "Start Code assistance before beginning a conversation."
     InstalledNeedsConfiguration =>
-      "Connect Codex, GitHub Copilot, or OpenRouter to finish setup."
+      "Open MoonGate to add a model provider and connect it to MoonDesk, then check again."
     NotInstalled => "Install Code assistance to use Code conversations."
     Misconfigured => "Review the configuration before using Code assistance."
     UnsupportedPlatform =>
@@ -281,7 +281,7 @@ fn code_capability_primary_action_label(
     NoPrimaryAction => ""
     StartCapability => "Start Code assistance"
     InstallCapability => "Install Code assistance"
-    ConfigureCapability => "Connect Codex"
+    ConfigureCapability => "Open MoonGate"
     OpenConfiguration => "Review configuration"
     RetryCapabilityCheck => "Check again"
   }

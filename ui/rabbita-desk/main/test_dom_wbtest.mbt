@@ -11,7 +11,22 @@ extern "js" fn test_dom_snapshot(
   loader : @js.Value,
   mount : (String) -> Unit,
 ) -> String =
-  #| (load, mount) => load('#test-dom').renderWithDOM(mount, true)
+  #| (load, mount) => load('#test-dom').renderWithDOM(id => {
+  #|   const win = globalThis.window;
+  #|   if (win) win.queueMicrotask = () => {};
+  #|   const doc = globalThis.document;
+  #|   const markers = [];
+  #|   if (doc) {
+  #|     const origCreateComment = doc.createComment.bind(doc);
+  #|     doc.createComment = text => {
+  #|       const node = origCreateComment(text);
+  #|       if (text === '[' || text === ']') markers.push(node);
+  #|       return node;
+  #|     };
+  #|   }
+  #|   mount(id);
+  #|   for (const node of markers) node.remove();
+  #| }, false)
 
 ///|
 fn render_test_dom(root : @rabbita.Cell) -> String {

@@ -7,8 +7,10 @@ export function boundedEditorPosition(position, text) {
   return { start: bound(position.start), end: bound(position.end), direction: position.direction || 'none', scrollTop: Math.max(0, Number(position.scrollTop) || 0), scrollLeft: Math.max(0, Number(position.scrollLeft) || 0) }
 }
 
+const safeLocalStorage = () => { try { return globalThis.localStorage } catch { return null } }
+
 export class SourcePositionMemory {
-  constructor(storage = globalThis.localStorage) { this.storage = storage; this.positions = new Map() }
+  constructor(storage = safeLocalStorage()) { this.storage = storage; this.positions = new Map() }
   key(workspace, path) { return `moondesk.source.position:${JSON.stringify([workspace, path])}` }
   save(workspace, path, position) {
     if (!workspace || !path) return

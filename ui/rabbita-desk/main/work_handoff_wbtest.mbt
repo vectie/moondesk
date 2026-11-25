@@ -6,7 +6,7 @@ test "delivery title is an escaped display hint and never changes captured work 
   assert_eq(state.work_title, "Dissertation <script>")
   assert_eq(state.target, work_handoff_from_query(handoff_desk_query()).target)
   let model = { ..handoff_desk_ready(), work_handoff: state, }
-  let html = @rabbita.render_to_string(
+  let html = render_test_dom(
     @rabbita.static_cell(render_work_handoff(code_mode_test_dispatch, model)),
   )
   assert_true(html.contains("Dissertation &lt;script&gt;"))
@@ -374,8 +374,7 @@ extern "js" fn handoff_install_history(query : String) -> @js.Value =
 ///|
 test "canonicalization effect preserves exact lineage and ignores newer navigation" {
   let ready = handoff_desk_ready()
-  let scheduler : RequestedSelectionTestScheduler = {
-    hooks: { url_request: None, url_changed: None, },
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
   }
   let target = ready.work_handoff.target.unwrap()
   let canonical = ready.work_handoff.canonical.unwrap()
@@ -397,8 +396,7 @@ test "canonicalization effect preserves exact lineage and ignores newer navigati
 
 ///|
 test "departure effects clear lineage and session on reload without replacing selected new chat" {
-  let scheduler : RequestedSelectionTestScheduler = {
-    hooks: { url_request: None, url_changed: None, },
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
   }
   for
     navigation in [

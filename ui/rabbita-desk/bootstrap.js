@@ -2,6 +2,9 @@ import './interface-locale.js'
 import '/styles.css'
 import '/styles/provider-connection.css'
 import '/styles/product-shell.css'
+import '/styles/product-shell-flow.css'
+import '/styles/product-shell-desk.css'
+import '/styles/product-shell-setup.css'
 import '/styles/mooncode-workflow.css'
 import '/styles/mooncode-tool-transcript.css'
 import '/styles/mooncode.css'
@@ -26,6 +29,8 @@ import '/styles/work-journey.css'
 import '/styles/specialist-builder.css'
 // Shared visual roles are last so new surfaces inherit the workspace standard.
 import '/styles/type-hierarchy.css'
+import '/styles/moondesk-motion.css'
+import '/styles/moondesk-code-clean.css'
 import {
   connectedWorkspaceUrl,
   parseProviderHandoff,
@@ -64,6 +69,7 @@ const startWorkspace = () => {
   void import('./mooncode-task-controls-runtime.js').then(module => module.installMoonCodeTaskControls())
   void import('./mooncode-calendar-runtime.js')
   void import('./mooncode-media-tools-runtime.js')
+  void import('./workspace-motion-runtime.js').then(module => module.installWorkspaceMotion())
   requestAnimationFrame(() => {
     void import('/main.js')
   })

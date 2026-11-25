@@ -1,6 +1,6 @@
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_agent_binding() -> @js.Promise =
+extern "js" fn browser_pick_agent_binding() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const input = document.createElement('input');
   #|   input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;

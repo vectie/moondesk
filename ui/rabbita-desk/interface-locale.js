@@ -28,12 +28,13 @@ const contentSelector = [
 ].join(',')
 
 function normalizedPreference(value) { return validPreferences.has(value) ? value : null }
+function readStoredPreference() { try { return localStorage.getItem(STORAGE) } catch { return null } }
+function readCookiePreference() { try { const cookie = document.cookie.match(new RegExp('(?:^|; )' + COOKIE + '=([^;]+)')); return cookie ? decodeURIComponent(cookie[1]) : null } catch { return null } }
 function selectedPreference() {
   const query = normalizedPreference(new URLSearchParams(location.search).get('locale'))
-  const cookie = document.cookie.match(new RegExp('(?:^|; )' + COOKIE + '=([^;]+)'))
+  const cookie = normalizedPreference(readCookiePreference())
   const name = window.name.startsWith(WINDOW_NAME_PREFIX) ? window.name.slice(WINDOW_NAME_PREFIX.length) : null
-  return query || (cookie && normalizedPreference(decodeURIComponent(cookie[1]))) ||
-    normalizedPreference(name) || normalizedPreference(localStorage.getItem(STORAGE)) || 'system'
+  return query || cookie || normalizedPreference(name) || normalizedPreference(readStoredPreference()) || 'system'
 }
 function selectedLocale() {
   const preference = selectedPreference()
@@ -42,9 +43,9 @@ function selectedLocale() {
 }
 function storeLocale(preference) {
   preference = normalizedPreference(preference) || 'system'
-  document.cookie = COOKIE + '=' + encodeURIComponent(preference) + '; Path=/; Max-Age=31536000; SameSite=Lax'
-  localStorage.setItem(STORAGE, preference)
-  window.name = WINDOW_NAME_PREFIX + preference
+  try { document.cookie = COOKIE + '=' + encodeURIComponent(preference) + '; Path=/; Max-Age=31536000; SameSite=Lax' } catch {}
+  try { localStorage.setItem(STORAGE, preference) } catch {}
+  try { window.name = WINDOW_NAME_PREFIX + preference } catch {}
   // An explicit choice must override a locale used in a shared/preview URL.
   const url = new URL(location.href)
   url.searchParams.delete('locale')

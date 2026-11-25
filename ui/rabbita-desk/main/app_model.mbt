@@ -64,6 +64,7 @@ struct Model {
   current_directory : String
   desk_location_input : String
   desk_filter_query : String
+  desk_show_hidden : Bool
   desk_back_stack : Array[String]
   desk_forward_stack : Array[String]
   entries : Array[@desk.DeskFileEntry]
@@ -706,6 +707,7 @@ enum Msg {
   SetDeskSort(DeskSortKey)
   SetDeskFilterQuery(String)
   SetDeskDensity(DeskDensity)
+  ToggleDeskShowHidden
   DeskKeyDown(String, Bool, Bool)
   DeskMouseDown(String, Bool, Bool)
   ClearDeskSelection

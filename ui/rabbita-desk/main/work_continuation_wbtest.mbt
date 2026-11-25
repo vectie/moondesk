@@ -128,9 +128,7 @@ test "operation is durably stored before any native POST and repeated click keep
     continuation_desk_ready(),
   )
   assert_eq(emitted.length(), 0)
-  let scheduler : RequestedSelectionTestScheduler = {
-    hooks: { url_request: None, url_changed: None, },
-  }
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
   @cmd.Scheduler::add(scheduler, save)
   assert_eq(emitted.length(), 1)
   let body = saving.work_handoff.continuation.operation
@@ -665,9 +663,7 @@ test "definitive not sent response retains validation error and allows edit only
     ),
     submitted,
   )
-  let scheduler : RequestedSelectionTestScheduler = {
-    hooks: { url_request: None, url_changed: None, },
-  }
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
   @cmd.Scheduler::add(scheduler, effect)
   assert_false(rejected.work_handoff.continuation.admission_possible)
   assert_false(work_continuation_restore(target, true).admission_possible)

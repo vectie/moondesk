@@ -99,72 +99,70 @@ test "source literal replacement shares ordinary edit history and current select
 }
 
 ///|
-test "source literal replacement travels through save command and reopens persisted text" {
-  @js.async_test(async fn() {
-    let fixture = source_save_http_fixture()
-    let state = update_source_pane(
-      update_source_pane(
-        literal_search_test_state("cat CAT cat"),
-        FindQuery("cat"),
-      ),
-      FindReplacement("dog"),
-    )
-    let cell = Ref({ ..init_model(), source_pane: state, })
-    source_save_action_send(fixture, cell, SourcePane(ReplaceAll))
-    assert_eq(cell.val.source_pane.draft, "dog CAT dog")
-    assert_eq(source_save_request_count(fixture), 0)
-    source_save_action_send(fixture, cell, SourcePane(Save))
-    guard @json.parse(source_save_http_requests(fixture)) is Array(requests) else {
-      fail("Expected save request")
-    }
-    assert_eq(handoff_text(requests[0], "method"), "POST")
-    assert_eq(
-      handoff_text(requests[0], "url"),
-      @desk.workspace_endpoint_url("book-demo", "source"),
-    )
-    assert_eq(
-      handoff_field(requests[0], "body"),
-      (
-        {
-          "path": "src/main.mbt",
-          "content": "dog CAT dog",
-          "expected_content": "cat CAT cat",
-        } : Json),
-    )
-    let saving = cell.val.source_pane
-    source_save_action_send(fixture, cell, SourcePane(ReplaceNext))
-    assert_true(cell.val.source_pane == saving)
-    ignore(
-      source_save_http_resolve(
-        fixture,
-        0,
-        200,
-        source_save_test_success("dog CAT dog").stringify(),
-      ).wait(),
-    )
-    assert_false(source_pane_dirty(cell.val.source_pane))
-    source_save_action_send(
+async test "source literal replacement travels through save command and reopens persisted text" {
+  let fixture = source_save_http_fixture()
+  let state = update_source_pane(
+    update_source_pane(
+      literal_search_test_state("cat CAT cat"),
+      FindQuery("cat"),
+    ),
+    FindReplacement("dog"),
+  )
+  let cell = Ref({ ..init_model(), source_pane: state, })
+  source_save_action_send(fixture, cell, SourcePane(ReplaceAll))
+  assert_eq(cell.val.source_pane.draft, "dog CAT dog")
+  assert_eq(source_save_request_count(fixture), 0)
+  source_save_action_send(fixture, cell, SourcePane(Save))
+  guard @json.parse(source_save_http_requests(fixture)) is Array(requests) else {
+    fail("Expected save request")
+  }
+  assert_eq(handoff_text(requests[0], "method"), "POST")
+  assert_eq(
+    handoff_text(requests[0], "url"),
+    @desk.workspace_endpoint_url("book-demo", "source"),
+  )
+  assert_eq(
+    handoff_field(requests[0], "body"),
+    (
+      {
+        "path": "src/main.mbt",
+        "content": "dog CAT dog",
+        "expected_content": "cat CAT cat",
+      } : Json),
+  )
+  let saving = cell.val.source_pane
+  source_save_action_send(fixture, cell, SourcePane(ReplaceNext))
+  assert_true(cell.val.source_pane == saving)
+  ignore(
+    source_save_http_resolve(
       fixture,
-      cell,
-      SourcePane(CloseBuffer("src/main.mbt")),
-    )
-    assert_true(cell.val.source_pane.content is Empty)
-    source_save_action_send(
-      fixture,
-      cell,
-      SourcePane(RequestSource("src/main.mbt")),
-    )
-    assert_eq(source_save_request_count(fixture), 2)
-    let read = cell.val.source_pane
-    assert_true(read.content is Loading)
-    let preview = @desk.preview(
-      @desk.file_entry(workspace_id="book-demo", path="src/main.mbt"),
-      body="dog CAT dog",
-    )
-    ignore(
-      source_save_http_resolve(fixture, 1, 200, preview.to_json().stringify()).wait(),
-    )
-    assert_eq(cell.val.source_pane.draft, "dog CAT dog")
-    assert_false(source_pane_dirty(cell.val.source_pane))
-  })
+      0,
+      200,
+      source_save_test_success("dog CAT dog").stringify(),
+    ).wait(),
+  )
+  assert_false(source_pane_dirty(cell.val.source_pane))
+  source_save_action_send(
+    fixture,
+    cell,
+    SourcePane(CloseBuffer("src/main.mbt")),
+  )
+  assert_true(cell.val.source_pane.content is Empty)
+  source_save_action_send(
+    fixture,
+    cell,
+    SourcePane(RequestSource("src/main.mbt")),
+  )
+  assert_eq(source_save_request_count(fixture), 2)
+  let read = cell.val.source_pane
+  assert_true(read.content is Loading)
+  let preview = @desk.preview(
+    @desk.file_entry(workspace_id="book-demo", path="src/main.mbt"),
+    body="dog CAT dog",
+  )
+  ignore(
+    source_save_http_resolve(fixture, 1, 200, preview.to_json().stringify()).wait(),
+  )
+  assert_eq(cell.val.source_pane.draft, "dog CAT dog")
+  assert_false(source_pane_dirty(cell.val.source_pane))
 }

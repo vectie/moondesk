@@ -56,7 +56,7 @@ export function renderTaskSchedules(origin, { el, onEdit, onOpenRun, onChanged, 
       const data = await response.json()
       if (!response.ok || !Array.isArray(data.schedules)) throw new Error(data.message || 'This schedule could not be changed. Try again.')
       view.schedules = data.schedules
-      if (action === 'delete') { const bindings = taskScheduleBindings(); delete bindings[schedule.id]; localStorage.setItem(bindingKey, JSON.stringify(bindings)) }
+      if (action === 'delete') { const bindings = taskScheduleBindings(); delete bindings[schedule.id]; try { localStorage.setItem(bindingKey, JSON.stringify(bindings)) } catch {} }
     } catch (error) { view.error = error.message }
     view.busy = false; draw(); onChanged?.()
   }
@@ -179,7 +179,7 @@ export function renderTaskSchedule(origin, { el, onClose, onSaved }) {
       if (!response.ok || !Array.isArray(result.schedules)) throw new Error(response.status === 503 ? 'Start MoonTown to schedule this task. Your draft is kept.' : result.message || 'This schedule could not be saved. Try again.')
       const bindings = taskScheduleBindings()
       bindings[payload.id] = { workspaceId: origin.workspaceId, conversationId: origin.thread?.id || '', kind: origin.bundle.conversation_kind || '', title: origin.bundle.title, prompt: draft.prompt, outputPaths: origin.bundle.artifacts.map(file => file.path) }
-      localStorage.setItem(bindingKey, JSON.stringify(bindings))
+      try { localStorage.setItem(bindingKey, JSON.stringify(bindings)) } catch {}
       scheduleViews.set(origin.workspaceId, { schedules: result.schedules, loaded: true, busy: false, error: '' })
       origin.saved = payload.id
       status.textContent = 'Scheduled. New results will appear in this task.'; submit.textContent = 'Scheduled'

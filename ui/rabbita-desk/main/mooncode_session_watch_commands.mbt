@@ -12,7 +12,7 @@ extern "js" fn browser_watch_mooncode_session(
   url : String,
   generation : Int32,
   session_id : String,
-) -> @js.Promise =
+) -> @js.Promise[@js.Value] =
   #| async (url, generation, sessionId) => {
   #|   const previous = window.__moondeskMoonCodeWatch;
   #|   if (previous?.controller instanceof AbortController) {

@@ -85,6 +85,8 @@ fn update_workspace_surface_actions(
       desk_filter_query_action(dispatch, model, query)
     SetDeskDensity(density) =>
       (@rabbita.none, { ..model, desk_density: density, })
+    ToggleDeskShowHidden =>
+      (@rabbita.none, { ..model, desk_show_hidden: !model.desk_show_hidden, })
     DeskKeyDown(key, shift, accel) =>
       desk_keydown_action(dispatch, key, shift, accel, model)
     DeskMouseDown(path, shift, accel) =>

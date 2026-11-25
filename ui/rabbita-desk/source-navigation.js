@@ -18,8 +18,10 @@ export function parseSourceLocation(value, text) {
   return { line, column, offset: sourceOffset(text, line, column) }
 }
 
+const safeLocalStorage = () => { try { return globalThis.localStorage } catch { return null } }
+
 export class SourceNavigation {
-  constructor(limit = 50, storage = globalThis.localStorage) { this.limit = limit; this.workspace = ''; this.back = []; this.forward = []; this.pending = null; this.storage = storage }
+  constructor(limit = 50, storage = safeLocalStorage()) { this.limit = limit; this.workspace = ''; this.back = []; this.forward = []; this.pending = null; this.storage = storage }
   save() {
     if (!this.workspace) return
     const location = ({ path, start, end, direction, scrollTop, scrollLeft, line, column }) => ({ path, start, end, direction, scrollTop, scrollLeft, line, column })

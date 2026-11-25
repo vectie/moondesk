@@ -212,79 +212,75 @@ extern "js" fn return_http_requests() -> String =
 extern "js" fn return_http_resolve(
   index : Int32,
   payload : String,
-) -> @js.Promise =
+) -> @js.Promise[@js.Value] =
   #| (index, payload) => {
   #|   globalThis.__returnReceiptHttp.requests[index].resolve({ ok: true, status: 200, text: () => Promise.resolve(payload) });
   #|   return new Promise(resolve => setTimeout(resolve, 0));
   #| }
 
 ///|
-test "actual recovery effect uses only the receipt endpoint and rejects mismatched readback" {
-  @js.async_test(async fn() {
-    return_http_install()
-    defer return_http_restore()
-    let scheduler : RequestedSelectionTestScheduler = {
-      hooks: { url_request: None, url_changed: None, },
-    }
-    let receipt = sandbox_ui_test_receipt()
-    let key = receipt.review_key()
-    let base = {
-      ..init_model(),
-      mooncode_sandbox_review_key: key,
-      mooncode_sandbox_selected_paths: ["src/main.mbt"],
-    }
-    let cell = Ref(base)
-    fn dispatch(message : Msg) -> @rabbita.Cmd {
-      let (command, next) = update_mooncode_session_actions(
-        dispatch,
-        message,
-        cell.val,
-      )
-      cell.val = next
-      @cmd.Scheduler::add(scheduler, command)
-      @rabbita.none
-    }
-    ignore(dispatch(RecoverMoonCodeSandboxReceipt(receipt)))
-    ignore(dispatch(PromoteMoonCodeSandboxReceipt(receipt)))
-    guard @json.parse(return_http_requests()) is [Object(request)] else {
-      fail("Expected exactly one recovery request")
-    }
-    assert_eq(
-      request.get("url"),
-      Some("/api/mooncode/execution-sandbox/promotion-receipt"),
+async test "actual recovery effect uses only the receipt endpoint and rejects mismatched readback" {
+  return_http_install()
+  defer return_http_restore()
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let receipt = sandbox_ui_test_receipt()
+  let key = receipt.review_key()
+  let base = {
+    ..init_model(),
+    mooncode_sandbox_review_key: key,
+    mooncode_sandbox_selected_paths: ["src/main.mbt"],
+  }
+  let cell = Ref(base)
+  fn dispatch(message : Msg) -> @rabbita.Cmd {
+    let (command, next) = update_mooncode_session_actions(
+      dispatch,
+      message,
+      cell.val,
     )
-    assert_eq(request.get("method"), Some("POST"))
-    assert_eq(
-      request.get("body"),
-      Some(
-        mooncode_sandbox_promotion_request(receipt, ["src/main.mbt"])
-        .unwrap()
-        .to_json(),
-      ),
-    )
-    let applied = sandbox_ui_promotion_result(
-      receipt,
-      "applied-durable",
-      true,
-      ["src/main.mbt"],
-      [],
-      false,
-      "",
-    )
-    ignore(return_http_resolve(0, applied.to_json().stringify()).wait())
-    assert_false(cell.val.mooncode_sandbox_promotion_pending)
-    assert_true(cell.val.mooncode_sandbox_locked_review_keys.contains(key))
-    assert_true(
-      cell.val.mooncode_sandbox_promotion_status.contains("src/main.mbt"),
-    )
-    cell.val = base
-    ignore(dispatch(RecoverMoonCodeSandboxReceipt(receipt)))
-    let wrong = { ..applied, command_digest: "f".repeat(64), }
-    ignore(return_http_resolve(1, wrong.to_json().stringify()).wait())
-    assert_false(cell.val.mooncode_sandbox_promotion_pending)
-    assert_false(cell.val.mooncode_sandbox_locked_review_keys.contains(key))
-    assert_true(
-      cell.val.mooncode_sandbox_promotion_status.contains("did not match"),
-    )
-  })
+    cell.val = next
+    @cmd.Scheduler::add(scheduler, command)
+    @rabbita.none
+  }
+  ignore(dispatch(RecoverMoonCodeSandboxReceipt(receipt)))
+  ignore(dispatch(PromoteMoonCodeSandboxReceipt(receipt)))
+  guard @json.parse(return_http_requests()) is [Object(request)] else {
+    fail("Expected exactly one recovery request")
+  }
+  assert_eq(
+    request.get("url"),
+    Some("/api/mooncode/execution-sandbox/promotion-receipt"),
+  )
+  assert_eq(request.get("method"), Some("POST"))
+  assert_eq(
+    request.get("body"),
+    Some(
+      mooncode_sandbox_promotion_request(receipt, ["src/main.mbt"])
+      .unwrap()
+      .to_json(),
+    ),
+  )
+  let applied = sandbox_ui_promotion_result(
+    receipt,
+    "applied-durable",
+    true,
+    ["src/main.mbt"],
+    [],
+    false,
+    "",
+  )
+  ignore(return_http_resolve(0, applied.to_json().stringify()).wait())
+  assert_false(cell.val.mooncode_sandbox_promotion_pending)
+  assert_true(cell.val.mooncode_sandbox_locked_review_keys.contains(key))
+  assert_true(
+    cell.val.mooncode_sandbox_promotion_status.contains("src/main.mbt"),
+  )
+  cell.val = base
+  ignore(dispatch(RecoverMoonCodeSandboxReceipt(receipt)))
+  let wrong = { ..applied, command_digest: "f".repeat(64), }
+  ignore(return_http_resolve(1, wrong.to_json().stringify()).wait())
+  assert_false(cell.val.mooncode_sandbox_promotion_pending)
+  assert_false(cell.val.mooncode_sandbox_locked_review_keys.contains(key))
+  assert_true(
+    cell.val.mooncode_sandbox_promotion_status.contains("did not match"),
+  )
 }

@@ -2,7 +2,7 @@
 /// A file picker reads local bytes only. No network call or workspace path is
 /// involved until the user explicitly prepares the local package.
 #cfg(target="js")
-extern "js" fn browser_pick_accepted_human_result() -> @js.Promise =
+extern "js" fn browser_pick_accepted_human_result() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const input = document.createElement('input');
   #|   input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
@@ -44,7 +44,7 @@ extern "js" fn browser_pick_accepted_human_result() -> @js.Promise =
 extern "js" fn browser_validate_accepted_human_result(
   raw_base64 : String,
   filename : String,
-) -> @js.Promise =
+) -> @js.Promise[@js.Value] =
   #| async (rawBase64, filename) => {
   #|   try {
   #|     const exact = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).sort().join('|') === keys.slice().sort().join('|');

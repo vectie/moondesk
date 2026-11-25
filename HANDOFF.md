@@ -3,6 +3,50 @@
 Read this with `AGENTS.md` before starting work. Record concrete pitfalls and
 their resolution here; keep task-specific evidence in `docs/`.
 
+## Pure-UI audit fixes: MoonGate links, storage guards & Code title clamping — 2026-11-25
+
+- Added a direct **Open MoonGate** link (`http://127.0.0.1:15721/ui/rabbita#providers`, `data-testid="moonclaw-open-moongate"`) inside `Coding setup → Models` (`mooncode-setup-runtime.js`).
+- Replaced unguarded `globalThis.localStorage` default parameters and writes in `review-findings.js`, `source-navigation.js`, `source-position-memory.js`, `interface-locale.js`, and `task-schedule-runtime.js` with `try/catch` guards.
+- Added `moonsuite:navigate` handoff in `workspace-motion-runtime.js` so embedded Wiki links targeting MoonProj (`127.0.0.1:4173`) navigate the parent host instead of nesting iframes, and clamped verbose Code session titles in `styles/moondesk-code-clean.css`.
+- Verified live via Vite build + `test:bundle` (3/3) + `test:i18n` (20/20) + `test:dom` (8/8) + `workspace-motion-runtime.test.mjs` (4/4), installed into `/Applications/MoonDesk.app`, strictly signed, and verified `moongate/glm-5.3.flash` auto-discovered & selected in Code mode.
+
+## Code assistance setup routes users to MoonGate — 2026-11-25
+
+Replaced stale direct-provider onboarding copy in Code assistance with truthful MoonGate-first guidance:
+- **Root cause**: MoonDesk Code routes models strictly through `moondesk → moonclaw → moongate` (`moongate/*` prefix), yet `InstalledNeedsConfiguration` prompted users to "Connect Codex, GitHub Copilot, or OpenRouter".
+- **Fixes**:
+  - Updated `capability_state.mbt` and `locales/{en-US,zh-Hans}.json` (`Configure models in MoonGate` / `请在 MoonGate 中配置模型`, primary action `Open MoonGate` / `打开 MoonGate`).
+  - Updated `render_moonclaw_first_run_setup` (`desk_code_assistance_views.mbt`) to present **Open MoonGate** (`http://127.0.0.1:15721/ui/rabbita#bindings`, `data-testid="moonclaw-open-moongate"`) and **Check setup** upfront, while moving legacy direct Codex/Copilot/OpenRouter setup inside a collapsed `<details>` (`Direct provider sign-in (advanced)` / `直接连接模型账户（高级）`).
+  - Wired `workspace-motion-runtime.js` to post `moonsuite:open-url` to the parent host when embedded inside MoonProj's iframe.
+- **Verification**: `vectie/moondesk-rabbita/main` (845/845), Vite build, `test:bundle` (3/3), `test:i18n` (20/20), `test:dom` (8/8), and `workspace-motion-runtime.test.mjs` (4/4) all passed. Installed into `/Applications/MoonDesk.app` (assets first, `index.html` last), strictly signed, and verified live on `http://127.0.0.1:4201/`.
+
+## Desk dot-folder hiding & Code page zero-reflow layer cleanup — 2026-11-25
+
+Decluttered the Desk file browser/sidebar and eliminated Code page layer collisions & flashing error box resizes:
+- **Desk dot-folder hiding & sidebar declutter**:
+  - Added `desk_show_hidden : Bool` (defaults to `false`) and `ToggleDeskShowHidden` across `app_model.mbt`, `app_initial_model.mbt`, `app_update.mbt`, and `app_update_workspace_surface_actions.mbt`.
+  - Updated `filtered_desk_entries` (`desk_file_browser_views.mbt`) and `render_desk_folder_outline` (`desk_sidebar_tools_views.mbt`) so dot-files and dot-folders (`.moonsuite`, `.git`, `.DS_Store`, `raw/.moonproj-deliveries`, etc.) are hidden by default until explicitly toggled in the `View` (`视图`) menu (`data-testid="desk-toggle-hidden"`, localized via `desk.show_hidden_files` / `desk.hide_hidden_files` in both `en-US.json` and `zh-Hans.json` with hidden item count).
+  - Collapsed noisy secondary Desk sidebar sections (`Quick Access` and `Directory`) into `.workspace-disclosure` panels in `desk_mode_views.mbt`.
+- **Code page layer hierarchy & zero-reflow status banners**:
+  - Added `styles/moondesk-code-clean.css` (imported last in `bootstrap.js`) so `.mooncode-composer-status` and `.mooncode-guidance-feedback` float as solid opaque status pills above `.mooncode-composer` (`position: absolute; bottom: calc(100% + 6px)`), and active-session `.mooncode-runtime-setup` banners float cleanly at the top of `.mooncode-chat-surface` instead of reflowing normal flex layout during polling.
+  - Established a single explicit `z-index` layering scale on `.mooncode-center` (`isolation: isolate`, unified borderless `.code-workbench-heading` at `z-index: 20`, popovers at `45`, setup drawer at `70`, heading tooltips at `90`).
+- **Verification**: `moon test --target js -p vectie/moondesk-rabbita/main` (**845/845 passed**, including new `desk_hidden_files_wbtest.mbt`), Vite production build, `test:bundle` (3/3), `test:i18n` (20/20), `test:dom` (8/8), and `workspace-motion-runtime.test.mjs` (4/4) all passed. Installed into `/Applications/MoonDesk.app` (assets before `index.html`), strictly signed, and verified live on `http://127.0.0.1:4201/`.
+
+## Modular Rabbita UI, embedded MoonProj chrome & focus motion — 2026-11-25
+
+Modularized oversized MoonDesk UI files, upgraded `ui/rabbita-desk` to `moon 0.1.20261119` + `rabbita@0.17.0`, and added purposeful focus-guiding motion plus embedded-in-MoonProj chrome adaptation:
+- **Modularization**:
+  - Split `main/desk_mode_views.mbt` (2,910 lines) into 6 modules (`desk_mode_views.mbt`, `desk_code_assistance_views.mbt`, `desk_sidebar_tools_views.mbt`, `desk_file_browser_views.mbt`, `desk_entry_sorting.mbt`, `desk_entry_inspector_views.mbt`).
+  - Split `main/git_repository_views.mbt` (2,499 lines) into 4 modules (`git_repository_views.mbt`, `git_github_inline_review_views.mbt`, `git_github_context_views.mbt`, `git_diff_panel_views.mbt`).
+  - Split `main/mooncode_views.mbt` (1,905 lines) into 3 modules (`mooncode_views.mbt`, `mooncode_center_views.mbt`, `mooncode_editor_setup_views.mbt`).
+  - Split `styles/product-shell.css` (4,467 lines) into 4 cascade-preserving CSS modules (`product-shell.css`, `product-shell-flow.css`, `product-shell-desk.css`, `product-shell-setup.css`).
+- **Focus-guiding motion & embedded mode**:
+  - Added `styles/moondesk-motion.css` and `workspace-motion-runtime.js` (+ `workspace-motion-runtime.test.mjs`), wired into `bootstrap.js`: detects iframe hosting (`html[data-embedded="moonproj"]`) to hide duplicate outer brand chrome when embedded inside MoonProj, adds a GPU-composited sliding indicator on `.workspace-mode-toggle`, calm destination/drawer/popover entrance transitions, tactile row & active-bar focus cues, and strict `@media (prefers-reduced-motion: reduce)` safety (no smooth scrolling on document/editor panes).
+- **Validation & install**:
+  - `moon test --target js -p vectie/moondesk-rabbita/main`: **844/844 passed** (0 errors).
+  - Vite production build (`npm run build`): succeeded; `test:bundle`, `test:i18n` (20/20), `test:dom` (8/8), and `workspace-motion-runtime.test.mjs` (3/3) all passed.
+  - Backed up prior UI assets to `/tmp/moondesk-app-backup-20261125/main/`, installed updated assets (assets first, `index.html` last) into `/Applications/MoonDesk.app/Contents/Resources/lepusa/assets/main/`, strictly ad-hoc signed `/Applications/MoonDesk.app`, and verified live via MoonProj auto-wake on `http://127.0.0.1:4201/`.
+
 ## Wiki Word document editing, 2026-11-25
 
 DOCX belongs in Wiki, including old Code deep links. The normal surface is the

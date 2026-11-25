@@ -57,11 +57,11 @@ test "capability copy is exact for every state" {
   )
   assert_eq(
     code_capability_title(InstalledNeedsConfiguration),
-    "Code assistance needs an account or model",
+    "Configure models in MoonGate",
   )
   assert_eq(
     code_capability_detail(InstalledNeedsConfiguration),
-    "Connect Codex, GitHub Copilot, or OpenRouter to finish setup.",
+    "Open MoonGate to add a model provider and connect it to MoonDesk, then check again.",
   )
   assert_eq(
     code_capability_title(NotInstalled),
@@ -131,7 +131,7 @@ test "every capability primary action and label is exact" {
   )
   assert_eq(
     code_capability_primary_action_label(ConfigureCapability),
-    "Connect Codex",
+    "Open MoonGate",
   )
   assert_eq(
     code_capability_primary_action_label(OpenConfiguration),
@@ -457,7 +457,7 @@ test "platform evidence remains optional and technical" {
   assert_true(
     capability_platform_technical_detail(unsupported)
     is Some(
-      "Platform: unsupported; architecture: unsupported; supported: false"
+      "Platform: unsupported; architecture: unsupported; supported: false",
     ),
   )
 }
@@ -861,7 +861,7 @@ fn assert_only_home_code_action(
   for
     label in [
       "Start Code assistance", "Install Code assistance", "Repair Code assistance",
-      "Connect Codex", "Review configuration", "Check again",
+      "Open MoonGate", "Review configuration", "Check again",
     ] {
     assert_eq(markup.contains(">\{label}<"), label == expected)
   }
@@ -977,8 +977,8 @@ test "Home Code assistance renders every evidence state and action allowlist" {
         moonclaw_daemon: Some(capability_test_daemon(false, false, Some(true))),
       },
       "installed-needs-configuration",
-      "Code assistance needs an account or model",
-      "Connect Codex",
+      "Configure models in MoonGate",
+      "Open MoonGate",
     ),
     (
       {
@@ -1182,6 +1182,8 @@ test "first-run setup renders provider handoffs and an advanced secret input" {
   assert_true(
     initial_markup.contains("data-testid=\"code-assistance-first-run\""),
   )
+  assert_true(initial_markup.contains("data-testid=\"moonclaw-open-moongate\""))
+  assert_true(initial_markup.contains(">Open MoonGate<"))
   assert_true(initial_markup.contains(">Connect Codex<"))
   assert_true(initial_markup.contains(">Connect GitHub Copilot<"))
   assert_true(initial_markup.contains(">Use OpenRouter API key<"))
@@ -1269,7 +1271,7 @@ test "Code setup renders every non-ready typed state including unavailable" {
         moonclaw_daemon: Some(capability_test_daemon(false, false, Some(true))),
       },
       "installed-needs-configuration",
-      "Connect Codex",
+      "Open MoonGate",
     ),
     (
       {

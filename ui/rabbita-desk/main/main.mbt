@@ -96,16 +96,26 @@ extern "js" fn browser_set_workspace_context(
   #| }
 
 ///|
-#warnings("-alert_unstable")
+priv struct AppModel(Model)
+
+///|
+impl Eq for AppModel with equal(_, _) {
+  false
+}
+
+///|
 fn main {
-  let (dispatch, cell) = @rabbita.cell_with_emit(model=init_model(), update~, view=(
-    dispatch,
-    model,
-  ) => render_app(dispatch, model))
-  let app = @rabbita.new(cell)
-  // Queue the first message after mount initialization. Running the message
-  // synchronously from `with_init` can start the command batch before the
-  // root cell has completed its first runtime initialization.
-  app.with_init(@rabbita.delay(dispatch(Bootstrap), 0))
+  let app = @rabbita.new(() => {
+    let (model, dispatch) = @rabbita.create_state_with_init(
+      init=dispatch => {
+        (AppModel(init_model()), @rabbita.delay(dispatch(Bootstrap), 0))
+      },
+      update=(model, msg, dispatch) => {
+        let (cmd, next) = update(dispatch, msg, model.0)
+        (AppModel(next), cmd)
+      },
+    )
+    model.map(model => render_app(dispatch, model.0))
+  })
   app.mount("app")
 }

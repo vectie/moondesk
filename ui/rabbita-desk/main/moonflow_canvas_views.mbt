@@ -260,8 +260,8 @@ fn render_flow_canvas_node(
             dispatch(
               FlowNodeDragStart(
                 item.work_item_id,
-                event.get_client_x(),
-                event.get_client_y(),
+                event.get_client_x().to_int(),
+                event.get_client_y().to_int(),
               ),
             )
           })
@@ -544,10 +544,20 @@ fn render_flow_canvas_viewport(
       })
       .on_mousedown(fn(event) {
         event.prevent_default()
-        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
+        dispatch(
+          FlowPanStart(
+            event.get_client_x().to_int(),
+            event.get_client_y().to_int(),
+          ),
+        )
       })
       .on_mousemove(fn(event) {
-        dispatch(FlowPanMove(event.get_client_x(), event.get_client_y()))
+        dispatch(
+          FlowPanMove(
+            event.get_client_x().to_int(),
+            event.get_client_y().to_int(),
+          ),
+        )
       })
       .on_mouseup(fn(_event) { dispatch(FlowPanEnd) })
       .on_mouseleave(fn(_event) { dispatch(FlowPanEnd) }),

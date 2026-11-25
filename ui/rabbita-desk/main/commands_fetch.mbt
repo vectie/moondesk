@@ -221,7 +221,7 @@ struct MoonFlowBrowserResponse {
 extern "js" fn browser_import_selected_moonflow(
   url : String,
   workspace_id : String,
-) -> @js.Promise =
+) -> @js.Promise[@js.Value] =
   #| async (url, workspaceId) => {
   #|   const controller = new AbortController();
   #|   const timeout = setTimeout(() => controller.abort(), 30000);

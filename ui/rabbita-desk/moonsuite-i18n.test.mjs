@@ -16,7 +16,9 @@ const source = `const english = ${JSON.stringify(englishCatalog)};\nconst chines
 const capabilitySources = [
   "main/capability_state.mbt",
   "main/desk_mode_views.mbt",
+  "main/desk_code_assistance_views.mbt",
   "main/mooncode_views.mbt",
+  "main/mooncode_editor_setup_views.mbt",
 ].map((path) =>
   fs.readFileSync(new URL(path, import.meta.url), "utf8"),
 ).join("\n");
@@ -326,10 +328,11 @@ test("Code runtime messages use complete translations instead of matching fragme
   );
   assert.equal(context.messageForTest("code.moonclaw_not_installed"), "尚未安装 MoonClaw");
   assert.equal(context.messageForTest("code.runtime_unavailable"), "代码运行环境不可用");
-  const sourceText = fs.readFileSync(
-    new URL("main/mooncode_views.mbt", import.meta.url),
-    "utf8",
-  );
+  const sourceText = [
+    "main/mooncode_views.mbt",
+    "main/mooncode_center_views.mbt",
+    "main/mooncode_editor_setup_views.mbt",
+  ].map((p) => fs.readFileSync(new URL(p, import.meta.url), "utf8")).join("\n");
   assert.match(sourceText, /"MoonClaw is not installed" => "code\.moonclaw_not_installed"/);
   assert.match(sourceText, /mooncode_capability_title_i18n_key/);
 });
@@ -348,8 +351,8 @@ test("ordinary Code assistance capability copy translates in Simplified Chinese"
     "You can start or continue Code conversations.",
     "Code assistance is stopped",
     "Start Code assistance before beginning a conversation.",
-    "Code assistance needs an account or model",
-    "Connect Codex, GitHub Copilot, or OpenRouter to finish setup.",
+    "Configure models in MoonGate",
+    "Open MoonGate to add a model provider and connect it to MoonDesk, then check again.",
     "Code assistance is not installed",
     "Install Code assistance to use Code conversations.",
     "Code assistance needs configuration",
@@ -367,7 +370,7 @@ test("ordinary Code assistance capability copy translates in Simplified Chinese"
     "checking",
     "Start Code assistance",
     "Install Code assistance",
-    "Connect Codex",
+    "Open MoonGate",
     "Review configuration",
     "Check again",
     "Installing Code assistance…",

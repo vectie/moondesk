@@ -1,0 +1,173 @@
+/*
+ * Code workbench layer rationalization and zero-reflow status banners.
+ *
+ * Root causes addressed:
+ * 1. Transient errors in `.mooncode-composer-status` / `.mooncode-guidance-feedback`
+ *    and runtime checks in `.mooncode-runtime-setup` previously mounted in normal
+ *    flex flow, resizing `.mooncode-composer` and jumping the transcript on every poll.
+ * 2. Multiple stylesheets competed with uncoordinated z-index values and double
+ *    borders across `.code-workbench-heading`, popovers, and drawers.
+ */
+
+/* --- Desk sidebar disclosure & hidden-files toggle polish --- */
+.desk-sidebar-disclosure > .desk-quick-access,
+.desk-sidebar-disclosure > .desk-folder-outline {
+  margin-top: 6px;
+}
+
+.desk-sidebar-disclosure .pane-heading.compact-heading {
+  display: none;
+}
+
+.desk-hidden-count {
+  opacity: 0.72;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Code workbench explicit stacking hierarchy ---
+ * Layer 1  : chat & work panes (.code-workbench, .mooncode-chat-surface, .code-workbench-work)
+ * Layer 20 : unified workbench heading (.code-workbench-heading)
+ * Layer 36 : floating runtime setup notice inside active chat
+ * Layer 42 : floating composer status / guidance pill (zero composer resize)
+ * Layer 45 : composer settings / media popovers
+ * Layer 70 : coding setup drawer
+ * Layer 90 : heading tooltips
+ */
+.mooncode-center {
+  isolation: isolate;
+}
+
+.code-workbench-heading {
+  position: relative;
+  z-index: 20;
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+  border-bottom: 1px solid var(--mooncode-line, var(--line, #e2e8f0));
+}
+
+.code-workbench-heading > .mooncode-context-bar,
+.code-workbench-heading > .code-workbench-toolbar {
+  border-bottom: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.code-workbench-heading .moon-icon-button::after {
+  z-index: 90;
+}
+
+.code-workbench {
+  position: relative;
+  z-index: 1;
+}
+
+.code-workbench > .mooncode-chat-surface,
+.code-workbench > .code-workbench-work {
+  position: relative;
+  z-index: 1;
+  background: var(--mooncode-bg, var(--bg, #ffffff));
+}
+
+/* --- Zero-reflow composer status & guidance pills --- */
+.mooncode-composer {
+  position: relative;
+  z-index: 15;
+}
+
+.mooncode-composer .mooncode-composer-status,
+.mooncode-composer .mooncode-guidance-feedback {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(100% + 6px);
+  z-index: 42;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+  color: var(--mooncode-ink, var(--ink, #0f172a));
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);
+  font-size: 12px;
+  line-height: 1.4;
+  max-height: 76px;
+  overflow: auto;
+  pointer-events: auto;
+}
+
+/* Keep composer settings / media popovers solidly above floating status pills. */
+.mooncode-composer-settings-body,
+.mooncode-media-tools .mooncode-media-body {
+  z-index: 45;
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+}
+
+/* --- Zero-jump floating runtime setup notice in active sessions --- */
+.code-workbench > .mooncode-chat-surface:not(.empty) > .mooncode-runtime-setup {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 36;
+  margin: 0;
+  width: min(600px, calc(100% - 28px));
+  max-width: 600px;
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+}
+
+/* Keep empty-chat runtime setup compact and solid without washing out text. */
+.code-workbench > .mooncode-chat-surface.empty > .mooncode-runtime-setup {
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+/* Keep coding setup drawer strictly solid and above composer popovers. */
+.mooncode-skill-catalog.coding-setup-drawer {
+  z-index: 70;
+  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
+}
+
+.coding-setup-moongate-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--border, #d5dbe3);
+  border-radius: 7px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.coding-setup-moongate-link:hover {
+  background: var(--accent-soft, #e8eef9);
+}
+
+/* Clamp verbose prompt titles cleanly in Code rail and header */
+.mooncode-session strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mooncode-context-bar strong {
+  max-width: min(46ch, 46vw);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-composer .mooncode-composer-status,
+  .mooncode-composer .mooncode-guidance-feedback,
+  .code-workbench .mooncode-runtime-setup {
+    transition: none;
+    animation: none;
+  }
+}

@@ -201,7 +201,7 @@ async fn portable_human_check_invalid_bytes() -> Unit {
 extern "js" fn portable_human_boundary_fixture(
   wire : String,
   mode : String,
-) -> @js.Promise =
+) -> @js.Promise[@js.Value] =
   #| async (wire, mode) => {
   #|   const source = JSON.parse(wire);
   #|   const encode = bytes => { let b = ''; for (let i = 0; i < bytes.length; i += 8192) b += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(b); };
@@ -311,15 +311,13 @@ async fn portable_human_check_actual_producer() -> Unit {
 }
 
 ///|
-test "accepted human result wire preserves bytes and rejects invalid boundaries" {
-  @js.async_test(async fn() {
-    portable_human_check_exact_wire()
-    portable_human_check_empty_content()
-    portable_human_check_invalid_schema()
-    portable_human_check_invalid_bytes()
-    portable_human_check_byte_boundaries()
-    // This helper additionally verifies retained real exports when the
-    // existing opt-in fixture directory is supplied by the evidence runner.
-    portable_human_check_actual_producer()
-  })
+async test "accepted human result wire preserves bytes and rejects invalid boundaries" {
+  portable_human_check_exact_wire()
+  portable_human_check_empty_content()
+  portable_human_check_invalid_schema()
+  portable_human_check_invalid_bytes()
+  portable_human_check_byte_boundaries()
+  // This helper additionally verifies retained real exports when the
+  // existing opt-in fixture directory is supplied by the evidence runner.
+  portable_human_check_actual_producer()
 }

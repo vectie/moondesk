@@ -60,6 +60,7 @@ fn init_model() -> Model {
     current_directory: parent_path(initial_path),
     desk_location_input: "",
     desk_filter_query: "",
+    desk_show_hidden: false,
     desk_back_stack: [],
     desk_forward_stack: [],
     entries: [],

@@ -411,6 +411,8 @@ fn update(
     SetDeskFilterQuery(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
     SetDeskDensity(_) => update_workspace_surface_actions(dispatch, msg, model)
+    ToggleDeskShowHidden =>
+      update_workspace_surface_actions(dispatch, msg, model)
     DeskKeyDown(_, _, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
     DeskMouseDown(_, _, _) =>

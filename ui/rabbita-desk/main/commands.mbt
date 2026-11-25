@@ -500,7 +500,7 @@ extern "js" fn browser_mooncode_prompt_value() -> String =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_read_mooncode_images(source : String) -> @js.Promise =
+extern "js" fn browser_read_mooncode_images(source : String) -> @js.Promise[@js.Value] =
   #| async (source) => {
   #|   try {
   #|     let files = [];
@@ -613,7 +613,7 @@ fn copy_text_to_clipboard_cmd(text : String) -> @rabbita.Cmd {
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_import_files() -> @js.Promise =
+extern "js" fn browser_pick_import_files() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const readFile = async (file, source) => {
   #|     const textLike =
@@ -653,7 +653,7 @@ extern "js" fn browser_pick_import_files() -> @js.Promise =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_library_folder() -> @js.Promise =
+extern "js" fn browser_pick_library_folder() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const bridge = globalThis.lepusa;
   #|   if (!bridge || typeof bridge.invoke !== "function") {
@@ -694,7 +694,7 @@ extern "js" fn browser_pick_library_folder() -> @js.Promise =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_import_folder() -> @js.Promise =
+extern "js" fn browser_pick_import_folder() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const readFile = async (file, source) => {
   #|     const textLike =
@@ -736,7 +736,7 @@ extern "js" fn browser_pick_import_folder() -> @js.Promise =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_moonbook_archive() -> @js.Promise =
+extern "js" fn browser_pick_moonbook_archive() -> @js.Promise[@js.Value] =
   #| async () => {
   #|   const readFile = async (file) => {
   #|     const content = await new Promise((resolve, reject) => {

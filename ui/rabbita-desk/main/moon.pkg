@@ -13,6 +13,10 @@ import {
   "vectie/moondesk/mooncode/core" @mooncode_core,
 }
 
+import {
+  "moonbitlang/async",
+} for "wbtest"
+
 supported_targets = "js"
 
 pkgtype(kind: "executable")

@@ -536,38 +536,210 @@ test "requested session survives entering Code from a link without activity" {
 }
 
 ///|
-struct RequestedSelectionTestScheduler {
-  hooks : @cmd.Hooks
+struct RequestedSelectionTestScheduler {}
+
+///|
+#warnings("-alert_experimental")
+impl @cmd.Context for RequestedSelectionTestScheduler with fn get_base_uri(_) {
+  "http://localhost/"
 }
 
 ///|
-impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn run_effect(
+#warnings("-alert_experimental")
+impl @cmd.Context for RequestedSelectionTestScheduler with fn inject_url_changed(
+  _,
+  _,
+) {
+  @rabbita.none
+}
+
+///|
+#warnings("-alert_experimental")
+impl @cmd.Context for RequestedSelectionTestScheduler with fn inject_url_request(
+  _,
+  _,
+) {
+  @rabbita.none
+}
+
+///|
+#warnings("-alert_experimental")
+impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn queue_command(
   self,
-  _kind,
-  effect,
+  cmd,
 ) {
-  effect(self)
+  test_scheduler_run_cmd(self, cmd)
 }
 
 ///|
-impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn queue_message(
-  _self,
-  _id,
-  send,
-) {
-  send()
-}
-
-///|
-impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn drain_message(
-  _self,
+#warnings("-alert_experimental")
+impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn set_url_changed_injector(
+  _,
+  _,
 ) {
   ()
 }
 
 ///|
-impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn hooks(self) {
-  self.hooks
+#warnings("-alert_experimental")
+impl @cmd.Scheduler for RequestedSelectionTestScheduler with fn set_url_request_injector(
+  _,
+  _,
+) {
+  ()
+}
+
+///|
+fn test_scheduler_http_body_parts(body : @http.Body) -> (Bool, String, String) {
+  match body {
+    @http.Body::Json(json) => (true, json.stringify(), "application/json")
+    @http.Body::Text(text) => (true, text, "text/plain")
+    @http.Body::BytesBody(ct, _) => (true, "", ct)
+    @http.Body::BlobBody(ct, _) => (true, "", ct)
+    @http.Body::Empty => (false, "", "")
+  }
+}
+
+///|
+fn test_scheduler_deliver_http_text(
+  cb : (Result[String, @http.HttpError]) -> @rabbita.Cmd,
+  ok : Bool,
+  payload : String,
+) -> @rabbita.Cmd {
+  if ok {
+    cb(Ok(payload))
+  } else {
+    cb(Err(@http.HttpError::RequestError(payload)))
+  }
+}
+
+///|
+fn test_scheduler_deliver_http_json(
+  cb : (Result[Json, @http.HttpError]) -> @rabbita.Cmd,
+  ok : Bool,
+  payload : String,
+) -> @rabbita.Cmd {
+  if ok {
+    let parsed : Result[Json, @http.HttpError] = Ok(@json.parse(payload)) catch {
+      err => Err(@http.HttpError::RequestError(err.to_string()))
+    }
+    cb(parsed)
+  } else {
+    cb(Err(@http.HttpError::RequestError(payload)))
+  }
+}
+
+///|
+fn test_scheduler_cmd_each(
+  cmds : Array[@rabbita.Cmd],
+  f : (@rabbita.Cmd) -> Unit,
+) -> Unit {
+  for item in cmds {
+    f(item)
+  }
+}
+
+///|
+#cfg(target="js")
+extern "js" fn test_scheduler_run_cmd_js(
+  scheduler : &@cmd.Scheduler,
+  command : @rabbita.Cmd,
+  each_cmd : (Array[@rabbita.Cmd], (@rabbita.Cmd) -> Unit) -> Unit,
+  body_has : (@http.Body) -> Bool,
+  body_text : (@http.Body) -> String,
+  body_ct : (@http.Body) -> String,
+  deliver_text : ((Result[String, @http.HttpError]) -> @rabbita.Cmd, Bool, String) -> @rabbita.Cmd,
+  deliver_json : ((Result[Json, @http.HttpError]) -> @rabbita.Cmd, Bool, String) -> @rabbita.Cmd,
+) -> Unit =
+  #| (scheduler, command, eachCmd, bodyHas, bodyText, bodyCt, deliverText, deliverJson) => {
+  #|   const deliver = (expect, ok, payload) => {
+  #|     if (!expect || typeof expect._0 !== "function") return null;
+  #|     if (expect.$tag === 0) {
+  #|       return deliverJson(expect._0, ok, payload);
+  #|     }
+  #|     return deliverText(expect._0, ok, payload);
+  #|   };
+  #|   const walk = c => {
+  #|     if (!c || typeof c !== "object") return;
+  #|     if (c.$tag === 0) {
+  #|       eachCmd(c._0, walk);
+  #|       return;
+  #|     }
+  #|     const ext = c._1;
+  #|     const cname = ext && ext.constructor && ext.constructor.name ? ext.constructor.name : "";
+  #|     if (cname.endsWith("Extension_2eLegacyEffect")) {
+  #|       if (typeof ext._1 === "function") ext._1(scheduler);
+  #|       return;
+  #|     }
+  #|     if (cname.endsWith("Extension_2eLegacyMessage")) {
+  #|       if (typeof ext._0 === "function") ext._0(scheduler);
+  #|       return;
+  #|     }
+  #|     if (cname.endsWith("Extension_2eDelay")) {
+  #|       if (typeof globalThis.setTimeout === "function") {
+  #|         globalThis.setTimeout(() => walk(ext._0), ext._1);
+  #|       }
+  #|       return;
+  #|     }
+  #|     let httpMethod = null;
+  #|     let hasBodyArg = false;
+  #|     if (cname.endsWith("Extension_2eGet")) { httpMethod = "GET"; }
+  #|     else if (cname.endsWith("Extension_2eDelete")) { httpMethod = "DELETE"; }
+  #|     else if (cname.endsWith("Extension_2ePost")) { httpMethod = "POST"; hasBodyArg = true; }
+  #|     else if (cname.endsWith("Extension_2ePut")) { httpMethod = "PUT"; hasBodyArg = true; }
+  #|     else if (cname.endsWith("Extension_2ePatch")) { httpMethod = "PATCH"; hasBodyArg = true; }
+  #|     if (httpMethod !== null) {
+  #|       const url = ext._0;
+  #|       const expect = hasBodyArg ? ext._2 : ext._1;
+  #|       const config = { method: httpMethod };
+  #|       if (hasBodyArg && bodyHas(ext._1)) {
+  #|         config.body = bodyText(ext._1);
+  #|         const ct = bodyCt(ext._1);
+  #|         if (ct) config.headers = { "Content-Type": ct };
+  #|       }
+  #|       if (typeof globalThis.fetch !== "function") return;
+  #|       const p = globalThis.fetch(url, config);
+  #|       if (p && typeof p.then === "function") {
+  #|         const p2 = p.then(res => {
+  #|           if (res && typeof res.text === "function") {
+  #|             const tp = res.text();
+  #|             if (tp && typeof tp.then === "function") {
+  #|               tp.then(text => {
+  #|                 const follow = deliver(expect, true, String(text));
+  #|                 if (follow) walk(follow);
+  #|               });
+  #|             }
+  #|           }
+  #|         });
+  #|         if (p2 && typeof p2.catch === "function") {
+  #|           p2.catch(err => {
+  #|             const msg = err && err.message ? String(err.message) : String(err);
+  #|             const follow = deliver(expect, false, msg);
+  #|             if (follow) walk(follow);
+  #|           });
+  #|         }
+  #|       }
+  #|       return;
+  #|     }
+  #|   };
+  #|   walk(command);
+  #| }
+
+///|
+fn test_scheduler_run_cmd(
+  scheduler : &@cmd.Scheduler,
+  command : @rabbita.Cmd,
+) -> Unit {
+  test_scheduler_run_cmd_js(
+    scheduler,
+    command,
+    test_scheduler_cmd_each,
+    b => test_scheduler_http_body_parts(b).0,
+    b => test_scheduler_http_body_parts(b).1,
+    b => test_scheduler_http_body_parts(b).2,
+    test_scheduler_deliver_http_text,
+    test_scheduler_deliver_http_json,
+  )
 }
 
 ///|
@@ -588,9 +760,7 @@ extern "js" fn requested_selection_restore_test_history(previous : @js.Value) =
 
 ///|
 test "requested session cancellation clears URL before a reload" {
-  let scheduler : RequestedSelectionTestScheduler = {
-    hooks: { url_request: None, url_changed: None, },
-  }
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
   for
     navigation in [
       SelectWorkspaceMode(Desk),
