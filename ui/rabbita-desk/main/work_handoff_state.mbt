@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 struct WorkHandoffTarget {
   task_id : String
   run_id : String
@@ -6,9 +7,10 @@ struct WorkHandoffTarget {
   command_id : String
   book_root : String
   return_to : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct WorkHandoffCanonical {
   workspace_id : String
   root_path : String
@@ -19,7 +21,7 @@ struct WorkHandoffCanonical {
   receipt_status : String
   model : String
   context_path : String
-} derive(Eq, Debug)
+}
 
 ///|
 struct WorkHandoffState {

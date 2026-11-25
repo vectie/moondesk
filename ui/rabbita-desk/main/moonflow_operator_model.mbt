@@ -1,6 +1,7 @@
 ///|
 /// Read-only recovery state published by MoonFlow for human operation. Every
 /// field is optional so an older or partially upgraded host remains readable.
+#derive(FromJson)
 struct MoonFlowRecoveryOperatorProjection {
   state : String?
   owner : String?
@@ -18,9 +19,10 @@ struct MoonFlowRecoveryOperatorProjection {
   blocker : String?
   evidence_refs : Array[String]?
   recorded_at : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowDueActionOperatorProjection {
   action_id : String?
   kind : String?
@@ -31,9 +33,10 @@ struct MoonFlowDueActionOperatorProjection {
   authority_ref : String?
   source_ref : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowCallbackOperatorProjection {
   callback_id : String?
   state : String?
@@ -43,9 +46,10 @@ struct MoonFlowCallbackOperatorProjection {
   received_at : String?
   reason : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowQuarantineOperatorProjection {
   quarantine_id : String?
   state : String?
@@ -53,9 +57,10 @@ struct MoonFlowQuarantineOperatorProjection {
   reason : String?
   quarantined_at : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowManualInterventionOperatorProjection {
   intervention_id : String?
   state : String?
@@ -66,9 +71,10 @@ struct MoonFlowManualInterventionOperatorProjection {
   resolved_at : String?
   authority_ref : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowFinalDeliverableOperatorProjection {
   candidate_id : String?
   state : String?
@@ -83,9 +89,10 @@ struct MoonFlowFinalDeliverableOperatorProjection {
   source_terminal_ref : String?
   blocker : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowArtifactOperatorProjection {
   artifact_id : String?
   state : String?
@@ -97,9 +104,10 @@ struct MoonFlowArtifactOperatorProjection {
   lineage_root_ref : String?
   previous_revision_ref : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowDeliveryOperatorProjection {
   delivery_id : String?
   state : String?
@@ -110,9 +118,10 @@ struct MoonFlowDeliveryOperatorProjection {
   delivered_at : String?
   receipt_ref : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowOutcomeOperatorProjection {
   observation_id : String?
   state : String?
@@ -126,9 +135,10 @@ struct MoonFlowOutcomeOperatorProjection {
   summary : String?
   corrects_observation_ref : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowProposalOperatorProjection {
   proposal_id : String?
   state : String?
@@ -142,9 +152,10 @@ struct MoonFlowProposalOperatorProjection {
   source_assessment_ref : String?
   policy_version : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowEvaluationOperatorProjection {
   evaluation_id : String?
   state : String?
@@ -155,9 +166,10 @@ struct MoonFlowEvaluationOperatorProjection {
   regression_gate : String?
   completed_at : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowHumanAdoptionOperatorProjection {
   decision_id : String?
   state : String?
@@ -169,12 +181,13 @@ struct MoonFlowHumanAdoptionOperatorProjection {
   decided_at : String?
   reason : String?
   evidence_refs : Array[String]?
-} derive(FromJson)
+}
 
 ///|
 /// Generic host-facing closed-loop projection. The envelope is deliberately
 /// domain-neutral and read-only; commands continue through separately
 /// authorized MoonFlow routes.
+#derive(FromJson)
 struct MoonFlowOperatorSurface {
   contract_id : String?
   run_id : String?
@@ -193,4 +206,4 @@ struct MoonFlowOperatorSurface {
   proposals : Array[MoonFlowProposalOperatorProjection]?
   evaluations : Array[MoonFlowEvaluationOperatorProjection]?
   human_adoptions : Array[MoonFlowHumanAdoptionOperatorProjection]?
-} derive(FromJson)
+}

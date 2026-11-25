@@ -469,6 +469,30 @@ fn render_mooncode_runtime_setup(
     )
   }
   let state = moonclaw_capability_state(model.moonclaw_daemon)
+  if !(state is DetectedRunning) &&
+    model.moonclaw_startup_probes > 0 &&
+    model.moonclaw_startup_probes < 6 &&
+    model.moonclaw_operation == "" &&
+    !model.moonclaw_installing {
+    return section(
+      class="mooncode-runtime-setup is-startup-connecting",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "mooncode-runtime-setup")
+        .data_set("state", "connecting")
+        .role("status")
+        .aria_live("polite"),
+      [
+        div(class="code-capability-summary", [
+          strong(
+            attrs=@html.Attrs::build().data_set(
+              "i18n", "code.assistance_connecting",
+            ),
+            "Connecting…",
+          ),
+        ]),
+      ],
+    )
+  }
   match state {
     DetectedRunning => @html.nothing
     _ => {

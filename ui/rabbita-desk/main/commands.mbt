@@ -500,7 +500,9 @@ extern "js" fn browser_mooncode_prompt_value() -> String =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_read_mooncode_images(source : String) -> @js.Promise[@js.Value] =
+extern "js" fn browser_read_mooncode_images(
+  source : String,
+) -> @js.Promise[@js.Value] =
   #| async (source) => {
   #|   try {
   #|     let files = [];
@@ -880,12 +882,13 @@ fn parse_browser_import_batch(
 }
 
 ///|
+#derive(FromJson)
 priv struct BrowserLibrarySelection {
   ok : Bool
   path : String
   cancelled : Bool
   error : String
-} derive(FromJson)
+}
 
 ///|
 fn parse_browser_library_selection(text : String) -> Result[String, String] {

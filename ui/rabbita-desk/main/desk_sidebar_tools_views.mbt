@@ -417,4 +417,3 @@ fn render_desk_folder_outline(
     ),
   ])
 }
-

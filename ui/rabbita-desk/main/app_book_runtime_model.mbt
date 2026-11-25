@@ -1,13 +1,15 @@
 ///|
+#derive(FromJson)
 struct BookPatternCreationResult {
   book_id : String
   workspace_id : String
   standing_goal : Json
   moontown_publish : Json
   readiness : Json
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct BookPatternRecord {
   id : String
   title : String
@@ -21,9 +23,10 @@ struct BookPatternRecord {
   creation_backend : String
   default_websites : Array[String]
   skills : Array[String]
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct BookBaseTypeRecord {
   id : String
   title : String
@@ -35,4 +38,4 @@ struct BookBaseTypeRecord {
   template_registry_refs : Array[String]
   supported_patterns : Array[String]
   required_roots : Array[String]
-} derive(FromJson)
+}

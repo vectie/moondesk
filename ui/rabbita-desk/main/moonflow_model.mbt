@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson)
 struct MoonFlowItemProjection {
   work_item_id : String
   declaration_id : String
@@ -37,18 +38,20 @@ struct MoonFlowItemProjection {
   health_valid_until : String?
   health_evidence_ref : String?
   health_evidence_digest : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowBudget {
   model_tokens : Int32
   tool_calls : Int32
   storage_bytes : Int32
   attempts : Int32
   concurrency : Int32
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowEnvelopeSummary {
   envelope_id : String
   mode : String
@@ -57,9 +60,10 @@ struct MoonFlowEnvelopeSummary {
   external_effects_allowed : Bool
   physical_effects_allowed : Bool
   budget : MoonFlowBudget
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowAutonomyBinding {
   contract_id : String
   run_id : String
@@ -67,9 +71,10 @@ struct MoonFlowAutonomyBinding {
   usage_ref : String
   usage : MoonFlowBudget
   recorded_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowInterventionScorecard {
   contract_id : String
   run_id : String
@@ -79,9 +84,10 @@ struct MoonFlowInterventionScorecard {
   unattended_qualified : Bool
   finalization_findings : Array[String]
   recorded_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowRunControl {
   contract_id : String
   run_id : String
@@ -89,9 +95,10 @@ struct MoonFlowRunControl {
   authority_ceiling : String
   reason : String
   recorded_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowImportResult {
   ok : Bool
   status : String
@@ -100,9 +107,10 @@ struct MoonFlowImportResult {
   book_id : String
   run_id : String
   capability_evidence : MoonFlowCapabilityEvidence?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowCapabilityEvidence {
   available : Bool
   reason : String
@@ -110,16 +118,18 @@ struct MoonFlowCapabilityEvidence {
   platform_evidence : CapabilityPlatformEvidence?
   installation_evidence : CapabilityInstallationEvidence?
   configuration_evidence : CapabilityConfigurationEvidence?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowOperatorEvidenceRef {
   kind : String
   reference : String
   digest : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowOperatorAppEntrypoint {
   kind : String
@@ -129,9 +139,10 @@ struct MoonFlowOperatorAppEntrypoint {
   fallback_path : String
   status : String?
   launch_path : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowOperatorReceiver {
   handoff_token : String
@@ -147,9 +158,10 @@ struct MoonFlowOperatorReceiver {
   receipt_ref : String
   receipt_digest : String
   receipt_recorded_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowOperatorAction {
   action_id : String
@@ -176,16 +188,18 @@ struct MoonFlowOperatorAction {
   handoff_ref : String?
   receiver : MoonFlowOperatorReceiver?
   app_entrypoint : MoonFlowOperatorAppEntrypoint?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowOperatorActions {
   run_id : String
   status : String
   actions : Array[MoonFlowOperatorAction]
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowOperatorActionReceipt {
   run_id : String
   action_id : String
@@ -193,9 +207,10 @@ struct MoonFlowOperatorActionReceipt {
   status : String
   record_persisted : Bool
   source_digest : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowRunProjection {
   protocol : String
   run_id : String
@@ -214,9 +229,10 @@ struct MoonFlowRunProjection {
   owner_summary_observation : String?
   single_step_actions : Array[MoonFlowSingleStepAction]?
   single_step_setup : Json?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct MoonFlowOwnerSummary {
   contract_id : String
   run_id : String
@@ -234,9 +250,10 @@ struct MoonFlowOwnerSummary {
   actions : Array[MoonFlowOwnerAction]
   evidence : Array[MoonFlowOwnerEvidence]
   acceptance_boundary : String
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct MoonFlowOwnerAction {
   work_item_id : String
   product_id : String
@@ -246,9 +263,10 @@ struct MoonFlowOwnerAction {
   next_role : String?
   reasons : Array[String]
   depends_on : Array[String]
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct MoonFlowOwnerEvidence {
   work_item_id : String
   attempt_id : String
@@ -258,9 +276,10 @@ struct MoonFlowOwnerEvidence {
   review_id : String
   review_artifact : String
   reviewer_id : String
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowCompositionItem {
   work_item_id : String
   declaration_id : String
@@ -281,16 +300,18 @@ struct MoonFlowCompositionItem {
   health_valid_until : String?
   health_evidence_ref : String?
   health_evidence_digest : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct MoonFlowCompositionNodePosition {
   work_item_id : String
   x : Double
   y : Double
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowComposition {
   workspace_id : String?
   plan_source_unconfirmed : Bool?
@@ -304,4 +325,4 @@ struct MoonFlowComposition {
   evaluated_at : String?
   validation_status : String?
   validation_issues : Array[String]?
-} derive(FromJson)
+}

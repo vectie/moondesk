@@ -30,13 +30,7 @@ async test "line authoring live host indents duplicates edits saves and reopens 
   assert_eq(cell.val.source_pane.draft, initial)
   cell.val = {
     ..cell.val,
-    source_pane: line_authoring_test_selected(
-      cell.val.source_pane,
-      1,
-      0,
-      3,
-      0,
-    ),
+    source_pane: line_authoring_test_selected(cell.val.source_pane, 1, 0, 3, 0),
   }
   source_literal_live_send(cell, IndentLines(false))
   let indented = "fn main {\n  println(\"Hello 🚀\")\n  println(\"Launch\")\n}\n"

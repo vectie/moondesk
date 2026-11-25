@@ -1,10 +1,11 @@
 ///|
+#derive(FromJson)
 struct MoonCodeBrowserWatchEnvelope {
   ok : Bool
   aborted : Bool
   body : String
   error : String
-} derive(FromJson)
+}
 
 ///|
 #cfg(target="js")
@@ -145,8 +146,8 @@ fn schedule_mooncode_watch_resume(
 ) -> @rabbita.Cmd {
   @rabbita.delay(
     dispatch(ResumeMoonCodeWatch(generation, session_id)),
-    if after_ms < 100 {
-      100
+    if after_ms < 40 {
+      40
     } else {
       after_ms
     },

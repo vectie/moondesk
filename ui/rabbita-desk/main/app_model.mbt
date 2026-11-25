@@ -5,19 +5,21 @@ enum MoonCodeApprovalIntent {
 }
 
 ///|
+#derive(Eq)
 enum DeskSortKey {
   SortByName
   SortByKind
   SortByLayer
   SortByModified
   SortBySize
-} derive(Eq)
+}
 
 ///|
+#derive(Eq)
 enum DeskDensity {
   DeskDensityComfortable
   DeskDensityCompact
-} derive(Eq)
+}
 
 ///|
 struct Model {
@@ -134,6 +136,9 @@ struct Model {
   town_capability_probe_available : Bool
   launch_agent : LaunchAgentResult?
   moonclaw_daemon : MoonClawDaemonStatus?
+  moonclaw_startup_probes : Int32
+  mooncode_visible_window_session_id : String
+  mooncode_visible_item_limit : Int32
   mooncode_capability : MoonCodeCapabilityState
   moonclaw_installing : Bool
   moonclaw_install_feedback : String
@@ -362,7 +367,7 @@ enum Msg {
   LoadedSpecialistCatalog(String, Result[SpecialistAgentCatalog, String])
   LoadedMoonFlowCollaboration(
     String,
-    Result[MoonFlowCollaborationReply, String]
+    Result[MoonFlowCollaborationReply, String],
   )
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   RequestEntries(String, String)
@@ -370,7 +375,7 @@ enum Msg {
     String,
     String,
     Int32,
-    Result[Array[@desk.DeskFileEntry], String]
+    Result[Array[@desk.DeskFileEntry], String],
   )
   RequestPreview(String, String)
   LoadedPreview(String, String, Int32, Result[@desk.DeskPreview, String])
@@ -381,7 +386,7 @@ enum Msg {
   LoadedMoonFlowRunsAt(
     Int32,
     String,
-    Result[Array[MoonFlowRunProjection], String]
+    Result[Array[MoonFlowRunProjection], String],
   )
   LoadedMoonFlowComposition(Result[MoonFlowComposition, String])
   SavedMoonFlowComposition(Result[MoonFlowComposition, String])
@@ -390,7 +395,7 @@ enum Msg {
   ControlledMoonFlow(Result[MoonFlowRunControl, String])
   ExecutedMoonFlowOperatorAction(
     String,
-    Result[MoonFlowOperatorActionReceipt, String]
+    Result[MoonFlowOperatorActionReceipt, String],
   )
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
@@ -459,7 +464,7 @@ enum Msg {
     String,
     String,
     Int32,
-    Result[MoonCodeSession, String]
+    Result[MoonCodeSession, String],
   )
   ManagedMoonCodeSession(
     Result[
@@ -471,7 +476,7 @@ enum Msg {
         Bool,
       ),
       String,
-    ]
+    ],
   )
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
@@ -525,7 +530,7 @@ enum Msg {
   LoadedGitRepositoryProjection(
     String,
     Int32,
-    Result[GitRepositoryProjection, String]
+    Result[GitRepositoryProjection, String],
   )
   OpenGitChange(String)
   OpenGitDiff(String)
@@ -539,7 +544,7 @@ enum Msg {
     String,
     Int32,
     String,
-    Result[GitReviewProgress, String]
+    Result[GitReviewProgress, String],
   )
   SetGitReviewNote(String)
   SaveGitReview(String)
@@ -548,7 +553,7 @@ enum Msg {
     String,
     String,
     String,
-    Result[GitHubContextProjection, String]
+    Result[GitHubContextProjection, String],
   )
   BeginGitHubComment(Int32)
   OpenGitHubSavedDraft(Int32)
@@ -580,7 +585,7 @@ enum Msg {
     String,
     Int32,
     String,
-    Result[GitHubCheckoutProjection, String]
+    Result[GitHubCheckoutProjection, String],
   )
   OpenCheckedOutGitHubPull
   OpenGitHubSavedInlineDraft(GitHubInlineDraftProjection)
@@ -588,7 +593,7 @@ enum Msg {
     String,
     Int32,
     String,
-    Result[GitHubInlineReviewProjection, String]
+    Result[GitHubInlineReviewProjection, String],
   )
   CloseGitHubInlineReview
   SetGitHubInlineQuery(String)
@@ -605,7 +610,7 @@ enum Msg {
     Int32,
     String,
     String,
-    Result[String, String]
+    Result[String, String],
   )
   CopyMoonCodeText(String, String)
   ClearMoonCodeCopy(String)
@@ -618,9 +623,11 @@ enum Msg {
   CompletedMoonCodeSandboxPromotion(
     String,
     Int32,
-    Result[@mooncode_core.MoonCodeSandboxPromotionResult, String]
+    Result[@mooncode_core.MoonCodeSandboxPromotionResult, String],
   )
   ManageMoonClaw(String)
+  RetryMoonClawStartupProbe
+  LoadEarlierMoonCodeMessages(String)
   StartMoonClawAuth(String)
   CheckMoonClawSetup
   SetMoonClawOpenRouterKey(String)

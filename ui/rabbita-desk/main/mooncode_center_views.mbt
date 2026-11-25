@@ -382,18 +382,7 @@ fn render_mooncode_center(
                   ),
                 ),
               ]),
-              if model.mooncode_composer_status == "" ||
-                model.mooncode_composer_status == "draft" ||
-                model.mooncode_composer_status == "mooncode idle" ||
-                model.mooncode_composer_status == "MoonCode workspace ready" ||
-                model.mooncode_composer_status.has_prefix(
-                  "MoonClaw daemon running on ",
-                ) ||
-                model.mooncode_composer_status.has_suffix(" model(s) available") ||
-                model.mooncode_composer_status.has_suffix(
-                  " MoonCode session(s)",
-                ) ||
-                model.mooncode_composer_status == "MoonClaw is not installed" {
+              if mooncode_composer_status_hidden(model.mooncode_composer_status) {
                 @html.nothing
               } else {
                 let status_key = match model.mooncode_composer_status {
@@ -437,6 +426,30 @@ fn render_mooncode_center(
       ]),
     ],
   )
+}
+
+///|
+fn mooncode_composer_status_hidden(status : String) -> Bool {
+  let trimmed = status.trim().to_owned()
+  trimmed == "" ||
+  trimmed == "draft" ||
+  trimmed == "new session draft" ||
+  trimmed == "mooncode idle" ||
+  trimmed == "retrying" ||
+  trimmed == "Nothing to retry" ||
+  trimmed == "MoonCode workspace ready" ||
+  trimmed == "MoonCode is not running" ||
+  trimmed == "Cancellation requested" ||
+  trimmed == "Reconnecting to MoonCode" ||
+  trimmed == "Image removed from Code draft" ||
+  trimmed == "MoonClaw is not installed" ||
+  trimmed == "MoonClaw control route located" ||
+  trimmed.has_prefix("MoonClaw daemon running on ") ||
+  trimmed.has_prefix("Model set to ") ||
+  trimmed.has_prefix("Task intent set to ") ||
+  trimmed.has_prefix("Reasoning effort set to ") ||
+  trimmed.has_suffix(" model(s) available") ||
+  trimmed.has_suffix(" MoonCode session(s)")
 }
 
 ///|
@@ -511,4 +524,3 @@ fn render_mooncode_workspace_editors(
     ],
   )
 }
-

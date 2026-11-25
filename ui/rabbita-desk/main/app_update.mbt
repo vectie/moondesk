@@ -343,6 +343,11 @@ fn update(
     CompletedMoonCodeSandboxPromotion(_, _, _) =>
       update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
+    RetryMoonClawStartupProbe => update_mooncode_actions(dispatch, msg, model)
+    LoadEarlierMoonCodeMessages(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    LoadEarlierMoonCodeMessages(_) =>
+      update_mooncode_actions(dispatch, msg, model)
     StartMoonClawAuth(_) => update_mooncode_actions(dispatch, msg, model)
     CheckMoonClawSetup => update_mooncode_actions(dispatch, msg, model)
     SetMoonClawOpenRouterKey(_) => update_mooncode_actions(dispatch, msg, model)

@@ -8,6 +8,7 @@ fn specialist_library_scope(model : Model) -> String {
 }
 
 ///|
+#derive(FromJson)
 priv struct SpecialistExampleBinding {
   request_id : String
   library_scope : String
@@ -15,7 +16,7 @@ priv struct SpecialistExampleBinding {
   version : String
   capabilities : Array[String]
   knowledge_paths : Array[String]
-} derive(FromJson)
+}
 
 ///|
 fn specialist_knowledge_path_safe(path : String) -> Bool {

@@ -194,7 +194,7 @@ test "package receive requires ordered explicit inspection destination import an
   assert_true(
     effect
     is OpenAgentImport(
-      { workspace_id: "book-new-folder", book_id: "original-book-id", .. }
+      { workspace_id: "book-new-folder", book_id: "original-book-id", .. },
     ),
   )
 }

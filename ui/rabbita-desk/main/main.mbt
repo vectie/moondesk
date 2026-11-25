@@ -99,7 +99,7 @@ extern "js" fn browser_set_workspace_context(
 priv struct AppModel(Model)
 
 ///|
-impl Eq for AppModel with equal(_, _) {
+impl Eq for AppModel with fn equal(_, _) {
   false
 }
 

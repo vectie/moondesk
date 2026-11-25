@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum MoonCodeLifecycleAction {
   Rename(String)
   Archive
   Restore
   Delete
-} derive(Debug, Eq)
+}
 
 ///|
 fn MoonCodeLifecycleAction::name(self : MoonCodeLifecycleAction) -> String {

@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 #warnings("-unused_value")
 priv struct NativeCapabilityEndpoints {
   capabilities : String
@@ -19,7 +20,7 @@ priv struct NativeCapabilityEndpoints {
   tool_exec : String
   eval_report : String
   package_result : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 fn native_capability_endpoints() -> NativeCapabilityEndpoints {

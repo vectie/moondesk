@@ -1,12 +1,14 @@
 ///|
+#derive(FromJson)
 struct GitChangeProjection {
   path : String
   previous_path : String
   index_status : String
   worktree_status : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitRepositoryProjection {
   state : String
   branch : String
@@ -15,9 +17,10 @@ struct GitRepositoryProjection {
   changes : Array[GitChangeProjection]
   truncated : Bool
   error : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitDiffProjection {
   state : String
   path : String
@@ -26,9 +29,10 @@ struct GitDiffProjection {
   body : String
   digest : String
   error : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitReviewRecord {
   path : String?
   kind : String
@@ -37,9 +41,10 @@ struct GitReviewRecord {
   side : String?
   line : Int32?
   note : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitReviewProjection {
   path : String
   head : String
@@ -48,15 +53,17 @@ struct GitReviewProjection {
   records : Array[GitReviewRecord]
   stale_records : Array[GitReviewRecord]
   stale_count : Int32
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitReviewFileProgress {
   path : String
   status : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitReviewProgress {
   state : String
   head : String
@@ -66,7 +73,7 @@ struct GitReviewProgress {
   pending : Int32
   truncated : Bool
   files : Array[GitReviewFileProgress]
-} derive(FromJson)
+}
 
 ///|
 fn fetch_git_review_progress_cmd(
@@ -91,20 +98,23 @@ fn fetch_git_review_progress_cmd(
 }
 
 ///|
+#derive(FromJson)
 struct GitHubCheckProjection {
   name : String
   status : String
   conclusion : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubIssueProjection {
   number : Int32
   title : String
   url : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubPullProjection {
   number : Int32
   title : String
@@ -116,9 +126,10 @@ struct GitHubPullProjection {
   review_decision : String
   checks : Array[GitHubCheckProjection]
   closing_issues : Array[GitHubIssueProjection]
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubContextProjection {
   state : String
   repository : String
@@ -127,14 +138,15 @@ struct GitHubContextProjection {
   drafts : Array[GitHubCommentDraftProjection]
   inline_drafts : Array[GitHubInlineDraftProjection]
   error : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubCommentDraftProjection {
   number : Int32
   head_oid : String
   body : String
-} derive(FromJson)
+}
 
 ///|
 fn fetch_github_context_cmd(
@@ -159,6 +171,7 @@ fn fetch_github_context_cmd(
 }
 
 ///|
+#derive(FromJson)
 struct GitHubInlineFileProjection {
   path : String
   previous_path : String
@@ -168,9 +181,10 @@ struct GitHubInlineFileProjection {
   patch : String
   digest : String
   commentable : Bool
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubInlineReviewProjection {
   state : String
   repository : String
@@ -182,9 +196,10 @@ struct GitHubInlineReviewProjection {
   drafts : Array[GitHubInlineDraftProjection]
   truncated : Bool
   error : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct GitHubInlineDraftProjection {
   number : Int32
   head_oid : String
@@ -195,7 +210,7 @@ struct GitHubInlineDraftProjection {
   side : String
   line : Int32
   body : String
-} derive(FromJson)
+}
 
 ///|
 fn github_inline_same_draft_anchor(

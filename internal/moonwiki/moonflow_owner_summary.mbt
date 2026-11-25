@@ -59,7 +59,7 @@ fn moonflow_owner_summary_observation(
         "recorded_at": String(at),
         "sequence": sequence,
         ..
-      }
+      },
     ) &&
     id == head_id &&
     at == recorded_at &&

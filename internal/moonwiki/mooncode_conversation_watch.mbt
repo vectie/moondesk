@@ -36,9 +36,9 @@ async fn handle_mooncode_session_watch(
       _ => 15000
     },
     poll_ms=@string.parse_int(
-      query_value(request_path, "poll_ms").unwrap_or("100"),
+      query_value(request_path, "poll_ms").unwrap_or("50"),
     ) catch {
-      _ => 100
+      _ => 50
     },
   )
   let response = match

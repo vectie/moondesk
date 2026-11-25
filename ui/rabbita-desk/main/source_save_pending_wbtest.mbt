@@ -6,7 +6,8 @@ fn source_save_action_send(
 ) -> Unit {
   let previous = source_save_http_activate(fixture)
   defer source_save_http_restore(previous)
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   fn dispatch(message : Msg) -> @rabbita.Cmd {
     let (command, next) = match message {
       SourcePane(action) => source_pane_action(dispatch, action, cell.val)
@@ -77,9 +78,7 @@ async test "source replacement is single flight and pending conflict choices can
     "current_content": "external edit",
     "error": "File changed after this draft was opened",
   }
-  ignore(
-    source_save_http_resolve(fixture, 0, 409, conflict.stringify()).wait(),
-  )
+  ignore(source_save_http_resolve(fixture, 0, 409, conflict.stringify()).wait())
   source_save_action_send(fixture, cell, SourcePane(ReplaceServer))
   let replacing = cell.val.source_pane
   for
@@ -115,10 +114,7 @@ async test "source replacement is single flight and pending conflict choices can
     fixture,
     cell,
     SourcePane(
-      SaveResult(
-        replacing.pending_save.unwrap(),
-        SourceConflict("human edit"),
-      ),
+      SaveResult(replacing.pending_save.unwrap(), SourceConflict("human edit")),
     ),
   )
   assert_eq(cell.val.source_pane.draft, "newer edit after replacement")
@@ -158,9 +154,7 @@ async test "Git open waits for source save and old replies cannot overwrite the 
   assert_eq(source_save_request_count(fixture), 1)
   assert_eq(cell.val.source_pane.requested_path, "src/main.mbt")
   assert_eq(cell.val.source_pane.draft, "human edit")
-  assert_true(
-    cell.val.source_pane.status.contains("Wait for the current save"),
-  )
+  assert_true(cell.val.source_pane.status.contains("Wait for the current save"))
   ignore(
     source_save_http_resolve(
       fixture,
@@ -251,9 +245,7 @@ async test "source save acknowledgement never retires a newer draft" {
   assert_eq(cell.val.source_pane.baseline, "human edit")
   assert_true(source_pane_dirty(cell.val.source_pane))
   assert_false(cell.val.source_pane.saving)
-  assert_true(
-    cell.val.source_pane.status.contains("newer changes are unsaved"),
-  )
+  assert_true(cell.val.source_pane.status.contains("newer changes are unsaved"))
 }
 
 ///|

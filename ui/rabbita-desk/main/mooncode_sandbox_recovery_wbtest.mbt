@@ -222,7 +222,8 @@ extern "js" fn return_http_resolve(
 async test "actual recovery effect uses only the receipt endpoint and rejects mismatched readback" {
   return_http_install()
   defer return_http_restore()
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   let receipt = sandbox_ui_test_receipt()
   let key = receipt.review_key()
   let base = {

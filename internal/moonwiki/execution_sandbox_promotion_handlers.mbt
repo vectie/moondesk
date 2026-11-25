@@ -2,6 +2,7 @@
 const ExecutionSandboxPromotionRequestBytes : Int32 = 65_536
 
 ///|
+#derive(@json.FromJson)
 priv struct MoonClawSandboxPromotionEvidence {
   moonfort_protocol_version : Int32
   retention_id : String
@@ -14,9 +15,10 @@ priv struct MoonClawSandboxPromotionEvidence {
   uncertain_paths : Array[String]
   recovery_required : Bool
   error_code : String
-} derive(@json.FromJson)
+}
 
 ///|
+#derive(@json.FromJson)
 priv struct MoonClawSandboxPromotionResponse {
   protocol_version : Int32
   instance_id : String
@@ -32,7 +34,7 @@ priv struct MoonClawSandboxPromotionResponse {
   recovery_required : Bool
   error_code : String
   evidence : MoonClawSandboxPromotionEvidence
-} derive(@json.FromJson)
+}
 
 ///|
 async fn read_sandbox_promotion_body(

@@ -104,7 +104,7 @@ fn portable_book_effect_cmd(
       version,
       paths,
       groups,
-      source
+      source,
     ) =>
       (
         generation,
@@ -142,7 +142,7 @@ fn portable_book_effect_cmd(
       id,
       version,
       paths,
-      source
+      source,
     ) =>
       (
         generation,

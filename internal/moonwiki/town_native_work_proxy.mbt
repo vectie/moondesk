@@ -1,5 +1,6 @@
 ///|
 /// Browser projection only. Town owns all native targets, credentials, and writes.
+#derive(FromJson, ToJson)
 priv struct TownNativeWorkStatus {
   id : String
   kind : String
@@ -16,7 +17,7 @@ priv struct TownNativeWorkStatus {
   generation : Int32
   observed_at_ms : UInt64
   retry_after_ms : UInt64
-} derive(FromJson, ToJson)
+}
 
 ///|
 priv enum TownNativeWorkRoute {

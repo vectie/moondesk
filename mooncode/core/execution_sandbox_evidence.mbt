@@ -1,6 +1,7 @@
 ///|
 /// Sanitized limits from the grant-bound execution profile. These values are
 /// evidence only: MoonDesk never turns them into a local process policy.
+#derive(Debug, Eq)
 pub(all) struct MoonCodeSandboxLimits {
   wall_clock_ms : Int32
   cpu_seconds : Int32
@@ -8,11 +9,12 @@ pub(all) struct MoonCodeSandboxLimits {
   disk_mib : Int32
   processes : Int32
   output_bytes : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 /// A single scratch-relative change. Only a regular file present after the run
 /// can be selected for reviewed promotion.
+#derive(Debug, Eq)
 pub(all) struct MoonCodeSandboxChange {
   relative_path : String
   change : String
@@ -20,12 +22,13 @@ pub(all) struct MoonCodeSandboxChange {
   after_fingerprint : String?
   after_size_bytes : Int64?
   promotable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// Sanitized ExecutionSandbox evidence carried through MoonClaw. Host paths,
 /// audit paths, command text, environment values, and secrets are deliberately
 /// absent from this model.
+#derive(Debug, Eq)
 pub(all) struct MoonCodeSandboxReceipt {
   backend : String
   enforcement : String
@@ -40,7 +43,7 @@ pub(all) struct MoonCodeSandboxReceipt {
   changes : Array[MoonCodeSandboxChange]
   artifacts : Array[String]
   retention_id : String?
-} derive(Debug, Eq)
+}
 
 ///|
 const SandboxEvidenceMaxEntries : Int32 = 1_024

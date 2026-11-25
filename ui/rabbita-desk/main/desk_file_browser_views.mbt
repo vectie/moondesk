@@ -524,7 +524,7 @@ fn desk_is_hidden_entry(entry : @desk.DeskFileEntry) -> Bool {
 }
 
 ///|
-fn desk_hidden_entry_count(model : Model) -> Int {
+fn desk_hidden_entry_count(model : Model) -> Int32 {
   let mut count = 0
   for entry in model.entries {
     if desk_is_hidden_entry(entry) {
@@ -555,4 +555,3 @@ fn filtered_desk_entries(model : Model) -> Array[@desk.DeskFileEntry] {
     visible.filter(entry => desk_entry_matches_filter(entry, query))
   }
 }
-

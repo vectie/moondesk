@@ -125,7 +125,7 @@ test "grouped preparation preserves flat and human result inputs without duplica
       "1.2.3",
       ["standalone.txt"],
       [_],
-      Some(_)
+      Some(_),
     ),
   )
   let (_, duplicate) = reduce_portable_book(

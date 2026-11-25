@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson)
 struct DaemonControlResult {
   id : String
   ok : Bool
@@ -7,23 +8,26 @@ struct DaemonControlResult {
   path : String
   stdout : String
   stderr : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 priv struct TownInstallationEvidence {
   installed : Bool
   source : String
-} derive(FromJson)
+}
 
 ///|
 // Host configuration evidence is optional for compatibility with older lifecycle responses.
+#derive(FromJson)
 priv struct DaemonConfigurationEvidence {
   configured : Bool
   valid : Bool
   reason : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct DaemonLifecycleResult {
   ok : Bool
   action : String
@@ -49,9 +53,10 @@ struct DaemonLifecycleResult {
   platform_evidence : CapabilityPlatformEvidence?
   installation_evidence : TownInstallationEvidence?
   configuration_evidence : DaemonConfigurationEvidence?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct LaunchAgentResult {
   ok : Bool
   action : String
@@ -63,9 +68,10 @@ struct LaunchAgentResult {
   cwd : String
   exit_code : Int32
   message : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct RevealResult {
   ok : Bool
   status : String
@@ -73,4 +79,4 @@ struct RevealResult {
   workspace_id : String
   path : String
   absolute_path : String
-} derive(FromJson)
+}

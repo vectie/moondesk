@@ -15,6 +15,7 @@ priv enum EvidenceKind {
 }
 
 ///|
+#derive(Debug, Eq)
 #warnings("-unused_value")
 priv enum EvidenceState {
   Recorded
@@ -28,9 +29,10 @@ priv enum EvidenceState {
   Rejected
   Failed
   Stale
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 #warnings("-unused_value")
 priv enum WorkStatus {
   Queued
@@ -38,9 +40,10 @@ priv enum WorkStatus {
   Done
   Failed
   Cancelled
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeEvidence {
   item_id : String
   command_id : String
@@ -57,9 +60,10 @@ pub(all) struct MoonCodeEvidence {
   approval : MoonCodeApproval?
   sandbox_receipt : MoonCodeSandboxReceipt?
   sandbox_receipt_invalid : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeWork {
   item_id : String
   status : String
@@ -67,13 +71,14 @@ pub(all) struct MoonCodeWork {
   detail : String
   evidence : Array[MoonCodeEvidence]
   priv raw : Json
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 #warnings("-unused_value")
 priv struct MoonCodeWorkCodec {
   value : MoonCodeWork
-} derive(Debug, Eq)
+}
 
 ///|
 fn work_string(
@@ -342,4 +347,37 @@ pub fn MoonCodeWork::graph(self : MoonCodeWork) -> Json {
     { "graph": graph, .. } => graph
     _ => Json::null()
   }
+}
+
+///|
+/// Return live or completed model reasoning text captured for this turn.
+pub fn MoonCodeWork::reasoning(self : MoonCodeWork) -> String {
+  match self.raw {
+    { "reasoning": String(text), .. } if !text.trim().is_empty() =>
+      text.trim().to_owned()
+    { "live": { "reasoning": String(text), .. }, .. } if !text.trim().is_empty() =>
+      text.trim().to_owned()
+    _ => ""
+  }
+}
+
+///|
+/// Return the underlying tool name for a projected work step when present.
+pub fn MoonCodeWork::step_tool(self : MoonCodeWork, item_id : String) -> String {
+  guard self.raw is { "steps": Array(steps), .. } else { return "" }
+  for step in steps {
+    guard step is Object(fields) else { continue }
+    if work_string(fields, "item_id", "") == item_id {
+      let direct = work_string(fields, "tool", "")
+      if direct != "" {
+        return direct
+      }
+      match fields.get("evidence") {
+        Some(Object(evidence_fields)) =>
+          return work_string(evidence_fields, "tool", "")
+        _ => return ""
+      }
+    }
+  }
+  ""
 }

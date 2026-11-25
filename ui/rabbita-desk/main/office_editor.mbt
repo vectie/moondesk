@@ -1,11 +1,13 @@
 ///|
+#derive(Eq, Debug)
 enum OfficeEditorKind {
   OfficeDocx
   OfficeXlsx
   OfficePptx
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct OfficeEditorItem {
   section : String
   reference : String
@@ -20,25 +22,28 @@ struct OfficeEditorItem {
   y : Int32
   width : Int32
   height : Int32
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct OfficeEditorDocument {
   path : String
   kind : OfficeEditorKind
   items : Array[OfficeEditorItem]
   warnings : Array[String]
   baseline : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct OfficeEditorRequestIdentity {
   generation : Int32
   workspace_id : String
   path : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct OfficeEditorState {
   workspace_id : String
   path_input : String
@@ -54,9 +59,10 @@ struct OfficeEditorState {
   conflict_baseline : String?
   document_editing : Bool
   document_pending : Bool
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum OfficeEditorMsg {
   OfficeRebind(String)
   OfficeSetPath(String)
@@ -64,7 +70,7 @@ enum OfficeEditorMsg {
   OfficeOpen
   OfficeOpened(
     OfficeEditorRequestIdentity,
-    Result[OfficeEditorDocument, String]
+    Result[OfficeEditorDocument, String],
   )
   OfficeSelect(Int32)
   OfficeEditText(String)
@@ -91,7 +97,7 @@ enum OfficeEditorMsg {
   OfficeReopen
   OfficeRefresh
   OfficeDispose
-} derive(Eq, Debug)
+}
 
 ///|
 fn init_office_editor(workspace_id : String) -> OfficeEditorState {

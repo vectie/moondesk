@@ -1,11 +1,13 @@
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookHumanRecord {
   record_id : String
   record_version : String
   record_digest : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookHumanRevision {
   revision_id : String
   original_run_id : String
@@ -14,11 +16,12 @@ struct PortableBookHumanRevision {
   output_command_id : String
   output_evidence_id : String
   revision_snapshot_digest : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 /// Ephemeral browser selection. raw_base64 encodes the original file bytes,
 /// never a serialization of the parsed source observation or preview text.
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookHumanResult {
   filename : String
   raw_base64 : String
@@ -30,7 +33,7 @@ struct PortableBookHumanResult {
   content_text : String
   content_size_bytes : Int32
   content_sha256 : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 fn portable_book_human_result_preview_notice() -> String {

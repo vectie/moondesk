@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub struct MoonCodeWatchCursor {
   revision : String
   sequence : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn mooncode_watch_cursor(
@@ -94,28 +95,29 @@ fn watch_sequence_compare(left : String, right : String) -> Int32 {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum MoonCodeWatchResult {
   Snapshot(
     cursor~ : MoonCodeWatchCursor,
     session~ : MoonCodeSessionSummary,
     conversation~ : MoonCodeConversation,
-    terminal~ : Bool
+    terminal~ : Bool,
   )
   Heartbeat(
     cursor~ : MoonCodeWatchCursor,
     session_id~ : String,
     retry_after_ms~ : Int32,
-    terminal~ : Bool
+    terminal~ : Bool,
   )
   Duplicate(cursor~ : MoonCodeWatchCursor, session_id~ : String)
   Rollback(
     cursor~ : MoonCodeWatchCursor,
     session_id~ : String,
-    received_revision~ : String
+    received_revision~ : String,
   )
   Disconnected(cursor~ : MoonCodeWatchCursor, reason~ : String)
   Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn MoonCodeWatchResult::cursor(

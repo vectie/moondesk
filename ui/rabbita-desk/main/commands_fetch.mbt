@@ -210,11 +210,12 @@ fn fetch_moonflow_operator_actions_cmd(
 }
 
 ///|
+#derive(FromJson)
 struct MoonFlowBrowserResponse {
   ok : Bool
   body : String
   error : String
-} derive(FromJson)
+}
 
 ///|
 #cfg(target="js")

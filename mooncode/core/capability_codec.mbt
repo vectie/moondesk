@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeCapability {
   component : String
   provider : String
@@ -9,9 +10,10 @@ pub(all) struct MoonCodeCapability {
   session_owner : String
   extensions : Map[String, Json]
   ownership_extensions : Map[String, Json]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum MoonCodeFailure {
   Absent
   UnsupportedVersion(Int32)
@@ -19,7 +21,7 @@ pub(all) enum MoonCodeFailure {
   UnsupportedContract(String)
   Stale(revision~ : String, current_revision~ : String)
   Malformed(String)
-} derive(Debug, Eq)
+}
 
 ///|
 fn mooncode_capability_contract_id() -> String {

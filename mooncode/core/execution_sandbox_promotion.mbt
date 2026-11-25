@@ -1,20 +1,23 @@
 ///|
+#derive(Debug, Eq, ToJson, @json.FromJson)
 pub(all) struct MoonCodeSandboxPromotionItem {
   source_relative : String
   destination_relative : String
-} derive(Debug, Eq, ToJson, @json.FromJson)
+}
 
 ///|
 /// Browser-to-MoonDesk request. The private instance/workspace identity and
 /// authentication token are never present in browser state.
+#derive(Debug, Eq, ToJson, @json.FromJson)
 pub(all) struct MoonCodeSandboxPromotionRequest {
   retention_id : String
   approval_digest : String
   command_digest : String
   items : Array[MoonCodeSandboxPromotionItem]
-} derive(Debug, Eq, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, @json.FromJson)
 pub(all) struct MoonCodeSandboxPromotionResult {
   completed : Bool
   retention_id : String
@@ -25,7 +28,7 @@ pub(all) struct MoonCodeSandboxPromotionResult {
   uncertain_paths : Array[String]
   recovery_required : Bool
   error_code : String
-} derive(Debug, Eq, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn MoonCodeSandboxPromotionResult::locks_receipt(

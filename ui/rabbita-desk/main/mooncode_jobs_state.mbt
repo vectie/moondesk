@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson)
 struct MoonCodeJobRun {
   run_id : String
   service_id : String
@@ -9,9 +10,10 @@ struct MoonCodeJobRun {
   failed_turn_count : Int32
   stopped_by : String
   detail : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonCodeJobHistory {
   kind : String
   owner : String
@@ -19,7 +21,7 @@ struct MoonCodeJobHistory {
   job_count : Int32
   truncated : Bool
   jobs : Array[MoonCodeJobRun]
-} derive(FromJson)
+}
 
 ///|
 fn mooncode_job_history_valid(history : MoonCodeJobHistory) -> Bool {

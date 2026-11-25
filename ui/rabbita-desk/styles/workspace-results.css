@@ -45,9 +45,12 @@
 .workspace-room-message-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
 .workspace-room-channels [aria-pressed="true"],
 .workspace-room-message-actions [aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
-.workspace-room-message { padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.workspace-room-message { position: relative; padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.workspace-room-message::before { content: ""; position: absolute; top: 14px; right: 0; width: 2.5px; height: 12px; border-radius: 99px; background: var(--ms-human-mark, #c27803); pointer-events: none; }
 .workspace-room-message p { white-space: pre-wrap; }
 .workspace-room-message.reply { margin-inline-start: 20px; padding-inline-start: 12px; border-inline-start: 2px solid var(--line); }
+.workspace-room-message.reply::before { right: auto; left: -2px; top: 14px; width: 6px; height: 6px; border-radius: 0; background: transparent; border-top: 2px solid var(--ms-ai-mark, #0d9488); border-left: 2px solid var(--ms-ai-mark, #0d9488); }
+.workspace-room-message.reply::after { content: ""; position: absolute; right: 0; bottom: 12px; width: 6px; height: 6px; border-bottom: 2px solid var(--ms-ai-mark, #0d9488); border-right: 2px solid var(--ms-ai-mark, #0d9488); pointer-events: none; }
 .workspace-room-message small { color: var(--muted); }
 .workspace-room-composer { display: grid; gap: 10px; margin-top: 18px; }
 .workspace-room-composer textarea { min-height: 90px; resize: vertical; }

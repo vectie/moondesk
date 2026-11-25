@@ -722,4 +722,3 @@ fn mooncode_session_accessibility_title(session : MoonCodeSession) -> String {
   let summary = session.mooncode_summary
   "\{mooncode_session_project_line(session)} / \{session.status} / \{runtime} / events \{summary.event_count} / diffs \{summary.pending_diff_count} / tests \{summary.verified_test_count}"
 }
-

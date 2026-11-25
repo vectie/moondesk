@@ -100,7 +100,7 @@ test "typed watch codec distinguishes heartbeat rollback malformed and disconnec
       cursor~,
       session_id="session-a",
       retry_after_ms=125,
-      terminal=false
+      terminal=false,
     ) &&
     cursor.revision() == "8" &&
     cursor.sequence() == "6",

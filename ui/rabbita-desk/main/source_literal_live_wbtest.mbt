@@ -20,7 +20,8 @@ extern "js" fn source_literal_live_tick() -> @js.Promise[@js.Value] =
 
 ///|
 fn source_literal_live_send(cell : Ref[Model], action : SourcePaneMsg) -> Unit {
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   fn dispatch(message : Msg) -> @rabbita.Cmd {
     if message is SourcePane(action) {
       let (command, next) = source_pane_action(dispatch, action, cell.val)

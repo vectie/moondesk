@@ -1,6 +1,7 @@
 ///|
 /// Persist only recovery handles, never package contents or inspection members.
 /// Saved browser state grants no authority: the host rechecks it on explicit GET.
+#derive(FromJson, ToJson)
 struct AgentImportRecovery {
   library : String
   operation_id : String
@@ -9,7 +10,7 @@ struct AgentImportRecovery {
   import_started : Bool
   reviewed_sha : String
   binding_digest : String?
-} derive(FromJson, ToJson)
+}
 
 ///|
 #cfg(target="js")

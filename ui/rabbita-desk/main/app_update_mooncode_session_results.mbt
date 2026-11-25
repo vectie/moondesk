@@ -68,19 +68,32 @@ fn update_mooncode_session_results(
     LoadedMoonClawDaemon(Ok(status)) => {
       let ready = moonclaw_model_ready(Some(status))
       let commands : Array[@rabbita.Cmd] = []
+      let mut next_probes = model.moonclaw_startup_probes
       if status.running {
         commands.push(fetch_moonclaw_models_cmd(dispatch))
         commands.push(fetch_moonclaw_auth_cmd(dispatch))
         commands.push(fetch_mooncode_capability_cmd(dispatch))
         if moonclaw_model_readiness_allows_sessions(ready) {
           commands.push(fetch_mooncode_sessions_cmd(dispatch, ""))
+          next_probes = 0
+        } else if ready is None && model.moonclaw_startup_probes < 6 {
+          next_probes = model.moonclaw_startup_probes + 1
+          commands.push(
+            @rabbita.delay(dispatch(RetryMoonClawStartupProbe), 900),
+          )
         }
+      } else if model.moonclaw_startup_probes < 6 &&
+        model.moonclaw_operation == "" &&
+        !model.moonclaw_installing {
+        next_probes = model.moonclaw_startup_probes + 1
+        commands.push(@rabbita.delay(dispatch(RetryMoonClawStartupProbe), 900))
       }
       (
         @rabbita.batch(commands),
         {
           ..model,
           moonclaw_daemon: Some(status),
+          moonclaw_startup_probes: next_probes,
           mooncode_composer_status: if status.running {
             if mooncode_new_session_draft_active(model) {
               model.mooncode_composer_status
@@ -95,16 +108,28 @@ fn update_mooncode_session_results(
         },
       )
     }
-    LoadedMoonClawDaemon(Err(error)) =>
+    LoadedMoonClawDaemon(Err(error)) => {
+      let retry_cmd = if model.moonclaw_startup_probes < 6 {
+        @rabbita.delay(dispatch(RetryMoonClawStartupProbe), 900)
+      } else {
+        @rabbita.none
+      }
+      let next_probes = if model.moonclaw_startup_probes < 6 {
+        model.moonclaw_startup_probes + 1
+      } else {
+        model.moonclaw_startup_probes
+      }
       (
-        @rabbita.none,
+        retry_cmd,
         {
           ..model,
+          moonclaw_startup_probes: next_probes,
           mooncode_composer_status: mooncode_background_status_unless_draft(
             model, error,
           ),
         },
       )
+    }
     LoadedMoonClawModels(Ok(result)) => {
       let ready = moonclaw_models_result_allows_sessions(result)
       let daemon = if ready {

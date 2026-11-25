@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct MoonFlowPlanFields {
   work_item_id : String
   source_item_id : String?
@@ -6,9 +7,10 @@ struct MoonFlowPlanFields {
   dependencies : String
   criteria : String
   timeout : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowPlanEditor {
   fields : Array[MoonFlowPlanFields]
   saved_body : String
@@ -18,7 +20,7 @@ struct MoonFlowPlanEditor {
   generation : Int32
   receipt : Json?
   closed : Bool
-} derive(FromJson)
+}
 
 ///|
 fn moonflow_plan_seed(composition : MoonFlowComposition) -> MoonFlowPlanEditor {

@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeMessage {
   item_id : String
   role : String
@@ -7,9 +8,10 @@ pub(all) struct MoonCodeMessage {
   command_id : String
   client_turn_id : String
   extensions : Map[String, Json]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeTurn {
   kind : String
   turn_id : String
@@ -24,9 +26,10 @@ pub(all) struct MoonCodeTurn {
   approvals : Array[MoonCodeApproval]
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeConversation {
   kind : String
   protocol : String
@@ -40,7 +43,7 @@ pub(all) struct MoonCodeConversation {
   source_event_count : Int32
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
-} derive(Debug, Eq)
+}
 
 ///|
 fn conversation_string(fields : Map[String, Json], key : String) -> String? {

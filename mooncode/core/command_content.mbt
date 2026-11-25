@@ -2,13 +2,14 @@
 /// One ordered piece of a user-owned MoonCode prompt. Image bytes are bounded
 /// and retained in the daemon command journal until an external media store is
 /// available; they must never be flattened into the text request.
+#derive(Debug, Eq)
 pub(all) struct MoonCodeContentPart {
   kind : String
   text : String
   media_type : String
   data_base64 : String
   name : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn mooncode_content_part_field(

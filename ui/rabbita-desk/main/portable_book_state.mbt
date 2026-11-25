@@ -1,22 +1,25 @@
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookExport {
   export_id : String
   path : String
   version : String
   package_sha256 : String
   package_size_bytes : Int32
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson)
 struct PortableBookCatalog {
   workspace_id : String
   expected_library : String
   available : Bool
   message : String
   exports : Array[PortableBookExport]
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookMember {
   path : String
   role : String
@@ -24,15 +27,17 @@ struct PortableBookMember {
   size_bytes : Int32
   review_status : String
   sensitivity : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct PortableBookExclusion {
   path : String
   reason : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct PortableBookInspection {
   contract : String
   agent_id : String
@@ -47,9 +52,10 @@ struct PortableBookInspection {
   export_policy : Json
   memory_policy : Json
   memory_metrics : Json
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct PortableBookVerification {
   ok : Bool
   agent_id : String
@@ -57,9 +63,10 @@ struct PortableBookVerification {
   bundle_digest : String
   checked_file_count : Int32
   issues : Array[String]
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct PortableBookSource {
   agent_id : String
   agent_version : String
@@ -70,9 +77,10 @@ struct PortableBookSource {
   package_sha256 : String
   file_count : Int32
   total_decoded_bytes : Int32
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct PortableBookPrepared {
   workspace_id : String
   expected_library : String
@@ -81,22 +89,24 @@ struct PortableBookPrepared {
   inspection : PortableBookInspection
   verification : PortableBookVerification
   source : PortableBookSource
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(Eq, Debug)
 enum PortableBookOperation {
   Catalog
   Entries(String)
   ChooseHumanResult
   PreparePackage(String)
   InspectPackage(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct PortableBookPending {
   request : Int32
   operation : PortableBookOperation
-} derive(Eq, Debug)
+}
 
 ///|
 struct PortableBookState {
@@ -142,7 +152,7 @@ enum PortableBookMsg {
   AcceptedHumanResultPicked(
     Int32,
     Int32,
-    Result[PortableBookHumanResult?, String]
+    Result[PortableBookHumanResult?, String],
   )
   Prepare(String)
   InspectSaved(String)
@@ -154,6 +164,7 @@ enum PortableBookMsg {
 }
 
 ///|
+#derive(Eq, Debug)
 enum PortableBookEffect {
   NoPortableEffect
   ReadPortableCatalog(Int32, Int32)
@@ -166,7 +177,7 @@ enum PortableBookEffect {
     String,
     Array[String],
     Array[PortableBookGroup],
-    String?
+    String?,
   )
   PreparePortablePackageWithHumanResult(
     Int32,
@@ -174,11 +185,11 @@ enum PortableBookEffect {
     String,
     String,
     Array[String],
-    String
+    String,
   )
   PickAcceptedHumanResult(Int32, Int32)
   InspectPortablePackage(Int32, Int32, String)
-} derive(Eq, Debug)
+}
 
 ///|
 fn init_portable_book() -> PortableBookState {

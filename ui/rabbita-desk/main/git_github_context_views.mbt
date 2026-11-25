@@ -595,4 +595,3 @@ fn render_github_context(
     ],
   )
 }
-

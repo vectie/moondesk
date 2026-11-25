@@ -344,9 +344,7 @@ fn render_moonclaw_first_run_setup(
                 input_type=Password,
                 auto_complete="off",
                 value=model.moonclaw_openrouter_key,
-                on_input=fn(value) {
-                  dispatch(SetMoonClawOpenRouterKey(value))
-                },
+                on_input=fn(value) { dispatch(SetMoonClawOpenRouterKey(value)) },
               ),
               button(
                 class="secondary-button full",
@@ -626,4 +624,3 @@ fn render_desk_cold_start_action(
     AddMoonBook | OpenMoonBook | ChooseMoonBook => @html.nothing
   }
 }
-

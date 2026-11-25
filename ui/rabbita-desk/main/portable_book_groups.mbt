@@ -1,10 +1,12 @@
 ///|
+#derive(Eq, Debug, ToJson)
 struct PortableBookGroupFile {
   source_path : String
   path : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug)
 struct PortableBookGroup {
   artifact_id : String
   label : String
@@ -12,7 +14,7 @@ struct PortableBookGroup {
   files : Array[PortableBookGroupFile]
   preview_path : String?
   app_entrypoint : String?
-} derive(Eq, Debug)
+}
 
 ///|
 enum PortableGroupMsg {

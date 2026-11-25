@@ -281,4 +281,3 @@ fn render_desk_workspace_row(
     ],
   )
 }
-

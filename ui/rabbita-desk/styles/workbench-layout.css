@@ -290,7 +290,7 @@
   .code-workbench .mooncode-input { min-height: 44px; font-size: 16px; }
   .code-workbench .mooncode-transcript-list { padding: 20px 16px 20px; scroll-padding-bottom: 20px; }
   .code-workbench .mooncode-runtime-setup { width: calc(100% - 24px); max-width: none; margin-block: 8px; }
-  .code-workbench .mooncode-session-surface { height: auto; }
+  .code-workbench .mooncode-session-surface { flex: 1 1 0; min-height: 0; }
   .code-workbench-work .source-editor { padding: 10px; }
   .code-workbench-work .source-editor-toolbar { flex-wrap: wrap; }
   .code-workbench-work .source-editor-toolbar input { min-width: 120px; }

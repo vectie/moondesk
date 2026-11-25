@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson)
 struct MoonCodeSchedule {
   id : String
   book_id : String
@@ -13,14 +14,15 @@ struct MoonCodeSchedule {
   last_command_id : String
   last_status : String
   last_finished_at : Int64
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonCodeScheduleState {
   schema : String
   revision : Int32
   schedules : Array[MoonCodeSchedule]
-} derive(FromJson)
+}
 
 ///|
 fn mooncode_schedule_id_valid(id : String) -> Bool {

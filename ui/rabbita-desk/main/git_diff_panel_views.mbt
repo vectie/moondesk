@@ -251,4 +251,3 @@ fn render_git_diff_panel(
     ],
   )
 }
-

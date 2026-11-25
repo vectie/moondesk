@@ -33,19 +33,21 @@ fn mooncode_session_lifecycle_native_body(
 }
 
 ///|
+#derive(Debug, Eq)
 #warnings("-unused_value")
 priv enum MoonCodeLifecycleRouteFailureKind {
   NotFound
   Conflict
   RuntimeUnavailable
   RuntimeFailure
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 #warnings("-unused_value")
 priv enum MoonCodeLifecycleRouteStopReason {
   SessionActive
-} derive(Debug, Eq)
+}
 
 ///|
 #warnings("-unused_field")

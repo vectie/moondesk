@@ -4,6 +4,7 @@ package "vectie/moondesk/internal/moonwiki"
 import {
   "moonbitlang/async/http",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -43,73 +44,85 @@ pub async fn prepare_moonsuite_workspace_root(String) -> Bool
 
 pub fn town_service_config_path(String) -> String
 
-pub async fn town_service_descriptor(String, String) -> Json
+pub async fn town_service_descriptor(String, String) -> @json.Json
 
 // Errors
 
 // Types and methods
-type AgentPassportInventory derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type AgentPassportInventory
 pub fn AgentPassportInventory::equal(Self, Self) -> Bool
 pub fn AgentPassportInventory::not_equal(Self, Self) -> Bool
 pub fn AgentPassportInventory::to_repr(Self) -> @debug.Repr
 
-type DocxParagraph derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type DocxParagraph
 pub fn DocxParagraph::equal(Self, Self) -> Bool
 pub fn DocxParagraph::not_equal(Self, Self) -> Bool
 pub fn DocxParagraph::to_repr(Self) -> @debug.Repr
 
-type DocxRun derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type DocxRun
 pub fn DocxRun::equal(Self, Self) -> Bool
 pub fn DocxRun::not_equal(Self, Self) -> Bool
 pub fn DocxRun::to_repr(Self) -> @debug.Repr
 
-type GitChangeProjection derive(ToJson)
-pub fn GitChangeProjection::to_json(Self) -> Json
+#derive(@json.ToJson)
+type GitChangeProjection
+pub fn GitChangeProjection::to_json(Self) -> @json.Json
 
-type GitDiffProjection derive(ToJson)
-pub fn GitDiffProjection::to_json(Self) -> Json
+#derive(@json.ToJson)
+type GitDiffProjection
+pub fn GitDiffProjection::to_json(Self) -> @json.Json
 
-type GitRepositoryProjection derive(ToJson)
-pub fn GitRepositoryProjection::to_json(Self) -> Json
+#derive(@json.ToJson)
+type GitRepositoryProjection
+pub fn GitRepositoryProjection::to_json(Self) -> @json.Json
 
 pub struct MoonFlowRetainedResult {
   // private fields
 }
 
-type OfficeDocumentKind derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type OfficeDocumentKind
 pub fn OfficeDocumentKind::equal(Self, Self) -> Bool
 pub fn OfficeDocumentKind::not_equal(Self, Self) -> Bool
 pub fn OfficeDocumentKind::to_repr(Self) -> @debug.Repr
 
-type OfficeDocumentModel derive(@debug.Debug)
+#derive(@debug.Debug)
+type OfficeDocumentModel
 pub fn OfficeDocumentModel::to_repr(Self) -> @debug.Repr
 
-type OfficeSupportedModel derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type OfficeSupportedModel
 pub fn OfficeSupportedModel::equal(Self, Self) -> Bool
 pub fn OfficeSupportedModel::not_equal(Self, Self) -> Bool
 pub fn OfficeSupportedModel::to_repr(Self) -> @debug.Repr
 
-type PptxSlide derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type PptxSlide
 pub fn PptxSlide::equal(Self, Self) -> Bool
 pub fn PptxSlide::not_equal(Self, Self) -> Bool
 pub fn PptxSlide::to_repr(Self) -> @debug.Repr
 
-type PptxTextObject derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type PptxTextObject
 pub fn PptxTextObject::equal(Self, Self) -> Bool
 pub fn PptxTextObject::not_equal(Self, Self) -> Bool
 pub fn PptxTextObject::to_repr(Self) -> @debug.Repr
 
 pub struct Server {
   server : @http.Server
-  port : Int
+  port : Int32
 }
 pub fn Server::close(Self) -> Unit
-pub async fn Server::new(String, Int, dual_stack? : Bool, reuse_addr? : Bool) -> Self
-pub fn Server::port(Self) -> Int
+pub async fn Server::new(String, Int32, dual_stack? : Bool, reuse_addr? : Bool) -> Self
+pub fn Server::port(Self) -> Int32
 pub async fn Server::serve_desk(Self, String, String) -> Unit
 pub async fn Server::serve_directory(Self, String) -> Unit
 
-type WorkspaceContext derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type WorkspaceContext
 pub fn WorkspaceContext::equal(Self, Self) -> Bool
 pub fn WorkspaceContext::not_equal(Self, Self) -> Bool
 pub fn WorkspaceContext::to_repr(Self) -> @debug.Repr
@@ -118,12 +131,14 @@ pub struct WorkspaceTerminal {
   // private fields
 }
 
-type XlsxCell derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type XlsxCell
 pub fn XlsxCell::equal(Self, Self) -> Bool
 pub fn XlsxCell::not_equal(Self, Self) -> Bool
 pub fn XlsxCell::to_repr(Self) -> @debug.Repr
 
-type XlsxSheet derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type XlsxSheet
 pub fn XlsxSheet::equal(Self, Self) -> Bool
 pub fn XlsxSheet::not_equal(Self, Self) -> Bool
 pub fn XlsxSheet::to_repr(Self) -> @debug.Repr

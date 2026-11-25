@@ -1,13 +1,15 @@
 ///|
+#derive(FromJson)
 struct MoonCodeSkillProjection {
   name : String
   description : String
   source : String
   location : String
   authority : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonCodeSkillCatalogProjection {
   kind : String
   owner : String
@@ -15,7 +17,7 @@ struct MoonCodeSkillCatalogProjection {
   skills : Array[MoonCodeSkillProjection]
   skill_count : Int32
   content_included : Bool
-} derive(FromJson)
+}
 
 ///|
 fn fetch_mooncode_skills_cmd(

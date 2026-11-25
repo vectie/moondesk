@@ -635,7 +635,7 @@ function chatEntryFromNode(node) {
   }
   if (!node.classList.contains('wiki-chat-message')) return null
   const role = String(node.dataset.chatRole || '').trim()
-  const content = node.querySelector(':scope > p')?.textContent || ''
+  const content = node.dataset.markdownRaw || node.querySelector(':scope > .wiki-chat-markdown')?.textContent || node.querySelector(':scope > p')?.textContent || ''
   return role && hasNonWhitespaceText(content) ? { role, content } : null
 }
 

@@ -1,26 +1,30 @@
 ///|
+#derive(FromJson)
 struct InboxCreated {
   ok : Bool
   workspace_id : String
   path : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MarkdownEditResult {
   workspace_id : String
   path : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct InboxImportResult {
   ok : Bool
   workspace_id : String
   path : String
   kind : String
   data_path : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct LocalImportFile {
   id : String
   name : String
@@ -28,11 +32,12 @@ struct LocalImportFile {
   media_type : String
   content : String
   source : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct BrowserLocalImportBatch {
   ok : Bool
   files : Array[LocalImportFile]
   error : String?
-} derive(FromJson)
+}

@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 struct AgentPassportInventory {
   knowledge_count : Int32
   skill_count : Int32
@@ -6,7 +7,7 @@ struct AgentPassportInventory {
   tool_count : Int32
   app_count : Int32
   recurring_work_count : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 fn agent_passport_capabilities(

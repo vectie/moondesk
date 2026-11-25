@@ -1,6 +1,7 @@
 ///|
 // The specialist needs the current typed Book identity, while the MoonBooks
 // shelf remains the only place that lists Books in the local navigation.
+#derive(FromJson)
 priv struct AgentPassportWire {
   contract_id : String
   agent_id : String
@@ -19,13 +20,14 @@ priv struct AgentPassportWire {
   tool_count : Int32
   app_count : Int32
   recurring_work_count : Int32
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 priv struct SpecialistAgentCatalogWire {
   agent_count : Int32
   agents : Array[AgentPassportRecord]
-} derive(FromJson)
+}
 
 ///|
 // The complete wire decoder above still checks all original required fields.

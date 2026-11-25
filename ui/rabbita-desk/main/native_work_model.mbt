@@ -1,5 +1,6 @@
 ///|
 /// The saved native-work projection is independent of Requests and runs.
+#derive(FromJson, ToJson, Eq, Debug)
 struct NativeWorkStatus {
   id : String
   kind : String
@@ -16,35 +17,40 @@ struct NativeWorkStatus {
   generation : Int32
   observed_at_ms : UInt64
   retry_after_ms : UInt64
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, ToJson)
 struct NativeWorkEnvelope {
   schema : String
   revision : Int32
   items : Array[NativeWorkStatus]
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(Eq, Debug)
 enum NativeWorkAction {
   RefreshObservation
   CancelRemaining
   SyncResults
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum NativeWorkOperation {
   ReadSaved
   ControlNative(String, NativeWorkAction)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct NativeWorkPending {
   request : Int32
   operation : NativeWorkOperation
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct NativeWorkState {
   active : Bool
   library : String
@@ -57,7 +63,7 @@ struct NativeWorkState {
   loaded : Bool
   error : String
   notice : String
-} derive(Eq, Debug)
+}
 
 ///|
 enum NativeWorkMsg {
@@ -69,11 +75,12 @@ enum NativeWorkMsg {
 }
 
 ///|
+#derive(Eq, Debug)
 enum NativeWorkEffect {
   NoNativeEffect
   ReadNativeSaved(Int32, Int32)
   PostNativeControl(Int32, Int32, String, NativeWorkAction, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 fn init_native_work() -> NativeWorkState {

@@ -23,13 +23,7 @@ async test "table conversion opens selected CSV converts undoes saves and reopen
   assert_eq(cell.val.source_pane.draft, initial)
   cell.val = {
     ..cell.val,
-    source_pane: line_authoring_test_selected(
-      cell.val.source_pane,
-      2,
-      0,
-      6,
-      0,
-    ),
+    source_pane: line_authoring_test_selected(cell.val.source_pane, 2, 0, 6, 0),
   }
   source_literal_live_send(cell, ConvertDelimitedTable(Comma))
   let expected = "# Launch status\n\n| Item | Owner | Notes |\n| --- | --- | --- |\n| Launch | Ana | Ready,&#32;pending&#32;QA |\n| Docs | 李 | Line&#32;one<br>Line&#32;two&#32;&#124;&#32;checked |\n\nNext: publish.\n"

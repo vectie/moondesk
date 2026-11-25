@@ -1,25 +1,29 @@
 ///|
+#derive(FromJson)
 priv struct CapabilityPlatformEvidence {
   supported : Bool
   platform : String
   architecture : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 priv struct CapabilityInstallationEvidence {
   installed : Bool
   source : String
   reason : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 priv struct CapabilityConfigurationEvidence {
   configured : Bool
   valid : Bool
   reason : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 priv struct MoonClawModelReadiness {
   known : Bool
@@ -27,9 +31,10 @@ priv struct MoonClawModelReadiness {
   status : String
   reason : String
   default_model : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonClawDaemonStatus {
   ok : Bool?
   status : String?
@@ -46,17 +51,19 @@ struct MoonClawDaemonStatus {
   platform_evidence : CapabilityPlatformEvidence?
   installation_evidence : CapabilityInstallationEvidence?
   configuration_evidence : CapabilityConfigurationEvidence?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 priv struct MoonClawProviderAuthStatus {
   authenticated : Bool?
   email : String?
   plan : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonClawAuthStatus {
   ok : Bool?
@@ -66,9 +73,10 @@ struct MoonClawAuthStatus {
   model_ready : Bool?
   codex : MoonClawProviderAuthStatus?
   copilot : MoonClawProviderAuthStatus?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonClawCodexAuthFlow {
   ok : Bool?
@@ -78,9 +86,10 @@ struct MoonClawCodexAuthFlow {
   model_ready : Bool?
   auth_url : String?
   state : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonClawCopilotAuthFlow {
   ok : Bool?
@@ -92,9 +101,10 @@ struct MoonClawCopilotAuthFlow {
   verification_uri : String?
   expires_in : Int32?
   interval : Int32?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonClawSetupResult {
   ok : Bool
@@ -102,7 +112,7 @@ struct MoonClawSetupResult {
   message : String
   next_action : String
   model_ready : Bool
-} derive(FromJson)
+}
 
 ///|
 fn moonclaw_provider_is_connected(
@@ -125,14 +135,16 @@ fn moonclaw_auth_has_connected_provider(status : MoonClawAuthStatus?) -> Bool {
 }
 
 ///|
+#derive(FromJson)
 struct MoonClawModel {
   name : String
   input_modalities : Array[String]?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonClawModelsResult {
   ok : Bool
   daemon : MoonClawDaemonStatus
   models : Array[MoonClawModel]
-} derive(FromJson)
+}

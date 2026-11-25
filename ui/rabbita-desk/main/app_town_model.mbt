@@ -1,24 +1,28 @@
 ///|
+#derive(FromJson)
 struct TownMessage {
   title : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct WikiChatEntry {
   role : String
   content : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, ToJson, Eq, Debug)
 struct WikiChatContextItem {
   id : String
   kind : String
   label : String
   value : String
   detail : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 struct WikiChatSubmission {
   task_id : String
   status : String
@@ -28,17 +32,19 @@ struct WikiChatSubmission {
   automation_suggestion : Json?
   preferences_used : Int32
   preference_ids : Array[String]
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson)
 struct RequestRecord {
   id : String
   status : String
   path : String
   request : Json
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct StandingGoalRecord {
   id : String
   title : String
@@ -50,9 +56,10 @@ struct StandingGoalRecord {
   enabled : Bool
   source_policy : String
   review_policy : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct TownAnalytics {
   daemon_tick : Int32
   standing_goal_count : Int32
@@ -73,9 +80,10 @@ struct TownAnalytics {
   last_failure : String
   review_item_count : Int32
   next_due_tick : Int32
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct TownProgress {
   daemon_tick : Int32
   daemon_running : Bool
@@ -93,18 +101,20 @@ struct TownProgress {
   latest_run : String
   latest_run_status : String
   latest_run_artifacts : Int32
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonclawProgress {
   run_count : Int32
   ready_count : Int32
   artifact_count : Int32
   latest_run : String
   latest_status : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct DeskEvent {
   id : String
   source : String
@@ -116,9 +126,10 @@ struct DeskEvent {
   run_id : String
   tick : Int32
   created_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct ReviewItem {
   id : String
   workspace_id : String
@@ -127,9 +138,10 @@ struct ReviewItem {
   kind : String
   status : String
   detail : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct ReviewDecisionResult {
   id : String
   workspace_id : String
@@ -138,4 +150,4 @@ struct ReviewDecisionResult {
   status : String
   note : String
   receipt_path : String
-} derive(FromJson)
+}

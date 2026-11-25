@@ -524,4 +524,3 @@ fn render_desk_details(
     ],
   )
 }
-

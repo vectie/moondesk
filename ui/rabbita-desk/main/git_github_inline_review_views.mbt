@@ -813,4 +813,3 @@ fn render_github_inline_draft_inventory(
     }),
   )
 }
-

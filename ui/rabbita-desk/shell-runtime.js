@@ -585,39 +585,26 @@ function mooncodeScrollDistance(list) {
 }
 
 function mooncodeScrollTranscriptToBottom() {
+  // Handled by workspace-motion-runtime.js with directional intent tracking
+  // and progressive-history scroll-anchor preservation.
   cancelAnimationFrame(mooncodeScrollFrame)
   mooncodeScrollFrame = requestAnimationFrame(() => {
     const list = document.querySelector('.mooncode-transcript-list')
-    if (!list) return
+    if (!list || list.dataset.mdScrollBound === 'true') return
     const surface = document.querySelector('[data-testid="mooncode-center"]')
     const scope = JSON.stringify([surface?.dataset.workspaceId || '', surface?.dataset.sessionId || ''])
-    if (scope !== mooncodeTranscriptScope) { mooncodeTranscriptScope = scope; mooncodeTranscriptKey = '' }
-
+    if (scope !== mooncodeTranscriptScope) {
+      mooncodeTranscriptScope = scope
+      mooncodeTranscriptKey = ''
+      mooncodeStickToBottom = true
+    }
     if (list !== mooncodeTranscript) {
       mooncodeTranscript = list
       mooncodeTranscriptKey = ''
       mooncodeStickToBottom = true
-      list.addEventListener('scroll', () => {
-        mooncodeStickToBottom = mooncodeScrollDistance(list) < 96
-        try { localStorage.setItem(`moondesk.transcript.${mooncodeTranscriptScope}`, JSON.stringify({ top: list.scrollTop, follow: mooncodeStickToBottom })) } catch {}
-      }, { passive: true })
     }
-
-    const messages = list.querySelectorAll('.mooncode-message')
-    const last = messages[messages.length - 1]
-    const key = `${messages.length}:${last?.textContent || ''}`
-    if (key === mooncodeTranscriptKey) return
-
-    const firstRender = mooncodeTranscriptKey === ''
-    mooncodeTranscriptKey = key
-    let stored = null
-    if (firstRender) { try { stored = JSON.parse(localStorage.getItem(`moondesk.transcript.${scope}`)) } catch {} }
-    if (firstRender && stored && !stored.follow) {
-      list.scrollTop = Number(stored.top) || 0
-      mooncodeStickToBottom = false
-    } else if (firstRender || mooncodeStickToBottom) {
+    if (mooncodeStickToBottom) {
       list.scrollTop = list.scrollHeight
-      mooncodeStickToBottom = true
     }
   })
 }

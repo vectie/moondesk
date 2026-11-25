@@ -1,12 +1,14 @@
 ///|
+#derive(ToJson)
 struct GitChangeProjection {
   path : String
   previous_path : String
   index_status : String
   worktree_status : String
-} derive(ToJson)
+}
 
 ///|
+#derive(ToJson)
 struct GitRepositoryProjection {
   state : String
   branch : String
@@ -15,9 +17,10 @@ struct GitRepositoryProjection {
   changes : Array[GitChangeProjection]
   truncated : Bool
   error : String
-} derive(ToJson)
+}
 
 ///|
+#derive(ToJson)
 struct GitDiffProjection {
   state : String
   path : String
@@ -26,7 +29,7 @@ struct GitDiffProjection {
   body : String
   digest : String
   error : String
-} derive(ToJson)
+}
 
 ///|
 fn empty_git_projection(

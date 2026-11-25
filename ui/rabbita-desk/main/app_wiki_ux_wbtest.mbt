@@ -1023,3 +1023,24 @@ test "wiki review feedback uses decision language" {
     "Review this proposed change before it becomes accepted knowledge.",
   )
 }
+
+///|
+test "wiki chat hides terminal status labels and renders assistant messages with markdown" {
+  assert_eq(wiki_chat_status("complete"), None)
+  assert_eq(wiki_chat_status("completed"), None)
+  assert_eq(wiki_chat_status("idle"), None)
+  assert_eq(
+    wiki_chat_status("generating"),
+    Some("MoonDesk is working quietly…"),
+  )
+  let assistant_markup = render_test_dom(
+    @rabbita.static_cell(
+      wiki_chat_entry_view({
+        role: "assistant",
+        content: "**Summary**\n> First section.",
+      }),
+    ),
+  )
+  assert_true(assistant_markup.contains("mooncode-markdown-source"))
+  assert_true(assistant_markup.contains("data-markdown-raw"))
+}

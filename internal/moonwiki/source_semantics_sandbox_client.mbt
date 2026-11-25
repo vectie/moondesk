@@ -5,13 +5,14 @@ const SourceSemanticsSandboxConfigBytes : Int32 = 65_536
 const SourceSemanticsSandboxResponseBytes : Int32 = 200_000
 
 ///|
+#derive(@json.FromJson)
 priv struct SourceSemanticsSandboxClientConfig {
   protocol_version : Int32
   instance_id : String
   auth_token : String
   workspace_id : String
   workspace_root : String
-} derive(@json.FromJson)
+}
 
 ///|
 priv enum SourceSemanticsSandboxClientError {

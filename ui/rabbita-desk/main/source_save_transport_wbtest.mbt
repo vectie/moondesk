@@ -61,7 +61,8 @@ fn source_save_test_send(
 ) -> Unit raise {
   let previous = source_save_http_activate(fixture)
   defer source_save_http_restore(previous)
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   let dispatch : Dispatch[Msg] = fn(message) {
     if message is SourcePane(result) {
       cell.val = update_source_pane(cell.val, result)
@@ -124,10 +125,7 @@ async test "source save transport rejects host errors and preserves the retry dr
     assert_eq(cell.val.baseline, "fn main {}")
     assert_true(source_pane_dirty(cell.val))
     assert_false(cell.val.saving)
-    assert_eq(
-      cell.val.status,
-      json_field_string(payload, "error", default=""),
-    )
+    assert_eq(cell.val.status, json_field_string(payload, "error", default=""))
     assert_true(cell.val.server_content is None)
   }
   let retry = Ref(source_save_test_state())

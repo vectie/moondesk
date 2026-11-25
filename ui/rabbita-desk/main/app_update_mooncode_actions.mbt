@@ -2183,6 +2183,23 @@ fn update_mooncode_actions(
           moonclaw_auth_failed: false,
         },
       )
+    RetryMoonClawStartupProbe => (fetch_moonclaw_daemon_cmd(dispatch), model)
+    RetryMoonClawStartupProbe => (fetch_moonclaw_daemon_cmd(dispatch), model)
+    LoadEarlierMoonCodeMessages(session_id) => {
+      let next_limit = if model.mooncode_visible_window_session_id == session_id {
+        model.mooncode_visible_item_limit + 24
+      } else {
+        48
+      }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_visible_window_session_id: session_id,
+          mooncode_visible_item_limit: next_limit,
+        },
+      )
+    }
     SetMoonClawOpenRouterKey(value) =>
       (@rabbita.none, { ..model, moonclaw_openrouter_key: value, })
     SaveMoonClawOpenRouterKey =>

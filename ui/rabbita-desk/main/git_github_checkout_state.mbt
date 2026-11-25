@@ -1,11 +1,12 @@
 ///|
+#derive(FromJson)
 struct GitHubCheckoutProjection {
   contract : String
   repository : String
   number : Int32
   head_oid : String
   workspace : @desk.DeskWorkspace
-} derive(FromJson)
+}
 
 ///|
 fn github_checkout_head_valid(head : String) -> Bool {

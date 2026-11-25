@@ -1,18 +1,20 @@
 ///|
 /// A read-only projection. Comparison never changes retained source text.
+#derive(Debug, Eq)
 struct WorkHumanLineChange {
   kind : String
   line : Int32
   text : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 struct WorkHumanComparison {
   rows : Array[WorkHumanLineChange]
   removed : Int32
   added : Int32
   coarse : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// Keep line endings in each token: CRLF, CR, LF and missing final endings

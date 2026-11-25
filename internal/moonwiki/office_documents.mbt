@@ -1,67 +1,76 @@
 ///|
+#derive(Eq, Debug)
 enum OfficeDocumentKind {
   Docx
   Xlsx
   Pptx
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct DocxRun {
   text : String
   bold : Bool
   italic : Bool
   underline : Bool
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct DocxParagraph {
   runs : Array[DocxRun]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct XlsxCell {
   reference : String
   value : String
   formula : String?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct XlsxSheet {
   part : String
   name : String
   cells : Array[XlsxCell]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct PptxTextObject {
   text : String
   x : Int32?
   y : Int32?
   width : Int32?
   height : Int32?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct PptxSlide {
   part : String
   objects : Array[PptxTextObject]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum OfficeSupportedModel {
   Word(Array[DocxParagraph])
   Spreadsheet(Array[XlsxSheet])
   Presentation(Array[PptxSlide])
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 struct OfficeDocumentModel {
   kind : OfficeDocumentKind
   entries : Array[(String, FixedArray[Byte])]
   editable_parts : Array[String]
   supported : OfficeSupportedModel
   warnings : Array[String]
-} derive(Debug)
+}
 
 ///|
 fn office_document_kind(path : String) -> OfficeDocumentKind? {

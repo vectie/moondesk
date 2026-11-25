@@ -1,5 +1,6 @@
 ///|
 /// The command actions accepted by the current MoonCode native runtime.
+#derive(Debug, Eq)
 pub(all) enum MoonCodeCommandKind {
   Prompt
   Steer
@@ -16,14 +17,15 @@ pub(all) enum MoonCodeCommandKind {
   RevertPatch
   Cancel
   Note
-} derive(Debug, Eq)
+}
 
 ///|
 /// Optional explicit task purpose. An absent value leaves native inference on.
+#derive(Debug, Eq)
 pub(all) enum MoonCodeTaskIntent {
   ReadOnly
   WorkspaceChange
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn MoonCodeTaskIntent::to_string(self : MoonCodeTaskIntent) -> String {
@@ -35,14 +37,16 @@ pub fn MoonCodeTaskIntent::to_string(self : MoonCodeTaskIntent) -> String {
 
 ///|
 /// The daemon-owned status of an accepted command packet.
+#derive(Debug, Eq)
 #warnings("-unused_constructor")
 pub enum MoonCodeCommandStatus {
   Accepted
-} derive(Debug, Eq)
+}
 
 ///|
 /// A validated caller-owned command submission containing neither daemon-owned
 /// acceptance fields nor transport JSON.
+#derive(Debug, Eq)
 pub(all) struct MoonCodeCommand {
   kind : MoonCodeCommandKind
   client_turn_id : String
@@ -59,7 +63,7 @@ pub(all) struct MoonCodeCommand {
   target_command_id : String
   tool_call_id : String
   force_preflight : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn MoonCodeCommandKind::to_string(self : MoonCodeCommandKind) -> String {

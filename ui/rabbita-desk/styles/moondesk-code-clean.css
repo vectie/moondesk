@@ -76,20 +76,21 @@
 .mooncode-composer .mooncode-composer-status,
 .mooncode-composer .mooncode-guidance-feedback {
   position: absolute;
-  left: 10px;
-  right: 10px;
+  right: 12px;
+  left: auto;
+  max-width: min(420px, calc(100% - 24px));
   bottom: calc(100% + 6px);
   z-index: 42;
   margin: 0;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--mooncode-line, var(--line, #d0d5dd));
   background: var(--mooncode-panel, var(--bg-raised, #ffffff));
-  color: var(--mooncode-ink, var(--ink, #0f172a));
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);
-  font-size: 12px;
-  line-height: 1.4;
-  max-height: 76px;
+  color: var(--mooncode-muted, var(--muted, #475569));
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  font-size: 11.5px;
+  line-height: 1.35;
+  max-height: 52px;
   overflow: auto;
   pointer-events: auto;
 }
@@ -101,26 +102,251 @@
   background: var(--mooncode-panel, var(--bg-raised, #ffffff));
 }
 
-/* --- Zero-jump floating runtime setup notice in active sessions --- */
-.code-workbench > .mooncode-chat-surface:not(.empty) > .mooncode-runtime-setup {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+/* --- Antigravity-style compact bottom status bar (replaces giant warning boxes) --- */
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup,
+.code-workbench > .mooncode-chat-surface:not(.empty) > .mooncode-runtime-setup,
+.code-workbench > .mooncode-chat-surface.empty > .mooncode-runtime-setup {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  order: 99;
+  flex: 0 0 auto;
   z-index: 36;
-  margin: 0;
-  width: min(600px, calc(100% - 28px));
-  max-width: 600px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: var(--chat-track, min(740px, calc(100% - 40px)));
+  max-width: none;
+  min-height: 30px;
+  margin: 0 auto 10px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--mooncode-line, var(--line, #d0d5dd));
   background: var(--mooncode-panel, var(--bg-raised, #ffffff));
-  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+  box-shadow: none;
+  font-size: 12px;
+  color: var(--mooncode-muted, var(--muted, #475569));
 }
 
-/* Keep empty-chat runtime setup compact and solid without washing out text. */
-.code-workbench > .mooncode-chat-surface.empty > .mooncode-runtime-setup {
-  background: var(--mooncode-panel, var(--bg-raised, #ffffff));
-  border: 1px solid var(--mooncode-line-strong, var(--line, #cbd5e1));
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: #d97706;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup[data-state="connecting"]::before,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup[data-state="temporarily-unavailable"]::before {
+  background: var(--mooncode-accent, #2563eb);
+  animation: md-work-beacon 1.5s cubic-bezier(.4, 0, .6, 1) infinite;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup[data-state="installed-stopped"]::before,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup[data-state="not-installed"]::before,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup[data-state="unavailable"]::before {
+  background: #dc2626;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .code-capability-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .code-capability-summary strong,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 560;
+  color: var(--mooncode-ink, #1f2937);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep secondary verbose explanations out of the calm bottom bar */
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .code-capability-summary p {
+  display: none;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .primary-button,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .secondary-button,
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .link-button {
+  min-height: 24px;
+  height: 24px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  width: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .desk-detail-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+/* Collapse technical details into a tiny Antigravity-style icon trigger opening upward */
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details {
+  position: relative;
+  flex: 0 0 auto;
+  flex-basis: auto;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details > summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid var(--mooncode-line, #d0d5dd);
+  background: var(--mooncode-field, #f8fafc);
+  color: var(--mooncode-muted, #667085);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details[open] > :not(summary) {
+  display: block;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details[open] {
+  position: static;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details[open] > summary {
+  border-color: var(--mooncode-accent, #2563eb);
+  color: var(--mooncode-accent, #2563eb);
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details[open]::after {
+  content: "";
+  display: none;
+}
+
+/* When expanded, render details cleanly as a compact stacked drawer below the bar */
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup:has(.technical-details[open]) {
+  flex-wrap: wrap;
+  padding: 6px 10px 8px;
+}
+
+.code-workbench > .mooncode-chat-surface > .mooncode-runtime-setup .technical-details[open] {
+  flex-basis: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--mooncode-line, #d0d5dd);
+  background: var(--mooncode-field, #f8fafc);
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 11px;
+}
+
+/* --- Compact quiet session-history status in left sidebar (no giant error box) --- */
+.mooncode-rail .mooncode-sessions-state-panel {
+  margin: 6px 8px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--mooncode-line, #d0d5dd);
+  background: var(--mooncode-panel, #ffffff);
+  box-shadow: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel > .eyebrow {
+  display: none;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel .surface-state-announcement {
+  flex: 1 1 110px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel .surface-state-announcement::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 999px;
+  background: #d97706;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel[data-state="loading"] .surface-state-announcement::before {
+  background: var(--mooncode-accent, #2563eb);
+  animation: md-work-beacon 1.5s cubic-bezier(.4, 0, .6, 1) infinite;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel[data-state="legitimate-zero"] .surface-state-announcement::before,
+.mooncode-rail .mooncode-sessions-state-panel[data-state="first-use-empty"] .surface-state-announcement::before {
+  background: var(--mooncode-subtle, #98a2b3);
+}
+
+.mooncode-rail .mooncode-sessions-state-panel .surface-state-announcement strong {
+  font-size: 11.5px;
+  font-weight: 560;
+  color: var(--mooncode-ink, #1f2937);
+}
+
+.mooncode-rail .mooncode-sessions-state-panel .surface-state-announcement p {
+  display: none;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel > button {
+  min-height: 22px;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--mooncode-line, #d0d5dd);
+  background: var(--mooncode-field, #f8fafc);
+  color: var(--mooncode-ink, #1f2937);
+  cursor: pointer;
+}
+
+.mooncode-rail .mooncode-sessions-state-panel > details.technical-details {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+  color: var(--mooncode-muted, #667085);
+}
+
+.mooncode-rail .mooncode-sessions-state-panel > details.technical-details > summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--mooncode-subtle, #64748b);
 }
 
 /* Keep coding setup drawer strictly solid and above composer popovers. */
@@ -163,11 +389,526 @@
   white-space: nowrap;
 }
 
+/* ==========================================================================
+ * Unified Outfit & Chat Track across Chrome, WKWebView (Lepusa), and MoonProj
+ * ==========================================================================
+ * Uses standard width calculations with container-query progressive refinement
+ * so standalone browser, native Lepusa WKWebView, and embedded MoonProj iframe
+ * render with the exact same typography, palette, alignment, and proportions.
+ */
+:root {
+  --font-ui: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif;
+  --font-display: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-ui);
+}
+
+/* Keep embedded MoonDesk visually identical in shell chrome to standalone */
+html[data-embedded="moonproj"] .title-bar {
+  background: var(--bg-raised, #ffffff);
+  border-bottom: 1px solid var(--line, #d0d5dd);
+}
+
+.code-workbench > .mooncode-chat-surface {
+  container-type: inline-size;
+  container-name: mooncode-chat;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.code-workbench > .mooncode-chat-surface > * {
+  --chat-track: min(740px, calc(100% - 40px));
+}
+
+@container mooncode-chat (max-width: 560px) {
+  .code-workbench > .mooncode-chat-surface > * {
+    --chat-track: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 600px) {
+  .code-workbench > .mooncode-chat-surface > * {
+    --chat-track: calc(100% - 24px);
+  }
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-session-surface {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-transcript-list {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  overflow-anchor: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.28) transparent;
+  padding: 20px max(12px, calc((100% - var(--chat-track, min(740px, calc(100% - 40px)))) / 2)) 40px;
+  scroll-padding-bottom: 40px;
+  gap: 14px;
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-transcript-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-transcript-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-transcript-list::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+  border-radius: 999px;
+}
+
+.code-workbench > .mooncode-chat-surface .mooncode-transcript-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.48);
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-load-earlier {
+  align-self: center;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--mooncode-line, #d0d5dd);
+  background: var(--mooncode-panel, #ffffff);
+  color: var(--mooncode-muted, #667085);
+  font-size: 12px;
+  font-weight: 560;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-load-earlier:hover {
+  border-color: var(--mooncode-line-strong, #98a2b3);
+  color: var(--mooncode-ink, #1f2937);
+  background: var(--mooncode-field, #f8fafc);
+}
+
+/* Flush alignment & progressive virtualization for long conversations.
+   Keep the latest 6 rows eagerly laid out so scrollHeight is always exact on
+   new/streaming messages; virtualize only older off-screen history above them. */
+.code-workbench .mooncode-transcript-list > .mooncode-message {
+  box-sizing: border-box;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message:nth-last-child(n + 7) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 88px;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-activity-row:nth-last-child(n + 7) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 64px;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message[data-md-new="true"],
+.code-workbench .mooncode-transcript-list > .mooncode-activity-row[data-md-new="true"] {
+  animation: md-chat-enter 180ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.assistant {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.assistant::before,
+.code-workbench .mooncode-transcript-list > .mooncode-message.assistant::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.assistant::before {
+  top: 4px;
+  left: -10px;
+  border-top: 2px solid var(--ms-ai-mark, #0d9488);
+  border-left: 2px solid var(--ms-ai-mark, #0d9488);
+  border-radius: 1px 0 0 0;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.assistant::after {
+  bottom: 4px;
+  right: -8px;
+  border-bottom: 2px solid var(--ms-ai-mark, #0d9488);
+  border-right: 2px solid var(--ms-ai-mark, #0d9488);
+  border-radius: 0 0 1px 0;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.user {
+  position: relative;
+  align-self: flex-end;
+  width: fit-content;
+  max-width: min(82%, 580px);
+  border: 1px solid var(--mooncode-line, #e2e8f0);
+  border-radius: 12px;
+  background: var(--mooncode-field, #f8fafc);
+  color: var(--mooncode-ink, #1f2937);
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-message.user::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: -1px;
+  width: 2.5px;
+  height: 14px;
+  border-radius: 99px;
+  background: var(--ms-human-mark, #c27803);
+  pointer-events: none;
+}
+
+.code-workbench .mooncode-transcript-list > .mooncode-activity-row,
+.code-workbench .mooncode-transcript-list > .mooncode-message.activity {
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+/* Pin composer cleanly at the bottom in BOTH empty and active Code chats (matching Wiki chat) */
+.code-workbench > .mooncode-chat-surface > .mooncode-composer,
+.code-workbench > .mooncode-chat-surface.empty > .mooncode-composer {
+  width: var(--chat-track, min(740px, calc(100% - 40px)));
+  max-width: none;
+  margin: auto auto 14px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border-radius: 14px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.code-workbench > .mooncode-chat-surface:not(.empty) > .mooncode-composer {
+  margin-top: 0;
+}
+
+.code-workbench > .mooncode-chat-surface.empty {
+  align-items: center;
+  justify-content: flex-end;
+  padding: 24px 0 0;
+  gap: 16px;
+}
+
+.code-workbench > .mooncode-chat-surface.empty > .mooncode-empty {
+  width: var(--chat-track, min(740px, calc(100% - 40px)));
+  max-width: none;
+  margin: auto auto 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.code-workbench > .mooncode-chat-surface.empty > .mooncode-starters {
+  width: var(--chat-track, min(740px, calc(100% - 40px)));
+  max-width: none;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smooth GPU-safe collapse/expand on thinking & work disclosures */
+.mooncode-thinking-card,
+.mooncode-activity-disclosure,
+.mooncode-evidence {
+  overflow: hidden;
+}
+
+.mooncode-thinking-body {
+  animation: none;
+}
+
+.mooncode-activity-disclosure[open] .mooncode-activity-detail {
+  animation: none;
+}
+
+.code-workbench .mooncode-composer .mooncode-input {
+  max-height: min(32dvh, 220px);
+  transition: height 110ms ease;
+}
+
+/* --- GPU-composited live working pulse & shimmer --- */
+.mooncode-activity-row.running .mooncode-activity-dot,
+.mooncode-activity-row.queued .mooncode-activity-dot {
+  animation: md-work-beacon 1.5s cubic-bezier(.4, 0, .6, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.mooncode-activity-row.running .mooncode-activity-title,
+.mooncode-thinking-card[data-running="true"] .mooncode-thinking-label {
+  background: linear-gradient(
+    90deg,
+    var(--mooncode-ink, #0f172a) 0%,
+    var(--mooncode-accent, #2563eb) 48%,
+    var(--mooncode-ink, #0f172a) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: md-thinking-shimmer 2.2s linear infinite;
+}
+
+/* --- Dedicated Thinking / Reasoning block --- */
+.mooncode-thinking-card {
+  position: relative;
+  margin: 4px 0 6px;
+  border: 1px solid var(--mooncode-line, #e2e8f0);
+  border-radius: 10px;
+  background: var(--mooncode-field, #f8fafc);
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+
+.mooncode-thinking-card::before,
+.mooncode-thinking-card::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
+}
+
+.mooncode-thinking-card::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid var(--ms-ai-mark, #0d9488);
+  border-left: 2px solid var(--ms-ai-mark, #0d9488);
+  border-radius: 10px 0 0 0;
+}
+
+.mooncode-thinking-card::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid var(--ms-ai-mark, #0d9488);
+  border-right: 2px solid var(--ms-ai-mark, #0d9488);
+  border-radius: 0 0 10px 0;
+}
+
+.mooncode-thinking-card[data-running="true"] {
+  border-color: color-mix(in srgb, var(--ms-ai-mark, #0d9488) 42%, var(--mooncode-line, #e2e8f0));
+  background: var(--mooncode-panel, #ffffff);
+}
+
+.mooncode-thinking-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mooncode-muted, #475569);
+  user-select: none;
+}
+
+.mooncode-thinking-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mooncode-thinking-summary .moon-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--mooncode-accent, #2563eb);
+}
+
+.mooncode-thinking-chevron {
+  margin-left: auto;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--mooncode-subtle, #64748b);
+  border-bottom: 1.5px solid var(--mooncode-subtle, #64748b);
+  transform: rotate(-45deg);
+  transition: transform 160ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.mooncode-thinking-card[open] .mooncode-thinking-chevron {
+  transform: rotate(45deg);
+}
+
+.mooncode-thinking-body {
+  margin: 0;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--mooncode-line, #e2e8f0);
+  max-height: 260px;
+  overflow-y: auto;
+  color: var(--mooncode-muted, #475569);
+  font-family: Inter, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: md-chat-enter 160ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.mooncode-thinking-card[data-running="true"] .mooncode-thinking-body {
+  max-height: 200px;
+}
+
+.mooncode-activity-detail {
+  max-height: 220px;
+}
+
+/* --- Typed Tool Evidence Pills & Icons --- */
+.mooncode-evidence {
+  border-radius: 9px;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.mooncode-evidence-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mooncode-evidence-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--mooncode-muted, #475569);
+}
+
+.mooncode-evidence-icon .moon-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.mooncode-evidence-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  flex: 0 0 auto;
+  background: var(--mooncode-field, #f1f5f9);
+  color: var(--mooncode-muted, #475569);
+}
+
+.mooncode-evidence-kind.search {
+  background: rgba(14, 116, 144, 0.1);
+  color: #0e7490;
+}
+
+.mooncode-evidence-kind.web {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.mooncode-evidence-kind.read {
+  background: rgba(71, 85, 105, 0.1);
+  color: #334155;
+}
+
+.mooncode-evidence-kind.edit {
+  background: rgba(124, 58, 237, 0.1);
+  color: #6d28d9;
+}
+
+.mooncode-evidence-kind.command,
+.mooncode-evidence-kind.test {
+  background: rgba(5, 150, 105, 0.1);
+  color: #047857;
+}
+
+.mooncode-evidence-kind.skill {
+  background: rgba(217, 119, 6, 0.1);
+  color: #b45309;
+}
+
+.mooncode-evidence-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes md-chat-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes md-work-beacon {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes md-thinking-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mooncode-composer .mooncode-composer-status,
   .mooncode-composer .mooncode-guidance-feedback,
-  .code-workbench .mooncode-runtime-setup {
-    transition: none;
-    animation: none;
+  .code-workbench .mooncode-runtime-setup,
+  .code-workbench .mooncode-transcript-list > .mooncode-message,
+  .code-workbench .mooncode-transcript-list > .mooncode-activity-row,
+  .mooncode-activity-row.running .mooncode-activity-dot,
+  .mooncode-activity-row.queued .mooncode-activity-dot,
+  .mooncode-activity-row.running .mooncode-activity-title,
+  .mooncode-thinking-card[data-running="true"] .mooncode-thinking-label,
+  .mooncode-thinking-body,
+  .mooncode-thinking-chevron {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .mooncode-activity-row.running .mooncode-activity-title,
+  .mooncode-thinking-card[data-running="true"] .mooncode-thinking-label {
+    background: none;
+    color: var(--mooncode-ink, #0f172a);
   }
 }

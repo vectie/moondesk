@@ -1,5 +1,6 @@
 ///|
-pub struct MoonCodeSessionId(String) derive(Debug, Eq)
+#derive(Debug, Eq)
+pub struct MoonCodeSessionId(String)
 
 ///|
 pub fn MoonCodeSessionId::parse(value : String) -> MoonCodeSessionId? {
@@ -17,6 +18,7 @@ pub fn MoonCodeSessionId::to_string(self : MoonCodeSessionId) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum MoonCodeSessionStatus {
   Created
   Queued
@@ -27,7 +29,7 @@ pub(all) enum MoonCodeSessionStatus {
   Cancelled
   Durable
   Unknown
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn MoonCodeSessionStatus::parse(value : String) -> MoonCodeSessionStatus? {
@@ -61,6 +63,7 @@ pub fn MoonCodeSessionStatus::to_string(self : MoonCodeSessionStatus) -> String 
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct MoonCodeSessionSummary {
   id : MoonCodeSessionId
   workspace_id : String
@@ -76,7 +79,7 @@ pub(all) struct MoonCodeSessionSummary {
   last_message : String?
   archived : Bool
   extensions : Map[String, Json]
-} derive(Debug, Eq)
+}
 
 ///|
 fn listing_string(fields : Map[String, Json], key : String) -> String? {

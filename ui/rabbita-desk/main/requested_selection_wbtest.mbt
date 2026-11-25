@@ -648,7 +648,11 @@ extern "js" fn test_scheduler_run_cmd_js(
   body_has : (@http.Body) -> Bool,
   body_text : (@http.Body) -> String,
   body_ct : (@http.Body) -> String,
-  deliver_text : ((Result[String, @http.HttpError]) -> @rabbita.Cmd, Bool, String) -> @rabbita.Cmd,
+  deliver_text : (
+    (Result[String, @http.HttpError]) -> @rabbita.Cmd,
+    Bool,
+    String,
+  ) -> @rabbita.Cmd,
   deliver_json : ((Result[Json, @http.HttpError]) -> @rabbita.Cmd, Bool, String) -> @rabbita.Cmd,
 ) -> Unit =
   #| (scheduler, command, eachCmd, bodyHas, bodyText, bodyCt, deliverText, deliverJson) => {
@@ -760,7 +764,8 @@ extern "js" fn requested_selection_restore_test_history(previous : @js.Value) =
 
 ///|
 test "requested session cancellation clears URL before a reload" {
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   for
     navigation in [
       SelectWorkspaceMode(Desk),

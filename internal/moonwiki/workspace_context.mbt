@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 struct WorkspaceContext {
   requested_root : String
   suite_root : String
@@ -6,7 +7,7 @@ struct WorkspaceContext {
   state_dir : String
   tmp_root : String
   product_registry_path : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn workspace_context(workspace_root : String) -> WorkspaceContext {

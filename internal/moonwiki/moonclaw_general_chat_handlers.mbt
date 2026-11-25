@@ -291,6 +291,86 @@ fn moonclaw_general_existing_task_is_routed(payload : Json) -> Bool {
 }
 
 ///|
+fn moonclaw_general_task_is_missing_error(error : String) -> Bool {
+  let lower = error.to_lower()
+  lower.contains("404") ||
+  lower.contains("not found") ||
+  lower.contains("retiring")
+}
+
+///|
+async fn moonclaw_general_send_new_task(
+  conn : @http.ServerConnection,
+  method_ : @http.RequestMethod,
+  daemon : Json,
+  workspace_root : String,
+  workspace_id : String,
+  workspace_root_path : String,
+  content : String,
+  routed_model : String,
+  automation_suggestion : Json,
+  preferences_used : Int32,
+  preference_ids : Array[String],
+) -> Unit {
+  let request = moonclaw_general_new_task_request(
+    workspace_root_path,
+    content,
+    routed_model,
+    workspace_trust=moonclaw_general_workspace_trust(
+      workspace_root, workspace_id, workspace_root_path,
+    ),
+  )
+  match moonclaw_post_json(daemon, "/v1/task", request) {
+    Err(error) => send_api_error(conn, method_, 502, "Bad Gateway", error)
+    Ok(response) =>
+      match response {
+        {
+          "task": {
+            "id": String(created_task_id),
+            "status": String(status),
+            ..
+          },
+          "message": message_response,
+          ..
+        } =>
+          send_json(
+            conn,
+            method_,
+            moonclaw_general_chat_response(
+              created_task_id,
+              status,
+              json_bool(message_response, "queued", default=false),
+              automation_suggestion,
+              preferences_used,
+              preference_ids,
+              message_id=json_string(message_response, "id", default=""),
+            ),
+          )
+        {
+          "task": {
+            "id": String(created_task_id),
+            "status": String(status),
+            ..
+          },
+          ..
+        } =>
+          send_json(
+            conn,
+            method_,
+            moonclaw_general_chat_response(
+              created_task_id, status, false, automation_suggestion, preferences_used,
+              preference_ids,
+            ),
+          )
+        _ =>
+          send_api_error(
+            conn, method_, 502, "Bad Gateway", "The document assistant returned an invalid task response",
+          )
+      }
+  }
+}
+
+///|
 async fn handle_moonclaw_general_chat(
   workspace_root : String,
   body : &@io.Reader,
@@ -401,25 +481,29 @@ async fn handle_moonclaw_general_chat(
     }
   }
   let routed_model = moonclaw_moongate_default_model(route)
-  if task_id != "" {
-    let existing = match moonclaw_get_json(daemon, "/v1/task/" + task_id) {
-      Ok(value) => value
+  let mut active_task_id = task_id
+  if active_task_id != "" {
+    match moonclaw_get_json(daemon, "/v1/task/" + active_task_id) {
+      Ok(existing) => {
+        if moonclaw_general_task_workspace(existing) != workspace.root_path {
+          send_api_error(
+            conn, method_, 403, "Forbidden", "Task belongs to a different workspace",
+          )
+          return
+        }
+        if !moonclaw_general_existing_task_is_routed(existing) {
+          send_api_error(
+            conn, method_, 409, "Conflict", "This conversation predates MoonGate routing. Start a new chat.",
+          )
+          return
+        }
+      }
+      Err(error) if moonclaw_general_task_is_missing_error(error) =>
+        active_task_id = ""
       Err(error) => {
         send_api_error(conn, method_, 502, "Bad Gateway", error)
         return
       }
-    }
-    if moonclaw_general_task_workspace(existing) != workspace.root_path {
-      send_api_error(
-        conn, method_, 403, "Forbidden", "Task belongs to a different workspace",
-      )
-      return
-    }
-    if !moonclaw_general_existing_task_is_routed(existing) {
-      send_api_error(
-        conn, method_, 409, "Conflict", "This conversation predates MoonGate routing. Start a new chat.",
-      )
-      return
     }
   }
   let preference = moonclaw_preferences_for_prompt(workspace_root, workspace_id)
@@ -435,80 +519,69 @@ async fn handle_moonclaw_general_chat(
   let automation_suggestion = moonclaw_general_automation_suggestion(
     message, document_path, file_paths,
   )
-  if task_id == "" {
-    let request = moonclaw_general_new_task_request(
+  if active_task_id == "" {
+    moonclaw_general_send_new_task(
+      conn,
+      method_,
+      daemon,
+      workspace_root,
+      workspace_id,
       workspace.root_path,
       content,
       routed_model,
-      workspace_trust=moonclaw_general_workspace_trust(
-        workspace_root,
-        workspace_id,
-        workspace.root_path,
-      ),
+      automation_suggestion,
+      preferences_used,
+      preference_ids,
     )
-    match moonclaw_post_json(daemon, "/v1/task", request) {
-      Err(error) => send_api_error(conn, method_, 502, "Bad Gateway", error)
-      Ok(response) =>
-        match response {
-          {
-            "task": {
-              "id": String(created_task_id),
-              "status": String(status),
-              ..
-            },
-            "message": message_response,
-            ..
-          } =>
-            send_json(
-              conn,
-              method_,
-              moonclaw_general_chat_response(
-                created_task_id,
-                status,
-                json_bool(message_response, "queued", default=false),
-                automation_suggestion,
-                preferences_used,
-                preference_ids,
-                message_id=json_string(message_response, "id", default=""),
-              ),
-            )
-          {
-            "task": {
-              "id": String(created_task_id),
-              "status": String(status),
-              ..
-            },
-            ..
-          } =>
-            send_json(
-              conn,
-              method_,
-              moonclaw_general_chat_response(
-                created_task_id, status, false, automation_suggestion, preferences_used,
-                preference_ids,
-              ),
-            )
-          _ =>
-            send_api_error(
-              conn, method_, 502, "Bad Gateway", "The document assistant returned an invalid task response",
-            )
-        }
-    }
   } else {
     let request : Json = {
       "message": { "role": "user", "content": content },
       "web_search": true,
     }
     let events_cursor = match
-      moonclaw_general_task_head_cursor(daemon, task_id) {
+      moonclaw_general_task_head_cursor(daemon, active_task_id) {
       Ok(value) => value
+      Err(error) if moonclaw_general_task_is_missing_error(error) => {
+        moonclaw_general_send_new_task(
+          conn,
+          method_,
+          daemon,
+          workspace_root,
+          workspace_id,
+          workspace.root_path,
+          content,
+          routed_model,
+          automation_suggestion,
+          preferences_used,
+          preference_ids,
+        )
+        return
+      }
       Err(error) => {
         send_api_error(conn, method_, 502, "Bad Gateway", error)
         return
       }
     }
     match
-      moonclaw_post_json(daemon, "/v1/task/" + task_id + "/message", request) {
+      moonclaw_post_json(
+        daemon,
+        "/v1/task/" + active_task_id + "/message",
+        request,
+      ) {
+      Err(error) if moonclaw_general_task_is_missing_error(error) =>
+        moonclaw_general_send_new_task(
+          conn,
+          method_,
+          daemon,
+          workspace_root,
+          workspace_id,
+          workspace.root_path,
+          content,
+          routed_model,
+          automation_suggestion,
+          preferences_used,
+          preference_ids,
+        )
       Err(error) => send_api_error(conn, method_, 502, "Bad Gateway", error)
       Ok(response) => {
         let queued = json_bool(response, "queued", default=false)
@@ -521,7 +594,7 @@ async fn handle_moonclaw_general_chat(
             conn,
             method_,
             moonclaw_general_chat_response(
-              task_id,
+              active_task_id,
               if queued {
                 "queued"
               } else {

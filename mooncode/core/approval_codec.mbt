@@ -1,28 +1,29 @@
 ///|
 /// An approval snapshot decoded from canonical conversation evidence.
+#derive(Debug, Eq)
 pub(all) enum MoonCodeApproval {
   Pending(
     session_id~ : String,
     approval_id~ : String,
     target_command_id~ : String,
     tool_call_id~ : String,
-    arguments~ : String
+    arguments~ : String,
   )
   Approved(
     session_id~ : String,
     approval_id~ : String,
     target_command_id~ : String,
     tool_call_id~ : String,
-    arguments~ : String
+    arguments~ : String,
   )
   Rejected(
     session_id~ : String,
     approval_id~ : String,
     target_command_id~ : String,
     tool_call_id~ : String,
-    arguments~ : String
+    arguments~ : String,
   )
-} derive(Debug, Eq)
+}
 
 ///|
 fn approval_required_string(

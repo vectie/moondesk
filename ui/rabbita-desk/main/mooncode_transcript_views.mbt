@@ -16,6 +16,28 @@ struct MoonCodeTranscriptItem {
 }
 
 ///|
+const MOONCODE_TRANSCRIPT_PAGE_SIZE : Int32 = 24
+
+///|
+fn mooncode_transcript_visible_start(
+  model : Model,
+  session_id : String,
+  total : Int32,
+) -> Int32 {
+  let limit = if model.mooncode_visible_window_session_id == session_id &&
+    model.mooncode_visible_item_limit > MOONCODE_TRANSCRIPT_PAGE_SIZE {
+    model.mooncode_visible_item_limit
+  } else {
+    MOONCODE_TRANSCRIPT_PAGE_SIZE
+  }
+  if total > limit {
+    total - limit
+  } else {
+    0
+  }
+}
+
+///|
 fn render_mooncode_transcript(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -41,8 +63,31 @@ fn render_mooncode_transcript(
       p(class="lead", mooncode_empty_transcript_message(session)),
     ])
   } else {
+    let start_index = mooncode_transcript_visible_start(
+      model,
+      session.id,
+      items.length(),
+    )
     let children : Array[@rabbita.Html] = []
-    for item in items {
+    if start_index > 0 {
+      children.push(
+        button(
+          class="mooncode-load-earlier",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "mooncode-load-earlier")
+            .data_set("hidden-count", start_index.to_string())
+            .data_set("i18n", "code.load_earlier")
+            .data_set(
+              "i18n-params",
+              ({ "count": start_index } : Json).stringify(),
+            ),
+          on_click=dispatch(LoadEarlierMoonCodeMessages(session.id)),
+          "Load earlier (\{start_index})",
+        ),
+      )
+    }
+    for index in start_index..<items.length() {
+      let item = items[index]
       match item.message {
         Some(row) =>
           children.push(

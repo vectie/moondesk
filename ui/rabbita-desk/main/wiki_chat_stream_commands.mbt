@@ -78,11 +78,12 @@ extern "js" fn browser_stop_wiki_chat_stream() =
   #| }
 
 ///|
+#derive(FromJson)
 struct WikiChatStreamEnvelope {
   events : Array[Json]
   cursor : String
   error : String
-} derive(FromJson)
+}
 
 ///|
 const WikiChatStreamStartPollDelayMs : Int32 = 100

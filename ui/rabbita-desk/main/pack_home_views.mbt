@@ -30,12 +30,13 @@ fn pack_default_description(pack : PackAppRecord) -> String {
 }
 
 ///|
+#derive(Eq)
 enum PackInspection {
   Application(String)
   Studio
   Collaboration
   Runtime
-} derive(Eq)
+}
 
 ///|
 fn pack_inspect_button(

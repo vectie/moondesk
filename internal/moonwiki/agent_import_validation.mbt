@@ -8,13 +8,14 @@ priv struct AgentImportStage {
 }
 
 ///|
+#derive(Eq, ToJson)
 priv struct AgentImportRequest {
   operation_id : String
   expected_library : String
   destination_folder : String
   package_sha256 : String
   binding_digest : String?
-} derive(Eq, ToJson)
+}
 
 ///|
 let agent_import_package_limit : Int32 = 64 * 1024 * 1024

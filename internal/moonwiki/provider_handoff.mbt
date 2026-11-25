@@ -2,10 +2,11 @@
 const DesktopProviderHandoffMaximumBytes : Int32 = 2_048
 
 ///|
+#derive(FromJson)
 priv struct DesktopProviderHandoffRequest {
   client_id : String
   handoff_code : String
-} derive(FromJson)
+}
 
 ///|
 async fn read_desktop_provider_handoff_body(

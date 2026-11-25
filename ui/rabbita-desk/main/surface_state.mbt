@@ -2,6 +2,7 @@
 /// supported by explicit evidence.
 
 ///|
+#derive(Eq)
 #warnings("-unused_constructor")
 enum SurfaceState {
   FirstUseEmpty
@@ -12,7 +13,7 @@ enum SurfaceState {
   CapabilityLimited
   RecoverableError
   TerminalError
-} derive(Eq)
+}
 
 ///|
 fn surface_state_key(state : SurfaceState) -> String {

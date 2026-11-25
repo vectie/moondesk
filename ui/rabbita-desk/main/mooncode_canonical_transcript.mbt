@@ -152,12 +152,13 @@ fn mooncode_canonical_work_item(
   let summary = work.summary
   let status = work.status
   let detail = work.detail
+  let reasoning = work.reasoning()
   let evidence = mooncode_canonical_work_evidence(work, approvals)
   match mooncode_canonical_usage_evidence(usage, command_id) {
     Some(row) => evidence.push(row)
     None => ()
   }
-  if summary == "" && detail == "" && evidence.length() == 0 {
+  if summary == "" && detail == "" && reasoning == "" && evidence.length() == 0 {
     return None
   }
   Some(
@@ -175,6 +176,7 @@ fn mooncode_canonical_work_item(
         summary
       },
       detail,
+      reasoning,
       status,
       folded: status == "done" || status == "failed" || status == "cancelled",
       command_id,
@@ -237,12 +239,20 @@ fn mooncode_canonical_work_evidence(
   let rows : Array[MoonCodeEvidenceRow] = []
   let mut approval_index = 0
   for evidence in work.evidence {
+    let tool = work.step_tool(evidence.item_id)
     let kind = match evidence.kind {
       "edit" => "edit"
       "test" => "test"
       "approval" => "approval"
-      "tool" => "tool"
       "skill" => "skill"
+      "tool" =>
+        match tool {
+          "glob" | "grep" => "search"
+          "web_search" | "web_fetch" => "web"
+          "read" | "view_image" | "moon_ide" => "read"
+          "shell" | "moon_cmd" => "command"
+          _ => "tool"
+        }
       _ => "artifact"
     }
     let state = evidence.state
@@ -259,6 +269,7 @@ fn mooncode_canonical_work_evidence(
     }
     let state = if evidence.kind == "approval" { "" } else { state }
     if evidence.kind != "approval" &&
+      state != "pending" &&
       evidence.path == "" &&
       evidence.diff == "" &&
       evidence.command == "" &&

@@ -3,24 +3,27 @@
 /// These types do not define a second collaboration wire contract: adapters
 /// must validate the frozen MoonLib contract ids and canonical digest strings
 /// before constructing this view model.
+#derive(FromJson)
 struct CollaborationPrincipalRef {
   contract_id : String
   principal_id : String
   kind : String
   issuer : String
   subject : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct CollaborationWorkspaceRef {
   contract_id : String
   workspace_id : String
   revision : String
   digest : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct CollaborationCorrelationRef {
   contract_id : String
@@ -29,35 +32,39 @@ struct CollaborationCorrelationRef {
   request_id : String?
   attempt_id : String?
   idempotency_key : String?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct CollaborationOperationRef {
   contract_id : String
   product_id : String
   tool_id : String
   pack_version : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct CollaborationContractRef {
   contract_id : String
   referenced_contract_id : String
   referenced_contract_version : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct CollaborationBudgetCeilings {
   max_cost_micros : Int64?
   max_runtime_ms : Int64?
   max_tokens : Int64?
   max_artifacts : Int32?
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationMembership {
   membership_id : String
@@ -66,9 +73,10 @@ struct MoonFlowCollaborationMembership {
   status : String
   added_by : CollaborationPrincipalRef
   updated_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationAssignment {
   assignment_id : String
@@ -81,9 +89,10 @@ struct MoonFlowCollaborationAssignment {
   submitted_artifact_digest : String?
   approval_review_id : String?
   updated_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationComment {
   comment_id : String
@@ -94,9 +103,10 @@ struct MoonFlowCollaborationComment {
   body_digest : String
   mentions : Array[CollaborationPrincipalRef]
   created_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationReview {
   review_id : String
@@ -108,9 +118,10 @@ struct MoonFlowCollaborationReview {
   decision_evidence_ref : String?
   decision_evidence_digest : String?
   updated_at : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationPayload {
   workspace_ref : CollaborationWorkspaceRef
@@ -121,32 +132,36 @@ struct MoonFlowCollaborationPayload {
   reviews : Array[MoonFlowCollaborationReview]
   events : Array[Json]
   head_digest : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationSnapshot {
   contract_id : String
   payload : MoonFlowCollaborationPayload
   content_digest : String
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowHandoverCatalogEntry {
   handover_id : String
   state : String
   head_digest : String?
   envelope_digest : String?
   valid : Bool
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 struct MoonFlowHandoverCatalog {
   contract_id : String
   handovers : Array[MoonFlowHandoverCatalogEntry]
-} derive(FromJson)
+}
 
 ///|
+#derive(FromJson)
 #warnings("-unused_field")
 struct MoonFlowCollaborationReply {
   ok : Bool
@@ -157,7 +172,7 @@ struct MoonFlowCollaborationReply {
   source_contract : String
   snapshot : MoonFlowCollaborationSnapshot?
   handover_catalog : MoonFlowHandoverCatalog?
-} derive(FromJson)
+}
 
 ///|
 #warnings("-unused_field")

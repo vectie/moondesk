@@ -1,10 +1,11 @@
 ///|
+#derive(FromJson)
 struct MoonFlowSingleStepAction {
   work_item_id : String
   request_id : String
   status : String
   message : String
-} derive(FromJson)
+}
 
 ///|
 struct MoonFlowSingleStepState {

@@ -370,19 +370,28 @@ fn wiki_chat_entry_view(entry : WikiChatEntry) -> @rabbita.Html {
       ([] : Array[@rabbita.Html]),
     )
   }
+  let is_user = entry.role == "user"
+  let body = if is_user {
+    p(entry.content)
+  } else {
+    div(class="wiki-chat-markdown mooncode-markdown", [
+      div(
+        class="mooncode-markdown-source",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "mooncode-markdown-source")
+          .aria_label("Rendering Markdown"),
+        entry.content,
+      ),
+    ])
+  }
   div(
     class="wiki-chat-message " + entry.role,
-    attrs=@html.Attrs::build().data_set("chat-role", entry.role),
+    attrs=@html.Attrs::build()
+      .data_set("chat-role", entry.role)
+      .data_set("markdown-raw", entry.content),
     [
-      span(
-        class="wiki-chat-speaker",
-        if entry.role == "user" {
-          "You"
-        } else {
-          "MoonDesk"
-        },
-      ),
-      p(entry.content),
+      span(class="wiki-chat-speaker", if is_user { "You" } else { "MoonDesk" }),
+      body,
     ],
   )
 }
@@ -390,7 +399,13 @@ fn wiki_chat_entry_view(entry : WikiChatEntry) -> @rabbita.Html {
 ///|
 fn wiki_chat_status(status : String) -> String? {
   let value = status.trim().to_lower()
-  if value == "" || value == "draft" || value == "ready" {
+  if value == "" ||
+    value == "draft" ||
+    value == "ready" ||
+    value == "complete" ||
+    value == "completed" ||
+    value == "idle" ||
+    value == "done" {
     None
   } else if value.contains("sending") ||
     value.contains("generating") ||
@@ -668,7 +683,7 @@ fn render_wiki_office_document(
                 RecoverableError
                 | Disconnected
                 | TerminalError
-                | CapabilityLimited
+                | CapabilityLimited,
               ) {
               []
             } else if model.preview_state is Some(Loading) {

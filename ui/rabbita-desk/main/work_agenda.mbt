@@ -1,9 +1,10 @@
 ///|
+#derive(Debug, Eq)
 enum WorkAgendaState {
   AgendaDue
   AgendaUpcoming
   AgendaPaused
-} derive(Debug, Eq)
+}
 
 ///|
 struct WorkAgendaItem {

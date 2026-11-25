@@ -1,37 +1,42 @@
 ///|
 /// Feature-owned direct editor state for MoonCode's source pane.
+#derive(Eq, Debug)
 enum SourcePaneContent {
   Empty
   Loading
   Ready(@desk.DeskPreview)
   Unsupported(String)
   Failed(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum SourceSaveOutcome {
   SourceSaved(Json)
   SourceConflict(String)
   SourceSaveFailed(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct SourcePaneRequestIdentity {
   generation : Int32
   workspace_id : String
   session_id : String
   path : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct SourcePaneSaveRequest {
   generation : Int32
   source : SourcePaneRequestIdentity
   baseline : String
   content : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct SourcePaneBuffer {
   path : String
   content : SourcePaneContent
@@ -40,9 +45,10 @@ struct SourcePaneBuffer {
   server_content : String?
   status : String
   search : SourceLiteralState
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct SourcePaneState {
   open : Bool
   collapsed : Bool
@@ -61,9 +67,10 @@ struct SourcePaneState {
   status : String
   buffers : Array[SourcePaneBuffer]
   search : SourceLiteralState
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 #warnings("-unused_constructor")
 enum SourcePaneMsg {
   SetOpen(Bool)
@@ -101,7 +108,7 @@ enum SourcePaneMsg {
   CleanupLines(@edit.LineCleanupAction)
   LayoutJson(@edit.JsonLayout)
   ConvertDelimitedTable(@edit.TableDelimiter)
-} derive(Eq, Debug)
+}
 
 ///|
 fn init_source_pane(

@@ -390,7 +390,8 @@ test "submit uncertain retry and conflict retain draft while exact verified acce
     Submit,
     model,
   )
-  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{}
+  let scheduler : RequestedSelectionTestScheduler = RequestedSelectionTestScheduler::{
+  }
   @cmd.Scheduler::add(scheduler, save)
   let operation = saving.work_handoff.continuation.operation
   let restored = work_continuation_restore(target, true)

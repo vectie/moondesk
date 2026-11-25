@@ -65,7 +65,7 @@ test "accepted human result selection is local and only Prepare transports origi
       _,
       "1.2.3",
       ["output/extra.txt"],
-      raw
+      raw,
     ) &&
     raw == portable_human_test_source().raw_base64,
   )

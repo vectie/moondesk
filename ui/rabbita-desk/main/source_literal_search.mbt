@@ -1,10 +1,12 @@
 ///|
+#derive(Eq, Debug)
 struct SourceLiteralSnapshot {
   text : String
   selection : @edit.Range?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct SourceLiteralState {
   query : String
   replacement : String
@@ -13,7 +15,7 @@ struct SourceLiteralState {
   selection : @edit.Range?
   undo : Array[SourceLiteralSnapshot]
   redo : Array[SourceLiteralSnapshot]
-} derive(Eq, Debug)
+}
 
 ///|
 fn init_source_literal() -> SourceLiteralState {

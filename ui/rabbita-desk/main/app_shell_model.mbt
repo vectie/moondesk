@@ -1,4 +1,5 @@
 ///|
+#derive(Eq)
 enum Activity {
   Files
   Search
@@ -6,9 +7,10 @@ enum Activity {
   Town
   Runs
   Settings
-} derive(Eq)
+}
 
 ///|
+#derive(Eq)
 enum WorkspaceMode {
   PackHome
   Desk
@@ -19,15 +21,17 @@ enum WorkspaceMode {
   ReviewWorkspace
   PublishWorkspace
   MoonFlow
-} derive(Eq)
+}
 
 ///|
+#derive(Eq)
 enum MoonBookAction {
   Chat
   StartTask
-} derive(Eq)
+}
 
 ///|
+#derive(Eq)
 enum PendingMarkdownNavigation {
   NoPendingMarkdownNavigation
   PendingWorkspaceMode(WorkspaceMode)
@@ -43,7 +47,7 @@ enum PendingMarkdownNavigation {
   PendingQuickPath(String)
   PendingDeskQuickPath(String, String)
   PendingSearchHit(String, String)
-} derive(Eq)
+}
 
 ///|
 struct ActivityButton {

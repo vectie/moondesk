@@ -1,8 +1,9 @@
 ///|
+#derive(FromJson)
 struct AgentImportMembers {
   ok : Bool
   changed_members : Array[String]
-} derive(FromJson)
+}
 
 ///|
 struct AgentImportReply {
@@ -24,6 +25,7 @@ struct AgentImportReply {
 ///|
 /// HTTP uses explicit nulls. Derived optional record fields interpret absence
 /// as None, so decode nullable completion fields explicitly at the boundary.
+#derive(FromJson)
 struct AgentImportWire {
   operation_id : String
   expected_library : String
@@ -36,7 +38,7 @@ struct AgentImportWire {
   import_verification : Json
   created : Json
   message : String
-} derive(FromJson)
+}
 
 ///|
 fn agent_import_parse_reply(json : Json) -> AgentImportReply? {
@@ -85,6 +87,7 @@ struct AgentImportSession {
 }
 
 ///|
+#derive(Eq, Debug)
 enum AgentImportOperation {
   PickingPackage
   PickingBinding
@@ -92,13 +95,14 @@ enum AgentImportOperation {
   ImportingPackage
   CheckingImport
   CheckingBeforeOpen
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct AgentImportPending {
   request : Int32
   operation : AgentImportOperation
-} derive(Eq, Debug)
+}
 
 ///|
 struct AgentImportState {

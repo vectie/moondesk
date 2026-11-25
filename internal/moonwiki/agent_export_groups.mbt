@@ -1,10 +1,12 @@
 ///|
+#derive(FromJson, ToJson)
 priv struct AgentExportGroupFile {
   source_path : String
   path : String
-} derive(FromJson, ToJson)
+}
 
 ///|
+#derive(FromJson, ToJson)
 priv struct AgentExportGroup {
   artifact_id : String
   label : String
@@ -12,7 +14,7 @@ priv struct AgentExportGroup {
   files : Array[AgentExportGroupFile]
   preview_path : String?
   app_entrypoint : String?
-} derive(FromJson, ToJson)
+}
 
 ///|
 fn agent_export_group_path(path : String) -> Bool {

@@ -1,4 +1,5 @@
 ///|
+#derive(FromJson)
 priv struct OpenAiConnectionImport {
   version : String
   api : String
@@ -6,7 +7,7 @@ priv struct OpenAiConnectionImport {
   api_key : String
   model : String
   max_output_tokens : Int32
-} derive(FromJson)
+}
 
 ///|
 fn connection_url_parts(value : String) -> (String, String)? {

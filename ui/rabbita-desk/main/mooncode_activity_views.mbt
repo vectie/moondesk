@@ -23,6 +23,7 @@ struct MoonCodeActivityRow {
   label : String
   title : String
   detail : String
+  reasoning : String
   status : String
   folded : Bool
   command_id : String
@@ -138,13 +139,59 @@ fn render_mooncode_activity_row(
 }
 
 ///|
+fn render_mooncode_thinking_card(row : MoonCodeActivityRow) -> @rabbita.Html {
+  let text = row.reasoning.trim().to_owned()
+  if text == "" {
+    return @html.nothing
+  }
+  let running = row.status == "running" || row.status == "queued"
+  let i18n_key = if running {
+    "code.thinking_live"
+  } else {
+    "code.thinking_done"
+  }
+  let label = if running { "Thinking…" } else { "Thinking process" }
+  @html.node(
+    "details",
+    @html.Attrs::build()
+    .class("mooncode-thinking-card")
+    .data_set("testid", "mooncode-thinking")
+    .data_set("running", if running { "true" } else { "false" })
+    .open(running),
+    [
+      @html.node(
+        "summary",
+        @html.Attrs::build().class("mooncode-thinking-summary"),
+        [
+          ui_icon(if running { "running" } else { "info" }),
+          span(
+            class="mooncode-thinking-label",
+            attrs=@html.Attrs::build().data_set("i18n", i18n_key),
+            label,
+          ),
+          span(class="mooncode-thinking-chevron", ""),
+        ],
+      ),
+      div(class="mooncode-thinking-body", text),
+    ],
+  )
+}
+
+///|
 fn render_mooncode_activity_body(
   dispatch : Dispatch[Msg],
   model : Model,
   row : MoonCodeActivityRow,
 ) -> @rabbita.Html {
   if row.folded {
-    render_mooncode_activity_disclosure(dispatch, model, row)
+    if row.reasoning.trim().is_empty() {
+      render_mooncode_activity_disclosure(dispatch, model, row)
+    } else {
+      div(class="mooncode-activity-body", [
+        render_mooncode_thinking_card(row),
+        render_mooncode_activity_disclosure(dispatch, model, row),
+      ])
+    }
   } else {
     div(class="mooncode-activity-body", [
       p(
@@ -159,6 +206,7 @@ fn render_mooncode_activity_body(
         },
         row.title,
       ),
+      render_mooncode_thinking_card(row),
       render_mooncode_work_content(dispatch, model, row),
     ])
   }
@@ -244,6 +292,9 @@ fn render_mooncode_evidence(
     "summary",
     @html.Attrs::build().class("mooncode-evidence-summary"),
     [
+      span(class="mooncode-evidence-icon", [
+        ui_icon(mooncode_evidence_icon(row)),
+      ]),
       span(
         class="mooncode-evidence-kind " + row.kind,
         attrs=@html.Attrs::build().data_set(
@@ -336,8 +387,27 @@ fn render_mooncode_evidence(
 }
 
 ///|
+fn mooncode_evidence_icon(row : MoonCodeEvidenceRow) -> String {
+  match row.kind {
+    "search" => "search"
+    "web" => "browser"
+    "read" => "files"
+    "edit" => "edit"
+    "command" => "terminal"
+    "test" => "check"
+    "skill" => "book"
+    "usage" => "info"
+    _ => "code"
+  }
+}
+
+///|
 fn mooncode_evidence_label(row : MoonCodeEvidenceRow) -> String {
   match row.kind {
+    "search" => "Search"
+    "web" => "Web"
+    "read" => "Read"
+    "command" => "Command"
     "edit" => "Edit"
     "test" => "Test"
     "artifact" => "Output"
@@ -351,6 +421,10 @@ fn mooncode_evidence_label(row : MoonCodeEvidenceRow) -> String {
 ///|
 fn mooncode_evidence_label_key(row : MoonCodeEvidenceRow) -> String {
   match row.kind {
+    "search" => "code.evidence_search"
+    "web" => "code.evidence_web"
+    "read" => "code.evidence_read"
+    "command" => "code.evidence_command"
     "edit" => "code.evidence_edit"
     "test" => "code.evidence_test"
     "artifact" => "code.evidence_output"
