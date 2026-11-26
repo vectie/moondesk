@@ -32,6 +32,8 @@ import {
   "vectie/moondesk/internal/terminal",
   "vectie/moondesk/internal/trusted_host_process" @trusted_host,
   "vectie/moonleaf",
+  "vectie/moonleaf/docx" @leafdocx,
+  "vectie/moonleaf/opc" @leafopc,
   "vectie/moonleaf/jsontable",
   "vectie/moonleaf/xlsx" @leafxlsx,
   "vectie/moonleaf/csv" @leafcsv,

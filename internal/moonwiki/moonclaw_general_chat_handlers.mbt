@@ -35,6 +35,12 @@ fn moonclaw_general_chat_prompt(
 ) -> String {
   let document_context = if document_path == "" {
     "No document is currently selected. Work with the MoonBook workspace as a whole."
+  } else if document_path.to_lower().has_suffix(".docx") {
+    "The selected Word document is `" +
+    document_path +
+    "`. Inspect it before making claims or changes. " +
+    "When the user asks to insert text at the cursor, replace selected text, add or replace a section/chapter, format text (bold, italic, underline, strike, highlight, background shade), or add a comment/note, " +
+    "you may either edit the file cleanly on disk or include a single ```docx-ops fenced JSON block (`{\"ops\":[...]}`) using op names `replace`, `insert_after`, `insert_before`, `delete`, `format`, `format_range`, `replace_range`, `comment`, `insert_in_section`, `replace_section`, `delete_section`, `insert_section_after` targeting the cursor/selection/section from <user-approved-context> so MoonDesk can apply it atomically."
   } else {
     "The selected document is `" +
     document_path +

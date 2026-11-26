@@ -978,3 +978,42 @@ fn office_document_save_bytes(
 ) -> FixedArray[Byte] {
   @moonzip.zip_sync(document.entries)
 }
+
+///|
+fn office_document_apply_docx_ops(
+  document : OfficeDocumentModel,
+  payload : Json,
+) -> Result[OfficeDocumentModel, String] {
+  guard document.kind is Docx else {
+    return Err("DOCX batch edits are only supported on Word documents")
+  }
+  let bytes = office_document_save_bytes(document)
+  let pkg = @leafopc.open(bytes) catch {
+    error => return Err("Failed to open DOCX package: " + repr(error))
+  }
+  let (updated, _) = @leafdocx.apply_edit_ops(pkg, payload) catch {
+    error => return Err(repr(error))
+  }
+  let saved = @leafopc.save(updated) catch {
+    error => return Err("Failed to save DOCX package: " + repr(error))
+  }
+  office_document_open_bytes("document.docx", saved)
+}
+
+///|
+fn office_document_docx_metadata(
+  document : OfficeDocumentModel,
+) -> (Json?, Json?) {
+  guard document.kind is Docx else { return (None, None) }
+  let bytes = office_document_save_bytes(document)
+  let pkg = @leafopc.open(bytes) catch { _ => return (None, None) }
+  let outline : Json? = Some(
+    @leafdocx.document_outline(pkg) catch {
+      _ => return (None, None)
+    },
+  )
+  let comments : Json? = Some(
+    Json::array(@leafdocx.list_comments(pkg) catch { _ => [] }),
+  )
+  (outline, comments)
+}

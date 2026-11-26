@@ -160,6 +160,8 @@ fn render_wiki_docx(
       class="wiki-docx-host",
       attrs=@html.Attrs::build()
         .data_set("testid", "wiki-docx-document")
+        .data_set("workspace-id", state.workspace_id)
+        .data_set("document-path", state.path)
         .data_set(
           "source-url",
           office_editor_endpoint_url(

@@ -1,5 +1,7 @@
 import { uiText } from './ui-locale.js'
 
+import { installDocxOpsToolbar, renderCommentBadges, syncDocxMetadata } from './wiki-docx-ops.js'
+
 const mounted = new WeakMap()
 let installed = false
 const style = `
@@ -173,6 +175,7 @@ async function loadWordView(host, view) {
       view.loading=false; view.model=null
       view.article.removeAttribute('aria-busy')
       enhance(host)
+      renderCommentBadges(view)
     }
   }
 }
@@ -213,6 +216,7 @@ function enhance(host) {
     root.append(css, article)
     view = {root, article, nodes:new Map(), signatures:new Map(), identity:host.dataset.identity,restoreScroll,drafts:new Map(),originalTexts:new Map(),dirty:false}
     mounted.set(host, view)
+    installDocxOpsToolbar(host, view, loadWordView)
     article.addEventListener('input', event => {
       const paragraph = event.target.closest('[data-paragraph]')
       if (!paragraph || host.dataset.saving === 'true') return

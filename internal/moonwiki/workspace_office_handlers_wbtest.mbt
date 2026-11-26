@@ -92,3 +92,82 @@ test "Office routes are selected-workspace confined contracts" {
   assert_eq(contracts[save].authority_scope, "selected-book")
   assert_eq(contracts[save].methods, ["POST"])
 }
+
+///|
+async test "docx-ops batch editing supports insert format comment and metadata" {
+  let project = @env.current_dir().unwrap_or(".")
+  let test_root = @pathx.join(project, "_build/phase7-tests")
+  if !@fs.exists(test_root) {
+    @fs.mkdir(test_root, permission=0o755)
+  }
+  let root = @pathx.join(test_root, "office-docx-ops")
+  if !@fs.exists(root) {
+    @fs.mkdir(root, permission=0o755)
+  }
+  let workspace = @desk.workspace(
+    id="office-docx-ops-book",
+    name="Office docx ops book",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let path = @pathx.join(root, "ops.docx")
+  let initial = valid_docx_bytes()
+  let initial_bytes = Bytes::from_array(initial.exact_view())
+  @fs.write_file(path, initial_bytes, create_mode=CreateOrTruncate)
+  let (_, opened) = open_workspace_office(workspace, "ops.docx").unwrap()
+  let opened_json = office_document_json(
+    "ops.docx",
+    opened,
+    initial_bytes.exact_view(),
+  )
+  assert_true(opened_json is { "outline": Object(_), "comments": Array(_), .. })
+  let baseline = json_string(opened_json, "baseline", default="")
+  let receipt = save_workspace_office(workspace, "ops.docx", baseline, {
+    "operation": "docx-ops",
+    "author": "Reviewer",
+    "ops": [
+      {
+        "op": "format_range",
+        "target": { "paragraph_index": 0 },
+        "range": { "start": 0, "end": 8 },
+        "style": { "highlight": "yellow", "bold": true },
+      },
+      {
+        "op": "insert_after",
+        "target": { "paragraph_index": 0 },
+        "paragraphs": ["Inserted by docx-ops"],
+      },
+      {
+        "op": "comment",
+        "target": { "paragraph_index": 1 },
+        "range": { "start": 0, "end": 8 },
+        "text": "Review this insertion",
+      },
+    ],
+  }).unwrap()
+  assert_true(
+    receipt
+    is {
+      "comments": [
+        {
+          "author": String("Reviewer"),
+          "text": String("Review this insertion"),
+          "paragraph_index": Number(1.0, ..),
+          ..
+        },
+      ],
+      ..
+    },
+  )
+  let saved_bytes = @fs.read_file(path).binary()
+  let reopened = office_document_open_bytes(
+    "ops.docx",
+    saved_bytes.to_fixedarray(),
+  ).unwrap()
+  guard reopened.supported is Word(paragraphs) else { fail("expected DOCX") }
+  assert_eq(paragraphs.length(), 2)
+  assert_eq(
+    paragraphs[1].runs.map(run => run.text).join(""),
+    "Inserted by docx-ops",
+  )
+}

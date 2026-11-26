@@ -112,7 +112,7 @@ fn office_document_json(
   document : OfficeDocumentModel,
   baseline : BytesView,
 ) -> Json {
-  {
+  let obj : Map[String, Json] = {
     "ok": true,
     "path": path,
     "kind": office_kind_json(document.kind),
@@ -120,6 +120,14 @@ fn office_document_json(
     "warnings": document.warnings,
     "baseline": @base64.encode(baseline),
   }
+  let (outline, comments) = office_document_docx_metadata(document)
+  if outline is Some(value) {
+    obj["outline"] = value
+  }
+  if comments is Some(value) {
+    obj["comments"] = value
+  }
+  Json::object(obj)
 }
 
 ///|
@@ -252,6 +260,7 @@ fn apply_workspace_office_edit(
           height: Some(json_int(payload, "height", default=0)),
         },
       )
+    "docx-ops" => office_document_apply_docx_ops(document, payload)
     _ => Err("Unsupported Office edit operation")
   }
 }

@@ -1986,8 +1986,44 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
     }
     case 'use-answer': {
       const text = decodeURIComponent(first)
+      const docxHost = document.querySelector('[data-testid="wiki-docx-document"]')
+      const cursor = globalThis.__moondeskDocxCursor
+      if (docxHost && typeof globalThis.__moondeskApplyDocxOps === 'function' && cursor && Number.isFinite(cursor.paragraph_index)) {
+        const cleanLines = text.split('\n').map(line => line.trim()).filter(Boolean)
+        if (cursor.end > cursor.start && cursor.selected_text) {
+          const singleLine = cleanLines.join(' ')
+          if (singleLine) {
+            void globalThis.__moondeskApplyDocxOps([{
+              op: 'replace_range',
+              target: { paragraph_index: cursor.paragraph_index },
+              range: { start: cursor.start, end: cursor.end },
+              selected_text: cursor.selected_text,
+              text: singleLine,
+            }], { author: 'MoonDesk AI' })
+            return
+          }
+        } else if (cleanLines.length) {
+          void globalThis.__moondeskApplyDocxOps([{
+            op: 'insert_after',
+            target: { paragraph_index: cursor.paragraph_index },
+            paragraphs: cleanLines,
+          }], { author: 'MoonDesk AI' })
+          return
+        }
+      }
       const prompt = `Use the following answer in the selected document. Choose the most appropriate location, preserve document style, and show the proposed change for review before saving.\n\n${text}`
       forward('ask-selection', prompt, 'send')
+      return
+    }
+    case 'apply-docx-ops': {
+      if (typeof globalThis.__moondeskApplyDocxOps === 'function') {
+        try {
+          const ops = JSON.parse(decodeURIComponent(first))
+          if (Array.isArray(ops) && ops.length) {
+            void globalThis.__moondeskApplyDocxOps(ops, { author: 'MoonDesk AI' })
+          }
+        } catch {}
+      }
       return
     }
     case 'pin-answer': {
@@ -4054,6 +4090,23 @@ function enhanceChatMessages(state) {
     node.querySelector(':scope > .workspace-answer-citations')?.remove()
     const actions = element('div', 'workspace-answer-actions')
     const encoded = encodeURIComponent(entry.content)
+    const docxHost = document.querySelector('[data-testid="wiki-docx-document"]')
+    if (docxHost) {
+      const codeRegex = /```(?:docx-ops|json)?\s*\n([\s\S]*?)```/gi
+      let opsMatch
+      while ((opsMatch = codeRegex.exec(String(entry.content || ''))) !== null) {
+        try {
+          const parsedOps = JSON.parse(opsMatch[1].trim())
+          const opsList = Array.isArray(parsedOps?.ops) ? parsedOps.ops : (Array.isArray(parsedOps) && parsedOps[0]?.op ? parsedOps : null)
+          if (opsList && opsList.length > 0) {
+            actions.append(
+              button('answer-action primary', 'Apply to Word', 'apply-docx-ops', [encodeURIComponent(JSON.stringify(opsList))]),
+            )
+            break
+          }
+        } catch {}
+      }
+    }
     actions.append(
       button('answer-action', 'Copy', 'copy-answer', [encoded], { label: 'Copy answer as Markdown' }),
       button('answer-action', 'Use in document', 'use-answer', [encoded]),
@@ -4633,4 +4686,17 @@ export {
   taskRecipeMissingFields,
   typedSourceEntries,
   typedLocationLabel,
+}
+
+
+if (typeof globalThis.addEventListener === 'function') {
+  globalThis.addEventListener('moondesk:docx-chat-action', (event) => {
+    const detail = event?.detail
+    if (!detail || detail.type !== 'add-context' || !detail.item) return
+    forward('add-context', JSON.stringify(detail.item))
+    if (detail.focusChat) {
+      const input = document.querySelector('.wiki-chat-composer textarea, .wiki-chat-composer input')
+      if (input instanceof HTMLElement) input.focus()
+    }
+  })
 }
