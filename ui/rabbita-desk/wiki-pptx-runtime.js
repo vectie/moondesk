@@ -176,7 +176,31 @@ async function enhancePptxHost(host) {
     })
     nextBtn.disabled = idx >= preview.slides.length - 1
 
-    bar.append(prevBtn, nextBtn, duplicateBtn, askAiBtn, status)
+    const exportPdfBtn = makeBtn('Export PDF', 'Export all slides to PDF', () => {
+      const win = globalThis.open('', '_blank', 'width=1024,height=640')
+      if (!win) {
+        status.textContent = 'Allow popups to export PDF'
+        return
+      }
+      const slidesHtml = preview.slides
+        .map(s => `<section class="slide">${s.svg || ''}</section>`)
+        .join('')
+      win.document.open()
+      win.document.write(
+        `<!doctype html><html><head><meta charset="utf-8"><title>${path.split('/').pop() || 'presentation'}.pdf</title><style>` +
+        `@page { size: 960pt 540pt; margin: 0; }` +
+        `html, body { margin: 0; padding: 0; background: #fff; }` +
+        `.slide { width: 960pt; height: 540pt; page-break-after: always; break-after: page; overflow: hidden; }` +
+        `.slide:last-child { page-break-after: auto; break-after: auto; }` +
+        `.slide svg { width: 100%; height: 100%; display: block; }` +
+        `</style></head><body>${slidesHtml}</body></html>`,
+      )
+      win.document.close()
+      win.focus()
+      globalThis.setTimeout(() => win.print(), 150)
+    })
+
+    bar.append(prevBtn, nextBtn, duplicateBtn, exportPdfBtn, askAiBtn, status)
 
     // Inline shape editor when user clicks a shape in the SVG
     const shapeEditor = document.createElement('div')
