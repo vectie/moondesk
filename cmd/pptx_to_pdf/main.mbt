@@ -32,11 +32,16 @@ fn run() -> Unit raise {
     ".slide svg { width: 100%; height: 100%; display: block; }" +
     "</style></head><body>",
   )
-  for slide in slides {
+  for idx, slide in slides {
     match slide {
       { "svg": String(svg), .. } => {
+        let prefix = "s\{idx}_"
+        let scoped = svg
+          .replace_all(old="id=\"", new="id=\"\{prefix}")
+          .replace_all(old="url(#", new="url(#\{prefix}")
+          .replace_all(old="href=\"#", new="href=\"#\{prefix}")
         buf.write_string("<section class=\"slide\">")
-        buf.write_string(svg)
+        buf.write_string(scoped)
         buf.write_string("</section>")
       }
       _ => ()

@@ -183,7 +183,14 @@ async function enhancePptxHost(host) {
         return
       }
       const slidesHtml = preview.slides
-        .map(s => `<section class="slide">${s.svg || ''}</section>`)
+        .map((s, si) => {
+          const p = `s${si}_`
+          const scoped = String(s.svg || '')
+            .replaceAll('id="', `id="${p}`)
+            .replaceAll('url(#', `url(#${p}`)
+            .replaceAll('href="#', `href="#${p}`)
+          return `<section class="slide">${scoped}</section>`
+        })
         .join('')
       win.document.open()
       win.document.write(
