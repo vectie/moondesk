@@ -389,7 +389,10 @@ fn render_office_supported_preview(
         OfficePptx =>
           div(
             class="office-preview-pptx",
-            attrs=@html.Attrs::build().data_set("testid", "office-pptx-preview"),
+            attrs=@html.Attrs::build()
+              .data_set("testid", "office-pptx-preview")
+              .data_set("section", item.section)
+              .data_set("slide-index", selected.to_string()),
             [
               div(
                 class="office-preview-slide",
@@ -448,8 +451,8 @@ fn office_docx_run_class(item : OfficeEditorItem, selected~ : Bool) -> String {
 
 ///|
 fn office_pptx_extent(items : Array[OfficeEditorItem]) -> (Int32, Int32) {
-  let mut right = 1
-  let mut bottom = 1
+  let mut right = 12_192_000
+  let mut bottom = 6_858_000
   for item in items {
     if item.x + item.width > right {
       right = item.x + item.width

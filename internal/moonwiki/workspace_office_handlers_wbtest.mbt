@@ -171,3 +171,61 @@ async test "docx-ops batch editing supports insert format comment and metadata" 
     "Inserted by docx-ops",
   )
 }
+
+///|
+async test "pptx-from-template and pptx-ops create and update slides atomically" {
+  let project = @env.current_dir().unwrap_or(".")
+  let test_root = @pathx.join(project, "_build/phase7-tests")
+  if !@fs.exists(test_root) {
+    @fs.mkdir(test_root, permission=0o755)
+  }
+  let root = @pathx.join(test_root, "office-pptx-ops")
+  if !@fs.exists(root) {
+    @fs.mkdir(root, permission=0o755)
+  }
+  let workspace = @desk.workspace(
+    id="office-pptx-ops-book",
+    name="Office pptx ops book",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let tpl_path = @pathx.join(root, "template.pptx")
+  let tpl_bytes = @leafpptx.create({
+    "title": "Template",
+    "slides": [
+      { "title": "Title Slide", "bullets": ["Subtitle"] },
+      { "title": "Section Slide", "bullets": ["Point 1"] },
+    ],
+  })
+  @fs.write_file(
+    tpl_path,
+    Bytes::from_array(tpl_bytes.exact_view()),
+    create_mode=CreateOrTruncate,
+  )
+  let created = save_workspace_office(workspace, "draft.pptx", "", {
+    "operation": "pptx-from-template",
+    "template_path": "template.pptx",
+    "ops": [
+      { "op": "clone_slide", "template_slide": 1, "insert_at": 2 },
+      {
+        "op": "replace_shape_text",
+        "slide": 2,
+        "shape_index": 0,
+        "paragraphs": ["Generated Slide 3"],
+      },
+      {
+        "op": "set_notes",
+        "slide": 2,
+        "text": "Speaker notes for generated slide",
+      },
+    ],
+  }).unwrap()
+  assert_true(
+    created
+    is {
+      "path": String("draft.pptx"),
+      "pptx_summary": { "slide_count": Number(3.0, ..), .. },
+      ..
+    },
+  )
+}

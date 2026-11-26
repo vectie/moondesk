@@ -159,6 +159,32 @@ fn render_desk_location_bar(
 }
 
 ///|
+fn desk_entry_kind_label(entry : @desk.DeskFileEntry) -> String {
+  if !(entry.kind is Unknown) {
+    return kind_label(entry.kind)
+  }
+  match wiki_document_kind_label(entry.path) {
+    Some(label) => label
+    None => {
+      let lower = entry.path.to_lower()
+      if lower.has_suffix(".py") {
+        "Python"
+      } else if lower.has_suffix(".js") || lower.has_suffix(".mjs") {
+        "JavaScript"
+      } else if lower.has_suffix(".ts") || lower.has_suffix(".tsx") {
+        "TypeScript"
+      } else if lower.has_suffix(".mbt") {
+        "MoonBit"
+      } else if lower.has_suffix(".pptd") {
+        "Presentation"
+      } else {
+        "unknown"
+      }
+    }
+  }
+}
+
+///|
 fn render_desk_file_row(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -215,7 +241,7 @@ fn render_desk_file_row(
         },
       ],
     ),
-    span(kind_label(entry.kind)),
+    span(desk_entry_kind_label(entry)),
     span(optional_text(entry.modified_at, "—")),
     span(size_label(entry.size_bytes)),
   ])

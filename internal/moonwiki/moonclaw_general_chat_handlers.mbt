@@ -41,10 +41,17 @@ fn moonclaw_general_chat_prompt(
     "`. Inspect it before making claims or changes. " +
     "When the user asks to insert text at the cursor, replace selected text, add or replace a section/chapter, format text (bold, italic, underline, strike, highlight, background shade), or add a comment/note, " +
     "you may either edit the file cleanly on disk or include a single ```docx-ops fenced JSON block (`{\"ops\":[...]}`) using op names `replace`, `insert_after`, `insert_before`, `delete`, `format`, `format_range`, `replace_range`, `comment`, `insert_in_section`, `replace_section`, `delete_section`, `insert_section_after` targeting the cursor/selection/section from <user-approved-context> so MoonDesk can apply it atomically."
+  } else if document_path.to_lower().has_suffix(".pptx") {
+    "The selected PowerPoint presentation is `" +
+    document_path +
+    "`. Inspect it before making claims or changes. " +
+    "When the user asks to create or update slides from a template, clone/delete/reorder slides, edit slide text, or update speaker notes, " +
+    "output a single ```pptx-ops fenced JSON block (`{\"template_path\"?: \"...\", \"output_path\"?: \"...\", \"ops\": [...]}`) using op names `clone_slide`, `delete_slide`, `reorder_slides`, `replace_shape_text`, `set_notes` (no python-pptx needed) so MoonDesk can apply it atomically."
   } else {
     "The selected document is `" +
     document_path +
-    "`. Inspect it before making claims or changes."
+    "`. Inspect it before making claims or changes. " +
+    "If the user asks to generate a `.pptx` from a template `.pptx` in the workspace, output a single ```pptx-ops fenced JSON block (`{\"template_path\": \"...\", \"output_path\": \"...\", \"ops\": [...]}`) using op names `clone_slide`, `delete_slide`, `reorder_slides`, `replace_shape_text`, `set_notes`."
   }
   let mentions = if file_paths.is_empty() {
     ""

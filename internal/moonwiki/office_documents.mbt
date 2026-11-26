@@ -980,6 +980,18 @@ fn office_document_save_bytes(
 }
 
 ///|
+fn office_document_opc_package(
+  document : OfficeDocumentModel,
+) -> @leafopc.Package {
+  {
+    parts: document.entries.map(entry => {
+      let (name, content) = entry
+      { name, content, }
+    }),
+  }
+}
+
+///|
 fn office_document_apply_docx_ops(
   document : OfficeDocumentModel,
   payload : Json,
@@ -987,10 +999,7 @@ fn office_document_apply_docx_ops(
   guard document.kind is Docx else {
     return Err("DOCX batch edits are only supported on Word documents")
   }
-  let bytes = office_document_save_bytes(document)
-  let pkg = @leafopc.open(bytes) catch {
-    error => return Err("Failed to open DOCX package: " + repr(error))
-  }
+  let pkg = office_document_opc_package(document)
   let (updated, _) = @leafdocx.apply_edit_ops(pkg, payload) catch {
     error => return Err(repr(error))
   }
@@ -1005,8 +1014,7 @@ fn office_document_docx_metadata(
   document : OfficeDocumentModel,
 ) -> (Json?, Json?) {
   guard document.kind is Docx else { return (None, None) }
-  let bytes = office_document_save_bytes(document)
-  let pkg = @leafopc.open(bytes) catch { _ => return (None, None) }
+  let pkg = office_document_opc_package(document)
   let outline : Json? = Some(
     @leafdocx.document_outline(pkg) catch {
       _ => return (None, None)
@@ -1016,4 +1024,52 @@ fn office_document_docx_metadata(
     Json::array(@leafdocx.list_comments(pkg) catch { _ => [] }),
   )
   (outline, comments)
+}
+
+///|
+fn office_document_apply_pptx_ops(
+  document : OfficeDocumentModel,
+  payload : Json,
+) -> Result[OfficeDocumentModel, String] {
+  guard document.kind is Pptx else {
+    return Err(
+      "PPTX batch edits are only supported on PowerPoint presentations",
+    )
+  }
+  let pkg = office_document_opc_package(document)
+  let (updated, _) = @leafpptx.apply_edit_ops(pkg, payload) catch {
+    error => return Err(repr(error))
+  }
+  let saved = @leafopc.save(updated) catch {
+    error => return Err("Failed to save PPTX package: " + repr(error))
+  }
+  office_document_open_bytes("presentation.pptx", saved)
+}
+
+///|
+fn office_document_pptx_metadata(
+  document : OfficeDocumentModel,
+) -> (Json?, Json?) {
+  guard document.kind is Pptx else { return (None, None) }
+  let pkg = office_document_opc_package(document)
+  let summary : Json? = Some(
+    @leafpptx.template_summary(pkg) catch {
+      _ => Json::null()
+    },
+  )
+  let preview : Json? = Some(
+    @leafpptx.preview_json(pkg, "") catch {
+      error => { "error": error.to_string() }
+    },
+  )
+  (
+    match summary {
+      Some(Null) => None
+      other => other
+    },
+    match preview {
+      Some(Null) => None
+      other => other
+    },
+  )
 }

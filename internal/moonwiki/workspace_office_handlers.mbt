@@ -127,6 +127,13 @@ fn office_document_json(
   if comments is Some(value) {
     obj["comments"] = value
   }
+  let (pptx_summary, pptx_preview) = office_document_pptx_metadata(document)
+  if pptx_summary is Some(value) {
+    obj["pptx_summary"] = value
+  }
+  if pptx_preview is Some(value) && !(value is Null) {
+    obj["pptx_preview"] = value
+  }
   Json::object(obj)
 }
 
@@ -261,6 +268,7 @@ fn apply_workspace_office_edit(
         },
       )
     "docx-ops" => office_document_apply_docx_ops(document, payload)
+    "pptx-ops" => office_document_apply_pptx_ops(document, payload)
     _ => Err("Unsupported Office edit operation")
   }
 }
@@ -272,6 +280,123 @@ async fn save_workspace_office(
   baseline : String,
   payload : Json,
 ) -> Result[Json, Json] {
+  if json_string(payload, "operation", default="") == "pptx-from-template" {
+    let template_path = json_string(payload, "template_path", default="")
+    let (_, template_doc) = match
+      open_workspace_office(workspace, template_path) {
+      Ok(value) => value
+      Err(error) =>
+        return Err({ "code": 400, "reason": "Bad Request", "error": error })
+    }
+    let (_, clean_output) = match
+      resolve_workspace_write_path(workspace.root_path, path) {
+      Some((abs, clean)) if clean.to_lower().has_suffix(".pptx") => (abs, clean)
+      _ =>
+        return Err({
+          "code": 400,
+          "reason": "Bad Request",
+          "error": "Output presentation path must be a .pptx file inside the workspace",
+        })
+    }
+    let edited = match payload {
+      { "ops": Array(ops), .. } if !ops.is_empty() =>
+        match office_document_apply_pptx_ops(template_doc, payload) {
+          Ok(value) => value
+          Err(error) =>
+            return Err({
+              "code": 422,
+              "reason": "Unprocessable Content",
+              "error": error,
+            })
+        }
+      _ => template_doc
+    }
+    let saved_fixed = office_document_save_bytes(edited)
+    let saved = Bytes::from_array(saved_fixed.exact_view())
+    let authority_root = workspace_authority_root(
+      workspace.root_path,
+      clean_output,
+    )
+    let authority_relative = workspace_authority_relative(clean_output)
+    let target_abs = @pathx.join(authority_root, authority_relative)
+    let existing = if @fs.exists(target_abs) {
+      @fs.read_file(target_abs).binary().exact_view()
+    } else {
+      b""[:]
+    }
+    if existing.length() > 0 && baseline != "" {
+      let decoded = @base64.decode(baseline) catch {
+        _ =>
+          return Err({
+            "code": 400,
+            "reason": "Bad Request",
+            "error": "Office save baseline is not valid base64",
+          })
+      }
+      if decoded.exact_view() != existing {
+        return Err({
+          "code": 409,
+          "reason": "Conflict",
+          "error": "Office document changed after this editor was opened",
+          "current_baseline": @base64.encode(existing),
+        })
+      }
+    }
+    if !@fs.exists(target_abs) {
+      match @fsx.resolve_confined_write(authority_root, authority_relative) {
+        Some(resolved) => {
+          @fs.write_file(resolved, saved, create_mode=CreateOrTruncate) catch {
+            _ =>
+              return Err({
+                "code": 500,
+                "reason": "Internal Server Error",
+                "error": "Office save failed; the editor draft is preserved",
+              })
+          }
+          return Ok(
+            office_document_json(clean_output, edited, saved.exact_view()),
+          )
+        }
+        None =>
+          return Err({
+            "code": 400,
+            "reason": "Bad Request",
+            "error": "Office path is outside the selected workspace",
+          })
+      }
+    }
+    match
+      @fsx.compare_and_write_confined_bytes(
+        authority_root,
+        authority_relative,
+        existing,
+        saved.exact_view(),
+      ) {
+      SavedBytes =>
+        return Ok(
+          office_document_json(clean_output, edited, saved.exact_view()),
+        )
+      ConflictBytes(current) =>
+        return Err({
+          "code": 409,
+          "reason": "Conflict",
+          "error": "Office document changed after this editor was opened",
+          "current_baseline": @base64.encode(current),
+        })
+      InvalidBytesTarget =>
+        return Err({
+          "code": 400,
+          "reason": "Bad Request",
+          "error": "Office path is outside the selected workspace",
+        })
+      BytesWriteFailed =>
+        return Err({
+          "code": 500,
+          "reason": "Internal Server Error",
+          "error": "Office save failed; the editor draft is preserved",
+        })
+    }
+  }
   let (clean, document) = match open_workspace_office(workspace, path) {
     Ok(value) => value
     Err(error) =>

@@ -2026,6 +2026,82 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       }
       return
     }
+    case 'apply-pptx-ops': {
+      void (async () => {
+        try {
+          const spec = JSON.parse(decodeURIComponent(first))
+          const ws = serverState.workspace_id || ''
+          if (!ws || !spec || !Array.isArray(spec.ops) || !spec.ops.length) return
+          const targetPath = String(spec.output_path || serverState.selected_document || '').trim()
+          if (!targetPath) return
+          let baseline = ''
+          if (spec.template_path) {
+            // Creating or updating from a template `.pptx` in the workspace
+            const res = await fetch(`/api/workspaces/${encodeURIComponent(ws)}/office/save`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                path: targetPath,
+                baseline: '',
+                operation: 'pptx-from-template',
+                template_path: spec.template_path,
+                ops: spec.ops,
+              }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok || !data?.ok) {
+              featureState.thread_status = data?.error || `Presentation save failed (${res.status})`
+              render()
+              return
+            }
+            featureState.thread_status = `Created ${targetPath}`
+            render()
+            const nextUrl = new URL(globalThis.location.href)
+            nextUrl.searchParams.set('workspace', ws)
+            nextUrl.searchParams.set('path', targetPath)
+            nextUrl.searchParams.set('activity', 'pages')
+            globalThis.location.href = nextUrl.toString()
+            return
+          }
+          const openRes = await fetch(`/api/workspaces/${encodeURIComponent(ws)}/office?path=${encodeURIComponent(targetPath)}`, {
+            credentials: 'same-origin',
+            cache: 'no-store',
+          })
+          const openData = await openRes.json().catch(() => ({}))
+          baseline = openData?.baseline || ''
+          if (!baseline) {
+            featureState.thread_status = 'Presentation baseline unavailable'
+            render()
+            return
+          }
+          const res = await fetch(`/api/workspaces/${encodeURIComponent(ws)}/office/save`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              path: targetPath,
+              baseline,
+              operation: 'pptx-ops',
+              ops: spec.ops,
+            }),
+          })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok || !data?.ok) {
+            featureState.thread_status = data?.error || `Presentation update failed (${res.status})`
+            render()
+            return
+          }
+          featureState.thread_status = `Updated ${targetPath}`
+          render()
+          globalThis.location.reload()
+        } catch (err) {
+          featureState.thread_status = String(err?.message || err || 'Presentation update failed')
+          render()
+        }
+      })()
+      return
+    }
     case 'pin-answer': {
       const text = decodeURIComponent(first)
       featureState.synthesis.push({
@@ -4048,7 +4124,7 @@ function renderDocumentMap(state) {
   const viewer = document.querySelector('.wiki-document-viewer')
   if (!(viewer instanceof HTMLElement)) return
   viewer.querySelector(':scope > .document-review-map')?.remove()
-  if (viewer.querySelector('[data-testid="wiki-docx-document"]')) return
+  if (viewer.querySelector('[data-testid="wiki-docx-document"], [data-testid="office-pptx-preview"]')) return
   const markers = reviewMarkers(state)
   if (!markers.length || !state.selected_document) return
   const open = markers.filter(marker => !marker.reviewed)
@@ -4091,21 +4167,34 @@ function enhanceChatMessages(state) {
     const actions = element('div', 'workspace-answer-actions')
     const encoded = encodeURIComponent(entry.content)
     const docxHost = document.querySelector('[data-testid="wiki-docx-document"]')
-    if (docxHost) {
-      const codeRegex = /```(?:docx-ops|json)?\s*\n([\s\S]*?)```/gi
-      let opsMatch
-      while ((opsMatch = codeRegex.exec(String(entry.content || ''))) !== null) {
-        try {
-          const parsedOps = JSON.parse(opsMatch[1].trim())
-          const opsList = Array.isArray(parsedOps?.ops) ? parsedOps.ops : (Array.isArray(parsedOps) && parsedOps[0]?.op ? parsedOps : null)
-          if (opsList && opsList.length > 0) {
-            actions.append(
-              button('answer-action primary', 'Apply to Word', 'apply-docx-ops', [encodeURIComponent(JSON.stringify(opsList))]),
-            )
-            break
-          }
-        } catch {}
-      }
+    const codeRegex = /```(?:docx-ops|pptx-ops|json)?\s*\n([\s\S]*?)```/gi
+    let opsMatch
+    while ((opsMatch = codeRegex.exec(String(entry.content || ''))) !== null) {
+      try {
+        const parsedOps = JSON.parse(opsMatch[1].trim())
+        const opsList = Array.isArray(parsedOps?.ops) ? parsedOps.ops : (Array.isArray(parsedOps) && parsedOps[0]?.op ? parsedOps : null)
+        if (!opsList || !opsList.length) continue
+        const firstOp = String(opsList[0]?.op || '')
+        const isPptx = Boolean(parsedOps?.template_path) ||
+          ['clone_slide', 'delete_slide', 'reorder_slides', 'replace_shape_text', 'set_notes'].includes(firstOp)
+        if (isPptx) {
+          const label = parsedOps?.template_path ? 'Create Presentation' : 'Apply to Slides'
+          actions.append(
+            button('answer-action primary', label, 'apply-pptx-ops', [encodeURIComponent(JSON.stringify({
+              template_path: parsedOps?.template_path || '',
+              output_path: parsedOps?.output_path || '',
+              ops: opsList,
+            }))]),
+          )
+          break
+        }
+        if (docxHost) {
+          actions.append(
+            button('answer-action primary', 'Apply to Word', 'apply-docx-ops', [encodeURIComponent(JSON.stringify(opsList))]),
+          )
+          break
+        }
+      } catch {}
     }
     actions.append(
       button('answer-action', 'Copy', 'copy-answer', [encoded], { label: 'Copy answer as Markdown' }),

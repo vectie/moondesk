@@ -574,6 +574,18 @@ function loadWikiDocxRuntime() {
 new MutationObserver(loadWikiDocxRuntime).observe(document.getElementById('app') || document.body, {childList:true,subtree:true})
 loadWikiDocxRuntime()
 
+let wikiPptxRuntimeLoading = false
+function loadWikiPptxRuntime() {
+  if (wikiPptxRuntimeLoading || !document.querySelector('[data-testid="office-pptx-preview"]')) return
+  wikiPptxRuntimeLoading = true
+  void import('./wiki-pptx-runtime.js').then(module => module.installWikiPptxRuntime()).catch(error => {
+    wikiPptxRuntimeLoading = false
+    console.error('Presentation editor failed to load', error)
+  })
+}
+new MutationObserver(loadWikiPptxRuntime).observe(document.getElementById('app') || document.body, {childList:true,subtree:true})
+loadWikiPptxRuntime()
+
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''
 let mooncodeTranscriptScope = ''
