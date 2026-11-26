@@ -51,6 +51,64 @@ fn document_conversation_title(value : String) -> String {
 }
 
 ///|
+fn document_conversation_paths(
+  payload : Json,
+  primary : String,
+) -> Array[String] {
+  let paths : Array[String] = []
+  let seen : Map[String, Bool] = {}
+  let add_path = fn(raw : String) {
+    let clean = raw.trim().to_owned()
+    if clean != "" && !seen.contains(clean) {
+      seen[clean] = true
+      paths.push(clean)
+    }
+  }
+  add_path(primary)
+  match payload {
+    Object(fields) =>
+      match fields.get("document_paths") {
+        Some(Array(items)) =>
+          for item in items {
+            if item is String(value) {
+              add_path(value)
+            }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  paths
+}
+
+///|
+fn document_conversation_matches_path(
+  record : Json,
+  document_path : String,
+) -> Bool {
+  if document_path == "" {
+    return true
+  }
+  if json_string(record, "document_path", default="") == document_path {
+    return true
+  }
+  match record {
+    Object(fields) =>
+      match fields.get("document_paths") {
+        Some(Array(items)) =>
+          for item in items {
+            if item is String(value) && value == document_path {
+              return true
+            }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  false
+}
+
+///|
 fn document_conversation_entries(payload : Json) -> Array[Json]? {
   guard payload is Object(fields) else { return None }
   guard fields.get("entries") is Some(Array(items)) else { return None }
@@ -138,10 +196,7 @@ async fn handle_document_conversations(
   )
   let selected = records.filter(record => {
     json_string(record, "workspace_id", default="") == workspace_id &&
-    (
-      document_path == "" ||
-      json_string(record, "document_path", default="") == document_path
-    )
+    document_conversation_matches_path(record, document_path)
   })
   send_json(conn, method_, {
     "contract": "moondesk.document_conversations.v1",
@@ -188,12 +243,14 @@ async fn handle_save_document_conversation(
       return
     }
   }
-  if document_path != "" &&
-    resolve_workspace_existing_path(workspace.root_path, document_path) is None {
-    send_api_error(
-      conn, method_, 400, "Bad Request", "Document is outside this workspace",
-    )
-    return
+  let document_paths = document_conversation_paths(payload, document_path)
+  for candidate in document_paths {
+    if resolve_workspace_existing_path(workspace.root_path, candidate) is None {
+      send_api_error(
+        conn, method_, 400, "Bad Request", "Document is outside this workspace",
+      )
+      return
+    }
   }
   let path = document_conversations_path(workspace_root)
   document_conversation_write_mutex.acquire()
@@ -263,6 +320,7 @@ async fn handle_save_document_conversation(
     "conversation_id": conversation_id,
     "workspace_id": workspace_id,
     "document_path": document_path,
+    "document_paths": Json::array(document_paths.map(ToJson::to_json)),
     "document_baseline": json_string(payload, "document_baseline", default=""),
     "title": document_conversation_title(
       json_string(payload, "title", default="Document conversation"),

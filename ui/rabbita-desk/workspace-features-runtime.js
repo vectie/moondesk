@@ -699,11 +699,53 @@ function currentThreads() {
   return local
 }
 
+function normalizeDocumentPaths(...sources) {
+  const seen = new Set()
+  const out = []
+  const add = value => {
+    const clean = String(value || '').trim()
+    if (clean && !seen.has(clean)) {
+      seen.add(clean)
+      out.push(clean)
+    }
+  }
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      for (const item of source) add(item)
+    } else if (source) {
+      add(source)
+    }
+  }
+  return out
+}
+
+function artifactPathsFromChat(chat) {
+  const out = []
+  for (const entry of Array.isArray(chat) ? chat : []) {
+    if (entry?.role !== 'artifact_ref') continue
+    try {
+      const parsed = JSON.parse(String(entry.content || '{}'))
+      if (parsed?.path) out.push(String(parsed.path))
+    } catch {}
+  }
+  return out
+}
+
+function threadMatchesDocument(thread, documentPath) {
+  const target = String(documentPath || '').trim()
+  if (!target) return (thread?.document || '') === ''
+  if ((thread?.document || '') === target) return true
+  if (Array.isArray(thread?.documents) && thread.documents.includes(target)) return true
+  if (Array.isArray(thread?.position?.files) && thread.position.files.includes(target)) return true
+  return false
+}
+
 function normalizeServerThread(record) {
   return {
     id: String(record.conversation_id || record.id || ''),
     title: String(record.title || 'Document conversation'),
     document: String(record.document_path || ''),
+    documents: normalizeDocumentPaths(record.document_path, record.document_paths),
     baseline: String(record.document_baseline || ''),
     updated_at: Date.parse(record.updated_at || '') || Number(record.updated_at) || Date.now(),
     status: String(record.status || 'ready'),
@@ -766,11 +808,19 @@ function queueServerConversationWrite(record) {
 }
 
 function serverConversationRecord(thread, action = 'upsert') {
+  const documentPaths = normalizeDocumentPaths(
+    thread.document,
+    thread.documents,
+    thread.position?.document,
+    thread.position?.files,
+    artifactPathsFromChat(thread.chat),
+  )
   return {
     action,
     workspace_id: serverState.workspace_id || '',
     conversation_id: thread.id,
-    document_path: thread.document || '',
+    document_path: thread.document || documentPaths[0] || '',
+    document_paths: documentPaths,
     document_baseline: thread.baseline || serverState.office?.baseline || '',
     title: thread.title || 'Document conversation',
     status: thread.status || 'ready',
@@ -1416,10 +1466,19 @@ function persistCurrentThread() {
   const all = readStored(storageKeys.threads, {})
   const threads = Array.isArray(all[workspaceId]) ? all[workspaceId] : []
   const firstUser = serverState.work_title || chat.find(entry => entry.role === 'user')?.content || serverState.request_prompt || 'Task'
+  const previous = threads.find(item => item.id === taskId)
   const record = {
     id: taskId,
     title: boundedText(firstUser, 72),
-    document: serverState.selected_document || '',
+    document: serverState.selected_document || previous?.document || '',
+    documents: normalizeDocumentPaths(
+      serverState.selected_document,
+      previous?.document,
+      previous?.documents,
+      previousPosition?.files,
+      position?.files,
+      artifactPathsFromChat(chat),
+    ),
     baseline: serverState.office?.baseline || '',
     updated_at: Date.now(),
     status: serverState.request_status || 'ready',
@@ -1432,9 +1491,9 @@ function persistCurrentThread() {
       content: String(entry.content || '').slice(0, 240000),
     })),
   }
-  const previous = threads.find(item => item.id === taskId)
-  if (previous?.title && previous.title !== 'Document conversation') record.title = previous.title
-  if (previous) record.revision = Number(previous.revision) || 0
+  const previousDuplicateRemoved = threads.find(item => item.id === taskId)
+  if (previousDuplicateRemoved?.title && previousDuplicateRemoved.title !== 'Document conversation') record.title = previousDuplicateRemoved.title
+  if (previousDuplicateRemoved) record.revision = Number(previousDuplicateRemoved.revision) || 0
   all[workspaceId] = [record, ...threads.filter(item => item.id !== taskId && (!activeTaskId || item.id !== draftTaskId))]
     .sort((left, right) => right.updated_at - left.updated_at)
     .slice(0, 24)
@@ -1485,7 +1544,7 @@ function maybeRestoreCurrentThread() {
   if (!globalThis.__moondeskWorkspaceFeaturesDispatch) return
   restoredDocumentKeys.add(key)
   const thread = currentThreads().find(item =>
-    !item.archived && (item.document || '') === (serverState.selected_document || ''))
+    !item.archived && threadMatchesDocument(item, serverState.selected_document || ''))
   if (thread) {
     restoreTask(thread, undefined, true)
   }

@@ -115,3 +115,31 @@ async test "enabled scoped preferences enter general-agent context" {
   assert_true(context.contains("ARR: Annual recurring revenue"))
   assert_false(context.contains("Do not use"))
 }
+
+///|
+test "document conversations support many-to-many document_paths matching" {
+  let payload : Json = {
+    "document_path": "wiki/01-intro.md",
+    "document_paths": [
+      "wiki/01-intro.md",
+      "wiki/02-presentation/opening-defense-draft.pptx",
+      "  ",
+      "wiki/01-intro.md",
+    ],
+  }
+  let paths = document_conversation_paths(payload, "wiki/01-intro.md")
+  assert_eq(paths, [
+    "wiki/01-intro.md", "wiki/02-presentation/opening-defense-draft.pptx",
+  ])
+  let record : Json = {
+    "document_path": "wiki/01-intro.md",
+    "document_paths": paths.map(ToJson::to_json),
+  }
+  assert_true(document_conversation_matches_path(record, "wiki/01-intro.md"))
+  assert_true(
+    document_conversation_matches_path(
+      record, "wiki/02-presentation/opening-defense-draft.pptx",
+    ),
+  )
+  assert_false(document_conversation_matches_path(record, "wiki/other.md"))
+}

@@ -36,22 +36,84 @@ type Dispatch[A] = Emit[A]
 ///|
 #cfg(target="js")
 extern "js" fn browser_initial_activity() -> String =
-  #| () => new URLSearchParams(globalThis.location?.search || "").get("activity") || ""
+  #| () => {
+  #|   const params = new URLSearchParams(globalThis.location?.search || "");
+  #|   const explicit = params.get("activity");
+  #|   if (explicit) {
+  #|     try {
+  #|       const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, activity: explicit }));
+  #|     } catch {}
+  #|     return explicit;
+  #|   }
+  #|   if (!params.has("workspace") && !params.has("path") && !params.has("session")) {
+  #|     try {
+  #|       const saved = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       if (saved?.activity) return String(saved.activity);
+  #|     } catch {}
+  #|   }
+  #|   return "";
+  #| }
 
 ///|
 #cfg(target="js")
 extern "js" fn browser_initial_workspace() -> String =
-  #| () => new URLSearchParams(globalThis.location?.search || "").get("workspace") || ""
+  #| () => {
+  #|   const params = new URLSearchParams(globalThis.location?.search || "");
+  #|   const explicit = params.get("workspace");
+  #|   if (explicit) {
+  #|     try {
+  #|       const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, workspace: explicit }));
+  #|     } catch {}
+  #|     return explicit;
+  #|   }
+  #|   if (!params.has("workspace") && !params.has("path") && !params.has("session") && !params.has("activity")) {
+  #|     try {
+  #|       const saved = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       if (saved?.workspace) return String(saved.workspace);
+  #|     } catch {}
+  #|   }
+  #|   return "";
+  #| }
 
 ///|
 #cfg(target="js")
 extern "js" fn browser_initial_path() -> String =
-  #| () => new URLSearchParams(globalThis.location?.search || "").get("path") || ""
+  #| () => {
+  #|   const params = new URLSearchParams(globalThis.location?.search || "");
+  #|   const explicit = params.get("path");
+  #|   if (explicit) {
+  #|     try {
+  #|       const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, path: explicit }));
+  #|     } catch {}
+  #|     return explicit;
+  #|   }
+  #|   if (!params.has("workspace") && !params.has("path") && !params.has("session") && !params.has("activity")) {
+  #|     try {
+  #|       const saved = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       if (saved?.path) return String(saved.path);
+  #|     } catch {}
+  #|   }
+  #|   return "";
+  #| }
 
 ///|
 #cfg(target="js")
 extern "js" fn browser_initial_mooncode_session() -> String =
-  #| () => new URLSearchParams(globalThis.location?.search || "").get("session") || ""
+  #| () => {
+  #|   const params = new URLSearchParams(globalThis.location?.search || "");
+  #|   const explicit = params.get("session");
+  #|   if (explicit) return explicit;
+  #|   if (!params.has("workspace") && !params.has("path") && !params.has("session") && !params.has("activity")) {
+  #|     try {
+  #|       const saved = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|       if (saved?.session) return String(saved.session);
+  #|     } catch {}
+  #|   }
+  #|   return "";
+  #| }
 
 ///|
 #cfg(target="js")
@@ -61,6 +123,10 @@ extern "js" fn browser_set_activity(slug : String) =
   #|   const url = new URL(globalThis.location.href);
   #|   url.searchParams.set("activity", slug);
   #|   globalThis.history.replaceState(null, "", url.toString());
+  #|   try {
+  #|     const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|     globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, activity: String(slug || "") }));
+  #|   } catch {}
   #| }
 
 ///|
@@ -77,6 +143,10 @@ extern "js" fn browser_set_mooncode_context(
   #|   if (sessionId) url.searchParams.set("session", sessionId);
   #|   else url.searchParams.delete("session");
   #|   globalThis.history.replaceState(null, "", url.toString());
+  #|   try {
+  #|     const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|     globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, workspace: String(workspaceId || ""), session: String(sessionId || "") }));
+  #|   } catch {}
   #| }
 
 ///|
@@ -93,6 +163,10 @@ extern "js" fn browser_set_workspace_context(
   #|   if (path) url.searchParams.set("path", path);
   #|   else url.searchParams.delete("path");
   #|   globalThis.history.replaceState(null, "", url.toString());
+  #|   try {
+  #|     const prev = JSON.parse(globalThis.localStorage?.getItem("moondesk.last_context.v1") || "{}");
+  #|     globalThis.localStorage?.setItem("moondesk.last_context.v1", JSON.stringify({ ...prev, workspace: String(workspaceId || ""), path: String(path || "") }));
+  #|   } catch {}
   #| }
 
 ///|
