@@ -85,6 +85,15 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             "files",
             workspace_feature_msg("open-toolbox", first="results"),
           ),
+          button(
+            class="wiki-header-action secondary-button",
+            attrs=@html.Attrs::build().aria_label("Research Structure"),
+            title="Open 6-stage Research Structure & Stage Visualizers",
+            on_click=dispatch(
+              workspace_feature_msg("open-toolbox", first="research"),
+            ),
+            [span("Research")],
+          ),
           if model.selected_path != "" ||
             model.wiki_chat_entries.any(entry => entry.content.trim() != "") ||
             !model.wiki_chat_context_items.is_empty() {

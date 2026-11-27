@@ -1,4 +1,5 @@
 import { workPanelItems, renderTaskDraft, installPackWorkspace, mergeTaskThreads, taskPosition, taskResultPackage, taskArtifacts, taskSources, downloadTaskFile } from './work-journey-runtime.js'
+import { renderResearchTab } from './wiki-research-runtime.js'
 import { uiText, uiLocale, userContent } from './ui-locale.js'
 import { iconMarkup } from './ui-icons.js'
 let specialistBuilderPromise = null
@@ -3769,6 +3770,7 @@ function renderToolbox(state) {
     learning: renderLearningTab,
     preferences: renderPreferencesTab,
     inbox: () => renderInboxTab(state),
+    research: () => renderLocalTool(state, 'research', () => renderResearchTab(state)),
   })[featureState.toolbox_tab]?.() || renderReviewTab(state)
   panel.append(header)
   if (items.length > 1) panel.append(tabs)

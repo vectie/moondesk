@@ -4,6 +4,7 @@ const panelGroups = [
   [['threads', 'Recent tasks']],
   [['room', 'Book room']], [['calendar', 'Calendar']], [['inbox', 'Inbox']],
   [['learning', 'Learning']], [['preferences', 'Preferences']], [['tasks', 'Start a task']],
+  [['research', 'Research Structure']],
 ]
 
 export function workPanelItems(active) {

@@ -251,6 +251,7 @@ import { readFile } from 'node:fs/promises'
 const sourcePath = new URL('./workspace-features-runtime.js', import.meta.url)
 const source = (await readFile(sourcePath, 'utf8'))
   .replace("'./work-journey-runtime.js'", JSON.stringify(new URL('./work-journey-runtime.js', import.meta.url).href))
+  .replace("'./wiki-research-runtime.js'", JSON.stringify(new URL('./wiki-research-runtime.js', import.meta.url).href))
   .replace("'./ui-locale.js'", JSON.stringify(new URL('./ui-locale.js', import.meta.url).href))
   .replace("'./ui-icons.js'", JSON.stringify(new URL('./ui-icons.js', import.meta.url).href))
 
