@@ -6,11 +6,11 @@ import {
 }
 
 // Values
-pub fn adler32(FixedArray[Byte]) -> UInt
+pub fn adler32(FixedArray[Byte]) -> UInt32
 
 pub fn compress_sync(FixedArray[Byte], opts? : @types.GzipOptions) -> FixedArray[Byte]
 
-pub fn crc32(FixedArray[Byte]) -> UInt
+pub fn crc32(FixedArray[Byte]) -> UInt32
 
 pub fn decompress_sync(FixedArray[Byte], opts? : @types.InflateOptions) -> FixedArray[Byte] raise @types.FlateError
 

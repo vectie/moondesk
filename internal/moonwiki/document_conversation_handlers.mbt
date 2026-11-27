@@ -56,7 +56,7 @@ fn document_conversation_paths(
   primary : String,
 ) -> Array[String] {
   let paths : Array[String] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let add_path = fn(raw : String) {
     let clean = raw.trim().to_owned()
     if clean != "" && !seen.contains(clean) {

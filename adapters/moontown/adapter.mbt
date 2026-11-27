@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct TownSnapshotRef {
   town_json_path : String
   daemon_json_path : String
   standing_goals_path : String
   watcher_dir : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct OperatorRequestDraft {
   title : String
   prompt : String
@@ -15,7 +17,7 @@ pub struct OperatorRequestDraft {
   source_policy : @moondesk_core.SourcePolicy
   review_policy : String
   context_entries : Array[String]
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 pub fn snapshot_paths(root_path : String) -> TownSnapshotRef {

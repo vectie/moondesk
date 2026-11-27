@@ -25,13 +25,13 @@ fn agent_import_runtime_runner(
 
 ///|
 async fn agent_import_read_body(body : &@io.Reader, limit : Int32) -> Json? {
-  let bytes = @buffer.Buffer(size_hint=8192)
+  let bytes = @buffer.Buffer(capacity=8192)
   while body.read_some(max_len=(limit + 1 - bytes.length()).min(65536))
         is Some(chunk) {
     if bytes.length() + chunk.length() > limit {
       return None
     }
-    bytes.write_bytes(chunk)
+    bytes.write_bytesview(chunk)
   }
   Some(@json.parse(@encoding/utf8.decode(bytes.to_bytes()))) catch {
     _ => None

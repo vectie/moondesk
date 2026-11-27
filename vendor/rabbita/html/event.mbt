@@ -7,10 +7,11 @@ struct Mouse(@dom.MouseEvent)
 struct Mouse(Unit)
 
 ///|
+#derive(Show, Debug)
 pub(all) struct Pos {
   x : Int
   y : Int
-} derive(Show, Debug)
+}
 
 ///|
 #cfg(target="js")

@@ -6,12 +6,12 @@ pub(all) enum MoonFlowPlanningOperation {
     form_ref~ : String,
     catalog_ref~ : String,
     draft_id~ : String,
-    recorded_at~ : String
+    recorded_at~ : String,
   )
   ApplyPrepared(
     preparation_id~ : String,
     catalog_ref~ : String,
-    evaluated_at~ : String
+    evaluated_at~ : String,
   )
 }
 

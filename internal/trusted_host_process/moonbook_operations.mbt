@@ -20,17 +20,18 @@ pub(all) enum MoonBookExportOperation {
   ImportExact(
     destination~ : String,
     package_path~ : String,
-    source_path~ : String
+    source_path~ : String,
   )
   VerifyImport(destination~ : String, package_path~ : String)
 }
 
 ///|
+#derive(Eq)
 priv struct MoonBookExecutableStamp {
   size : Int64
   modified : (Int64, Int32)
   changed : (Int64, Int32)
-} derive(Eq)
+}
 
 ///|
 priv struct MoonBookCapturedOutput {
@@ -227,7 +228,7 @@ async fn moonbook_read_bounded(
   reader : &@io.Reader,
   limit : Int32,
 ) -> Result[Bytes, String] {
-  let output = @buffer.Buffer(size_hint=limit.min(8192))
+  let output = @buffer.Buffer(capacity=limit.min(8192))
   for ;; {
     let chunk = reader.read_some(
       max_len=(limit - output.length() + 1).min(8192),
@@ -238,7 +239,7 @@ async fn moonbook_read_bounded(
     guard output.length() + chunk.length() <= limit else {
       return Err("MoonBook output exceeds the export limit")
     }
-    output.write_bytes(chunk)
+    output.write_bytesview(chunk)
   }
   Ok(output.to_bytes())
 }

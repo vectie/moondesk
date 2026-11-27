@@ -1,12 +1,16 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "vectie/moondesk/internal/town"
 
+import {
+  "moonbitlang/core/json",
+}
+
 // Values
-pub fn configuration_evidence_from_values(Bool, Bool, configuration_valid? : Bool, configuration_reason? : String) -> Json
+pub fn configuration_evidence_from_values(Bool, Bool, configuration_valid? : Bool, configuration_reason? : String) -> @json.Json
 
-pub fn installation_evidence_from_values(Bool, Bool) -> Json
+pub fn installation_evidence_from_values(Bool, Bool) -> @json.Json
 
-pub fn platform_evidence_from_values(String, String) -> Json
+pub fn platform_evidence_from_values(String, String) -> @json.Json
 
 // Errors
 

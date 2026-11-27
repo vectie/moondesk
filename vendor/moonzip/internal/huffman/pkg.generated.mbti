@@ -2,50 +2,50 @@
 package "ivgtr/moonzip/internal/huffman"
 
 // Values
-pub fn clen(FixedArray[Int], FixedArray[Int]) -> Int
+pub fn clen(FixedArray[Int32], FixedArray[Int32]) -> Int32
 
-pub let clim : FixedArray[Int]
+pub let clim : FixedArray[Int32]
 
-pub fn dyn_build(FixedArray[Int], FixedArray[Int]) -> (FixedArray[Int], Int, FixedArray[Int], Int)
+pub fn dyn_build(FixedArray[Int32], FixedArray[Int32]) -> (FixedArray[Int32], Int32, FixedArray[Int32], Int32)
 
-pub fn enc_pair(Int, Int) -> (Int, Int)
+pub fn enc_pair(Int32, Int32) -> (Int32, Int32)
 
-pub let fclim : FixedArray[Int]
+pub let fclim : FixedArray[Int32]
 
-pub let fd : FixedArray[Int]
+pub let fd : FixedArray[Int32]
 
-pub let fdeb : FixedArray[Int]
+pub let fdeb : FixedArray[Int32]
 
-pub let fdm : FixedArray[Int]
+pub let fdm : FixedArray[Int32]
 
-pub let fdrm : FixedArray[Int]
+pub let fdrm : FixedArray[Int32]
 
-pub let fdt : FixedArray[Int]
+pub let fdt : FixedArray[Int32]
 
-pub let fl : FixedArray[Int]
+pub let fl : FixedArray[Int32]
 
-pub let fleb : FixedArray[Int]
+pub let fleb : FixedArray[Int32]
 
-pub let flm : FixedArray[Int]
+pub let flm : FixedArray[Int32]
 
-pub let flrm : FixedArray[Int]
+pub let flrm : FixedArray[Int32]
 
-pub let flt : FixedArray[Int]
+pub let flt : FixedArray[Int32]
 
-pub fn h_map(FixedArray[Int], Int, HMapDirection) -> FixedArray[Int]
+pub fn h_map(FixedArray[Int32], Int32, HMapDirection) -> FixedArray[Int32]
 
-pub fn h_tree(FixedArray[Int], Int) -> HTreeResult
+pub fn h_tree(FixedArray[Int32], Int32) -> HTreeResult
 
-pub fn lc(FixedArray[Int]) -> LcResult
+pub fn lc(FixedArray[Int32]) -> LcResult
 
-pub fn max_bits(FixedArray[Int]) -> Int
+pub fn max_bits(FixedArray[Int32]) -> Int32
 
 // Errors
 
 // Types and methods
 pub(all) struct FrebResult {
-  b : FixedArray[Int]
-  r : FixedArray[Int]
+  b : FixedArray[Int32]
+  r : FixedArray[Int32]
 }
 
 pub(all) enum HMapDirection {
@@ -54,13 +54,13 @@ pub(all) enum HMapDirection {
 }
 
 pub(all) struct HTreeResult {
-  t : FixedArray[Int]
-  l : Int
+  t : FixedArray[Int32]
+  l : Int32
 }
 
 pub(all) struct LcResult {
-  c : FixedArray[Int]
-  n : Int
+  c : FixedArray[Int32]
+  n : Int32
 }
 
 // Type aliases

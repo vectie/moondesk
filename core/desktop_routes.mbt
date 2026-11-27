@@ -40,13 +40,15 @@ pub fn url_path(value : String) -> String {
 }
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) struct DesktopApiRouteContract {
   path : String
   methods : Array[String]
   authority_scope : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) struct DesktopApiCapabilities {
   component : String
   kind : String
@@ -57,7 +59,7 @@ pub(all) struct DesktopApiCapabilities {
   portable_api_snapshot_routes : Array[String]
   portable_api_workspace_content_routes : Array[String]
   portable_api_supported_route_patterns : Array[String]
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 fn desktop_api_route_contract(

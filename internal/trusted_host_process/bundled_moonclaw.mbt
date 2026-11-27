@@ -78,7 +78,7 @@ async fn provision_bundled_moonclaw_at(
     } else {
       // Publish only a complete copy; an interrupted install cannot select it.
       let staging = @fsx.mkdtemp(join_daemon_path(bin_dir, ".install-XXXXXX"))
-      defer remove_bundled_staging(staging)
+      defer @async.protect_from_cancel(() => remove_bundled_staging(staging))
       let staged = join_daemon_path(staging, "moonclaw")
       @fs.write_file(staged, data, create_mode=CreateNew, permission=0o755)
       @fs.rename(staged, target, replace=false)

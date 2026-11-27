@@ -74,7 +74,7 @@ async fn town_native_work_with_deadline(
 async fn town_native_work_read_body(
   body : &@io.Reader,
 ) -> Result[Bytes, (Int32, String)] {
-  let output = @buffer.Buffer(size_hint=512)
+  let output = @buffer.Buffer(capacity=512)
   for ;; {
     let chunk = body.read_some(max_len=4097 - output.length()) catch {
       _ => return Err((400, "Unable to read Town work request body"))
@@ -83,7 +83,7 @@ async fn town_native_work_read_body(
     if output.length() + chunk.length() > 4096 {
       return Err((413, "Town work request exceeds the 4 KiB limit"))
     }
-    output.write_bytes(chunk)
+    output.write_bytesview(chunk)
   }
   Ok(output.to_bytes())
 }

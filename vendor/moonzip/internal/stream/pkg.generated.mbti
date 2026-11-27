@@ -33,12 +33,12 @@ pub struct DeflateStream {
   buf : Array[FixedArray[Byte]]
   output : Array[FixedArray[Byte]]
   mut finished : Bool
-  level : Int
-  mem : Int
+  level : Int32
+  mem : Int32
   ondata : ((FixedArray[Byte], Bool) -> Unit)?
 }
 pub fn DeflateStream::flush(Self) -> Unit
-pub fn DeflateStream::new(level? : Int, mem? : Int, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
+pub fn DeflateStream::new(level? : Int32, mem? : Int32, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
 pub fn DeflateStream::push(Self, FixedArray[Byte], Bool) -> Unit raise @types.FlateError
 pub fn DeflateStream::result(Self) -> FixedArray[Byte] raise @types.FlateError
 
@@ -65,12 +65,12 @@ pub struct GzipStream {
   buf : Array[FixedArray[Byte]]
   output : Array[FixedArray[Byte]]
   mut finished : Bool
-  level : Int
-  mem : Int
+  level : Int32
+  mem : Int32
   ondata : ((FixedArray[Byte], Bool) -> Unit)?
 }
 pub fn GzipStream::flush(Self) -> Unit
-pub fn GzipStream::new(level? : Int, mem? : Int, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
+pub fn GzipStream::new(level? : Int32, mem? : Int32, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
 pub fn GzipStream::push(Self, FixedArray[Byte], Bool) -> Unit raise @types.FlateError
 pub fn GzipStream::result(Self) -> FixedArray[Byte] raise @types.FlateError
 
@@ -119,18 +119,18 @@ pub fn Zip::new(comment? : String, ondata? : ((FixedArray[Byte], Bool) -> Unit)?
 pub struct ZipDeflate {
   filename : String
   buf : Array[FixedArray[Byte]]
-  mut crc_state : UInt
-  mut original_size : Int
+  mut crc_state : UInt32
+  mut original_size : Int32
   mut finished : Bool
-  level : Int
-  mem : Int
-  mtime : Int
+  level : Int32
+  mem : Int32
+  mtime : Int32
   ondata : ((FixedArray[Byte], Bool) -> Unit)?
 }
 pub fn ZipDeflate::compressed_result(Self) -> FixedArray[Byte] raise @types.FlateError
-pub fn ZipDeflate::crc(Self) -> UInt
-pub fn ZipDeflate::new(String, level? : Int, mem? : Int, mtime? : Int, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
-pub fn ZipDeflate::original_size(Self) -> Int
+pub fn ZipDeflate::crc(Self) -> UInt32
+pub fn ZipDeflate::new(String, level? : Int32, mem? : Int32, mtime? : Int32, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
+pub fn ZipDeflate::original_size(Self) -> Int32
 pub fn ZipDeflate::push(Self, FixedArray[Byte], Bool) -> Unit raise @types.FlateError
 
 type ZipEntry
@@ -138,28 +138,28 @@ type ZipEntry
 pub struct ZipPassThrough {
   filename : String
   buf : Array[FixedArray[Byte]]
-  mut crc_state : UInt
-  mut size : Int
+  mut crc_state : UInt32
+  mut size : Int32
   mut finished : Bool
-  mtime : Int
+  mtime : Int32
   ondata : ((FixedArray[Byte], Bool) -> Unit)?
 }
-pub fn ZipPassThrough::crc(Self) -> UInt
-pub fn ZipPassThrough::new(String, mtime? : Int, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
+pub fn ZipPassThrough::crc(Self) -> UInt32
+pub fn ZipPassThrough::new(String, mtime? : Int32, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
 pub fn ZipPassThrough::push(Self, FixedArray[Byte], Bool) -> Unit raise @types.FlateError
 pub fn ZipPassThrough::result(Self) -> FixedArray[Byte] raise @types.FlateError
-pub fn ZipPassThrough::size(Self) -> Int
+pub fn ZipPassThrough::size(Self) -> Int32
 
 pub struct ZlibStream {
   buf : Array[FixedArray[Byte]]
   output : Array[FixedArray[Byte]]
   mut finished : Bool
-  level : Int
-  mem : Int
+  level : Int32
+  mem : Int32
   ondata : ((FixedArray[Byte], Bool) -> Unit)?
 }
 pub fn ZlibStream::flush(Self) -> Unit
-pub fn ZlibStream::new(level? : Int, mem? : Int, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
+pub fn ZlibStream::new(level? : Int32, mem? : Int32, ondata? : ((FixedArray[Byte], Bool) -> Unit)?) -> Self
 pub fn ZlibStream::push(Self, FixedArray[Byte], Bool) -> Unit raise @types.FlateError
 pub fn ZlibStream::result(Self) -> FixedArray[Byte] raise @types.FlateError
 

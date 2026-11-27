@@ -2,13 +2,13 @@
 package "ivgtr/moonzip/internal/checksum"
 
 // Values
-pub fn adler32(FixedArray[Byte]) -> UInt
+pub fn adler32(FixedArray[Byte]) -> UInt32
 
-pub fn adler32_update(UInt, FixedArray[Byte], offset? : Int, length? : Int) -> UInt
+pub fn adler32_update(UInt32, FixedArray[Byte], offset? : Int32, length? : Int32) -> UInt32
 
-pub fn crc32(FixedArray[Byte]) -> UInt
+pub fn crc32(FixedArray[Byte]) -> UInt32
 
-pub fn crc32_update(UInt, FixedArray[Byte], offset? : Int, length? : Int) -> UInt
+pub fn crc32_update(UInt32, FixedArray[Byte], offset? : Int32, length? : Int32) -> UInt32
 
 // Errors
 

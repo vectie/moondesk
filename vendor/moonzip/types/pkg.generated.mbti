@@ -14,8 +14,8 @@ pub(all) suberror FlateError {
 
 // Types and methods
 pub(all) struct DeflateOptions {
-  level : Int
-  mem : Int
+  level : Int32
+  mem : Int32
   dictionary : FixedArray[Byte]?
 }
 pub fn DeflateOptions::default() -> Self
@@ -23,6 +23,7 @@ pub fn DeflateOptions::output(Self, &Logger) -> Unit
 pub fn DeflateOptions::to_string(Self) -> String
 pub impl Show for DeflateOptions
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FlateErrorCode {
   UnexpectedEOF
   InvalidBlockType
@@ -39,8 +40,8 @@ pub(all) enum FlateErrorCode {
   StreamFinishing
   InvalidZipData
   UnknownCompressionMethod
-} derive(Eq, @debug.Debug)
-pub fn FlateErrorCode::code(Self) -> Int
+}
+pub fn FlateErrorCode::code(Self) -> Int32
 pub fn FlateErrorCode::equal(Self, Self) -> Bool
 pub fn FlateErrorCode::not_equal(Self, Self) -> Bool
 pub fn FlateErrorCode::output(Self, &Logger) -> Unit
@@ -49,9 +50,9 @@ pub fn FlateErrorCode::to_string(Self) -> String
 pub impl Show for FlateErrorCode
 
 pub(all) struct GzipOptions {
-  level : Int
-  mem : Int
-  mtime : Int?
+  level : Int32
+  mem : Int32
+  mtime : Int32?
   filename : String?
   comment : String?
   extra : FixedArray[Byte]?
@@ -62,7 +63,7 @@ pub fn GzipOptions::to_string(Self) -> String
 pub impl Show for GzipOptions
 
 pub(all) struct InflateOptions {
-  size : Int?
+  size : Int32?
   dictionary : FixedArray[Byte]?
 }
 pub fn InflateOptions::default() -> Self
@@ -72,31 +73,31 @@ pub impl Show for InflateOptions
 
 pub(all) struct UnzipFileInfo {
   name : String
-  size : Int
-  original_size : Int
-  compression : Int
-  mtime : Int
-  attrs : Int
+  size : Int32
+  original_size : Int32
+  compression : Int32
+  mtime : Int32
+  attrs : Int32
   comment : String
-  extra : Map[Int, FixedArray[Byte]]
+  extra : Map[Int32, FixedArray[Byte]]
 }
 pub fn UnzipFileInfo::output(Self, &Logger) -> Unit
 pub fn UnzipFileInfo::to_string(Self) -> String
 pub impl Show for UnzipFileInfo
 
 pub(all) struct ZipAttributes {
-  os : Int?
-  attrs : Int?
+  os : Int32?
+  attrs : Int32?
   comment : String?
-  extra : Map[Int, FixedArray[Byte]]?
+  extra : Map[Int32, FixedArray[Byte]]?
 }
 pub fn ZipAttributes::output(Self, &Logger) -> Unit
 pub fn ZipAttributes::to_string(Self) -> String
 pub impl Show for ZipAttributes
 
 pub(all) struct ZipEntryOptions {
-  level : Int
-  mtime : Int?
+  level : Int32
+  mtime : Int32?
   attrs : ZipAttributes?
 }
 pub fn ZipEntryOptions::default() -> Self
@@ -105,8 +106,8 @@ pub fn ZipEntryOptions::to_string(Self) -> String
 pub impl Show for ZipEntryOptions
 
 pub(all) struct ZipOptions {
-  level : Int
-  mtime : Int?
+  level : Int32
+  mtime : Int32?
   comment : String?
 }
 pub fn ZipOptions::default() -> Self
@@ -115,8 +116,8 @@ pub fn ZipOptions::to_string(Self) -> String
 pub impl Show for ZipOptions
 
 pub(all) struct ZlibOptions {
-  level : Int
-  mem : Int
+  level : Int32
+  mem : Int32
   dictionary : FixedArray[Byte]?
 }
 pub fn ZlibOptions::default() -> Self

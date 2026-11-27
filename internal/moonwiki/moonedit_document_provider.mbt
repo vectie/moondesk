@@ -21,7 +21,7 @@ priv struct MoonEditDocument {
 
 ///|
 fn moonedit_hex(bytes : FixedArray[Byte]) -> String {
-  let out = StringBuilder(size_hint=bytes.length() * 2)
+  let out = StringBuilder(capacity=bytes.length() * 2)
   for byte in bytes {
     out.write_string(byte.to_hex())
   }

@@ -18,18 +18,18 @@ pub(all) enum MoonFlowServiceOperation {
   ValidateGraph(
     graph_path~ : String,
     catalog_path~ : String,
-    evaluated_at~ : String
+    evaluated_at~ : String,
   )
   ImportGraph(
     graph_path~ : String,
     catalog_path~ : String,
-    evaluated_at~ : String
+    evaluated_at~ : String,
   )
   Control(
     run_id~ : String,
     action~ : String,
     evaluated_at~ : String,
-    detail~ : String
+    detail~ : String,
   )
   InspectCollaboration(workspace_id~ : String)
   ListHandovers

@@ -113,13 +113,14 @@ pub async fn write_confined_text(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ConfinedWriteResult {
   Saved
   Conflict(String)
   InvalidTarget
   UnsupportedText
   WriteFailed
-} derive(Eq, Debug)
+}
 
 ///|
 /// Compare and replace one existing UTF-8 file under the confined root. The
@@ -150,12 +151,13 @@ pub async fn compare_and_write_confined_text(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ConfinedBytesWriteResult {
   SavedBytes
   ConflictBytes(Bytes)
   InvalidBytesTarget
   BytesWriteFailed
-} derive(Eq, Debug)
+}
 
 ///|
 pub async fn compare_and_write_confined_bytes(

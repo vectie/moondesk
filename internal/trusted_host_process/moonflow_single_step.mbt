@@ -6,13 +6,13 @@ pub(all) enum MoonFlowSingleStepOperation {
     run_id~ : String,
     item_id~ : String,
     request_id~ : String,
-    recorded_at~ : String
+    recorded_at~ : String,
   )
   ReconcileOne(
     run_id~ : String,
     item_id~ : String,
     request_id~ : String,
-    recorded_at~ : String
+    recorded_at~ : String,
   )
 }
 

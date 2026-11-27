@@ -11,11 +11,11 @@ pub suberror TerminalError {
 // Types and methods
 pub type Session
 pub fn Session::close(Self) -> Unit
-pub fn Session::open(String, columns? : Int, rows? : Int) -> Self raise TerminalError
+pub fn Session::open(String, columns? : Int32, rows? : Int32) -> Self raise TerminalError
 pub fn Session::read(Self, Int64) -> (Bytes, Int64, Int64)
-pub fn Session::resize(Self, Int, Int) -> Bool
-pub fn Session::status(Self) -> Int
-pub fn Session::write(Self, Bytes) -> Int
+pub fn Session::resize(Self, Int32, Int32) -> Bool
+pub fn Session::status(Self) -> Int32
+pub fn Session::write(Self, Bytes) -> Int32
 
 // Type aliases
 

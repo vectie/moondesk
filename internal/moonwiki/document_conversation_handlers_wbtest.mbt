@@ -121,9 +121,7 @@ test "document conversations support many-to-many document_paths matching" {
   let payload : Json = {
     "document_path": "wiki/01-intro.md",
     "document_paths": [
-      "wiki/01-intro.md",
-      "wiki/02-presentation/opening-defense-draft.pptx",
-      "  ",
+      "wiki/01-intro.md", "wiki/02-presentation/opening-defense-draft.pptx", "  ",
       "wiki/01-intro.md",
     ],
   }

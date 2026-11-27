@@ -458,13 +458,13 @@ async fn handle_moonflow_plan(
 
 ///|
 async fn moonflow_plan_read_body(body : &@io.Reader) -> Json {
-  let bytes = @buffer.Buffer(size_hint=8192)
+  let bytes = @buffer.Buffer(capacity=8192)
   for ;; {
     guard body.read_some(max_len=8192) is Some(chunk) else { break }
     guard bytes.length() + chunk.length() <= 700000 else {
       fail("The plan request exceeds the 700 KiB limit")
     }
-    bytes.write_bytes(chunk)
+    bytes.write_bytesview(chunk)
   }
   @json.parse(@encoding/utf8.decode(bytes.to_bytes()))
 }

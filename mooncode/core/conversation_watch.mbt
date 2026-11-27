@@ -153,7 +153,7 @@ fn watch_required_nonnegative_int(
   match fields.get(key) {
     Some(Number(value, ..)) => {
       let parsed = value.to_int()
-      if parsed < 0 || value != Double::from_int(parsed) {
+      if parsed < 0 || value != parsed.to_double() {
         Err("watch \{key} must be a nonnegative integer")
       } else {
         Ok(parsed)

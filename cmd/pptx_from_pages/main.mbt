@@ -3,7 +3,7 @@
 /// and a template `.pptx` using `vectie/moonleaf/pptx`.
 
 ///|
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let ca = a.to_array()
   let cb = b.to_array()
   let len = if ca.length() < cb.length() { ca.length() } else { cb.length() }
@@ -35,7 +35,7 @@ fn fixed_to_bytes(arr : FixedArray[Byte]) -> Bytes {
 }
 
 ///|
-fn load_notes(notes_json_path : String, count : Int) -> Array[String] {
+fn load_notes(notes_json_path : String, count : Int32) -> Array[String] {
   let out : Array[String] = Array::make(count, "")
   if !@nativefs.path_exists(notes_json_path) {
     return out
@@ -61,7 +61,7 @@ fn load_notes(notes_json_path : String, count : Int) -> Array[String] {
 
 ///|
 fn collect_media(ppt_dir : String) -> Map[String, FixedArray[Byte]] {
-  let media : Map[String, FixedArray[Byte]] = {}
+  let media : Map[String, FixedArray[Byte]] = Map([])
   let media_dir = ppt_dir + "/media"
   if !@nativefs.path_exists(media_dir) {
     return media

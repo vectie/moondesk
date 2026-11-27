@@ -164,7 +164,9 @@ async test "exact review real Desk HTTP authenticates maps existing human applie
     let mapping = @env.get_env_var("MOONDESK_REVIEW_PRINCIPAL_MAP").unwrap()
     @fs.rename(mapping, mapping + ".held", replace=false)
     let missing = {
-      defer @fs.rename(mapping + ".held", mapping, replace=false)
+      defer @async.protect_from_cancel(() => {
+        @fs.rename(mapping + ".held", mapping, replace=false)
+      })
       review_test_http(base, "/api/moonflow/review", "reviewer", Some(request))
     }
     assert_true(json_string(missing, "message", default="").contains("mapping"))
@@ -231,7 +233,9 @@ async test "exact review real Desk HTTP authenticates maps existing human applie
       create_mode=TruncateExisting,
     )
     let changed = {
-      defer @fs.write_file(artifact, original, create_mode=TruncateExisting)
+      defer @async.protect_from_cancel(() => {
+        @fs.write_file(artifact, original, create_mode=TruncateExisting)
+      })
       review_test_http(base, "/api/moonflow/review", "reviewer", Some(request))
     }
     assert_eq(json_string(changed, "status", default=""), "unavailable")

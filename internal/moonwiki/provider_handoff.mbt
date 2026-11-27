@@ -12,7 +12,7 @@ priv struct DesktopProviderHandoffRequest {
 async fn read_desktop_provider_handoff_body(
   body : &@io.Reader,
 ) -> Result[DesktopProviderHandoffRequest, String] {
-  let output = @buffer.Buffer(size_hint=512)
+  let output = @buffer.Buffer(capacity=512)
   for ;; {
     let remaining = DesktopProviderHandoffMaximumBytes - output.length() + 1
     guard body.read_some(max_len=remaining.min(1_024)) is Some(chunk) else {
@@ -21,7 +21,7 @@ async fn read_desktop_provider_handoff_body(
     if output.length() + chunk.length() > DesktopProviderHandoffMaximumBytes {
       return Err("provider handoff request exceeds the size limit")
     }
-    output.write_bytes(chunk)
+    output.write_bytesview(chunk)
   }
   let json = @json.parse(@encoding/utf8.decode(output.to_bytes())) catch {
     _ => return Err("provider handoff request is not valid JSON")

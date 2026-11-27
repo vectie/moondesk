@@ -1,5 +1,6 @@
 ///|
 /// A generic app surface that MoonDesk can expose without knowing its domain.
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) struct AppBinding {
   pack_id : String
   product_id : String
@@ -7,12 +8,13 @@ pub(all) struct AppBinding {
   entrypoint_id : String
   path : String
   audience : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) struct AppRegistry {
   entrypoints : Array[AppBinding]
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 pub fn empty_registry() -> AppRegistry {

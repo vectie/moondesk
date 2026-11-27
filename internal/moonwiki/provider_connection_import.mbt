@@ -74,13 +74,13 @@ fn valid_openai_connection_import(value : OpenAiConnectionImport) -> Bool {
 async fn read_openai_connection_import(
   body : &@io.Reader,
 ) -> OpenAiConnectionImport? {
-  let bytes = @buffer.Buffer(size_hint=1024)
+  let bytes = @buffer.Buffer(capacity=1024)
   for ;; {
     guard body.read_some(max_len=(8193 - bytes.length()).min(1024))
       is Some(chunk) else {
       break
     }
-    bytes.write_bytes(chunk)
+    bytes.write_bytesview(chunk)
     if bytes.length() > 8192 {
       return None
     }

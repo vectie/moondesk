@@ -40,7 +40,7 @@ priv struct MoonClawSandboxPromotionResponse {
 async fn read_sandbox_promotion_body(
   body : &@io.Reader,
 ) -> Result[@mooncode_core.MoonCodeSandboxPromotionRequest, String] {
-  let output = @buffer.Buffer(size_hint=1_024)
+  let output = @buffer.Buffer(capacity=1_024)
   for ;; {
     guard body.read_some(
         max_len=(ExecutionSandboxPromotionRequestBytes - output.length() + 1).min(
@@ -54,7 +54,7 @@ async fn read_sandbox_promotion_body(
       ExecutionSandboxPromotionRequestBytes else {
       return Err("sandbox promotion request exceeds the size limit")
     }
-    output.write_bytes(chunk)
+    output.write_bytesview(chunk)
   }
   let json = @json.parse(@encoding/utf8.decode(output.to_bytes())) catch {
     _ => return Err("sandbox promotion request is not valid JSON")

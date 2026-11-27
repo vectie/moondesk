@@ -19,16 +19,17 @@ pub fn workspace_from_root(String, String) -> @core.DeskWorkspace
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct MoonBookSection {
   label : String
   path : String
   layer : @core.SourceLayer
   writable : Bool
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn MoonBookSection::equal(Self, Self) -> Bool
-pub fn MoonBookSection::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoonBookSection::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn MoonBookSection::not_equal(Self, Self) -> Bool
-pub fn MoonBookSection::to_json(Self) -> Json
+pub fn MoonBookSection::to_json(Self) -> @json.Json
 pub fn MoonBookSection::to_repr(Self) -> @debug.Repr
 
 // Type aliases

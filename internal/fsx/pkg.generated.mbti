@@ -24,30 +24,32 @@ pub async fn resolve_confined_existing(StringView, StringView) -> String?
 
 pub async fn resolve_confined_write(StringView, StringView) -> String?
 
-pub async fn write_confined_text(StringView, StringView, StringView, create? : Int) -> Bool
+pub async fn write_confined_text(StringView, StringView, StringView, create? : Int32) -> Bool
 
-pub async fn write_to_file(StringView, StringView, create? : Int) -> Unit
+pub async fn write_to_file(StringView, StringView, create? : Int32) -> Unit
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum ConfinedBytesWriteResult {
   SavedBytes
   ConflictBytes(Bytes)
   InvalidBytesTarget
   BytesWriteFailed
-} derive(Eq, @debug.Debug)
+}
 pub fn ConfinedBytesWriteResult::equal(Self, Self) -> Bool
 pub fn ConfinedBytesWriteResult::not_equal(Self, Self) -> Bool
 pub fn ConfinedBytesWriteResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ConfinedWriteResult {
   Saved
   Conflict(String)
   InvalidTarget
   UnsupportedText
   WriteFailed
-} derive(Eq, @debug.Debug)
+}
 pub fn ConfinedWriteResult::equal(Self, Self) -> Bool
 pub fn ConfinedWriteResult::not_equal(Self, Self) -> Bool
 pub fn ConfinedWriteResult::to_repr(Self) -> @debug.Repr

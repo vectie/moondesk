@@ -1,9 +1,10 @@
 ///|
 /// The only LaunchAgents MoonDesk may administer directly on the host.
+#derive(Debug, Eq)
 pub(all) enum ManagedLaunchAgent {
   MoonDesk
   MoonTown
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ManagedLaunchAgent with @moonbitlang/core/debug.Debug::{to_repr}

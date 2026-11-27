@@ -1005,7 +1005,7 @@ fn pack_app_proxy_binary_body(content_type : String) -> Bool {
 
 ///|
 async fn pack_app_proxy_bounded_body(body : &@io.Reader) -> Bytes? {
-  let output = @buffer.Buffer(size_hint=4096)
+  let output = @buffer.Buffer(capacity=4096)
   for ;; {
     let remaining = PackAppProxyMaximumBodyBytes - output.length() + 1
     guard body.read_some(max_len=remaining.min(65536)) is Some(chunk) else {
@@ -1014,7 +1014,7 @@ async fn pack_app_proxy_bounded_body(body : &@io.Reader) -> Bytes? {
     if output.length() + chunk.length() > PackAppProxyMaximumBodyBytes {
       return None
     }
-    output.write_bytes(chunk)
+    output.write_bytesview(chunk)
   }
   Some(output.to_bytes())
 }

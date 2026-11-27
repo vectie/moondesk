@@ -153,7 +153,7 @@ fn children_to_string(buf : StringBuilder, children : Children[VNode]) -> Unit {
 ///|
 pub fn server_side_render(root : &IsCell) -> String {
   let vnode = root.view()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   vnode_to_string(buf, vnode)
   buf.to_string()
 }

@@ -1,18 +1,21 @@
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum WorkspaceKind {
   MoonBook
   SuiteRoot
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum WorkspaceStatus {
   Ready
   Missing
   NeedsAttention
   Unknown
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum EntryKind {
   Markdown
   Html
@@ -22,9 +25,10 @@ pub(all) enum EntryKind {
   Artifact
   Text
   Unknown
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum SourceLayer {
   Wiki
   RawEvidence
@@ -41,9 +45,10 @@ pub(all) enum SourceLayer {
   Inbox
   Config
   Workspace
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum PreviewRenderer {
   Markdown
   Html
@@ -53,23 +58,26 @@ pub(all) enum PreviewRenderer {
   ArtifactSummary
   DirectoryListing
   Unsupported
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum SubmissionCadence {
   OneShot
   StandingWatch(String)
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum SourcePolicy {
   BookOnly
   WebFirst
   ProvidedFilesOnly
   Mixed
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskWorkspace {
   id : String
   name : String
@@ -77,9 +85,10 @@ pub struct DeskWorkspace {
   kind : WorkspaceKind
   status : WorkspaceStatus
   last_seen_at : String?
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskFileEntry {
   id : String
   workspace_id : String
@@ -91,9 +100,10 @@ pub struct DeskFileEntry {
   writable : Bool
   size_bytes : Int32?
   modified_at : String?
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskPreview {
   entry_id : String
   renderer : PreviewRenderer
@@ -101,9 +111,10 @@ pub struct DeskPreview {
   body : String
   metadata : Map[String, String]
   warnings : Array[String]
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskTaskSubmission {
   id : String
   target_book_id : String
@@ -114,17 +125,19 @@ pub struct DeskTaskSubmission {
   review_policy : String
   source_policy : SourcePolicy
   created_at : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskRunArtifact {
   id : String
   path : String
   title : String
   kind : EntryKind
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct DeskRunProjection {
   run_id : String
   book_id : String
@@ -135,4 +148,4 @@ pub struct DeskRunProjection {
   artifacts : Array[DeskRunArtifact]
   started_at : String?
   updated_at : String?
-} derive(Debug, Eq, ToJson, FromJson)
+}

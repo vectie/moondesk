@@ -17,31 +17,33 @@ pub fn snapshot_paths(String) -> TownSnapshotRef
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct OperatorRequestDraft {
   title : String
   prompt : String
   target_book_id : String
-  cadence_ticks : Int
+  cadence_ticks : Int32
   source_policy : @core.SourcePolicy
   review_policy : String
   context_entries : Array[String]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn OperatorRequestDraft::equal(Self, Self) -> Bool
-pub fn OperatorRequestDraft::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn OperatorRequestDraft::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn OperatorRequestDraft::not_equal(Self, Self) -> Bool
-pub fn OperatorRequestDraft::to_json(Self) -> Json
+pub fn OperatorRequestDraft::to_json(Self) -> @json.Json
 pub fn OperatorRequestDraft::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct TownSnapshotRef {
   town_json_path : String
   daemon_json_path : String
   standing_goals_path : String
   watcher_dir : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn TownSnapshotRef::equal(Self, Self) -> Bool
-pub fn TownSnapshotRef::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn TownSnapshotRef::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn TownSnapshotRef::not_equal(Self, Self) -> Bool
-pub fn TownSnapshotRef::to_json(Self) -> Json
+pub fn TownSnapshotRef::to_json(Self) -> @json.Json
 pub fn TownSnapshotRef::to_repr(Self) -> @debug.Repr
 
 // Type aliases

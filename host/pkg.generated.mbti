@@ -16,24 +16,26 @@ pub async fn read_scoped_text(String, String) -> String?
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct DeskRoot {
   id : String
   label : String
   path : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn DeskRoot::equal(Self, Self) -> Bool
-pub fn DeskRoot::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeskRoot::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn DeskRoot::not_equal(Self, Self) -> Bool
-pub fn DeskRoot::to_json(Self) -> Json
+pub fn DeskRoot::to_json(Self) -> @json.Json
 pub fn DeskRoot::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct HostConfig {
   roots : Array[DeskRoot]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn HostConfig::equal(Self, Self) -> Bool
-pub fn HostConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn HostConfig::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn HostConfig::not_equal(Self, Self) -> Bool
-pub fn HostConfig::to_json(Self) -> Json
+pub fn HostConfig::to_json(Self) -> @json.Json
 pub fn HostConfig::to_repr(Self) -> @debug.Repr
 
 // Type aliases

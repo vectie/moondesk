@@ -3,24 +3,25 @@ package "vectie/moondesk/internal/trusted_host_process"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
-pub async fn archive_app(String, String) -> Int
+pub async fn archive_app(String, String) -> Int32
 
-pub async fn bootout_launch_agent(ManagedLaunchAgent) -> Int
+pub async fn bootout_launch_agent(ManagedLaunchAgent) -> Int32
 
-pub async fn bootstrap_launch_agent(ManagedLaunchAgent) -> Int
+pub async fn bootstrap_launch_agent(ManagedLaunchAgent) -> Int32
 
-pub async fn build_lepusa_runtime(String) -> Int
+pub async fn build_lepusa_runtime(String) -> Int32
 
-pub async fn build_moondesk_sidecar(String) -> Int
+pub async fn build_moondesk_sidecar(String) -> Int32
 
-pub async fn copy_app(String, String) -> Int
+pub async fn copy_app(String, String) -> Int32
 
-pub async fn create_dmg(String, String) -> Int
+pub async fn create_dmg(String, String) -> Int32
 
-pub async fn force_kill_pid(Int) -> Int
+pub async fn force_kill_pid(Int32) -> Int32
 
 pub async fn git_add_pr_worktree(String, String, String, String) -> Bool
 
@@ -38,15 +39,15 @@ pub fn git_diff_tracked(String, String) -> GitReadOperation
 
 pub fn git_diff_untracked(String) -> GitReadOperation
 
-pub async fn git_fetch_pr(String, String, Int, String) -> Bool
+pub async fn git_fetch_pr(String, String, Int32, String) -> Bool
 
 pub fn git_finding_diff(String, String) -> GitReadOperation
 
 pub fn git_head() -> GitReadOperation
 
-pub fn git_history(Int) -> GitReadOperation
+pub fn git_history(Int32) -> GitReadOperation
 
-pub fn git_pr_ref(Int, String) -> GitReadOperation
+pub fn git_pr_ref(Int32, String) -> GitReadOperation
 
 pub async fn git_read(String, GitReadOperation) -> Result[String, String]
 
@@ -66,15 +67,15 @@ pub fn git_top_level() -> GitReadOperation
 
 pub async fn git_workflow_change(String, String, String) -> Result[String, String]
 
-pub fn github_get_pull(String, Int) -> GitHubOperation
+pub fn github_get_pull(String, Int32) -> GitHubOperation
 
-pub fn github_get_pull_files(String, Int, Int) -> GitHubOperation
+pub fn github_get_pull_files(String, Int32, Int32) -> GitHubOperation
 
 pub fn github_list_pulls(String) -> GitHubOperation
 
-pub fn github_post_pr_comment(String, Int, String) -> GitHubOperation
+pub fn github_post_pr_comment(String, Int32, String) -> GitHubOperation
 
-pub fn github_post_pr_line(String, Int, String, String, String, Int, String) -> GitHubOperation
+pub fn github_post_pr_line(String, Int32, String, String, String, Int32, String) -> GitHubOperation
 
 pub fn github_reply_thread(String, String) -> GitHubOperation
 
@@ -82,7 +83,7 @@ pub async fn github_request(String, GitHubOperation) -> Result[String, String]
 
 pub fn github_resolve_thread(String, Bool) -> GitHubOperation
 
-pub fn github_review_threads(String, Int, String) -> GitHubOperation
+pub fn github_review_threads(String, Int32, String) -> GitHubOperation
 
 pub async fn launch_agent_is_loaded(ManagedLaunchAgent) -> Bool
 
@@ -132,43 +133,43 @@ pub fn moonflow_single_step_configuration() -> String
 
 pub async fn moonflow_single_step_runtime() -> Result[MoonFlowSingleStepRuntime, String]
 
-pub async fn notarize_archive(NotaryProfile, String) -> Int
+pub async fn notarize_archive(NotaryProfile, String) -> Int32
 
 pub fn notary_profile(String) -> Result[NotaryProfile, String]
 
-pub async fn open_browser_url(String) -> Int
+pub async fn open_browser_url(String) -> Int32
 
-pub async fn pid_is_alive(Int) -> Bool
+pub async fn pid_is_alive(Int32) -> Bool
 
 pub async fn provision_bundled_moonclaw() -> Result[String?, String]
 
-pub async fn reveal_path(String, String) -> Int
+pub async fn reveal_path(String, String) -> Int32
 
-pub async fn run_lepusa_operation(String, LepusaOperation) -> Int
+pub async fn run_lepusa_operation(String, LepusaOperation) -> Int32
 
 pub async fn run_moonflow_planning(MoonFlowPlanningRuntime, String, MoonFlowPlanningOperation) -> Result[String, String]
 
 pub async fn run_moonflow_review(MoonFlowReviewRuntime, String, MoonFlowReviewOperation) -> Result[String, String]
 
-pub async fn run_moonflow_service(MoonFlowServiceRuntime, String, MoonFlowServiceOperation) -> Result[Json, String]
+pub async fn run_moonflow_service(MoonFlowServiceRuntime, String, MoonFlowServiceOperation) -> Result[@json.Json, String]
 
 pub async fn run_moonflow_single_step(MoonFlowSingleStepRuntime, String, MoonFlowSingleStepOperation) -> Result[String, String]
 
 pub async fn sha256_file(String) -> String
 
-pub async fn sign_app(SigningIdentity, String) -> Int
+pub async fn sign_app(SigningIdentity, String) -> Int32
 
 pub fn signing_identity(String) -> Result[SigningIdentity, String]
 
-pub async fn staple_app(String) -> Int
+pub async fn staple_app(String) -> Int32
 
 pub async fn start_managed_moonclaw_daemon(ManagedMoonClawBinding, String) -> Result[ManagedDaemonStart, String]
 
 pub async fn system_name() -> String
 
-pub async fn terminate_pid(Int) -> Int
+pub async fn terminate_pid(Int32) -> Int32
 
-pub async fn verify_app_signature(String) -> Int
+pub async fn verify_app_signature(String) -> Int32
 
 // Errors
 
@@ -176,7 +177,7 @@ pub async fn verify_app_signature(String) -> Int
 pub struct GitHubOperation {
   args : Array[String]
   valid : Bool
-  timeout_ms : Int
+  timeout_ms : Int32
 }
 
 pub struct GitReadOperation {
@@ -197,14 +198,15 @@ pub struct LepusaTarget {
 }
 
 pub(all) struct ManagedDaemonStart {
-  pid : Int
+  pid : Int32
   display : String
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ManagedLaunchAgent {
   MoonDesk
   MoonTown
-} derive(Eq, @debug.Debug)
+}
 pub fn ManagedLaunchAgent::equal(Self, Self) -> Bool
 pub fn ManagedLaunchAgent::not_equal(Self, Self) -> Bool
 pub fn ManagedLaunchAgent::to_repr(Self) -> @debug.Repr

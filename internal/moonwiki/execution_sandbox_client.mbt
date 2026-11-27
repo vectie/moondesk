@@ -1,6 +1,7 @@
 ///|
 /// Operations that MoonDesk may request from an isolated executor. The client
 /// boundary intentionally contains no process primitive and no host fallback.
+#warnings("-unused_constructor")
 priv enum ExecutionSandboxOperation {
   MoonFlowValidateGraph
   MoonFlowImportGraph
@@ -25,6 +26,7 @@ priv enum ExecutionSandboxClientError {
 }
 
 ///|
+#warnings("-unused_value")
 fn execution_sandbox_client_available() -> Bool {
   false
 }

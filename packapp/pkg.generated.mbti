@@ -21,6 +21,7 @@ pub fn resolve(Array[AppBinding], String) -> AppBinding?
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct AppBinding {
   pack_id : String
   product_id : String
@@ -28,20 +29,21 @@ pub(all) struct AppBinding {
   entrypoint_id : String
   path : String
   audience : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn AppBinding::equal(Self, Self) -> Bool
-pub fn AppBinding::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AppBinding::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn AppBinding::not_equal(Self, Self) -> Bool
-pub fn AppBinding::to_json(Self) -> Json
+pub fn AppBinding::to_json(Self) -> @json.Json
 pub fn AppBinding::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct AppRegistry {
   entrypoints : Array[AppBinding]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn AppRegistry::equal(Self, Self) -> Bool
-pub fn AppRegistry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AppRegistry::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn AppRegistry::not_equal(Self, Self) -> Bool
-pub fn AppRegistry::to_json(Self) -> Json
+pub fn AppRegistry::to_json(Self) -> @json.Json
 pub fn AppRegistry::to_repr(Self) -> @debug.Repr
 
 // Type aliases

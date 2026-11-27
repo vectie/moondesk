@@ -1,30 +1,35 @@
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum BrowserActor {
   User
   Agent
   Replay
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum BrowserOriginClass {
   OpaqueLocalPreview
   IsolatedLoopback
   ExternalOrigin
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum BrowserNetworkPolicy {
   Offline
   ApprovedOriginsOnly
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum BrowserStorageLifetime {
   Ephemeral
   RunScoped
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) enum BrowserOperation {
   Navigate
   Reload
@@ -36,9 +41,10 @@ pub(all) enum BrowserOperation {
   SetViewport
   CaptureScreenshot
   CaptureDiagnostics
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct BrowserSessionScope {
   session_id : String
   workspace_id : String
@@ -53,9 +59,10 @@ pub struct BrowserSessionScope {
   download_root : String
   upload_sources : Array[String]
   permitted_effects : Array[String]
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct BrowserAction {
   action_id : String
   session_id : String
@@ -67,9 +74,10 @@ pub struct BrowserAction {
   code_revision : String
   authority_envelope_id : String
   created_at : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct BrowserObservation {
   observation_id : String
   session_id : String
@@ -79,9 +87,10 @@ pub struct BrowserObservation {
   artifact_path : String?
   code_revision : String
   captured_at : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub struct BrowserActionReceipt {
   action_id : String
   session_id : String
@@ -92,7 +101,7 @@ pub struct BrowserActionReceipt {
   authority_envelope_id : String
   code_revision : String
   completed_at : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 pub fn opaque_local_browser_scope(

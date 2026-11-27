@@ -1,5 +1,6 @@
 ///|
 /// Error codes compatible with fflate's FlateErrorCode (0-14).
+#derive(Eq, Debug)
 pub(all) enum FlateErrorCode {
   UnexpectedEOF // 0
   InvalidBlockType // 1
@@ -16,7 +17,7 @@ pub(all) enum FlateErrorCode {
   StreamFinishing // 12
   InvalidZipData // 13
   UnknownCompressionMethod // 14
-} derive(Eq, Debug)
+}
 
 ///|
 pub(all) suberror FlateError {

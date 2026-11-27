@@ -144,16 +144,6 @@ test "moonclaw_general_task_is_missing_error detects stale task responses" {
 }
 
 ///|
-test "moonclaw_general_task_is_missing_error detects stale task responses" {
-  assert_true(
-    moonclaw_general_task_is_missing_error("MoonClaw returned HTTP 404"),
-  )
-  assert_true(moonclaw_general_task_is_missing_error("Task not found: abc-123"))
-  assert_true(moonclaw_general_task_is_missing_error("This task is retiring"))
-  assert_false(moonclaw_general_task_is_missing_error("Connection refused"))
-}
-
-///|
 test "moonclaw_general_chat_prompt includes docx-ops guidance for Word docs" {
   let prompt = moonclaw_general_chat_prompt(
     "drafts/proposal.docx",

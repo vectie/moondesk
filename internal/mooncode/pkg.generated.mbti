@@ -2,11 +2,12 @@
 package "vectie/moondesk/internal/mooncode"
 
 import {
+  "moonbitlang/core/json",
   "vectie/moondesk/mooncode/core",
 }
 
 // Values
-pub fn capabilities_json() -> Json
+pub fn capabilities_json() -> @json.Json
 
 pub fn command_action(@core.MoonCodeCommand) -> String
 
@@ -22,13 +23,13 @@ pub fn conversation_turn_kind() -> String
 
 pub fn conversation_watch_contract_id() -> String
 
-pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : @core.MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : @core.MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int32, snapshot~ : @json.Json) -> @json.Json
 
-pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
+pub fn decode_command_submission(@json.Json) -> Result[@core.MoonCodeCommand, String]
 
 pub fn desktop_capabilities_endpoint() -> String
 
-pub fn desktop_projection_route_contracts() -> Array[Json]
+pub fn desktop_projection_route_contracts() -> Array[@json.Json]
 
 pub fn desktop_session_commands_endpoint() -> String
 
@@ -46,13 +47,13 @@ pub fn desktop_status_endpoint() -> String
 
 pub fn desktop_work_handoff_endpoint() -> String
 
-pub fn engine_status_projection_json(daemon~ : Json, moonclaw_root~ : String, checkout_ready~ : Bool, running~ : Bool, models_ready~ : Bool, runtime_contract_ready~ : Bool, model_evidence~ : String, runtime_evidence~ : String) -> Json
+pub fn engine_status_projection_json(daemon~ : @json.Json, moonclaw_root~ : String, checkout_ready~ : Bool, running~ : Bool, models_ready~ : Bool, runtime_contract_ready~ : Bool, model_evidence~ : String, runtime_evidence~ : String) -> @json.Json
 
 pub fn moonclaw_native_archived_session_listing_endpoint(String, include_books? : Bool) -> String
 
-pub fn moonclaw_native_capabilities_ready(Json) -> Bool
+pub fn moonclaw_native_capabilities_ready(@json.Json) -> Bool
 
-pub fn moonclaw_native_capabilities_unavailable(String) -> Json
+pub fn moonclaw_native_capabilities_unavailable(String) -> @json.Json
 
 pub fn moonclaw_native_runtime_claim_endpoint(String, String) -> String
 
@@ -70,27 +71,27 @@ pub fn moonclaw_native_skills_endpoint(String) -> String
 
 pub fn moonclaw_native_turn_endpoint(String) -> String
 
-pub fn moonclaw_native_watch_endpoint(String, String, @core.MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
+pub fn moonclaw_native_watch_endpoint(String, String, @core.MoonCodeWatchCursor, wait_ms? : Int32, poll_ms? : Int32) -> String
 
-pub fn mooncode_negotiated_runtime_readiness(Json) -> Json
+pub fn mooncode_negotiated_runtime_readiness(@json.Json) -> @json.Json
 
-pub fn native_command_body(Json, @core.MoonCodeCommand, String, Json) -> Json
+pub fn native_command_body(@json.Json, @core.MoonCodeCommand, String, @json.Json) -> @json.Json
 
-pub fn native_runtime_session_projection(String, String) -> Json
+pub fn native_runtime_session_projection(String, String) -> @json.Json
 
-pub fn negotiate_capabilities_json(Json) -> Json
+pub fn negotiate_capabilities_json(@json.Json) -> @json.Json
 
-pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String) -> Json
+pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : @json.Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String) -> @json.Json
 
 pub fn protocol_version() -> String
 
-pub fn runtime_session_listing_rows(Json) -> Result[Array[Json], String]
+pub fn runtime_session_listing_rows(@json.Json) -> Result[Array[@json.Json], String]
 
-pub fn selected_session_response(Json) -> Result[Json, String]
+pub fn selected_session_response(@json.Json) -> Result[@json.Json, String]
 
-pub fn session_response_defaults(Json) -> Json
+pub fn session_response_defaults(@json.Json) -> @json.Json
 
-pub fn session_with_field(Json, String, Json) -> Json
+pub fn session_with_field(@json.Json, String, @json.Json) -> @json.Json
 
 // Errors
 

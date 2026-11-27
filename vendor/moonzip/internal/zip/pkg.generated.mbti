@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn dt(Int, Int) -> Int
+pub fn dt(Int32, Int32) -> Int32
 
 pub fn unzip_list(FixedArray[Byte], decode? : (FixedArray[Byte]) -> String) -> Array[@types.UnzipFileInfo] raise @types.FlateError
 
